@@ -2,7 +2,7 @@ import { requirePermission } from "@/lib/auth/permissions";
 import { PERMISSIONS } from "@/lib/auth/constants";
 
 export default async function AdminHomePage() {
-  const ctx = await requirePermission(PERMISSIONS.PLATFORM_ADMIN);
+  await requirePermission(PERMISSIONS.PLATFORM_ADMIN);
 
   return (
     <div>

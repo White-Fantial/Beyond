@@ -1,7 +1,7 @@
 import { requireAuth } from "@/lib/auth/permissions";
 
 export default async function OwnerHomePage() {
-  const ctx = await requireAuth();
+  await requireAuth();
 
   return (
     <div>

@@ -243,8 +243,8 @@ model Connection {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
-  tenant      Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  store       Store                 @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  tenant      Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  store       Store                  @relation(fields: [storeId], references: [id], onDelete: Cascade)
   credentials ConnectionCredential[]
 
   @@unique([storeId, type, provider])
@@ -257,13 +257,13 @@ model Connection {
 }
 
 model ConnectionCredential {
-  id              String     @id @default(uuid())
+  id              String    @id @default(uuid())
   connectionId    String
-  version         Int        @default(1)
-  isActive        Boolean    @default(true)
+  version         Int       @default(1)
+  isActive        Boolean   @default(true)
   configEncrypted String
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   rotatedAt       DateTime?
 
   connection Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
@@ -274,15 +274,15 @@ model ConnectionCredential {
 }
 
 model AuditLog {
-  id          String   @id @default(uuid())
-  tenantId    String?
-  storeId     String?
-  actorUserId String?
-  action      String
-  targetType  String
-  targetId    String
+  id           String   @id @default(uuid())
+  tenantId     String?
+  storeId      String?
+  actorUserId  String?
+  action       String
+  targetType   String
+  targetId     String
   metadataJson Json?
-  createdAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
 
   tenant    Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   store     Store?  @relation("AuditLogStore", fields: [storeId], references: [id], onDelete: SetNull)
@@ -373,7 +373,7 @@ model OptionGroup {
   isRequired    Boolean @default(false)
   maxSelections Int     @default(1)
 
-  menuItem MenuItem    @relation(fields: [menuItemId], references: [id])
+  menuItem MenuItem     @relation(fields: [menuItemId], references: [id])
   options  MenuOption[]
 
   @@map("option_groups")

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getSession, type SessionPayload } from "./session";
+import { getSession } from "./session";
 import {
   STORE_ROLE_PERMISSIONS,
   MEMBERSHIP_ROLE_PERMISSIONS,
