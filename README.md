@@ -69,7 +69,13 @@ beyond/
 │   │   ├── billing/
 │   │   ├── integrations/
 │   │   └── settings/
-│   ├── api/auth/logout/        # Logout API route
+│   ├── api/                    # API routes
+│   │   ├── auth/logout/        # Logout API route
+│   │   └── catalog/            # Catalog API routes
+│   │       ├── sync/           # POST /api/catalog/sync
+│   │       ├── categories/     # GET + PATCH /api/catalog/categories
+│   │       ├── products/       # GET + PATCH /api/catalog/products
+│   │       └── modifier-groups/ # GET + PATCH /api/catalog/modifier-groups
 │   ├── unauthorized/           # 403 page
 │   ├── globals.css
 │   ├── layout.tsx              # Root layout
@@ -106,6 +112,9 @@ beyond/
 │
 ├── services/                   # Application service layer
 │   ├── auth.service.ts
+│   ├── catalog.service.ts      # Catalog CRUD + resolveExternalId
+│   ├── catalog-sync.service.ts # Full Loyverse catalog sync orchestration
+│   ├── foundation.service.ts   # Tenant/store/connection bootstrapping
 │   └── store.service.ts
 │
 ├── lib/
@@ -115,8 +124,18 @@ beyond/
 │   │   ├── permissions.ts      # requireAuth / requirePermission helpers
 │   │   ├── redirect.ts         # Post-login redirect logic
 │   │   └── session.ts          # JWT create / verify / cookie helpers
+│   ├── integrations/
+│   │   └── loyverse/
+│   │       ├── client.ts       # LoyverseClient (paginated fetch helpers)
+│   │       ├── parser.ts       # parseLoyverseCategory/Item/ModifierGroup
+│   │       └── types.ts        # Loyverse API response types
+│   ├── audit.ts                # logAuditEvent helper
 │   ├── prisma.ts               # Prisma client singleton
 │   └── utils.ts                # Shared utilities
+│
+├── __tests__/                  # Vitest test suites
+│   ├── catalog.test.ts         # Catalog service + sync + parser tests
+│   └── foundation.test.ts      # Foundation integrity tests
 │
 ├── middleware.ts               # Edge route protection (JWT, role checks)
 ├── config/index.ts             # App-wide configuration
@@ -231,6 +250,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the landing page.
 | `npm run prisma:migrate` | Run database migrations |
 | `npm run prisma:seed` | Seed roles, permissions, and demo data |
 | `npm run prisma:studio` | Open Prisma Studio |
+| `npm run test` | Run Vitest test suite |
 
 ---
 
@@ -244,12 +264,59 @@ Open [http://localhost:3000](http://localhost:3000) to view the landing page.
 - [x] Multi-portal routing & layouts (Customer, Backoffice, Owner, Admin)
 - [x] Edge middleware with role-based route protection
 - [x] Login page with server action & `LoginForm` client component
+- [x] Loyverse POS adapter (categories, items, modifier groups) with `modifier_ids` mirroring
+- [x] Full catalog sync service (raw mirror tables → internal catalog → channel mappings)
+- [x] Catalog API routes (sync, categories, products, modifier-groups)
+- [x] Backoffice catalog pages (categories, products, modifiers) — operational UX
+- [x] Channel entity mapping for outbound ID resolution
+- [x] Vitest test suite (catalog service, sync, parsers, foundation integrity)
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)
 - [ ] Real-time order notifications (WebSocket / SSE)
 - [ ] Sales analytics charts
 - [ ] Subscription billing engine
+
+---
+
+## Troubleshooting
+
+### No active Loyverse connection found (sync returns 404)
+
+The sync endpoint looks up a `Connection` with `type=POS`, `provider=LOYVERSE`, and `status=CONNECTED` for the given `storeId`. If this query returns nothing, check:
+
+1. A `Connection` row exists for the store with the correct type/provider.
+2. `connection.status` is `CONNECTED` (not `PENDING`, `DISCONNECTED`, or `ERROR`).
+3. You are using the correct `storeId` UUID (not the store `code`).
+
+### No active credential for connection (sync returns 404)
+
+After resolving the connection, the endpoint looks for a `ConnectionCredential` row where `isActive = true`. If missing:
+
+1. Ensure a credential was inserted via `createConnectionCredential()` (or the seed).
+2. Check that `isActive` was not accidentally set to `false` during a credential rotation.
+3. `configEncrypted` must contain the Loyverse access token.
+
+### Modifier groups not appearing in order UI
+
+The order UI reads modifier groups from `catalog_product_modifier_groups`, which is populated during full catalog sync from Loyverse `item.modifier_ids`. If modifiers are missing, trace the chain:
+
+1. **Loyverse API**: confirm the item returns `modifier_ids` (non-empty array).
+2. **External mirror**: check `external_catalog_product_modifier_group_links` for a row with `(connectionId, externalProductId, externalModifierGroupId)`.
+3. **Internal link**: check `catalog_product_modifier_groups` for a row with the internal product/modifier-group IDs and `isActive = true`.
+4. **API response**: `GET /api/catalog/modifier-groups?storeId=<id>` should return the groups; `listProductModifierGroups(productId)` should return the linked groups.
+
+Run a full sync (`POST /api/catalog/sync`) after confirming the Loyverse data is correct.
+
+### Outbound order fails: mapping missing for entity
+
+`resolveExternalId()` in `catalog.service.ts` returns `null` when no `ChannelEntityMapping` row exists for the requested `(connectionId, entityType, internalEntityId)`. This means:
+
+1. The catalog sync was never run, or the entity appeared after the last sync — run a full sync.
+2. The entity was deactivated/deleted in Loyverse but the internal row was not cleaned up — deactivate the internal row and re-sync.
+3. The mapping was manually deleted — re-run sync to recreate it.
+
+Never fall back to using internal UUIDs as Loyverse IDs. If the mapping is missing, the order must be blocked until sync is re-run and the mapping is restored.
 
 ---
 
