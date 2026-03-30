@@ -1,5 +1,7 @@
 import { requireStorePermission } from "@/lib/auth/permissions";
 import { PERMISSIONS } from "@/lib/auth/constants";
+import { listCatalogProducts } from "@/services/catalog.service";
+import CatalogProductsClient from "./CatalogProductsClient";
 
 export default async function BackofficeProductsPage({
   params,
@@ -9,10 +11,12 @@ export default async function BackofficeProductsPage({
   const { storeId } = await params;
   await requireStorePermission(storeId, PERMISSIONS.MENU_MANAGE);
 
+  const products = await listCatalogProducts(storeId);
+
   return (
     <div>
       <h1 className="text-xl font-bold text-gray-900 mb-4">상품 관리</h1>
-      <p className="text-gray-500">등록된 상품이 없습니다.</p>
+      <CatalogProductsClient initialProducts={products} />
     </div>
   );
 }

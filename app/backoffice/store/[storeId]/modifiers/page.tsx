@@ -1,5 +1,7 @@
 import { requireStorePermission } from "@/lib/auth/permissions";
 import { PERMISSIONS } from "@/lib/auth/constants";
+import { listModifierGroups } from "@/services/catalog.service";
+import CatalogModifiersClient from "./CatalogModifiersClient";
 
 export default async function BackofficeModifiersPage({
   params,
@@ -9,10 +11,12 @@ export default async function BackofficeModifiersPage({
   const { storeId } = await params;
   await requireStorePermission(storeId, PERMISSIONS.MODIFIER_MANAGE);
 
+  const modifierGroups = await listModifierGroups(storeId);
+
   return (
     <div>
       <h1 className="text-xl font-bold text-gray-900 mb-4">옵션/수식어 관리</h1>
-      <p className="text-gray-500">등록된 옵션 그룹이 없습니다.</p>
+      <CatalogModifiersClient initialGroups={modifierGroups} />
     </div>
   );
 }
