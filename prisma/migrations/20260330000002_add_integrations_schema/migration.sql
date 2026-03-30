@@ -2,6 +2,11 @@
 -- Adds new enums, extends Connection/ConnectionCredential, and adds
 -- ProviderAppCredential, ConnectionOAuthState, and ConnectionActionLog models.
 
+-- @prisma-disable-transaction
+-- ALTER TYPE ... ADD VALUE cannot be used in the same transaction as the new
+-- enum value. Disabling the transaction wrapper lets each statement auto-commit
+-- so 'CONNECTING' is visible before the UPDATE on line 48 runs.
+
 -- ─── New Enums ────────────────────────────────────────────────────────────────
 
 CREATE TYPE "ProviderEnvironment" AS ENUM ('SANDBOX', 'PRODUCTION');
