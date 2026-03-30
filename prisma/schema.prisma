@@ -22,20 +22,76 @@ model Tenant {
   @@map("tenants")
 }
 
-model User {
-  id        String    @id @default(cuid())
-  tenantId  String
-  email     String    @unique
-  name      String
-  password  String
-  role      String    @default("STAFF")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+model Role {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  name        String
+  description String?
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  permissions  RolePermission[]
+  memberships  StoreMembership[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  name        String
+  description String?
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String @id @default(cuid())
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  tenantId       String?
+  email          String    @unique
+  name           String
+  password       String
+  platformRole   String    @default("CUSTOMER")
+  defaultStoreId String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  tenant           Tenant?           @relation(fields: [tenantId], references: [id])
+  defaultStore     Store?            @relation("UserDefaultStore", fields: [defaultStoreId], references: [id])
+  storeMemberships StoreMembership[]
 
   @@map("users")
+}
+
+model StoreMembership {
+  id        String   @id @default(cuid())
+  userId    String
+  storeId   String
+  roleId    String
+  isDefault Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id])
+  store Store @relation(fields: [storeId], references: [id])
+  role  Role  @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, storeId])
+  @@map("store_memberships")
 }
 
 model Store {
@@ -55,6 +111,8 @@ model Store {
   posIntegrations      PosIntegration[]
   deliveryIntegrations DeliveryIntegration[]
   subscriptionPlans    SubscriptionPlan[]
+  memberships          StoreMembership[]
+  defaultForUsers      User[]                @relation("UserDefaultStore")
 
   @@map("stores")
 }

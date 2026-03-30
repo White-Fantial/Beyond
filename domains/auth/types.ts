@@ -1,19 +1,25 @@
+import type { RoleKey, PermissionKey } from "@/lib/auth/constants";
+
+export type { RoleKey, PermissionKey };
+
 export interface User {
   id: string;
   email: string;
   name: string;
-  role: UserRole;
-  tenantId: string;
+  platformRole: RoleKey;
+  tenantId: string | null;
+  defaultStoreId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export type UserRole = "SUPER_ADMIN" | "TENANT_ADMIN" | "STORE_MANAGER" | "STAFF";
-
 export interface Session {
   userId: string;
-  tenantId: string;
-  role: UserRole;
+  email: string;
+  name: string;
+  platformRole: RoleKey;
+  tenantId: string | null;
+  defaultStoreId: string | null;
   expiresAt: Date;
 }
 
@@ -23,6 +29,31 @@ export interface LoginCredentials {
 }
 
 export interface AuthResult {
-  user: User;
-  token: string;
+  success: boolean;
+  redirectTo?: string;
+  error?: string;
 }
+
+export interface StoreMembershipInfo {
+  storeId: string;
+  storeName: string;
+  roleKey: RoleKey;
+  isDefault: boolean;
+  permissions: PermissionKey[];
+}
+
+export interface UserAuthContext {
+  userId: string;
+  email: string;
+  name: string;
+  platformRole: RoleKey;
+  tenantId: string | null;
+  defaultStoreId: string | null;
+  isAdmin: boolean;
+  isOwner: boolean;
+  isCustomer: boolean;
+  isOperationalUser: boolean;
+  storeMemberships: StoreMembershipInfo[];
+  permissions: PermissionKey[];
+}
+
