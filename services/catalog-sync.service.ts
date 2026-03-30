@@ -17,6 +17,7 @@
  * Never matches by name.
  */
 
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { LoyverseClient } from "@/lib/integrations/loyverse/client";
 import {
@@ -198,7 +199,7 @@ export async function runLoyverseFullCatalogSync(
           channelType: "LOYVERSE",
           externalProductId: parsed.externalId,
           externalModifierGroupId: mgId,
-          rawPayload: null,
+          rawPayload: Prisma.JsonNull,
           lastSyncedAt: now,
           updatedAt: now,
         },
