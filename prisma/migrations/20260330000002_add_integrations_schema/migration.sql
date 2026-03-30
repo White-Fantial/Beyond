@@ -2,11 +2,6 @@
 -- Adds new enums, extends Connection/ConnectionCredential, and adds
 -- ProviderAppCredential, ConnectionOAuthState, and ConnectionActionLog models.
 
--- @prisma-disable-transaction
--- ALTER TYPE ... ADD VALUE cannot be used in the same transaction as the new
--- enum value. Disabling the transaction wrapper lets each statement auto-commit
--- so 'CONNECTING' is visible before the UPDATE on line 48 runs.
-
 -- ─── New Enums ────────────────────────────────────────────────────────────────
 
 CREATE TYPE "ProviderEnvironment" AS ENUM ('SANDBOX', 'PRODUCTION');
@@ -43,14 +38,38 @@ CREATE TYPE "ConnectionActionType" AS ENUM (
 );
 
 -- ─── Extend ConnectionStatus enum ─────────────────────────────────────────────
--- Rename old enum, create new one, migrate data, drop old.
+-- PostgreSQL error 55P04: ALTER TYPE ... ADD VALUE cannot be used in the same
+-- transaction as the new enum value. Instead we create a replacement enum,
+-- migrate the column (mapping legacy PENDING → CONNECTING via a USING clause),
+-- drop the old type, and rename the new one. This is fully transaction-safe.
 
-ALTER TYPE "ConnectionStatus" ADD VALUE IF NOT EXISTS 'NOT_CONNECTED';
-ALTER TYPE "ConnectionStatus" ADD VALUE IF NOT EXISTS 'CONNECTING';
-ALTER TYPE "ConnectionStatus" ADD VALUE IF NOT EXISTS 'REAUTH_REQUIRED';
+CREATE TYPE "ConnectionStatus_new" AS ENUM (
+  'NOT_CONNECTED',
+  'CONNECTING',
+  'CONNECTED',
+  'ERROR',
+  'REAUTH_REQUIRED',
+  'DISCONNECTED'
+);
 
--- Map legacy PENDING → CONNECTING
-UPDATE "connections" SET "status" = 'CONNECTING' WHERE "status" = 'PENDING';
+-- Drop the column DEFAULT first; it references the old enum type.
+ALTER TABLE "connections" ALTER COLUMN "status" DROP DEFAULT;
+
+-- Migrate column type, mapping legacy PENDING value → CONNECTING.
+ALTER TABLE "connections"
+  ALTER COLUMN "status" TYPE "ConnectionStatus_new"
+  USING CASE "status"::TEXT
+    WHEN 'PENDING' THEN 'CONNECTING'
+    ELSE "status"::TEXT
+  END::"ConnectionStatus_new";
+
+-- Remove the old enum and promote the new one.
+DROP TYPE "ConnectionStatus";
+ALTER TYPE "ConnectionStatus_new" RENAME TO "ConnectionStatus";
+
+-- Restore the column default using the renamed type.
+ALTER TABLE "connections"
+  ALTER COLUMN "status" SET DEFAULT 'NOT_CONNECTED'::"ConnectionStatus";
 
 -- ─── ProviderAppCredential ────────────────────────────────────────────────────
 
