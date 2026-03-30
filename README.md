@@ -69,13 +69,21 @@ beyond/
 │   │   ├── billing/
 │   │   ├── integrations/
 │   │   └── settings/
+│   ├── store/[storeSlug]/      # /store — public customer ordering portal
+│   │   ├── layout.tsx          # Minimal public layout (no auth)
+│   │   ├── page.tsx            # Order entry page (menu browse + add to cart)
+│   │   ├── OrderPageClient.tsx # Interactive client component (category nav, modals)
+│   │   ├── cart/page.tsx       # Cart review page
+│   │   ├── checkout/page.tsx   # Checkout page (stub — future payment)
+│   │   └── subscriptions/page.tsx # Subscription entry page
 │   ├── api/                    # API routes
 │   │   ├── auth/logout/        # Logout API route
-│   │   └── catalog/            # Catalog API routes
-│   │       ├── sync/           # POST /api/catalog/sync
-│   │       ├── categories/     # GET + PATCH /api/catalog/categories
-│   │       ├── products/       # GET + PATCH /api/catalog/products
-│   │       └── modifier-groups/ # GET + PATCH /api/catalog/modifier-groups
+│   │   ├── catalog/            # Catalog API routes
+│   │   │   ├── sync/           # POST /api/catalog/sync
+│   │   │   ├── categories/     # GET + PATCH /api/catalog/categories
+│   │   │   ├── products/       # GET + PATCH /api/catalog/products
+│   │   │   └── modifier-groups/ # GET + PATCH /api/catalog/modifier-groups
+│   │   └── store/[storeSlug]/product/[productId]/route.ts  # GET product detail (public)
 │   ├── unauthorized/           # 403 page
 │   ├── globals.css
 │   ├── layout.tsx              # Root layout
@@ -89,6 +97,16 @@ beyond/
 │   │   ├── Header.tsx
 │   │   ├── OwnerSidebar.tsx
 │   │   └── Sidebar.tsx
+│   ├── order/                  # Customer Order UI components
+│   │   ├── StoreHeader.tsx     # Store name + pickup time display
+│   │   ├── CategoryBar.tsx     # Horizontal scroll category tab bar
+│   │   ├── ProductSection.tsx  # Category section with product list
+│   │   ├── ProductCard.tsx     # Product card (text left, image right)
+│   │   ├── ProductModal.tsx    # Modifier selection bottom sheet / modal
+│   │   ├── CartButton.tsx      # Floating cart badge button
+│   │   ├── PickupTimeChip.tsx  # Pickup time display chip
+│   │   ├── PickupTimeSelector.tsx  # Pickup time slot picker
+│   │   └── SubscriptionEntryLink.tsx  # Link to subscription entry page
 │   └── ui/
 │       ├── Button.tsx
 │       └── Card.tsx
@@ -114,6 +132,7 @@ beyond/
 │   ├── auth.service.ts
 │   ├── catalog.service.ts      # Catalog CRUD + resolveExternalId
 │   ├── catalog-sync.service.ts # Full Loyverse catalog sync orchestration
+│   ├── customer-menu.service.ts # Customer-facing catalog queries (public ordering)
 │   ├── foundation.service.ts   # Tenant/store/connection bootstrapping
 │   └── store.service.ts
 │
@@ -124,11 +143,15 @@ beyond/
 │   │   ├── permissions.ts      # requireAuth / requirePermission helpers
 │   │   ├── redirect.ts         # Post-login redirect logic
 │   │   └── session.ts          # JWT create / verify / cookie helpers
+│   ├── cart/
+│   │   └── cart-context.tsx    # Client-side cart state (React Context + useReducer)
 │   ├── integrations/
 │   │   └── loyverse/
 │   │       ├── client.ts       # LoyverseClient (paginated fetch helpers)
 │   │       ├── parser.ts       # parseLoyverseCategory/Item/ModifierGroup
 │   │       └── types.ts        # Loyverse API response types
+│   ├── order/
+│   │   └── pickup-time.ts      # Pickup time auto-calculation utilities
 │   ├── audit.ts                # logAuditEvent helper
 │   ├── prisma.ts               # Prisma client singleton
 │   └── utils.ts                # Shared utilities
@@ -156,6 +179,159 @@ beyond/
 - **JWT Session** — sessions are stored as signed JWTs in an `httpOnly` cookie (`beyond_session`). Signing uses `jose` with a `SESSION_SECRET` / `NEXTAUTH_SECRET` environment variable.
 - **Multi-Portal Routing** — four separate URL namespaces (`/app`, `/backoffice`, `/owner`, `/admin`) each have their own layout and sidebar, automatically guarded by `middleware.ts`.
 - **Server Components by default** — client components (`"use client"`) are used only where interactivity is required (sidebars, login form).
+- **Customer Order UI** — the public ordering portal (`/store/[storeSlug]`) reads only the internal catalog tables. No provider-specific fields, external mirror tables, or sync metadata are ever exposed to customer-facing code.
+
+---
+
+## Customer Order UI
+
+The customer ordering portal lives under `/store/[storeSlug]` and is a **fully public, no-login-required** ordering interface inspired by Bopple / Uber Eats mobile UX.
+
+### Route Structure
+
+| Route | Purpose |
+|-------|---------|
+| `/store/[storeSlug]` | Main order entry — category bar + product card list |
+| `/store/[storeSlug]/cart` | Cart review — items, quantities, pickup time summary |
+| `/store/[storeSlug]/checkout` | Checkout (stub — payment & order creation coming) |
+| `/store/[storeSlug]/subscriptions` | Subscription entry — same catalog filtered for subscription products |
+
+`storeSlug` maps to the `Store.code` field in the database (URL-safe, human-readable store identifier).
+
+### Information Architecture
+
+```
+/store/[storeSlug]
+│
+├── StoreHeader (sticky)
+│   ├── Store display name
+│   └── Pickup time chip (auto-selected, click to change)
+│
+├── CategoryBar (sticky below header)
+│   └── Horizontal scroll tabs — filtered by isVisibleOnOnlineOrder, sorted by displayOrder
+│
+└── ProductSections (scrollable)
+    ├── [Category Name]
+    │   └── ProductCard × N
+    │       ├── Left 70%: displayName, shortDescription, price, Add button
+    │       └── Right 30%: product image (or gradient fallback)
+    └── SubscriptionEntryLink
+```
+
+### Product Card Layout
+
+Cards follow a **text-left / image-right** layout:
+
+```
+┌─────────────────────────────────┐
+│ Product Name        ┌─────────┐ │
+│ Short description…  │  image  │ │
+│                     └─────────┘ │
+│ $12.50     [+ Add]              │
+└─────────────────────────────────┘
+```
+
+- `displayName` = `onlineName` if set, otherwise `name`
+- `isFeatured` products show a Featured badge
+- `isSoldOut` products show a Sold Out badge and disable the Add button
+- Products with modifiers (`hasModifiers=true`) open a **ProductModal** on Add
+
+### Product Modal (Modifier Selection)
+
+When a product has modifier groups, tapping **Add** opens a bottom sheet / modal:
+
+- Displays product name, image, description, base price
+- Renders each `CatalogModifierGroup` in order
+- Required groups are validated before adding to cart
+- `selectionMax=1` groups render as radio buttons; others as checkboxes
+- Sold-out options are disabled
+- Quantity stepper + "Add to Cart" CTA at the bottom
+
+### Pickup Time Auto-Selection
+
+Pickup time is automatically calculated on page load:
+
+```
+now + prepMinutes (default: 15 min) + buffer → round up to nearest 10-min slot
+```
+
+**Utilities** (`lib/order/pickup-time.ts`):
+
+| Function | Purpose |
+|----------|---------|
+| `getDefaultPickupTime(params?)` | Returns earliest available pickup time |
+| `roundToPickupSlot(date, interval?)` | Rounds a date up to the nearest slot boundary |
+| `getAvailablePickupSlots(params?)` | Returns an array of upcoming pickup time slots |
+| `formatPickupTime(time)` | Formats a Date as "10:30 AM" |
+| `formatPickupLabel(time, isAsap)` | Formats as "ASAP (10:30 AM)" or "Pickup at 10:30 AM" |
+
+Customers can tap the pickup time chip to open `PickupTimeSelector` and choose a different slot.
+
+> TODO: Filter slots against store opening hours once `StoreHours` table is added.
+
+### Cart State
+
+Client-side cart is managed via React Context (`lib/cart/cart-context.tsx`):
+
+```typescript
+interface CartItem {
+  productId: string;
+  displayName: string;
+  unitPrice: number;          // minor units (cents)
+  quantity: number;
+  selectedModifiers: SelectedModifier[];
+  imageUrl?: string;
+  notes?: string;             // future: per-item notes
+}
+```
+
+- `CartProvider` is instantiated per page with the server-computed `initialPickupTime`
+- `cartItemKey()` creates a stable key from `productId` + sorted modifier option IDs, allowing two items with different modifier selections to coexist in the cart
+
+> TODO: Persist cart to `sessionStorage` or server-side `cart_sessions` table across navigations.
+
+### Order vs Subscription Entry
+
+Regular ordering and subscriptions **share the same backend catalog and cart infrastructure**. The only difference is the visibility filter applied when querying products:
+
+| Context | Filter |
+|---------|--------|
+| `/store/[storeSlug]` | `isVisibleOnOnlineOrder=true` |
+| `/store/[storeSlug]/subscriptions` | `isVisibleOnSubscription=true` |
+
+Both use the same `OrderPageClient` component, same `CartProvider`, and same `CustomerModifierGroup` types.
+
+> The subscription page is designed to extend into a full **Subscription Builder** flow (frequency selection, subscription checkout, subscription management) without changing the catalog data model.
+
+### Customer Menu Service
+
+All customer-facing data queries go through `services/customer-menu.service.ts`:
+
+| Function | Purpose |
+|----------|---------|
+| `getStoreBySlugForCustomer(storeSlug)` | Looks up an active store by its `code` field |
+| `getOnlineCatalogForStore(storeId)` | Returns categories + products for online ordering |
+| `getSubscriptionCatalogForStore(storeId)` | Returns categories + products for subscriptions |
+| `getProductDetailForOrdering(productId, storeId)` | Returns full product with modifier groups |
+
+**Important constraints:**
+- Only reads `catalog_*` tables — never external mirror tables (`external_catalog_*`) or mapping tables
+- Never exposes `sourceRef`, `sourceType`, `syncChecksum`, or any provider-specific field
+- Money values are always returned as integer minor units (e.g. `1250` for $12.50)
+
+### Component Reference
+
+| Component | Location | Description |
+|-----------|----------|-------------|
+| `StoreHeader` | `components/order/` | Store name + pickup time display in page header |
+| `CategoryBar` | `components/order/` | Sticky horizontal scroll category tabs |
+| `ProductSection` | `components/order/` | One section per category with heading |
+| `ProductCard` | `components/order/` | Text-left / image-right product card |
+| `ProductModal` | `components/order/` | Bottom sheet for modifier group selection |
+| `CartButton` | `components/order/` | Cart badge button (item count + subtotal) |
+| `PickupTimeChip` | `components/order/` | Compact pickup time display chip |
+| `PickupTimeSelector` | `components/order/` | Slot list bottom sheet for time changes |
+| `SubscriptionEntryLink` | `components/order/` | Link card to subscription entry page |
 
 ---
 
