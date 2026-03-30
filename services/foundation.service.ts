@@ -94,7 +94,7 @@ export interface CreateConnectionInput {
   type: ConnectionType;
   provider: ConnectionProvider;
   displayName?: string;
-  externalAccountId?: string;
+  externalMerchantId?: string;
   externalLocationId?: string;
   actorUserId?: string;
 }
@@ -104,7 +104,7 @@ export interface CreateConnectionInput {
  * Validates that the store belongs to the given tenant.
  */
 export async function createConnection(input: CreateConnectionInput): Promise<Connection> {
-  const { tenantId, storeId, type, provider, displayName, externalAccountId, externalLocationId, actorUserId } = input;
+  const { tenantId, storeId, type, provider, displayName, externalMerchantId, externalLocationId, actorUserId } = input;
 
   const store = await prisma.store.findUnique({ where: { id: storeId } });
   if (!store) throw new Error(`Store ${storeId} not found`);
@@ -115,7 +115,7 @@ export async function createConnection(input: CreateConnectionInput): Promise<Co
   }
 
   const existing = await prisma.connection.findUnique({
-    where: { storeId_type_provider: { storeId, type, provider } },
+    where: { storeId_provider_type: { storeId, provider, type } },
   });
   if (existing) {
     throw new DuplicateRecordError(
@@ -124,7 +124,7 @@ export async function createConnection(input: CreateConnectionInput): Promise<Co
   }
 
   const connection = await prisma.connection.create({
-    data: { tenantId, storeId, type, provider, displayName, externalAccountId, externalLocationId },
+    data: { tenantId, storeId, type, provider, displayName, externalMerchantId, externalLocationId },
   });
 
   await logAuditEvent({
@@ -145,6 +145,8 @@ export async function createConnection(input: CreateConnectionInput): Promise<Co
 export interface UpsertActiveCredentialInput {
   connectionId: string;
   configEncrypted: string;
+  credentialType?: import("@prisma/client").CredentialType;
+  authScheme?: import("@prisma/client").AuthScheme;
   actorUserId?: string;
 }
 
@@ -155,6 +157,8 @@ export async function upsertActiveCredential(
   input: UpsertActiveCredentialInput
 ): Promise<ConnectionCredential> {
   const { connectionId, configEncrypted, actorUserId } = input;
+  const credentialType = input.credentialType ?? "OAUTH_TOKEN";
+  const authScheme = input.authScheme ?? "OAUTH2";
 
   const connection = await prisma.connection.findUnique({ where: { id: connectionId } });
   if (!connection) throw new Error(`Connection ${connectionId} not found`);
@@ -165,7 +169,15 @@ export async function upsertActiveCredential(
       data: { isActive: false, rotatedAt: new Date() },
     });
     return tx.connectionCredential.create({
-      data: { connectionId, configEncrypted, isActive: true },
+      data: {
+        connectionId,
+        tenantId: connection.tenantId,
+        storeId: connection.storeId,
+        credentialType,
+        authScheme,
+        configEncrypted,
+        isActive: true,
+      },
     });
   });
 

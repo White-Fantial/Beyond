@@ -560,3 +560,222 @@ The endpoint:
 
 Returns sync result counts on success.
 
+
+---
+
+## Store-Level External Channel Integration
+
+### Overview
+
+매장 단위 외부 채널 연동 시스템은 Loyverse POS, Uber Eats, DoorDash 등의 외부 플랫폼을 **매장 단위**로 연결하는 end-to-end 인증/자격증명 관리 구조를 제공합니다.
+
+---
+
+### Architecture
+
+```
+app/owner/stores/[storeId]/integrations/   # Store-level integration UI
+app/api/integrations/
+  connect/route.ts         # POST — initiate OAuth flow
+  callback/[provider]/route.ts  # GET  — OAuth callback handler
+  disconnect/route.ts      # POST — soft-disconnect provider
+services/integration.service.ts  # Full connection lifecycle
+adapters/integrations/
+  base.ts                  # ProviderAdapter interface + registry
+  loyverse.adapter.ts      # Loyverse OAuth2 adapter
+  uber-eats.adapter.ts     # Uber Eats OAuth2 adapter
+  doordash.adapter.ts      # DoorDash OAuth2 + JWT adapter
+lib/integrations/crypto.ts # AES-256-GCM encrypt/decryptJson
+domains/integration/types.ts  # Shared domain types
+```
+
+---
+
+### Database Schema — Integrations Layer
+
+#### New Enums
+
+| Enum | Values |
+|------|--------|
+| `ConnectionStatus` | `NOT_CONNECTED`, `CONNECTING`, `CONNECTED`, `ERROR`, `REAUTH_REQUIRED`, `DISCONNECTED` |
+| `ProviderEnvironment` | `SANDBOX`, `PRODUCTION` |
+| `AuthScheme` | `OAUTH2`, `JWT_BEARER`, `API_KEY`, `BASIC`, `CUSTOM` |
+| `CredentialType` | `OAUTH_TOKEN`, `CLIENT_CREDENTIAL`, `JWT_SIGNING_KEY`, `JWT_ASSERTION`, `API_KEY`, `WEBHOOK_SECRET`, `CUSTOM_SECRET` |
+| `ConnectionActionType` | `CONNECT_START`, `CONNECT_CALLBACK`, `CONNECT_SUCCESS`, `CONNECT_FAILURE`, `REFRESH_SUCCESS`, `REFRESH_FAILURE`, `DISCONNECT`, `REAUTHORIZE`, `STORE_MAPPING_UPDATE`, `SYNC_TEST` |
+
+#### Models
+
+| Model | Purpose |
+|-------|---------|
+| `ProviderAppCredential` | Tenant-level or platform-global provider app settings (client_id, encrypted client_secret, scopes, key_id, developer_id). Separate from per-store credentials. |
+| `Connection` | Per-store connection instance (status, auth scheme, external merchant/store IDs, last auth validation, reauth timestamps). |
+| `ConnectionCredential` | Lifecycle-aware encrypted credential storage. Supports multiple active credentials per connection (e.g. `JWT_SIGNING_KEY` + `WEBHOOK_SECRET` for DoorDash). |
+| `ConnectionOAuthState` | CSRF state for OAuth flows (expires, consumed once). |
+| `ConnectionActionLog` | Per-connection audit trail for UI display and debugging (CONNECT_START → CONNECT_SUCCESS, REFRESH, DISCONNECT…). |
+
+#### Connection Model Fields
+
+```
+Connection
+  storeId, tenantId, type (POS/DELIVERY/PAYMENT), provider
+  status: NOT_CONNECTED → CONNECTING → CONNECTED → ERROR/REAUTH_REQUIRED → DISCONNECTED
+  authScheme: OAUTH2 / JWT_BEARER / API_KEY / …
+  appCredentialId: → ProviderAppCredential
+  externalMerchantId, externalStoreId, externalStoreName, externalLocationId
+  lastConnectedAt, lastAuthValidatedAt, reauthRequiredAt, disconnectedAt
+  lastSyncAt, lastSyncStatus, lastErrorCode, lastErrorMessage
+  capabilitiesJson, metadataJson
+```
+
+#### ConnectionCredential Model Fields
+
+```
+ConnectionCredential
+  connectionId, tenantId, storeId
+  credentialType: OAUTH_TOKEN / JWT_SIGNING_KEY / API_KEY / WEBHOOK_SECRET / …
+  authScheme: OAUTH2 / JWT_BEARER / API_KEY / …
+  configEncrypted: AES-256-GCM encrypted JSON payload
+  tokenReferenceHash: SHA-256 fingerprint of access/refresh token (dedup)
+  issuedAt, expiresAt, refreshAfter
+  canRefresh, requiresReauth, isActive
+  lastRefreshAt, lastRefreshStatus, lastRefreshError
+```
+
+---
+
+### Encryption
+
+All credential payloads are encrypted at rest using **AES-256-GCM** before being written to `ConnectionCredential.configEncrypted`.
+
+- Module: `lib/integrations/crypto.ts`
+- Key: `INTEGRATIONS_ENCRYPTION_KEY` (env var — 64-char hex = 32 bytes)
+- Format: `<iv_b64url>:<authTag_b64url>:<ciphertext_b64url>`
+- Never logs plaintext tokens
+
+Generate a key:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+---
+
+### Provider Adapters
+
+Each provider implements the `ProviderAdapter` interface in `adapters/integrations/`:
+
+```typescript
+interface ProviderAdapter {
+  provider: ConnectionProvider
+  supportsPkce: boolean
+  canRefreshCredentials: boolean
+  buildAuthorizationUrl(input): AuthorizationStartResult
+  handleOAuthCallback(input): Promise<OAuthCallbackResult>
+  listAvailableStores?(input): Promise<ProviderStoreCandidate[]>
+  refreshCredentials?(input): Promise<CredentialRefreshResult | undefined>
+}
+```
+
+#### Provider Differences
+
+| Provider | Auth Scheme | Refresh | Notes |
+|----------|-------------|---------|-------|
+| **Loyverse** | OAuth2 | ✅ refresh_token | Standard code flow; merchant info fetched at callback |
+| **Uber Eats** | OAuth2 | ✅ refresh_token | `eats.store` + `eats.order` scopes |
+| **DoorDash** | OAuth2 + JWT Bearer | ✅ refresh_token | OAuth for merchant auth; `JWT_SIGNING_KEY` credential stored for Drive API calls |
+
+#### DoorDash Dual-Auth Model
+
+DoorDash supports two concurrent auth strategies:
+1. **OAuth token** — merchant authorization, stored as `OAUTH_TOKEN` credential
+2. **JWT signing key** — `developer_id` + `key_id` + signing secret stored as `JWT_SIGNING_KEY` credential; short-lived HS256 assertions minted at request time
+
+If a `ProviderAppCredential` has `developerId` + `keyId` + `clientSecret` set, the DoorDash adapter automatically stores both credentials after OAuth callback.
+
+---
+
+### OAuth Flow
+
+```
+User clicks "Connect" in UI
+  → POST /api/integrations/connect { storeId, provider, connectionType }
+  → Creates ConnectionOAuthState (CSRF state, 10-min TTL)
+  → Returns { redirectUrl } (provider auth page)
+  → Browser redirects to provider
+
+User authorizes on provider
+  → Provider redirects to GET /api/integrations/callback/[provider]?code=...&state=...
+  → State is validated + consumed
+  → Token exchange via adapter.handleOAuthCallback()
+  → Connection upserted (CONNECTED status)
+  → Credentials encrypted + stored
+  → Action logged (AuditLog + ConnectionActionLog)
+  → Browser redirected to /owner/stores/[storeId]/integrations?connected=1
+```
+
+---
+
+### API Routes
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/integrations/connect` | INTEGRATIONS | Start OAuth flow for a provider |
+| `GET` | `/api/integrations/callback/[provider]` | Public | OAuth callback (Loyverse / uber-eats / doordash) |
+| `POST` | `/api/integrations/disconnect` | INTEGRATIONS | Soft-disconnect a provider |
+
+---
+
+### UI Routes
+
+| Path | Description |
+|------|-------------|
+| `/owner/stores/[storeId]/integrations` | Store-level integration dashboard — shows connection status per provider, connect/disconnect buttons, recent action log |
+| `/owner/integrations` | Legacy tenant-level integrations page (redirects to store picker) |
+
+---
+
+### Permission Model
+
+| Action | Required Permission | Notes |
+|--------|--------------------|----|
+| View integration status | `INTEGRATIONS` | Store-level check via `requireStorePermission` |
+| Connect / reconnect | `INTEGRATIONS` | Only OWNER or MANAGER roles hold this permission |
+| Disconnect | `INTEGRATIONS` | Same |
+| Refresh credentials | Server-side only | Background job; no direct UI trigger |
+
+---
+
+### ConnectionActionLog vs AuditLog
+
+| Log | Purpose |
+|-----|---------|
+| `ConnectionActionLog` | Integration-specific summary log for UI display (provider, actionType, status, errorCode). Shows in store integrations page. |
+| `AuditLog` | Tenant-wide general audit trail (actor, action, targetType, targetId). Also written for important integration events. |
+
+Important integration events write **both** logs.
+
+---
+
+### Credential Lifecycle
+
+```
+New token           isActive=true
+Token refresh       old row → isActive=false, rotatedAt=now; new row created
+Disconnect          all active credentials → isActive=false, rotatedAt=now
+Re-connect          new credentials created (update existing Connection row)
+```
+
+The `tokenReferenceHash` (SHA-256 of token prefix) prevents duplicate inserts when the same token is refreshed idempotently.
+
+---
+
+### Environment Variables
+
+```bash
+# AES-256-GCM key for encrypting credentials at rest (required)
+INTEGRATIONS_ENCRYPTION_KEY="<64-char-hex>"
+
+# Required for OAuth redirect URI construction
+NEXT_PUBLIC_APP_URL="https://yourdomain.com"
+```
+
+Provider-specific client IDs and secrets are stored in `ProviderAppCredential` rows in the database (not env vars), encrypted via `configEncrypted`.
