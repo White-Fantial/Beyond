@@ -117,21 +117,20 @@ UPDATE "connections" SET "lastConnectedAt" = "connectedAt" WHERE "connectedAt" I
 -- Migrate externalAccountId → externalMerchantId
 UPDATE "connections" SET "externalMerchantId" = "externalAccountId" WHERE "externalAccountId" IS NOT NULL;
 
--- Migrate lastSyncStatus SyncStatus → TEXT
+-- Migrate lastSyncStatus SyncStatus → TEXT (nullable, no default)
+-- The Prisma schema declares this as String? so we must also drop the NOT NULL
+-- constraint and the enum-typed DEFAULT that was set in the foundation migration.
+ALTER TABLE "connections" ALTER COLUMN "lastSyncStatus" DROP DEFAULT;
+
 ALTER TABLE "connections"
-  ALTER COLUMN "lastSyncStatus" TYPE TEXT USING CASE
-    WHEN "lastSyncStatus"::TEXT IS NOT NULL THEN "lastSyncStatus"::TEXT
-    ELSE NULL
-  END;
+  ALTER COLUMN "lastSyncStatus" TYPE TEXT USING "lastSyncStatus"::TEXT;
+
+ALTER TABLE "connections" ALTER COLUMN "lastSyncStatus" DROP NOT NULL;
 
 -- Drop old columns that are superseded
 ALTER TABLE "connections"
   DROP COLUMN IF EXISTS "connectedAt",
   DROP COLUMN IF EXISTS "externalAccountId";
-
--- Drop old SyncStatus-typed column (already converted above)
--- The old column was named lastSyncStatus as SyncStatus enum; now it's TEXT.
--- Note: we kept the name the same, just changed the type above.
 
 -- Update existing indexes
 DROP INDEX IF EXISTS "connections_tenantId_idx";
