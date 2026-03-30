@@ -9,6 +9,37 @@ datasource db {
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
+enum CatalogSourceType {
+  POS
+  DELIVERY
+  LOCAL
+  MERGED
+  IMPORTED
+}
+
+enum CatalogChannelType {
+  LOYVERSE
+  UBER_EATS
+  DOORDASH
+  ONLINE_ORDER
+  SUBSCRIPTION
+  OTHER
+}
+
+enum CatalogEntityType {
+  CATEGORY
+  PRODUCT
+  MODIFIER_GROUP
+  MODIFIER_OPTION
+}
+
+enum MappingStatus {
+  ACTIVE
+  BROKEN
+  PENDING
+  DISCONNECTED
+}
+
 enum TenantStatus {
   ACTIVE
   TRIAL
@@ -510,4 +541,304 @@ model Subscription {
   plan SubscriptionPlan @relation(fields: [planId], references: [id])
 
   @@map("subscriptions")
+}
+
+// ─── Internal Catalog ─────────────────────────────────────────────────────────
+
+model CatalogCategory {
+  id                       String            @id @default(uuid())
+  tenantId                 String
+  storeId                  String
+  sourceType               CatalogSourceType
+  sourceOfTruthConnectionId String?
+  sourceCategoryRef        String?
+  name                     String
+  description              String?
+  slug                     String?
+  displayOrder             Int               @default(0)
+  isActive                 Boolean           @default(true)
+  isVisibleOnOnlineOrder   Boolean           @default(true)
+  isVisibleOnSubscription  Boolean           @default(false)
+  imageUrl                 String?
+  metadata                 Json              @default("{}")
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  deletedAt                DateTime?
+
+  productCategories CatalogProductCategory[]
+
+  @@index([tenantId, storeId])
+  @@index([storeId, isActive, isVisibleOnOnlineOrder, displayOrder])
+  @@index([storeId, sourceOfTruthConnectionId, sourceCategoryRef])
+  @@map("catalog_categories")
+}
+
+model CatalogProduct {
+  id                        String            @id @default(uuid())
+  tenantId                  String
+  storeId                   String
+  sourceType                CatalogSourceType
+  sourceOfTruthConnectionId String?
+  sourceProductRef          String?
+  sku                       String?
+  barcode                   String?
+  name                      String
+  description               String?
+  shortDescription          String?
+  basePriceAmount           Int               @default(0)
+  currency                  String            @default("NZD")
+  imageUrl                  String?
+  displayOrder              Int               @default(0)
+  isActive                  Boolean           @default(true)
+  isSellable                Boolean           @default(true)
+  isVisibleOnOnlineOrder    Boolean           @default(true)
+  isVisibleOnSubscription   Boolean           @default(false)
+  isFeatured                Boolean           @default(false)
+  posName                   String?
+  onlineName                String?
+  subscriptionName          String?
+  internalNote              String?
+  metadata                  Json              @default("{}")
+  createdAt                 DateTime          @default(now())
+  updatedAt                 DateTime          @updatedAt
+  deletedAt                 DateTime?
+
+  productCategories     CatalogProductCategory[]
+  productModifierGroups CatalogProductModifierGroup[]
+
+  @@index([tenantId, storeId])
+  @@index([storeId, isActive, isVisibleOnOnlineOrder, displayOrder])
+  @@index([storeId, sourceOfTruthConnectionId, sourceProductRef])
+  @@index([storeId, name])
+  @@map("catalog_products")
+}
+
+model CatalogProductCategory {
+  id         String   @id @default(uuid())
+  tenantId   String
+  storeId    String
+  productId  String
+  categoryId String
+  sortOrder  Int      @default(0)
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  product  CatalogProduct  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category CatalogCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, categoryId])
+  @@index([storeId, categoryId, sortOrder])
+  @@index([storeId, productId])
+  @@map("catalog_product_categories")
+}
+
+model CatalogModifierGroup {
+  id                        String            @id @default(uuid())
+  tenantId                  String
+  storeId                   String
+  sourceType                CatalogSourceType
+  sourceOfTruthConnectionId String?
+  sourceModifierGroupRef    String?
+  name                      String
+  description               String?
+  selectionMin              Int               @default(0)
+  selectionMax              Int?
+  isRequired                Boolean           @default(false)
+  displayOrder              Int               @default(0)
+  isActive                  Boolean           @default(true)
+  isVisibleOnOnlineOrder    Boolean           @default(true)
+  metadata                  Json              @default("{}")
+  createdAt                 DateTime          @default(now())
+  updatedAt                 DateTime          @updatedAt
+  deletedAt                 DateTime?
+
+  modifierOptions       CatalogModifierOption[]
+  productModifierGroups CatalogProductModifierGroup[]
+
+  @@index([tenantId, storeId])
+  @@index([storeId, sourceOfTruthConnectionId, sourceModifierGroupRef])
+  @@index([storeId, isActive, displayOrder])
+  @@map("catalog_modifier_groups")
+}
+
+model CatalogModifierOption {
+  id                        String            @id @default(uuid())
+  tenantId                  String
+  storeId                   String
+  modifierGroupId           String
+  sourceType                CatalogSourceType
+  sourceOfTruthConnectionId String?
+  sourceModifierOptionRef   String?
+  name                      String
+  description               String?
+  priceDeltaAmount          Int               @default(0)
+  currency                  String            @default("NZD")
+  displayOrder              Int               @default(0)
+  isDefault                 Boolean           @default(false)
+  isActive                  Boolean           @default(true)
+  isSoldOut                 Boolean           @default(false)
+  metadata                  Json              @default("{}")
+  createdAt                 DateTime          @default(now())
+  updatedAt                 DateTime          @updatedAt
+  deletedAt                 DateTime?
+
+  modifierGroup CatalogModifierGroup @relation(fields: [modifierGroupId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, storeId])
+  @@index([modifierGroupId, isActive, isSoldOut, displayOrder])
+  @@index([storeId, sourceOfTruthConnectionId, sourceModifierOptionRef])
+  @@map("catalog_modifier_options")
+}
+
+model CatalogProductModifierGroup {
+  id                  String   @id @default(uuid())
+  tenantId            String
+  storeId             String
+  productId           String
+  modifierGroupId     String
+  displayOrder        Int      @default(0)
+  overrideSelectionMin Int?
+  overrideSelectionMax Int?
+  overrideRequired    Boolean?
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  product       CatalogProduct       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  modifierGroup CatalogModifierGroup @relation(fields: [modifierGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, modifierGroupId])
+  @@index([storeId, productId, displayOrder])
+  @@index([storeId, modifierGroupId])
+  @@map("catalog_product_modifier_groups")
+}
+
+// ─── External Raw Mirror Tables ───────────────────────────────────────────────
+
+model ExternalCatalogCategory {
+  id                String           @id @default(uuid())
+  tenantId          String
+  storeId           String
+  connectionId      String
+  channelType       CatalogChannelType
+  externalId        String
+  externalParentId  String?
+  normalizedName    String?
+  rawPayload        Json
+  externalUpdatedAt DateTime?
+  syncChecksum      String?
+  lastSyncedAt      DateTime         @default(now())
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([connectionId, externalId])
+  @@index([storeId, connectionId])
+  @@map("external_catalog_categories")
+}
+
+model ExternalCatalogProduct {
+  id                    String           @id @default(uuid())
+  tenantId              String
+  storeId               String
+  connectionId          String
+  channelType           CatalogChannelType
+  externalId            String
+  externalParentId      String?
+  normalizedName        String?
+  normalizedPriceAmount Int?
+  rawPayload            Json
+  externalUpdatedAt     DateTime?
+  syncChecksum          String?
+  lastSyncedAt          DateTime         @default(now())
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  @@unique([connectionId, externalId])
+  @@index([storeId, connectionId])
+  @@map("external_catalog_products")
+}
+
+model ExternalCatalogModifierGroup {
+  id                String           @id @default(uuid())
+  tenantId          String
+  storeId           String
+  connectionId      String
+  channelType       CatalogChannelType
+  externalId        String
+  externalParentId  String?
+  normalizedName    String?
+  rawPayload        Json
+  externalUpdatedAt DateTime?
+  syncChecksum      String?
+  lastSyncedAt      DateTime         @default(now())
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([connectionId, externalId])
+  @@index([storeId, connectionId])
+  @@map("external_catalog_modifier_groups")
+}
+
+model ExternalCatalogModifierOption {
+  id                    String           @id @default(uuid())
+  tenantId              String
+  storeId               String
+  connectionId          String
+  channelType           CatalogChannelType
+  externalId            String
+  externalParentId      String?
+  normalizedName        String?
+  normalizedPriceAmount Int?
+  rawPayload            Json
+  externalUpdatedAt     DateTime?
+  syncChecksum          String?
+  lastSyncedAt          DateTime         @default(now())
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  @@unique([connectionId, externalId])
+  @@index([storeId, connectionId])
+  @@map("external_catalog_modifier_options")
+}
+
+model ExternalCatalogProductModifierGroupLink {
+  id                      String           @id @default(uuid())
+  tenantId                String
+  storeId                 String
+  connectionId            String
+  channelType             CatalogChannelType
+  externalProductId       String
+  externalModifierGroupId String
+  rawPayload              Json?
+  lastSyncedAt            DateTime         @default(now())
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  @@unique([connectionId, externalProductId, externalModifierGroupId])
+  @@index([storeId, connectionId, externalProductId])
+  @@map("external_catalog_product_modifier_group_links")
+}
+
+// ─── Channel Entity Mappings ──────────────────────────────────────────────────
+
+model ChannelEntityMapping {
+  id               String            @id @default(uuid())
+  tenantId         String
+  storeId          String
+  entityType       CatalogEntityType
+  internalEntityId String
+  connectionId     String
+  channelType      CatalogChannelType
+  externalEntityId String
+  externalParentId String?
+  mappingStatus    MappingStatus     @default(ACTIVE)
+  lastVerifiedAt   DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@unique([connectionId, entityType, externalEntityId])
+  @@unique([connectionId, entityType, internalEntityId])
+  @@index([storeId, entityType, internalEntityId])
+  @@index([storeId, connectionId, entityType])
+  @@map("channel_entity_mappings")
 }

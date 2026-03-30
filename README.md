@@ -369,3 +369,127 @@ This creates:
 ```bash
 npm run test
 ```
+
+---
+
+## Catalog Architecture
+
+### Overview
+
+The catalog system is organized into three layers:
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  1. Internal Catalog Tables                                           │
+│     catalog_categories, catalog_products, catalog_modifier_groups,   │
+│     catalog_modifier_options, catalog_product_categories,            │
+│     catalog_product_modifier_groups                                  │
+├──────────────────────────────────────────────────────────────────────┤
+│  2. External Raw Mirror Tables                                        │
+│     external_catalog_categories, external_catalog_products,          │
+│     external_catalog_modifier_groups, external_catalog_modifier_options│
+│     external_catalog_product_modifier_group_links                    │
+├──────────────────────────────────────────────────────────────────────┤
+│  3. Channel Mapping Table                                             │
+│     channel_entity_mappings                                          │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+### Internal Catalog vs External Mirror vs Channel Mapping
+
+| Layer | Purpose | Key fields |
+|-------|---------|------------|
+| **Internal catalog** | Single normalized source of truth for all catalog reads (UI, order UI, subscriptions). IDs are internal UUIDs only. | `id`, `tenantId`, `storeId`, `sourceType`, `sourceOfTruthConnectionId`, `source*Ref` |
+| **External mirror** | Raw, unmodified copy of each record fetched from Loyverse (or any channel). Used for debugging, diffing, and re-syncing. | `connectionId`, `externalId`, `rawPayload`, `lastSyncedAt` |
+| **Channel mapping** | Bidirectional lookup table between internal IDs and external channel IDs. Used when sending orders outbound to Loyverse or any channel. | `internalEntityId`, `externalEntityId`, `connectionId`, `entityType` |
+
+### sourceOfTruthConnectionId and source*Ref fields
+
+Every internal catalog entity that was imported from a POS has two source-key fields:
+- `sourceOfTruthConnectionId` — the `Connection.id` of the POS connection that owns this entity.
+- `source*Ref` (e.g. `sourceCategoryRef`, `sourceProductRef`) — the external ID on the POS side (e.g. a Loyverse category UUID).
+
+**These two fields together form the stable natural key used during sync.** If Loyverse renames a category, the sync finds the existing row by `(connectionId, sourceCategoryRef)` and updates it — it does not create a duplicate row.
+
+### Why internal and external IDs must never be mixed
+
+Loyverse IDs are UUIDs specific to a Loyverse account. Internal Beyond IDs are UUIDs specific to a tenant/store. They have no relationship to each other. Mixing them would:
+- Break sync idempotency (renamed entities would create duplicate rows)
+- Cause outbound API calls to Loyverse to fail (wrong ID format/namespace)
+- Make it impossible to support multiple channels for the same internal entity
+
+All outbound Loyverse API calls **must** first look up the external ID via `channel_entity_mappings`. See `resolveExternalId()` in `services/catalog.service.ts`.
+
+### Full Sync Philosophy
+
+Beyond uses **full catalog sync** rather than incremental/partial sync. On each sync run:
+1. All categories, modifier groups, modifier options, and items are fetched from Loyverse.
+2. Raw mirror rows are upserted (one per external entity).
+3. Internal catalog rows are upserted using source keys (never names).
+4. Product–category and product–modifier-group links are reconciled (missing links deactivated, new links created).
+5. Channel mapping rows are upserted.
+
+Full sync is simpler to reason about and avoids edge cases with partial updates.
+
+### Why Loyverse item modifier-ids are mirrored into catalog_product_modifier_groups
+
+Loyverse items have a `modifier_ids` array that lists which modifier groups apply to the item. Beyond mirrors these into `external_catalog_product_modifier_group_links` (raw) and then into `catalog_product_modifier_groups` (internal). This:
+- Enables the order UI to know which modifier groups to show for each product without calling Loyverse at runtime.
+- Allows Beyond to detect when a modifier group link is removed in Loyverse and deactivate it internally.
+
+### Source-locked vs locally editable product fields
+
+| Field | Editable locally? | Notes |
+|-------|------------------|-------|
+| `name` | ❌ Source-locked (POS) | Updated only via sync |
+| `basePriceAmount` | ❌ Source-locked (POS) | Updated only via sync |
+| `displayOrder` | ✅ Local | Reorder categories/products in the backoffice |
+| `isVisibleOnOnlineOrder` | ✅ Local | Toggle visibility on online ordering channel |
+| `isVisibleOnSubscription` | ✅ Local | Toggle visibility on subscription channel |
+| `isFeatured` | ✅ Local | Mark products as featured on the menu |
+| `onlineName` | ✅ Local | Override display name for online ordering |
+| `subscriptionName` | ✅ Local | Override display name for subscriptions |
+| `internalNote` | ✅ Local | Internal staff notes |
+| `imageUrl` | ✅ Local | Upload a custom image (POS images are imported but can be overridden) |
+| `CatalogModifierOption.isSoldOut` | ✅ Local | Mark option as sold out (blocks selection in order UI) |
+
+### Category visibility, display order, and modifier option sold-out
+
+- **Category visibility** (`isVisibleOnOnlineOrder`, `isVisibleOnSubscription`): Toggled via the backoffice categories page or the `/api/catalog/categories` PATCH endpoint.
+- **Display order**: Reordered via the `/api/catalog/categories` PATCH reorder endpoint (accepts `orderedIds` array).
+- **Modifier option sold-out**: Toggled via the backoffice modifiers page or the `/api/catalog/modifier-groups` PATCH endpoint. Sold-out options are not selectable in the order UI.
+
+### Catalog API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/catalog/categories?storeId=` | List catalog categories |
+| `PATCH` | `/api/catalog/categories` | Reorder or update category visibility |
+| `GET` | `/api/catalog/products?storeId=` | List catalog products (optionally by categoryId) |
+| `PATCH` | `/api/catalog/products` | Update allowed local merchandising fields |
+| `GET` | `/api/catalog/modifier-groups?storeId=` | List modifier groups with nested options |
+| `PATCH` | `/api/catalog/modifier-groups` | Toggle modifier option sold-out |
+| `POST` | `/api/catalog/sync` | Trigger full Loyverse catalog sync for a store |
+
+### Loyverse Full Catalog Sync
+
+Trigger a full sync for a store:
+
+```bash
+POST /api/catalog/sync
+Content-Type: application/json
+
+{
+  "tenantId": "<tenant-uuid>",
+  "storeId": "<store-uuid>"
+}
+```
+
+The endpoint:
+1. Looks up the active Loyverse POS connection for the store.
+2. Reads the active credential (access token).
+3. Runs `runLoyverseFullCatalogSync()` which fetches all catalog data from Loyverse and persists it.
+4. Updates `Connection.lastSyncAt` and `lastSyncStatus`.
+
+Returns sync result counts on success.
+
