@@ -2,34 +2,34 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { RoleKey } from "@/lib/auth/constants";
+import type { StoreRoleKey } from "@/lib/auth/constants";
 
 interface BackofficeSidebarProps {
   storeId: string;
-  roleKey: RoleKey;
+  storeRole: StoreRoleKey;
   storeName: string;
 }
 
-function getNavItems(storeId: string, roleKey: RoleKey) {
+function getNavItems(storeId: string, storeRole: StoreRoleKey) {
   const base = `/backoffice/store/${storeId}`;
 
   const allItems = [
-    { href: `${base}/dashboard`, label: "대시보드", icon: "📊", roles: ["MANAGER", "OWNER"] },
-    { href: `${base}/orders`, label: "주문 관리", icon: "📦", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER"] },
-    { href: `${base}/operations`, label: "운영 관리", icon: "🔧", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER"] },
-    { href: `${base}/inventory`, label: "재고/품절", icon: "📋", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER"] },
-    { href: `${base}/products`, label: "상품 관리", icon: "🍽️", roles: ["MANAGER", "OWNER"] },
-    { href: `${base}/categories`, label: "카테고리", icon: "🗂️", roles: ["SUPERVISOR", "MANAGER", "OWNER"] },
-    { href: `${base}/modifiers`, label: "옵션/수식어", icon: "⚙️", roles: ["MANAGER", "OWNER"] },
-    { href: `${base}/reports`, label: "리포트", icon: "📈", roles: ["SUPERVISOR", "MANAGER", "OWNER"] },
+    { href: `${base}/dashboard`, label: "대시보드", icon: "📊", roles: ["MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/orders`, label: "주문 관리", icon: "📦", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/operations`, label: "운영 관리", icon: "🔧", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/inventory`, label: "재고/품절", icon: "📋", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/products`, label: "상품 관리", icon: "🍽️", roles: ["MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/categories`, label: "카테고리", icon: "🗂️", roles: ["SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/modifiers`, label: "옵션/수식어", icon: "⚙️", roles: ["MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/reports`, label: "리포트", icon: "📈", roles: ["SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
   ];
 
-  return allItems.filter((item) => item.roles.includes(roleKey));
+  return allItems.filter((item) => item.roles.includes(storeRole));
 }
 
-export default function BackofficeSidebar({ storeId, roleKey, storeName }: BackofficeSidebarProps) {
+export default function BackofficeSidebar({ storeId, storeRole, storeName }: BackofficeSidebarProps) {
   const pathname = usePathname();
-  const navItems = getNavItems(storeId, roleKey);
+  const navItems = getNavItems(storeId, storeRole);
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
@@ -38,7 +38,7 @@ export default function BackofficeSidebar({ storeId, roleKey, storeName }: Backo
           Beyond
         </Link>
         <div className="text-xs text-gray-400 mt-0.5 truncate">🏪 {storeName}</div>
-        <div className="text-xs text-brand-600 mt-0.5 font-medium">{roleKey}</div>
+        <div className="text-xs text-brand-600 mt-0.5 font-medium">{storeRole}</div>
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">

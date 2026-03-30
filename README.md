@@ -254,3 +254,118 @@ Open [http://localhost:3000](http://localhost:3000) to view the landing page.
 ---
 
 © 2024 Beyond. All rights reserved.
+
+---
+
+## Architecture
+
+### Multi-Tenant Data Model
+
+Beyond uses a three-tier multi-tenant model: **Tenant → Store → User** where access is controlled through two join tables.
+
+```
+Tenant (slug: "bagels-beyond")
+  │
+  ├── Store (code: "addington")   ◄── stores belong to a tenant
+  │     └── Connection            ◄── integrations scoped to store + tenant
+  │
+  ├── Membership (User ↔ Tenant)  ◄── user's role within a tenant
+  │     └── StoreMembership       ◄── user's role within a specific store
+  │
+  └── AuditLog                    ◄── immutable audit trail
+```
+
+#### Entity Relationship Diagram (ASCII)
+
+```
+┌────────────┐        ┌─────────────┐        ┌────────┐
+│   Tenant   │──────<│ Membership  │>────────│  User  │
+│            │        │             │         │        │
+│  slug (UK) │        │ role        │         │ email  │
+│  timezone  │        │ status      │         │ pwHash │
+│  currency  │        └──────┬──────┘         │ plRole │
+└─────┬──────┘               │                └────────┘
+      │                      │
+      │        ┌─────────────▼──────────┐
+      └──────<│    StoreMembership      │
+      │        │  membershipId (FK)      │
+      │        │  storeId     (FK)       │
+      │        │  tenantId    (FK)       │
+      │        │  role  status           │
+      │        └────────────────────────┘
+      │
+      └──────<│    Store                │
+               │  tenantId (FK)          │
+               │  code (UK per tenant)   │
+               │  name  status           │
+               └──────┬──────────────────┘
+                      │
+               ┌──────▼──────┐
+               │ Connection  │
+               │ type        │
+               │ provider    │
+               │ status      │
+               └──────┬──────┘
+                      │
+               ┌──────▼────────────────┐
+               │ ConnectionCredential  │
+               │ configEncrypted       │
+               │ isActive              │
+               └───────────────────────┘
+```
+
+#### Key Design Decisions
+
+| Concept | Decision |
+|---------|----------|
+| **Tenant isolation** | Every `Store`, `Membership`, `StoreMembership`, and `Connection` carries a `tenantId` FK. All service functions validate cross-tenant access before write. |
+| **Two-level membership** | `Membership` (User ↔ Tenant, carries `MembershipRole`) and `StoreMembership` (Membership ↔ Store, carries `StoreRole`) allow a user to have different roles in different stores of the same tenant. |
+| **Connection credentials** | `ConnectionCredential` stores encrypted config separately from `Connection` metadata, enabling credential rotation without changing the connection record. |
+| **Audit trail** | `AuditLog` is append-only. `logAuditEvent()` swallows errors so audit failures never block business operations. |
+| **JWT sessions** | The session cookie embeds `primaryTenantId`, `primaryMembershipRole`, `primaryStoreId`, `primaryStoreRole` to allow middleware to make routing decisions without a DB hit. |
+
+#### Portal Routing (post-login)
+
+| Platform Role / Membership Role | Redirect |
+|--------------------------------|----------|
+| `PLATFORM_ADMIN` | `/admin` |
+| Membership `OWNER` or `ADMIN` | `/owner` |
+| Has `primaryStoreId` in session | `/backoffice/store/:id/orders` |
+| No store access | `/app` |
+
+---
+
+### Running Migration & Seed
+
+#### Apply the migration (fresh database)
+
+```bash
+# Option A — Prisma managed migrations (recommended for dev)
+npx prisma migrate dev --name add_foundation_multi_tenant_schema
+
+# Option B — Apply the raw SQL directly (CI / production)
+psql $DATABASE_URL -f prisma/migrations/20260330000000_add_foundation_multi_tenant_schema/migration.sql
+```
+
+#### Generate the Prisma client after schema changes
+
+```bash
+npx prisma generate
+```
+
+#### Seed demo data (Bagels Beyond tenant)
+
+```bash
+npm run prisma:seed
+```
+
+This creates:
+- **Tenant**: `bagels-beyond` (Bagels Beyond Ltd, NZD, Pacific/Auckland)
+- **Store**: `addington` (Addington Store)
+- **User**: `owner@bagelsbeyond.local` / `password123` with `OWNER` membership + store membership
+
+#### Run tests
+
+```bash
+npm run test
+```
