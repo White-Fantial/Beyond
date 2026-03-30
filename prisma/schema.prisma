@@ -110,10 +110,48 @@ enum ConnectionProvider {
 }
 
 enum ConnectionStatus {
+  NOT_CONNECTED
+  CONNECTING
   CONNECTED
-  DISCONNECTED
   ERROR
-  PENDING
+  REAUTH_REQUIRED
+  DISCONNECTED
+}
+
+enum ProviderEnvironment {
+  SANDBOX
+  PRODUCTION
+}
+
+enum AuthScheme {
+  OAUTH2
+  JWT_BEARER
+  API_KEY
+  BASIC
+  CUSTOM
+}
+
+enum CredentialType {
+  OAUTH_TOKEN
+  CLIENT_CREDENTIAL
+  JWT_SIGNING_KEY
+  JWT_ASSERTION
+  API_KEY
+  WEBHOOK_SECRET
+  CUSTOM_SECRET
+}
+
+enum ConnectionActionType {
+  CONNECT_START
+  CONNECT_CALLBACK
+  CONNECT_SUCCESS
+  CONNECT_FAILURE
+  REFRESH_SUCCESS
+  REFRESH_FAILURE
+  DISCONNECT
+  REAUTHORIZE
+  STORE_MAPPING_UPDATE
+  SYNC_TEST
 }
 
 enum SyncStatus {
@@ -255,53 +293,140 @@ model StoreMembership {
   @@map("store_memberships")
 }
 
+model ProviderAppCredential {
+  id               String              @id @default(cuid())
+  tenantId         String?
+  provider         ConnectionProvider
+  environment      ProviderEnvironment @default(PRODUCTION)
+  displayName      String
+  authScheme       AuthScheme
+  clientId         String?
+  keyId            String?
+  developerId      String?
+  scopes           String[]            @default([])
+  configEncrypted  String
+  isActive         Boolean             @default(true)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  connections Connection[]
+
+  @@index([tenantId, provider, environment, isActive])
+  @@map("provider_app_credentials")
+}
+
 model Connection {
-  id                 String             @id @default(uuid())
-  tenantId           String
-  storeId            String
-  type               ConnectionType
-  provider           ConnectionProvider
-  status             ConnectionStatus   @default(PENDING)
-  displayName        String?
-  externalAccountId  String?
-  externalLocationId String?
-  connectedAt        DateTime?
-  disconnectedAt     DateTime?
-  lastSyncAt         DateTime?
-  lastSyncStatus     SyncStatus         @default(NEVER)
-  lastErrorCode      String?
-  lastErrorMessage   String?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  id                    String             @id @default(cuid())
+  tenantId              String
+  storeId               String
+  type                  ConnectionType
+  provider              ConnectionProvider
+  status                ConnectionStatus   @default(NOT_CONNECTED)
+  displayName           String?
+  externalMerchantId    String?
+  externalStoreId       String?
+  externalStoreName     String?
+  externalLocationId    String?
+  authScheme            AuthScheme?
+  appCredentialId       String?
+  capabilitiesJson      Json?
+  metadataJson          Json?
+  lastConnectedAt       DateTime?
+  lastAuthValidatedAt   DateTime?
+  lastSyncAt            DateTime?
+  lastSyncStatus        String?
+  lastErrorCode         String?
+  lastErrorMessage      String?
+  reauthRequiredAt      DateTime?
+  disconnectedAt        DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
 
-  tenant      Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  store       Store                  @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  credentials ConnectionCredential[]
+  tenant        Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  store         Store                  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  appCredential ProviderAppCredential? @relation(fields: [appCredentialId], references: [id], onDelete: SetNull)
+  credentials   ConnectionCredential[]
+  actionLogs    ConnectionActionLog[]
 
-  @@unique([storeId, type, provider])
-  @@index([tenantId])
-  @@index([storeId])
-  @@index([type])
-  @@index([provider])
-  @@index([status])
+  @@unique([storeId, provider, type])
+  @@index([tenantId, storeId, provider])
+  @@index([status, reauthRequiredAt])
   @@map("connections")
 }
 
 model ConnectionCredential {
-  id              String    @id @default(uuid())
-  connectionId    String
-  version         Int       @default(1)
-  isActive        Boolean   @default(true)
-  configEncrypted String
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  rotatedAt       DateTime?
+  id                  String         @id @default(cuid())
+  tenantId            String
+  storeId             String
+  connectionId        String
+  credentialType      CredentialType
+  authScheme          AuthScheme
+  label               String?
+  version             Int            @default(1)
+  configEncrypted     String
+  tokenReferenceHash  String?
+  issuedAt            DateTime?
+  expiresAt           DateTime?
+  refreshAfter        DateTime?
+  lastUsedAt          DateTime?
+  lastRefreshAt       DateTime?
+  lastRefreshStatus   String?
+  lastRefreshError    String?
+  canRefresh          Boolean        @default(false)
+  requiresReauth      Boolean        @default(false)
+  isActive            Boolean        @default(true)
+  rotatedAt           DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
   connection Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
 
-  @@index([connectionId])
-  @@index([isActive])
+  @@index([connectionId, isActive])
+  @@index([credentialType, authScheme])
+  @@index([expiresAt, refreshAfter])
+  @@index([tenantId, storeId])
   @@map("connection_credentials")
+}
+
+model ConnectionOAuthState {
+  id                String             @id @default(cuid())
+  tenantId          String
+  storeId           String
+  provider          ConnectionProvider
+  connectionType    ConnectionType
+  state             String             @unique
+  codeVerifier      String?
+  redirectUri       String
+  requestedByUserId String
+  expiresAt         DateTime
+  consumedAt        DateTime?
+  metadataJson      Json?
+  createdAt         DateTime           @default(now())
+
+  @@index([provider, expiresAt])
+  @@index([tenantId, storeId])
+  @@map("connection_oauth_states")
+}
+
+model ConnectionActionLog {
+  id           String               @id @default(cuid())
+  tenantId     String
+  storeId      String
+  connectionId String?
+  provider     ConnectionProvider
+  actionType   ConnectionActionType
+  status       String
+  actorUserId  String?
+  message      String?
+  errorCode    String?
+  payloadJson  Json?
+  createdAt    DateTime             @default(now())
+
+  connection Connection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, storeId, provider, createdAt])
+  @@index([connectionId, createdAt])
+  @@map("connection_action_logs")
 }
 
 model AuditLog {

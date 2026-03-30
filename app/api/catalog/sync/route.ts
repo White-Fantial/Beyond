@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   // Fetch the active Loyverse POS connection for this store
   const connection = await prisma.connection.findUnique({
-    where: { storeId_type_provider: { storeId, type: "POS", provider: "LOYVERSE" } },
+    where: { storeId_provider_type: { storeId, provider: "LOYVERSE", type: "POS" } },
     include: {
       credentials: {
         where: { isActive: true },
