@@ -17,7 +17,7 @@ function formatPrice(amount: number): string {
 }
 
 export default function CartPageInner({ storeSlug }: CartPageInnerProps) {
-  const { state, removeItem, updateQuantity, totalAmount, totalItems } = useCart();
+  const { state, updateQuantity, totalAmount, totalItems } = useCart();
 
   const pickupLabel = state.pickupTime
     ? formatPickupLabel(state.pickupTime, false)
