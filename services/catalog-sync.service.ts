@@ -348,7 +348,7 @@ export async function runLoyverseFullCatalogSync(
   // Build reverse map: internal modifier group id -> external modifier group id
   // Used to check whether an existing pmg link is still present in Loyverse.
   const internalToExternalMgId = new Map<string, string>(
-    [...modifierGroupIdMap.entries()].map(([extId, intId]) => [intId, extId])
+    Array.from(modifierGroupIdMap.entries()).map(([extId, intId]) => [intId, extId])
   );
 
   // Map externalId -> internal CatalogProduct id
