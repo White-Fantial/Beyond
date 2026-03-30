@@ -142,14 +142,37 @@ beyond/
 
 ## Roles & Permissions
 
-| Role | Permissions |
-|------|-------------|
-| `CUSTOMER` | `CUSTOMER_APP` |
-| `STAFF` | `ORDERS`, `OPERATIONS`, `INVENTORY`, `MENU_VIEW` |
-| `SUPERVISOR` | STAFF + `REPORTS`, `CATEGORY_MANAGE` |
-| `MANAGER` | SUPERVISOR + `MENU_MANAGE`, `MODIFIER_MANAGE` |
-| `OWNER` | MANAGER + `STAFF_MANAGE`, `STORE_SETTINGS`, `INTEGRATIONS`, `BILLING` |
-| `ADMIN` | `PLATFORM_ADMIN` (full platform access) |
+### Roles
+
+| Role | Description | Permissions |
+|------|-------------|-------------|
+| `CUSTOMER` | Customer ordering and subscription user | `CUSTOMER_APP` |
+| `STAFF` | Handles orders and basic inventory | `ORDERS`, `OPERATIONS`, `INVENTORY`, `MENU_VIEW` |
+| `SUPERVISOR` | Operational supervisor with broader daily controls | STAFF + `REPORTS`, `CATEGORY_MANAGE` |
+| `MANAGER` | Store manager with full operational management | SUPERVISOR + `MENU_MANAGE`, `MODIFIER_MANAGE` |
+| `OWNER` | Business owner managing team, billing, and integrations | MANAGER + `STAFF_MANAGE`, `STORE_SETTINGS`, `INTEGRATIONS`, `BILLING` |
+| `ADMIN` | Platform administrator | `PLATFORM_ADMIN` (full platform access) |
+
+### Permissions Reference
+
+| Permission | Name | Description |
+|------------|------|-------------|
+| `CUSTOMER_APP` | Customer App | Access to the customer-facing ordering and subscription app (`/app`). |
+| `ORDERS` | Orders | View and manage incoming orders in the backoffice. |
+| `OPERATIONS` | Operations | Manage daily store operations (floor control, open/close, station management). |
+| `INVENTORY` | Inventory | Manage inventory levels and mark menu items as sold-out. |
+| `MENU_VIEW` | Menu View | Read-only access to menu data — items, prices, and availability. |
+| `MENU_MANAGE` | Menu Manage | Create, update, and delete menu items and their pricing. |
+| `CATEGORY_MANAGE` | Category Manage | Manage product categories and control their visibility on menus. |
+| `MODIFIER_MANAGE` | Modifier Manage | Manage option groups and modifiers (add-ons, choices) attached to menu items. |
+| `REPORTS` | Reports | View sales reports and analytics dashboards. |
+| `STAFF_MANAGE` | Staff Manage | Add, remove, and manage store team members and their assigned roles. |
+| `STORE_SETTINGS` | Store Settings | Configure store details, business hours, and operational settings. |
+| `INTEGRATIONS` | Integrations | Connect and manage POS system and delivery platform integrations (e.g., Baemin, Coupang Eats). |
+| `BILLING` | Billing | Manage subscription plans, payment methods, and billing history. |
+| `PLATFORM_ADMIN` | Platform Admin | Full platform-level administration access, including tenant management, user oversight, and system configuration (`/admin`). |
+
+### Portal Redirects
 
 After login, each role is redirected to its home portal:
 
