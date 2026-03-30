@@ -1,14 +1,19 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { SESSION_COOKIE_NAME, SESSION_DURATION_SECONDS, type RoleKey } from "./constants";
+import { SESSION_COOKIE_NAME, SESSION_DURATION_SECONDS } from "./constants";
+import type { PlatformRoleKey, MembershipRoleKey, StoreRoleKey } from "./constants";
 
 export interface SessionPayload {
   userId: string;
   email: string;
   name: string;
-  platformRole: RoleKey;
-  tenantId: string | null;
-  defaultStoreId: string | null;
+  platformRole: PlatformRoleKey;
+  // Derived from primary active membership
+  primaryTenantId: string | null;
+  primaryMembershipRole: MembershipRoleKey | null;
+  // Derived from first active store membership
+  primaryStoreId: string | null;
+  primaryStoreRole: StoreRoleKey | null;
 }
 
 function getSecret(): Uint8Array {

@@ -7,20 +7,294 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Tenant {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  plan      String   @default("FREE")
-  status    String   @default("TRIAL")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// ─── Enums ────────────────────────────────────────────────────────────────────
 
-  users  User[]
-  stores Store[]
+enum TenantStatus {
+  ACTIVE
+  TRIAL
+  SUSPENDED
+  ARCHIVED
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+  ARCHIVED
+}
+
+enum PlatformRole {
+  USER
+  PLATFORM_ADMIN
+  PLATFORM_SUPPORT
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MANAGER
+  STAFF
+  ANALYST
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+enum StoreStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum StoreRole {
+  OWNER
+  ADMIN
+  MANAGER
+  SUPERVISOR
+  STAFF
+}
+
+enum StoreMembershipStatus {
+  ACTIVE
+  INACTIVE
+  REMOVED
+}
+
+enum ConnectionType {
+  POS
+  DELIVERY
+  PAYMENT
+}
+
+enum ConnectionProvider {
+  LOYVERSE
+  UBER_EATS
+  DOORDASH
+  STRIPE
+  OTHER
+}
+
+enum ConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+  PENDING
+}
+
+enum SyncStatus {
+  NEVER
+  RUNNING
+  SUCCESS
+  FAILED
+  PARTIAL
+}
+
+// ─── Foundation Models ────────────────────────────────────────────────────────
+
+model Tenant {
+  id          String       @id @default(uuid())
+  slug        String       @unique
+  legalName   String
+  displayName String
+  status      TenantStatus @default(ACTIVE)
+  timezone    String
+  currency    String
+  countryCode String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  archivedAt  DateTime?
+
+  stores           Store[]
+  memberships      Membership[]
+  storeMemberships StoreMembership[]
+  connections      Connection[]
+  auditLogs        AuditLog[]
 
   @@map("tenants")
 }
+
+model User {
+  id                 String       @id @default(uuid())
+  email              String       @unique
+  name               String
+  phone              String?
+  passwordHash       String?
+  authProvider       String?
+  authProviderUserId String?
+  platformRole       PlatformRole @default(USER)
+  status             UserStatus   @default(ACTIVE)
+  lastLoginAt        DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  archivedAt         DateTime?
+
+  memberships        Membership[] @relation("UserMemberships")
+  invitedMemberships Membership[] @relation("MembershipInvitedBy")
+  auditLogs          AuditLog[]   @relation("AuditLogActor")
+
+  @@map("users")
+}
+
+model Membership {
+  id              String           @id @default(uuid())
+  tenantId        String
+  userId          String
+  role            MembershipRole
+  status          MembershipStatus @default(INVITED)
+  invitedByUserId String?
+  joinedAt        DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user             User              @relation("UserMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  invitedByUser    User?             @relation("MembershipInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+  storeMemberships StoreMembership[]
+
+  @@unique([tenantId, userId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([status])
+  @@map("memberships")
+}
+
+model Store {
+  id           String      @id @default(uuid())
+  tenantId     String
+  code         String
+  name         String
+  displayName  String
+  status       StoreStatus @default(ACTIVE)
+  phone        String?
+  email        String?
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  region       String?
+  postalCode   String?
+  countryCode  String
+  timezone     String
+  currency     String
+  openingDate  DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  archivedAt   DateTime?
+
+  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  storeMemberships StoreMembership[]
+  connections      Connection[]
+  auditLogs        AuditLog[]        @relation("AuditLogStore")
+
+  categories           Category[]
+  menuItems            MenuItem[]
+  orders               Order[]
+  posIntegrations      PosIntegration[]
+  deliveryIntegrations DeliveryIntegration[]
+  subscriptionPlans    SubscriptionPlan[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([status])
+  @@map("stores")
+}
+
+model StoreMembership {
+  id           String                @id @default(uuid())
+  tenantId     String
+  membershipId String
+  storeId      String
+  role         StoreRole
+  status       StoreMembershipStatus @default(ACTIVE)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  store      Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, storeId])
+  @@index([tenantId])
+  @@index([storeId])
+  @@index([membershipId])
+  @@index([status])
+  @@map("store_memberships")
+}
+
+model Connection {
+  id                 String             @id @default(uuid())
+  tenantId           String
+  storeId            String
+  type               ConnectionType
+  provider           ConnectionProvider
+  status             ConnectionStatus   @default(PENDING)
+  displayName        String?
+  externalAccountId  String?
+  externalLocationId String?
+  connectedAt        DateTime?
+  disconnectedAt     DateTime?
+  lastSyncAt         DateTime?
+  lastSyncStatus     SyncStatus         @default(NEVER)
+  lastErrorCode      String?
+  lastErrorMessage   String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  tenant      Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  store       Store                  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  credentials ConnectionCredential[]
+
+  @@unique([storeId, type, provider])
+  @@index([tenantId])
+  @@index([storeId])
+  @@index([type])
+  @@index([provider])
+  @@index([status])
+  @@map("connections")
+}
+
+model ConnectionCredential {
+  id              String    @id @default(uuid())
+  connectionId    String
+  version         Int       @default(1)
+  isActive        Boolean   @default(true)
+  configEncrypted String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  rotatedAt       DateTime?
+
+  connection Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId])
+  @@index([isActive])
+  @@map("connection_credentials")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  tenantId     String?
+  storeId      String?
+  actorUserId  String?
+  action       String
+  targetType   String
+  targetId     String
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+
+  tenant    Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  store     Store?  @relation("AuditLogStore", fields: [storeId], references: [id], onDelete: SetNull)
+  actorUser User?   @relation("AuditLogActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([storeId, createdAt])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
+}
+
+// ─── RBAC (kept as-is) ────────────────────────────────────────────────────────
 
 model Role {
   id          String  @id @default(cuid())
@@ -28,8 +302,7 @@ model Role {
   name        String
   description String?
 
-  permissions  RolePermission[]
-  memberships  StoreMembership[]
+  permissions RolePermission[]
 
   @@map("roles")
 }
@@ -57,65 +330,7 @@ model RolePermission {
   @@map("role_permissions")
 }
 
-model User {
-  id             String    @id @default(cuid())
-  tenantId       String?
-  email          String    @unique
-  name           String
-  password       String
-  platformRole   String    @default("CUSTOMER")
-  defaultStoreId String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  deletedAt      DateTime?
-
-  tenant           Tenant?           @relation(fields: [tenantId], references: [id])
-  defaultStore     Store?            @relation("UserDefaultStore", fields: [defaultStoreId], references: [id])
-  storeMemberships StoreMembership[]
-
-  @@map("users")
-}
-
-model StoreMembership {
-  id        String   @id @default(cuid())
-  userId    String
-  storeId   String
-  roleId    String
-  isDefault Boolean  @default(false)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user  User  @relation(fields: [userId], references: [id])
-  store Store @relation(fields: [storeId], references: [id])
-  role  Role  @relation(fields: [roleId], references: [id])
-
-  @@unique([userId, storeId])
-  @@map("store_memberships")
-}
-
-model Store {
-  id        String   @id @default(cuid())
-  tenantId  String
-  name      String
-  address   String?
-  phone     String?
-  status    String   @default("ACTIVE")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  tenant               Tenant                @relation(fields: [tenantId], references: [id])
-  categories           Category[]
-  menuItems            MenuItem[]
-  orders               Order[]
-  posIntegrations      PosIntegration[]
-  deliveryIntegrations DeliveryIntegration[]
-  subscriptionPlans    SubscriptionPlan[]
-  memberships          StoreMembership[]
-  defaultForUsers      User[]                @relation("UserDefaultStore")
-
-  @@map("stores")
-}
+// ─── Catalog ──────────────────────────────────────────────────────────────────
 
 model Category {
   id           String   @id @default(cuid())
@@ -152,7 +367,7 @@ model MenuItem {
 }
 
 model OptionGroup {
-  id            String @id @default(cuid())
+  id            String  @id @default(cuid())
   menuItemId    String
   name          String
   isRequired    Boolean @default(false)
@@ -174,6 +389,8 @@ model MenuOption {
 
   @@map("menu_options")
 }
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
 
 model Order {
   id              String   @id @default(cuid())
@@ -224,6 +441,8 @@ model Payment {
   @@map("payments")
 }
 
+// ─── Integrations ─────────────────────────────────────────────────────────────
+
 model PosIntegration {
   id              String    @id @default(cuid())
   storeId         String
@@ -257,6 +476,8 @@ model DeliveryIntegration {
   @@unique([storeId, platform])
   @@map("delivery_integrations")
 }
+
+// ─── Subscriptions ────────────────────────────────────────────────────────────
 
 model SubscriptionPlan {
   id        String   @id @default(cuid())

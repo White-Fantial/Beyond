@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import { getCurrentUserAuthContext, type UserAuthContext } from "./context";
-import { ROLE_PERMISSIONS, type RoleKey, type PermissionKey } from "./constants";
+import type { PermissionKey } from "./constants";
 
 export function userHasPermission(
   ctx: UserAuthContext,
   permission: PermissionKey,
   storeId?: string
 ): boolean {
-  if (ctx.isAdmin) return true; // Admin has all platform permissions
+  if (ctx.isPlatformAdmin) return true;
 
   if (storeId) {
     const membership = ctx.storeMemberships.find((m) => m.storeId === storeId);
@@ -18,11 +18,6 @@ export function userHasPermission(
   }
 
   return ctx.permissions.includes(permission);
-}
-
-export function userHasRole(ctx: UserAuthContext, role: RoleKey): boolean {
-  if (ctx.platformRole === role) return true;
-  return ctx.storeMemberships.some((m) => m.roleKey === role);
 }
 
 export async function requireAuth(): Promise<UserAuthContext> {
@@ -53,7 +48,7 @@ export async function requireStorePermission(
   if (!membership) {
     redirect("/unauthorized");
   }
-  if (!membership.permissions.includes(permission) && !ctx.isAdmin) {
+  if (!membership.permissions.includes(permission) && !ctx.isPlatformAdmin) {
     redirect("/unauthorized");
   }
   return ctx;
@@ -61,14 +56,13 @@ export async function requireStorePermission(
 
 export async function requireStoreAccess(storeId: string): Promise<UserAuthContext> {
   const ctx = await requireAuth();
-  if (ctx.isAdmin) return ctx; // Admin can access any store for support (but via /admin)
+  if (ctx.isPlatformAdmin) return ctx;
   const membership = ctx.storeMemberships.find((m) => m.storeId === storeId);
-  if (!membership && !ctx.isOwner) {
+  const tenantMembership = ctx.tenantMemberships.find(
+    (tm) => tm.storeMemberships.some((sm) => sm.storeId === storeId)
+  );
+  if (!membership && !tenantMembership) {
     redirect("/unauthorized");
   }
   return ctx;
-}
-
-export function roleHasPermission(roleKey: RoleKey, permission: PermissionKey): boolean {
-  return ROLE_PERMISSIONS[roleKey]?.includes(permission) ?? false;
 }

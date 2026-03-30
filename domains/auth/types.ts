@@ -1,14 +1,20 @@
-import type { RoleKey, PermissionKey } from "@/lib/auth/constants";
+import type {
+  RoleKey,
+  PermissionKey,
+  PlatformRoleKey,
+  MembershipRoleKey,
+  StoreRoleKey,
+} from "@/lib/auth/constants";
 
-export type { RoleKey, PermissionKey };
+export type { RoleKey, PermissionKey, PlatformRoleKey, MembershipRoleKey, StoreRoleKey };
 
 export interface User {
   id: string;
   email: string;
   name: string;
-  platformRole: RoleKey;
-  tenantId: string | null;
-  defaultStoreId: string | null;
+  phone?: string | null;
+  platformRole: PlatformRoleKey;
+  status: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,10 +23,12 @@ export interface Session {
   userId: string;
   email: string;
   name: string;
-  platformRole: RoleKey;
-  tenantId: string | null;
-  defaultStoreId: string | null;
-  expiresAt: Date;
+  platformRole: PlatformRoleKey;
+  primaryTenantId: string | null;
+  primaryMembershipRole: MembershipRoleKey | null;
+  primaryStoreId: string | null;
+  primaryStoreRole: StoreRoleKey | null;
+  expiresAt?: Date;
 }
 
 export interface LoginCredentials {
@@ -37,23 +45,26 @@ export interface AuthResult {
 export interface StoreMembershipInfo {
   storeId: string;
   storeName: string;
-  roleKey: RoleKey;
-  isDefault: boolean;
+  membershipId: string;
+  storeRole: StoreRoleKey;
   permissions: PermissionKey[];
+}
+
+export interface TenantMembershipInfo {
+  tenantId: string;
+  membershipId: string;
+  membershipRole: MembershipRoleKey;
+  storeMemberships: StoreMembershipInfo[];
 }
 
 export interface UserAuthContext {
   userId: string;
   email: string;
   name: string;
-  platformRole: RoleKey;
-  tenantId: string | null;
-  defaultStoreId: string | null;
-  isAdmin: boolean;
-  isOwner: boolean;
-  isCustomer: boolean;
-  isOperationalUser: boolean;
+  platformRole: PlatformRoleKey;
+  isPlatformAdmin: boolean;
+  isPlatformSupport: boolean;
+  tenantMemberships: TenantMembershipInfo[];
   storeMemberships: StoreMembershipInfo[];
   permissions: PermissionKey[];
 }
-

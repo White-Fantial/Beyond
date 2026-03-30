@@ -1,26 +1,39 @@
 import { prisma } from "@/lib/prisma";
-import { getSession, type SessionPayload } from "./session";
-import { ROLES, ROLE_PERMISSIONS, type RoleKey, type PermissionKey } from "./constants";
+import { getSession } from "./session";
+import {
+  STORE_ROLE_PERMISSIONS,
+  MEMBERSHIP_ROLE_PERMISSIONS,
+  PLATFORM_ROLES,
+  type PlatformRoleKey,
+  type MembershipRoleKey,
+  type StoreRoleKey,
+  type PermissionKey,
+} from "./constants";
 
 export interface StoreMembershipContext {
   storeId: string;
   storeName: string;
-  roleKey: RoleKey;
-  isDefault: boolean;
+  membershipId: string;
+  storeRole: StoreRoleKey;
   permissions: PermissionKey[];
+}
+
+export interface TenantMembershipContext {
+  tenantId: string;
+  membershipId: string;
+  membershipRole: MembershipRoleKey;
+  storeMemberships: StoreMembershipContext[];
 }
 
 export interface UserAuthContext {
   userId: string;
   email: string;
   name: string;
-  platformRole: RoleKey;
-  tenantId: string | null;
-  defaultStoreId: string | null;
-  isAdmin: boolean;
-  isOwner: boolean;
-  isCustomer: boolean;
-  isOperationalUser: boolean;
+  platformRole: PlatformRoleKey;
+  isPlatformAdmin: boolean;
+  isPlatformSupport: boolean;
+  tenantMemberships: TenantMembershipContext[];
+  // Flattened store memberships across all tenants
   storeMemberships: StoreMembershipContext[];
   permissions: PermissionKey[];
 }
@@ -30,106 +43,110 @@ export async function getCurrentUserAuthContext(): Promise<UserAuthContext | nul
   if (!session) return null;
 
   const user = await prisma.user.findUnique({
-    where: { id: session.userId, deletedAt: null },
+    where: { id: session.userId },
     include: {
-      storeMemberships: {
-        where: { isActive: true },
-        include: { store: true, role: true },
+      memberships: {
+        where: { status: "ACTIVE" },
+        include: {
+          storeMemberships: {
+            where: { status: "ACTIVE" },
+            include: { store: true },
+          },
+        },
       },
     },
   });
 
-  if (!user) return null;
+  if (!user || user.status === "ARCHIVED" || user.status === "SUSPENDED") return null;
 
-  const platformRole = user.platformRole as RoleKey;
-  const platformPermissions = ROLE_PERMISSIONS[platformRole] ?? [];
+  const platformRole = user.platformRole as PlatformRoleKey;
+  const isPlatformAdmin = platformRole === PLATFORM_ROLES.PLATFORM_ADMIN;
+  const isPlatformSupport = platformRole === PLATFORM_ROLES.PLATFORM_SUPPORT;
 
-  const storeMemberships: StoreMembershipContext[] = user.storeMemberships.map((m) => {
-    const roleKey = m.role.key as RoleKey;
+  const tenantMemberships: TenantMembershipContext[] = user.memberships.map((m) => {
+    const membershipRole = m.role as MembershipRoleKey;
+    const storeMemberships: StoreMembershipContext[] = m.storeMemberships.map((sm) => {
+      const storeRole = sm.role as StoreRoleKey;
+      return {
+        storeId: sm.storeId,
+        storeName: sm.store.name,
+        membershipId: sm.membershipId,
+        storeRole,
+        permissions: STORE_ROLE_PERMISSIONS[storeRole] ?? [],
+      };
+    });
     return {
-      storeId: m.storeId,
-      storeName: m.store.name,
-      roleKey,
-      isDefault: m.isDefault,
-      permissions: ROLE_PERMISSIONS[roleKey] ?? [],
+      tenantId: m.tenantId,
+      membershipId: m.id,
+      membershipRole,
+      storeMemberships,
     };
   });
 
-  // Aggregate all permissions
-  const allPermissions = new Set<PermissionKey>(platformPermissions);
-  storeMemberships.forEach((m) => m.permissions.forEach((p) => allPermissions.add(p)));
+  const allStoreMemberships = tenantMemberships.flatMap((tm) => tm.storeMemberships);
 
-  const operationalRoles: RoleKey[] = [ROLES.STAFF, ROLES.SUPERVISOR, ROLES.MANAGER];
+  const allPermissions = new Set<PermissionKey>();
+  if (isPlatformAdmin) allPermissions.add("PLATFORM_ADMIN");
+  tenantMemberships.forEach((tm) => {
+    (MEMBERSHIP_ROLE_PERMISSIONS[tm.membershipRole] ?? []).forEach((p) => allPermissions.add(p));
+    tm.storeMemberships.forEach((sm) => sm.permissions.forEach((p) => allPermissions.add(p)));
+  });
 
   return {
     userId: user.id,
     email: user.email,
     name: user.name,
     platformRole,
-    tenantId: user.tenantId,
-    defaultStoreId: user.defaultStoreId,
-    isAdmin: platformRole === ROLES.ADMIN,
-    isOwner: platformRole === ROLES.OWNER,
-    isCustomer: platformRole === ROLES.CUSTOMER,
-    isOperationalUser: operationalRoles.includes(platformRole) || storeMemberships.length > 0,
-    storeMemberships,
+    isPlatformAdmin,
+    isPlatformSupport,
+    tenantMemberships,
+    storeMemberships: allStoreMemberships,
     permissions: Array.from(allPermissions),
   };
 }
 
-export async function getUserStoreMemberships(userId: string): Promise<StoreMembershipContext[]> {
-  const memberships = await prisma.storeMembership.findMany({
-    where: { userId, isActive: true },
-    include: { store: true, role: true },
+export async function getUserStoreMembershipsForStore(
+  userId: string,
+  storeId: string
+): Promise<StoreMembershipContext[]> {
+  const storeMemberships = await prisma.storeMembership.findMany({
+    where: {
+      storeId,
+      status: "ACTIVE",
+      membership: { userId, status: "ACTIVE" },
+    },
+    include: { store: true },
   });
 
-  return memberships.map((m) => {
-    const roleKey = m.role.key as RoleKey;
+  return storeMemberships.map((sm) => {
+    const storeRole = sm.role as StoreRoleKey;
     return {
-      storeId: m.storeId,
-      storeName: m.store.name,
-      roleKey,
-      isDefault: m.isDefault,
-      permissions: ROLE_PERMISSIONS[roleKey] ?? [],
+      storeId: sm.storeId,
+      storeName: sm.store.name,
+      membershipId: sm.membershipId,
+      storeRole,
+      permissions: STORE_ROLE_PERMISSIONS[storeRole] ?? [],
     };
   });
 }
 
-export async function getDefaultStoreMembership(userId: string): Promise<StoreMembershipContext | null> {
-  const membership = await prisma.storeMembership.findFirst({
-    where: { userId, isDefault: true, isActive: true },
-    include: { store: true, role: true },
+export async function getPrimaryStoreMembership(userId: string): Promise<StoreMembershipContext | null> {
+  const sm = await prisma.storeMembership.findFirst({
+    where: {
+      status: "ACTIVE",
+      membership: { userId, status: "ACTIVE" },
+    },
+    include: { store: true },
+    orderBy: { createdAt: "asc" },
   });
 
-  if (!membership) {
-    // Fall back to first active membership
-    const first = await prisma.storeMembership.findFirst({
-      where: { userId, isActive: true },
-      include: { store: true, role: true },
-    });
-    if (!first) return null;
-    const roleKey = first.role.key as RoleKey;
-    return {
-      storeId: first.storeId,
-      storeName: first.store.name,
-      roleKey,
-      isDefault: first.isDefault,
-      permissions: ROLE_PERMISSIONS[roleKey] ?? [],
-    };
-  }
-
-  const roleKey = membership.role.key as RoleKey;
+  if (!sm) return null;
+  const storeRole = sm.role as StoreRoleKey;
   return {
-    storeId: membership.storeId,
-    storeName: membership.store.name,
-    roleKey,
-    isDefault: membership.isDefault,
-    permissions: ROLE_PERMISSIONS[roleKey] ?? [],
+    storeId: sm.storeId,
+    storeName: sm.store.name,
+    membershipId: sm.membershipId,
+    storeRole,
+    permissions: STORE_ROLE_PERMISSIONS[storeRole] ?? [],
   };
-}
-
-export async function getUserPlatformRole(userId: string): Promise<RoleKey | null> {
-  const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } });
-  if (!user) return null;
-  return user.platformRole as RoleKey;
 }

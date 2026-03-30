@@ -1,11 +1,18 @@
 import { requireAuth } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
-import { ROLES } from "@/lib/auth/constants";
+import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
 import OwnerSidebar from "@/components/layout/OwnerSidebar";
 
 export default async function OwnerLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requireAuth();
-  if (ctx.platformRole !== ROLES.OWNER) {
+
+  const canAccessOwner =
+    ctx.isPlatformAdmin ||
+    ctx.tenantMemberships.some((tm) =>
+      OWNER_PORTAL_MEMBERSHIP_ROLES.includes(tm.membershipRole)
+    );
+
+  if (!canAccessOwner) {
     redirect("/unauthorized");
   }
 

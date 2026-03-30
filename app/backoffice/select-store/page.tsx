@@ -1,6 +1,5 @@
 import { requireAuth } from "@/lib/auth/permissions";
 import Link from "next/link";
-import { STORE_ROLE_REDIRECT_PATHS } from "@/lib/auth/constants";
 
 export default async function SelectStorePage() {
   const ctx = await requireAuth();
@@ -26,24 +25,21 @@ export default async function SelectStorePage() {
           <p className="text-gray-500 mt-2">작업할 매장을 선택하세요.</p>
         </div>
         <div className="space-y-3">
-          {memberships.map((m) => {
-            const path = STORE_ROLE_REDIRECT_PATHS[m.roleKey] ?? "orders";
-            return (
-              <Link
-                key={m.storeId}
-                href={`/backoffice/store/${m.storeId}/${path}`}
-                className="block bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm hover:border-brand-300 transition"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-gray-900">🏪 {m.storeName}</div>
-                    <div className="text-sm text-gray-500 mt-0.5">{m.roleKey}</div>
-                  </div>
-                  <span className="text-gray-400">→</span>
+          {memberships.map((m) => (
+            <Link
+              key={m.storeId}
+              href={`/backoffice/store/${m.storeId}/orders`}
+              className="block bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm hover:border-brand-300 transition"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium text-gray-900">🏪 {m.storeName}</div>
+                  <div className="text-sm text-gray-500 mt-0.5">{m.storeRole}</div>
                 </div>
-              </Link>
-            );
-          })}
+                <span className="text-gray-400">→</span>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </div>

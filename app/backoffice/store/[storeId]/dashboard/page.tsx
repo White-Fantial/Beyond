@@ -6,7 +6,7 @@ export default async function BackofficeDashboardPage({
   params: Promise<{ storeId: string }>;
 }) {
   const { storeId } = await params;
-  const ctx = await requireStoreAccess(storeId);
+  await requireStoreAccess(storeId);
 
   return (
     <div>

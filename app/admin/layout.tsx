@@ -1,11 +1,10 @@
 import { requireAuth } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
-import { ROLES } from "@/lib/auth/constants";
 import AdminSidebar from "@/components/layout/AdminSidebar";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const ctx = await requireAuth();
-  if (ctx.platformRole !== ROLES.ADMIN) {
+  if (!ctx.isPlatformAdmin) {
     redirect("/unauthorized");
   }
 
