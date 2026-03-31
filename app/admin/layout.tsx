@@ -1,11 +1,12 @@
-import { requireAuth } from "@/lib/auth/permissions";
+import { getActorUserAuthContext } from "@/lib/auth/context";
 import { redirect } from "next/navigation";
 import AdminSidebar from "@/components/layout/AdminSidebar";
 import WorkspaceSwitcher from "@/components/layout/WorkspaceSwitcher";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const ctx = await requireAuth();
-  if (!ctx.isPlatformAdmin) {
+  // Use actor context so PLATFORM_ADMIN stays authorised while impersonating.
+  const ctx = await getActorUserAuthContext();
+  if (!ctx || !ctx.isPlatformAdmin) {
     redirect("/unauthorized");
   }
 
