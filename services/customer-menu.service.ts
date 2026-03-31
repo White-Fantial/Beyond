@@ -184,6 +184,7 @@ async function _buildCatalog(
           imageUrl: true,
           displayOrder: true,
           isFeatured: true,
+          isSoldOut: true,
           productModifierGroups: {
             where: { modifierGroup: { deletedAt: null, isActive: true } },
             select: { id: true },
@@ -212,7 +213,7 @@ async function _buildCatalog(
       imageUrl: p.imageUrl,
       displayOrder: p.displayOrder,
       isFeatured: p.isFeatured,
-      isSoldOut: false, // TODO: wire to inventory/stock status
+      isSoldOut: p.isSoldOut,
       hasModifiers: p.productModifierGroups.length > 0,
       categoryId: link.categoryId,
     };
@@ -262,6 +263,7 @@ export async function getProductDetailForOrdering(
       imageUrl: true,
       displayOrder: true,
       isFeatured: true,
+      isSoldOut: true,
       productModifierGroups: {
         where: {
           modifierGroup: {
@@ -327,7 +329,7 @@ export async function getProductDetailForOrdering(
     imageUrl: product.imageUrl,
     displayOrder: product.displayOrder,
     isFeatured: product.isFeatured,
-    isSoldOut: false, // TODO: wire to inventory/stock status
+    isSoldOut: product.isSoldOut,
     hasModifiers: modifierGroups.length > 0,
     categoryId: "",
     modifierGroups,
