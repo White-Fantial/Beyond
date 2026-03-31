@@ -561,7 +561,7 @@ The `/admin` portal is a **PLATFORM_ADMIN-only, read-only operations console** f
 
 ---
 
-
+## Roadmap
 
 - [x] Project scaffolding (Next.js 14, Prisma, Tailwind)
 - [x] Domain types & adapter interfaces
@@ -587,6 +587,8 @@ The `/admin` portal is a **PLATFORM_ADMIN-only, read-only operations console** f
 - [x] Inbound order webhook routes (Uber Eats / DoorDash) with signature verification
 - [x] Backoffice orders page — live order list with status transitions
 - [x] Product availability control — `isSoldOut` per product, inventory management page, operations overview
+- [x] **Admin Console MVP (read-only)** — dashboard KPIs, tenant/user/store list+detail, search/filter/pagination, PLATFORM_ADMIN guard
+- [ ] Admin Console Phase 2 — write actions, jobs, logs, billing, integrations
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)
