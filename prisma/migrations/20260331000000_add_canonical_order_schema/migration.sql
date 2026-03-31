@@ -33,77 +33,98 @@ END;
 $$;
 
 -- ──────────────────────────────────────────────────────────────────────────────
--- 2. Create enums
+-- 2. Create enums (idempotent: skip if the type already exists)
 -- ──────────────────────────────────────────────────────────────────────────────
 
-CREATE TYPE "OrderSourceChannel" AS ENUM (
-    'POS',
-    'UBER_EATS',
-    'DOORDASH',
-    'ONLINE',
-    'SUBSCRIPTION',
-    'MANUAL',
-    'UNKNOWN'
-);
+DO $$ BEGIN
+    CREATE TYPE "OrderSourceChannel" AS ENUM (
+        'POS',
+        'UBER_EATS',
+        'DOORDASH',
+        'ONLINE',
+        'SUBSCRIPTION',
+        'MANUAL',
+        'UNKNOWN'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE "OrderChannelType" AS ENUM (
-    'POS',
-    'UBER_EATS',
-    'DOORDASH',
-    'ONLINE',
-    'SUBSCRIPTION'
-);
+DO $$ BEGIN
+    CREATE TYPE "OrderChannelType" AS ENUM (
+        'POS',
+        'UBER_EATS',
+        'DOORDASH',
+        'ONLINE',
+        'SUBSCRIPTION'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE "OrderChannelRole" AS ENUM (
-    'SOURCE',
-    'FORWARDED',
-    'MIRROR'
-);
+DO $$ BEGIN
+    CREATE TYPE "OrderChannelRole" AS ENUM (
+        'SOURCE',
+        'FORWARDED',
+        'MIRROR'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE "OrderLinkDirection" AS ENUM (
-    'INBOUND',
-    'OUTBOUND'
-);
+DO $$ BEGIN
+    CREATE TYPE "OrderLinkDirection" AS ENUM (
+        'INBOUND',
+        'OUTBOUND'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE "OrderStatus" AS ENUM (
-    'RECEIVED',
-    'ACCEPTED',
-    'IN_PROGRESS',
-    'READY',
-    'COMPLETED',
-    'CANCELLED',
-    'FAILED'
-);
+DO $$ BEGIN
+    CREATE TYPE "OrderStatus" AS ENUM (
+        'RECEIVED',
+        'ACCEPTED',
+        'IN_PROGRESS',
+        'READY',
+        'COMPLETED',
+        'CANCELLED',
+        'FAILED'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE "PosSubmissionStatus" AS ENUM (
-    'NOT_REQUIRED',
-    'PENDING',
-    'SENT',
-    'ACCEPTED',
-    'FAILED',
-    'SKIPPED'
-);
+DO $$ BEGIN
+    CREATE TYPE "PosSubmissionStatus" AS ENUM (
+        'NOT_REQUIRED',
+        'PENDING',
+        'SENT',
+        'ACCEPTED',
+        'FAILED',
+        'SKIPPED'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-CREATE TYPE "OrderEventType" AS ENUM (
-    'ORDER_RECEIVED',
-    'ORDER_CREATED',
-    'ORDER_UPDATED',
-    'ORDER_STATUS_CHANGED',
-    'POS_FORWARD_REQUESTED',
-    'POS_FORWARD_SENT',
-    'POS_FORWARD_ACCEPTED',
-    'POS_FORWARD_FAILED',
-    'POS_RECONCILED',
-    'ORDER_CANCELLED',
-    'RAW_WEBHOOK_RECEIVED',
-    'RAW_SYNC_RECEIVED'
-);
+DO $$ BEGIN
+    CREATE TYPE "OrderEventType" AS ENUM (
+        'ORDER_RECEIVED',
+        'ORDER_CREATED',
+        'ORDER_UPDATED',
+        'ORDER_STATUS_CHANGED',
+        'POS_FORWARD_REQUESTED',
+        'POS_FORWARD_SENT',
+        'POS_FORWARD_ACCEPTED',
+        'POS_FORWARD_FAILED',
+        'POS_RECONCILED',
+        'ORDER_CANCELLED',
+        'RAW_WEBHOOK_RECEIVED',
+        'RAW_SYNC_RECEIVED'
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- ──────────────────────────────────────────────────────────────────────────────
 -- 3. Create canonical orders table
 -- ──────────────────────────────────────────────────────────────────────────────
 
-CREATE TABLE "orders" (
+CREATE TABLE IF NOT EXISTS "orders" (
     "id"                      TEXT NOT NULL DEFAULT gen_random_uuid()::text,
     "tenantId"                TEXT NOT NULL,
     "storeId"                 TEXT NOT NULL,
@@ -160,14 +181,14 @@ CREATE TABLE "orders" (
 );
 
 -- Standard indexes
-CREATE INDEX "orders_tenantId_storeId_orderedAt_idx"       ON "orders" ("tenantId", "storeId", "orderedAt");
-CREATE INDEX "orders_tenantId_storeId_sourceChannel_idx"   ON "orders" ("tenantId", "storeId", "sourceChannel");
-CREATE INDEX "orders_sourceConnectionId_sourceOrderRef_idx" ON "orders" ("sourceConnectionId", "sourceOrderRef");
-CREATE INDEX "orders_posConnectionId_posOrderRef_idx"      ON "orders" ("posConnectionId", "posOrderRef");
+CREATE INDEX IF NOT EXISTS "orders_tenantId_storeId_orderedAt_idx"       ON "orders" ("tenantId", "storeId", "orderedAt");
+CREATE INDEX IF NOT EXISTS "orders_tenantId_storeId_sourceChannel_idx"   ON "orders" ("tenantId", "storeId", "sourceChannel");
+CREATE INDEX IF NOT EXISTS "orders_sourceConnectionId_sourceOrderRef_idx" ON "orders" ("sourceConnectionId", "sourceOrderRef");
+CREATE INDEX IF NOT EXISTS "orders_posConnectionId_posOrderRef_idx"      ON "orders" ("posConnectionId", "posOrderRef");
 
 -- Partial unique index: canonicalOrderKey uniqueness only when non-null.
 -- This prevents double-counting real orders while allowing null for orders without a key.
-CREATE UNIQUE INDEX "orders_tenantId_storeId_canonicalOrderKey_unique"
+CREATE UNIQUE INDEX IF NOT EXISTS "orders_tenantId_storeId_canonicalOrderKey_unique"
     ON "orders" ("tenantId", "storeId", "canonicalOrderKey")
     WHERE "canonicalOrderKey" IS NOT NULL;
 
@@ -175,7 +196,7 @@ CREATE UNIQUE INDEX "orders_tenantId_storeId_canonicalOrderKey_unique"
 -- 4. Create canonical order_items table
 -- ──────────────────────────────────────────────────────────────────────────────
 
-CREATE TABLE "order_items" (
+CREATE TABLE IF NOT EXISTS "order_items" (
     "id"               TEXT NOT NULL DEFAULT gen_random_uuid()::text,
     "orderId"          TEXT NOT NULL,
     "tenantId"         TEXT NOT NULL,
@@ -200,14 +221,14 @@ CREATE TABLE "order_items" (
         FOREIGN KEY ("orderId") REFERENCES "orders" ("id") ON DELETE CASCADE
 );
 
-CREATE INDEX "order_items_orderId_idx"        ON "order_items" ("orderId");
-CREATE INDEX "order_items_tenantId_storeId_idx" ON "order_items" ("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "order_items_orderId_idx"        ON "order_items" ("orderId");
+CREATE INDEX IF NOT EXISTS "order_items_tenantId_storeId_idx" ON "order_items" ("tenantId", "storeId");
 
 -- ──────────────────────────────────────────────────────────────────────────────
 -- 5. Create order_item_modifiers table
 -- ──────────────────────────────────────────────────────────────────────────────
 
-CREATE TABLE "order_item_modifiers" (
+CREATE TABLE IF NOT EXISTS "order_item_modifiers" (
     "id"                      TEXT NOT NULL DEFAULT gen_random_uuid()::text,
     "orderItemId"             TEXT NOT NULL,
     "tenantId"                TEXT NOT NULL,
@@ -233,14 +254,14 @@ CREATE TABLE "order_item_modifiers" (
         FOREIGN KEY ("orderItemId") REFERENCES "order_items" ("id") ON DELETE CASCADE
 );
 
-CREATE INDEX "order_item_modifiers_orderItemId_idx"         ON "order_item_modifiers" ("orderItemId");
-CREATE INDEX "order_item_modifiers_tenantId_storeId_idx"    ON "order_item_modifiers" ("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "order_item_modifiers_orderItemId_idx"         ON "order_item_modifiers" ("orderItemId");
+CREATE INDEX IF NOT EXISTS "order_item_modifiers_tenantId_storeId_idx"    ON "order_item_modifiers" ("tenantId", "storeId");
 
 -- ──────────────────────────────────────────────────────────────────────────────
 -- 6. Create order_channel_links table
 -- ──────────────────────────────────────────────────────────────────────────────
 
-CREATE TABLE "order_channel_links" (
+CREATE TABLE IF NOT EXISTS "order_channel_links" (
     "id"                  TEXT NOT NULL DEFAULT gen_random_uuid()::text,
     "orderId"             TEXT NOT NULL,
     "tenantId"            TEXT NOT NULL,
@@ -272,16 +293,16 @@ CREATE TABLE "order_channel_links" (
         FOREIGN KEY ("orderId") REFERENCES "orders" ("id") ON DELETE CASCADE
 );
 
-CREATE INDEX "order_channel_links_orderId_idx"              ON "order_channel_links" ("orderId");
-CREATE INDEX "order_channel_links_tenantId_storeId_ch_idx"  ON "order_channel_links" ("tenantId", "storeId", "channelType");
-CREATE INDEX "order_channel_links_connectionId_extRef_idx"  ON "order_channel_links" ("connectionId", "externalOrderRef");
-CREATE INDEX "order_channel_links_tenantId_storeId_role_idx" ON "order_channel_links" ("tenantId", "storeId", "role");
+CREATE INDEX IF NOT EXISTS "order_channel_links_orderId_idx"              ON "order_channel_links" ("orderId");
+CREATE INDEX IF NOT EXISTS "order_channel_links_tenantId_storeId_ch_idx"  ON "order_channel_links" ("tenantId", "storeId", "channelType");
+CREATE INDEX IF NOT EXISTS "order_channel_links_connectionId_extRef_idx"  ON "order_channel_links" ("connectionId", "externalOrderRef");
+CREATE INDEX IF NOT EXISTS "order_channel_links_tenantId_storeId_role_idx" ON "order_channel_links" ("tenantId", "storeId", "role");
 
 -- ──────────────────────────────────────────────────────────────────────────────
 -- 7. Create order_events table
 -- ──────────────────────────────────────────────────────────────────────────────
 
-CREATE TABLE "order_events" (
+CREATE TABLE IF NOT EXISTS "order_events" (
     "id"           TEXT NOT NULL DEFAULT gen_random_uuid()::text,
     "orderId"      TEXT NOT NULL,
     "tenantId"     TEXT NOT NULL,
@@ -298,14 +319,14 @@ CREATE TABLE "order_events" (
         FOREIGN KEY ("orderId") REFERENCES "orders" ("id") ON DELETE CASCADE
 );
 
-CREATE INDEX "order_events_orderId_createdAt_idx"         ON "order_events" ("orderId", "createdAt");
-CREATE INDEX "order_events_tenantId_storeId_createdAt_idx" ON "order_events" ("tenantId", "storeId", "createdAt");
+CREATE INDEX IF NOT EXISTS "order_events_orderId_createdAt_idx"         ON "order_events" ("orderId", "createdAt");
+CREATE INDEX IF NOT EXISTS "order_events_tenantId_storeId_createdAt_idx" ON "order_events" ("tenantId", "storeId", "createdAt");
 
 -- ──────────────────────────────────────────────────────────────────────────────
 -- 8. Create inbound_webhook_logs table
 -- ──────────────────────────────────────────────────────────────────────────────
 
-CREATE TABLE "inbound_webhook_logs" (
+CREATE TABLE IF NOT EXISTS "inbound_webhook_logs" (
     "id"               TEXT NOT NULL DEFAULT gen_random_uuid()::text,
     "tenantId"         TEXT,
     "storeId"          TEXT,
@@ -325,6 +346,6 @@ CREATE TABLE "inbound_webhook_logs" (
     CONSTRAINT "inbound_webhook_logs_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX "inbound_webhook_logs_channelType_receivedAt_idx"    ON "inbound_webhook_logs" ("channelType", "receivedAt");
-CREATE INDEX "inbound_webhook_logs_connectionId_extEventRef_idx"  ON "inbound_webhook_logs" ("connectionId", "externalEventRef");
-CREATE INDEX "inbound_webhook_logs_deliveryId_idx"                ON "inbound_webhook_logs" ("deliveryId");
+CREATE INDEX IF NOT EXISTS "inbound_webhook_logs_channelType_receivedAt_idx"    ON "inbound_webhook_logs" ("channelType", "receivedAt");
+CREATE INDEX IF NOT EXISTS "inbound_webhook_logs_connectionId_extEventRef_idx"  ON "inbound_webhook_logs" ("connectionId", "externalEventRef");
+CREATE INDEX IF NOT EXISTS "inbound_webhook_logs_deliveryId_idx"                ON "inbound_webhook_logs" ("deliveryId");
