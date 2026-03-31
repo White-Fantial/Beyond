@@ -260,7 +260,7 @@ model Store {
 
   categories           Category[]
   menuItems            MenuItem[]
-  orders               Order[]
+  legacyOrders         LegacyOrder[]
   posIntegrations      PosIntegration[]
   deliveryIntegrations DeliveryIntegration[]
   subscriptionPlans    SubscriptionPlan[]
@@ -514,10 +514,10 @@ model MenuItem {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  store        Store         @relation(fields: [storeId], references: [id])
-  category     Category      @relation(fields: [categoryId], references: [id])
+  store        Store            @relation(fields: [storeId], references: [id])
+  category     Category         @relation(fields: [categoryId], references: [id])
   optionGroups OptionGroup[]
-  orderItems   OrderItem[]
+  legacyOrderItems LegacyOrderItem[]
 
   @@map("menu_items")
 }
@@ -546,9 +546,10 @@ model MenuOption {
   @@map("menu_options")
 }
 
-// ─── Orders ───────────────────────────────────────────────────────────────────
+// ─── Legacy Orders (deprecated — superseded by canonical Order model below) ────
 
-model Order {
+/// @deprecated Use the canonical Order model instead.
+model LegacyOrder {
   id              String   @id @default(cuid())
   storeId         String
   channelType     String
@@ -558,14 +559,15 @@ model Order {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  store   Store       @relation(fields: [storeId], references: [id])
-  items   OrderItem[]
-  payment Payment?
+  store   Store            @relation(fields: [storeId], references: [id])
+  items   LegacyOrderItem[]
+  payment LegacyPayment?
 
-  @@map("orders")
+  @@map("legacy_orders")
 }
 
-model OrderItem {
+/// @deprecated Use the canonical OrderItem model instead.
+model LegacyOrderItem {
   id         String @id @default(cuid())
   orderId    String
   menuItemId String
@@ -574,13 +576,14 @@ model OrderItem {
   totalPrice Int
   options    Json?
 
-  order    Order    @relation(fields: [orderId], references: [id])
-  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
+  order    LegacyOrder @relation(fields: [orderId], references: [id])
+  menuItem MenuItem    @relation(fields: [menuItemId], references: [id])
 
-  @@map("order_items")
+  @@map("legacy_order_items")
 }
 
-model Payment {
+/// @deprecated Payment for legacy orders.
+model LegacyPayment {
   id                    String    @id @default(cuid())
   orderId               String    @unique
   storeId               String
@@ -592,9 +595,301 @@ model Payment {
   paidAt                DateTime?
   createdAt             DateTime  @default(now())
 
-  order Order @relation(fields: [orderId], references: [id])
+  order LegacyOrder @relation(fields: [orderId], references: [id])
 
-  @@map("payments")
+  @@map("legacy_payments")
+}
+
+// ─── Order Enums ──────────────────────────────────────────────────────────────
+
+/// The channel that originated this order.
+enum OrderSourceChannel {
+  POS
+  UBER_EATS
+  DOORDASH
+  ONLINE
+  SUBSCRIPTION
+  MANUAL
+  UNKNOWN
+}
+
+/// Channel types used for order channel links.
+enum OrderChannelType {
+  POS
+  UBER_EATS
+  DOORDASH
+  ONLINE
+  SUBSCRIPTION
+}
+
+/// Role of a channel link relative to an order.
+enum OrderChannelRole {
+  SOURCE     // This channel originated the order.
+  FORWARDED  // The order was forwarded/sent to this channel.
+  MIRROR     // Sync/reconciliation mirror record.
+}
+
+/// Direction of the channel link event.
+enum OrderLinkDirection {
+  INBOUND   // External → Beyond
+  OUTBOUND  // Beyond → External
+}
+
+/// Canonical order lifecycle status.
+enum OrderStatus {
+  RECEIVED
+  ACCEPTED
+  IN_PROGRESS
+  READY
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+/// Tracks the state of forwarding an order to POS for docket printing.
+enum PosSubmissionStatus {
+  NOT_REQUIRED
+  PENDING
+  SENT
+  ACCEPTED
+  FAILED
+  SKIPPED
+}
+
+/// Audit event types recorded in OrderEvent.
+enum OrderEventType {
+  ORDER_RECEIVED
+  ORDER_CREATED
+  ORDER_UPDATED
+  ORDER_STATUS_CHANGED
+  POS_FORWARD_REQUESTED
+  POS_FORWARD_SENT
+  POS_FORWARD_ACCEPTED
+  POS_FORWARD_FAILED
+  POS_RECONCILED
+  ORDER_CANCELLED
+  RAW_WEBHOOK_RECEIVED
+  RAW_SYNC_RECEIVED
+}
+
+// ─── Canonical Orders ─────────────────────────────────────────────────────────
+
+/// Canonical order — one record per real customer purchase regardless of source channel.
+model Order {
+  id       String @id @default(uuid())
+  tenantId String
+  storeId  String
+
+  // ── Source channel ────────────────────────────────────────────────────────
+  sourceChannel     OrderSourceChannel
+  sourceConnectionId String?
+  /// External order ref from the originating channel (e.g. Uber order id, POS receipt id).
+  sourceOrderRef    String?
+  sourceCustomerRef String?
+  originSubmittedAt DateTime?
+
+  // ── Lifecycle timestamps ──────────────────────────────────────────────────
+  orderedAt    DateTime
+  acceptedAt   DateTime?
+  completedAt  DateTime?
+  cancelledAt  DateTime?
+
+  // ── Status ────────────────────────────────────────────────────────────────
+  status OrderStatus @default(RECEIVED)
+
+  // ── Money (integer minor units, e.g. cents / pence) ──────────────────────
+  subtotalAmount Int    @default(0)
+  discountAmount Int    @default(0)
+  taxAmount      Int    @default(0)
+  tipAmount      Int    @default(0)
+  totalAmount    Int    @default(0)
+  currencyCode   String @default("NZD")
+
+  // ── Customer display ──────────────────────────────────────────────────────
+  customerId    String?
+  customerName  String?
+  customerPhone String?
+  customerEmail String?
+
+  // ── POS forwarding ────────────────────────────────────────────────────────
+  posForwardingRequired Boolean           @default(false)
+  posConnectionId       String?
+  posSubmissionStatus   PosSubmissionStatus @default(NOT_REQUIRED)
+  /// External order ref assigned by the POS system after acceptance.
+  posOrderRef           String?
+  posSubmittedAt        DateTime?
+  posAcceptedAt         DateTime?
+
+  // ── Idempotency / deduplication ───────────────────────────────────────────
+  /// Composite idempotency key, e.g. "UBER_EATS:<storeId>:<uberOrderId>".
+  /// Partial-unique enforced at DB level (only when non-null).
+  canonicalOrderKey       String?
+  /// True when Beyond itself created the record in the external system (e.g. POS-forwarded orders).
+  externalCreatedByBeyond Boolean @default(false)
+
+  notes          String?
+  /// Snapshot of the raw source payload as received.
+  rawSourcePayload Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ── Relations ─────────────────────────────────────────────────────────────
+  items        OrderItem[]
+  channelLinks OrderChannelLink[]
+  events       OrderEvent[]
+
+  @@index([tenantId, storeId, orderedAt])
+  @@index([tenantId, storeId, sourceChannel])
+  @@index([sourceConnectionId, sourceOrderRef])
+  @@index([posConnectionId, posOrderRef])
+  // Partial unique on canonicalOrderKey is enforced via a raw SQL migration index
+  // (see migration 20260331000000) rather than a Prisma @@unique to handle nulls correctly.
+  @@map("orders")
+}
+
+/// Line item within a canonical order.
+model OrderItem {
+  id       String @id @default(uuid())
+  orderId  String
+  tenantId String
+  storeId  String
+
+  productId        String?
+  productName      String
+  productSku       String?
+  sourceProductRef String?
+  quantity         Int
+  unitPriceAmount  Int
+  totalPriceAmount Int
+
+  notes      String?
+  rawPayload Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order     Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  modifiers OrderItemModifier[]
+
+  @@index([orderId])
+  @@index([tenantId, storeId])
+  @@map("order_items")
+}
+
+/// Modifier/option applied to an order line item.
+model OrderItemModifier {
+  id          String @id @default(uuid())
+  orderItemId String
+  tenantId    String
+  storeId     String
+
+  modifierGroupId    String?
+  modifierOptionId   String?
+  modifierGroupName  String?
+  modifierOptionName String
+  quantity           Int     @default(1)
+  unitPriceAmount    Int     @default(0)
+  totalPriceAmount   Int     @default(0)
+
+  sourceModifierGroupRef  String?
+  sourceModifierOptionRef String?
+  rawPayload              Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  @@index([orderItemId])
+  @@index([tenantId, storeId])
+  @@map("order_item_modifiers")
+}
+
+/// Per-channel link record: tracks source, forward, and mirror connections for an order.
+/// - SOURCE link: the channel that originated the order (one per order).
+/// - FORWARDED link: the order was sent outbound to this channel (e.g. POS for docket printing).
+/// - MIRROR link: a reconciliation/sync record tying the order to a channel record.
+model OrderChannelLink {
+  id       String @id @default(uuid())
+  orderId  String
+  tenantId String
+  storeId  String
+
+  channelType  OrderChannelType
+  connectionId String?
+  role         OrderChannelRole
+  direction    OrderLinkDirection
+
+  externalOrderRef    String?
+  externalDisplayRef  String?
+  externalStatus      String?
+  externalCreatedAt   DateTime?
+  externalUpdatedAt   DateTime?
+
+  requestPayload  Json?
+  responsePayload Json?
+  rawPayload      Json?
+
+  /// How this link was established: "webhook", "sync", "forward-response", "manual".
+  linkedBy         String?
+  createdByBeyond  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([tenantId, storeId, channelType])
+  @@index([connectionId, externalOrderRef])
+  @@index([tenantId, storeId, role])
+  @@map("order_channel_links")
+}
+
+/// Immutable audit trail of order lifecycle events.
+model OrderEvent {
+  id           String          @id @default(uuid())
+  orderId      String
+  tenantId     String
+  storeId      String
+  eventType    OrderEventType
+  channelType  OrderChannelType?
+  connectionId String?
+  payload      Json?
+  message      String?
+  createdAt    DateTime        @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt])
+  @@index([tenantId, storeId, createdAt])
+  @@map("order_events")
+}
+
+/// Raw log of every inbound webhook call from external channels.
+/// Used for debugging, replay, and signature-verification audit.
+model InboundWebhookLog {
+  id              String             @id @default(uuid())
+  tenantId        String?
+  storeId         String?
+  connectionId    String?
+  channelType     OrderChannelType?
+  eventName       String?
+  externalEventRef String?
+  deliveryId      String?
+  signatureValid  Boolean?
+  processingStatus String
+  requestHeaders  Json?
+  requestBody     Json?
+  receivedAt      DateTime           @default(now())
+  processedAt     DateTime?
+  errorMessage    String?
+
+  @@index([channelType, receivedAt])
+  @@index([connectionId, externalEventRef])
+  @@index([deliveryId])
+  @@map("inbound_webhook_logs")
 }
 
 // ─── Integrations ─────────────────────────────────────────────────────────────
