@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listCatalogProducts, updateProductMerchandising } from "@/services/catalog.service";
+import { listCatalogProducts, updateProductMerchandising, setProductSoldOut } from "@/services/catalog.service";
 
 export async function GET(req: NextRequest) {
   const storeId = req.nextUrl.searchParams.get("storeId");
@@ -16,8 +16,10 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const body = await req.json();
-  const { productId, ...fields } = body as {
+  const { action, productId, isSoldOut, ...fields } = body as {
+    action?: "toggleSoldOut";
     productId: string;
+    isSoldOut?: boolean;
     displayOrder?: number;
     isVisibleOnOnlineOrder?: boolean;
     isVisibleOnSubscription?: boolean;
@@ -30,6 +32,14 @@ export async function PATCH(req: NextRequest) {
 
   if (!productId) {
     return NextResponse.json({ error: "productId is required" }, { status: 400 });
+  }
+
+  if (action === "toggleSoldOut") {
+    if (isSoldOut === undefined) {
+      return NextResponse.json({ error: "isSoldOut is required" }, { status: 400 });
+    }
+    const updated = await setProductSoldOut(productId, isSoldOut);
+    return NextResponse.json({ product: updated });
   }
 
   const updated = await updateProductMerchandising(productId, fields);

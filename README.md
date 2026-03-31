@@ -510,6 +510,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the landing page.
 - [x] Order HTTP API routes (list, status update, forward-to-POS)
 - [x] Inbound order webhook routes (Uber Eats / DoorDash) with signature verification
 - [x] Backoffice orders page — live order list with status transitions
+- [x] Product availability control — `isSoldOut` per product, inventory management page, operations overview
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)

@@ -1011,6 +1011,7 @@ model CatalogProduct {
   displayOrder              Int               @default(0)
   isActive                  Boolean           @default(true)
   isSellable                Boolean           @default(true)
+  isSoldOut                 Boolean           @default(false)
   isVisibleOnOnlineOrder    Boolean           @default(true)
   isVisibleOnSubscription   Boolean           @default(false)
   isFeatured                Boolean           @default(false)

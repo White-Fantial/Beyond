@@ -149,6 +149,60 @@ export async function updateProductMerchandising(
   });
 }
 
+export async function setProductSoldOut(
+  productId: string,
+  isSoldOut: boolean
+): Promise<CatalogProduct> {
+  return prisma.catalogProduct.update({
+    where: { id: productId },
+    data: { isSoldOut },
+  });
+}
+
+// ─── Products grouped by category (for inventory/availability view) ───────────
+
+export interface ProductWithCategory extends CatalogProduct {
+  primaryCategoryId: string | null;
+  primaryCategoryName: string | null;
+}
+
+export async function listProductsGroupedByCategory(
+  storeId: string
+): Promise<{ categoryId: string; categoryName: string; products: CatalogProduct[] }[]> {
+  const categories = await prisma.catalogCategory.findMany({
+    where: { storeId, deletedAt: null, isActive: true },
+    orderBy: { displayOrder: "asc" },
+  });
+
+  const productCategories = await prisma.catalogProductCategory.findMany({
+    where: { storeId },
+    orderBy: { sortOrder: "asc" },
+    include: {
+      product: true,
+    },
+  });
+
+  const grouped = new Map<string, CatalogProduct[]>();
+  for (const cat of categories) {
+    grouped.set(cat.id, []);
+  }
+
+  for (const link of productCategories) {
+    const prod = link.product;
+    if (prod.deletedAt || !prod.isActive) continue;
+    const list = grouped.get(link.categoryId);
+    if (list) list.push(prod);
+  }
+
+  return categories
+    .map((cat) => ({
+      categoryId: cat.id,
+      categoryName: cat.name,
+      products: grouped.get(cat.id) ?? [],
+    }))
+    .filter((group) => group.products.length > 0);
+}
+
 // ─── Modifier Groups & Options ────────────────────────────────────────────────
 
 export async function listModifierGroups(
