@@ -32,7 +32,9 @@ export async function loginAction(
 
     redirectTo = result.redirectTo ?? "/";
   } catch (error) {
-    console.error("[loginAction] Unexpected error during login:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorName = error instanceof Error ? error.constructor.name : typeof error;
+    console.error(`[loginAction] Unexpected error during login [${errorName}]: ${errorMessage}`, error);
     return { error: "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요." };
   }
 

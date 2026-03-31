@@ -35,6 +35,9 @@ export async function loginUser(credentials: LoginCredentials): Promise<LoginRes
         },
       },
     },
+  }).catch((error) => {
+    console.error("[loginUser] Database error while looking up user:", error);
+    throw error;
   });
 
   if (!user || user.status === "ARCHIVED" || user.status === "SUSPENDED") {
@@ -45,7 +48,11 @@ export async function loginUser(credentials: LoginCredentials): Promise<LoginRes
     return { success: false, error: "Invalid email or password" };
   }
 
-  const passwordMatch = await bcrypt.compare(credentials.password, user.passwordHash);
+  const passwordMatch = await bcrypt.compare(credentials.password, user.passwordHash).catch((error) => {
+    console.error("[loginUser] Error comparing password:", error);
+    throw error;
+  });
+
   if (!passwordMatch) {
     return { success: false, error: "Invalid email or password" };
   }
@@ -64,14 +71,26 @@ export async function loginUser(credentials: LoginCredentials): Promise<LoginRes
     primaryStoreRole: (primaryStoreMembership?.role ?? null) as StoreRoleKey | null,
   };
 
-  const token = await createSession(sessionPayload);
+  const token = await createSession(sessionPayload).catch((error) => {
+    console.error("[loginUser] Error creating session token:", error);
+    throw error;
+  });
 
   await prisma.user.update({
     where: { id: user.id },
     data: { lastLoginAt: new Date() },
+  }).catch((error) => {
+    console.error("[loginUser] Error updating lastLoginAt (non-critical):", error);
+    // Non-critical: do not block login if this update fails
   });
 
-  const redirectTo = await resolvePostLoginRedirect(sessionPayload);
+  let redirectTo: string = "/";
+  try {
+    redirectTo = await resolvePostLoginRedirect(sessionPayload);
+  } catch (error) {
+    console.error("[loginUser] Error resolving post-login redirect, using default '/':", error);
+  }
+
   return { success: true, token, redirectTo };
 }
 
