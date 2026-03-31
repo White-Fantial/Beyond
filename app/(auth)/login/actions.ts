@@ -18,14 +18,23 @@ export async function loginAction(
     return { error: "이메일과 비밀번호를 입력해주세요." };
   }
 
-  const result = await loginUser({ email, password });
+  let redirectTo: string;
 
-  if (!result.success) {
-    return { error: result.error ?? "로그인에 실패했습니다." };
+  try {
+    const result = await loginUser({ email, password });
+
+    if (!result.success) {
+      return { error: result.error ?? "로그인에 실패했습니다." };
+    }
+
+    const cookieStore = await cookies();
+    cookieStore.set(getSessionCookieOptions(result.token!));
+
+    redirectTo = result.redirectTo ?? "/";
+  } catch (error) {
+    console.error("[loginAction] Unexpected error during login:", error);
+    return { error: "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요." };
   }
 
-  const cookieStore = await cookies();
-  cookieStore.set(getSessionCookieOptions(result.token!));
-
-  redirect(result.redirectTo ?? "/");
+  redirect(redirectTo);
 }
