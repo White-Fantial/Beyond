@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
   const fromParam = searchParams.get("from");
   const toParam = searchParams.get("to");
 
-  const limit = limitParam ? Math.min(parseInt(limitParam, 10), 200) : 50;
-  const offset = offsetParam ? parseInt(offsetParam, 10) : 0;
+  const limit = limitParam ? Math.min(Math.max(1, parseInt(limitParam, 10) || 50), 200) : 50;
+  const offset = offsetParam ? Math.max(0, parseInt(offsetParam, 10) || 0) : 0;
 
   const status = statusParam
     ? (statusParam.split(",") as OrderStatus[])
