@@ -691,6 +691,82 @@ export async function markWebhookLogProcessed(
   });
 }
 
+// ─── Query functions ──────────────────────────────────────────────────────────
+
+export interface ListOrdersOptions {
+  limit?: number;
+  offset?: number;
+  status?: OrderStatus | OrderStatus[];
+  sourceChannel?: OrderSourceChannel | OrderSourceChannel[];
+  /** Inclusive lower bound (orderedAt). */
+  from?: Date;
+  /** Inclusive upper bound (orderedAt). */
+  to?: Date;
+}
+
+export interface ListOrdersResult {
+  orders: (Order & { items: OrderItem[] })[];
+  total: number;
+}
+
+/**
+ * List canonical orders for a store, newest first.
+ * Includes order items. Does not include modifiers (use a separate query if needed).
+ */
+export async function listOrders(
+  storeId: string,
+  opts: ListOrdersOptions = {}
+): Promise<ListOrdersResult> {
+  const { limit = 50, offset = 0, status, sourceChannel, from, to } = opts;
+
+  const where: Parameters<typeof prisma.order.findMany>[0]["where"] = {
+    storeId,
+    ...(status
+      ? { status: Array.isArray(status) ? { in: status } : status }
+      : {}),
+    ...(sourceChannel
+      ? {
+          sourceChannel: Array.isArray(sourceChannel)
+            ? { in: sourceChannel }
+            : sourceChannel,
+        }
+      : {}),
+    ...(from || to
+      ? {
+          orderedAt: {
+            ...(from ? { gte: from } : {}),
+            ...(to ? { lte: to } : {}),
+          },
+        }
+      : {}),
+  };
+
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      orderBy: { orderedAt: "desc" },
+      take: limit,
+      skip: offset,
+      include: { items: true },
+    }),
+    prisma.order.count({ where }),
+  ]);
+
+  return { orders, total };
+}
+
+/**
+ * Fetch a single canonical order by ID, including items and channel links.
+ */
+export async function getOrderById(
+  orderId: string
+): Promise<(Order & { items: OrderItem[]; channelLinks: OrderChannelLink[] }) | null> {
+  return prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true, channelLinks: true },
+  });
+}
+
 /**
  * Update the status of a canonical order.
  */

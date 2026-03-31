@@ -452,6 +452,9 @@ Open [http://localhost:3000](http://localhost:3000) to view the landing page.
 - [x] OrderChannelLink for SOURCE / FORWARDED / MIRROR channel tracking
 - [x] OrderEvent immutable audit trail
 - [x] InboundWebhookLog for raw webhook storage and signature-verification audit
+- [x] Order HTTP API routes (list, status update, forward-to-POS)
+- [x] Inbound order webhook routes (Uber Eats / DoorDash) with signature verification
+- [x] Backoffice orders page — live order list with status transitions
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)
@@ -652,9 +655,40 @@ A **partial unique index** (`WHERE canonical_order_key IS NOT NULL`) enforces un
 | `forwardOrderToPos(input)` | Mark an order as forwarded to POS, create OUTBOUND channel link. |
 | `recordPosForwardResponse(input)` | Record POS acceptance or rejection of a forwarded order. |
 | `reconcilePosWebhookOrSync(input)` | Reconcile a POS webhook/sync event — update or create. |
+| `listOrders(storeId, opts)` | List canonical orders for a store, newest-first, with items. Supports filtering by status, channel, date range. |
+| `getOrderById(orderId)` | Fetch a single order by ID including items and channel links. |
 | `updateOrderStatus(orderId, status)` | Transition order status, record event. |
 | `logInboundWebhook(params)` | Write a raw `InboundWebhookLog` at the start of webhook handling. |
 | `markWebhookLogProcessed(logId, status)` | Mark a webhook log as processed (or failed). |
+
+---
+
+### Order HTTP API Routes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/orders?storeId=<id>` | List orders for a store (newest-first). Query params: `status`, `sourceChannel`, `from`, `to`, `limit`, `offset`. |
+| `PATCH` | `/api/orders/[orderId]/status` | Transition an order to a new status. Body: `{ status: OrderStatus }`. |
+| `POST` | `/api/orders/[orderId]/forward-to-pos` | Mark an order as forwarded to POS. Body: `{ posConnectionId, requestPayload? }`. |
+| `POST` | `/api/webhooks/orders/[provider]?storeId=<id>` | Inbound order webhook from delivery platforms. Supported `provider` slugs: `uber-eats`, `doordash`. |
+
+#### Webhook Route Details
+
+The `/api/webhooks/orders/[provider]` route:
+
+1. **Reads the raw request body** before JSON parsing (required for HMAC signature verification).
+2. **Verifies the signature** if `UBER_EATS_WEBHOOK_SECRET` / `DOORDASH_WEBHOOK_SECRET` env vars are set. If the secret is not configured, the signature check is skipped (useful for local dev). If the secret is configured and the signature does not match, the request is rejected with HTTP 401.
+3. **Logs the raw webhook** to `InboundWebhookLog` immediately (before any processing).
+4. **Looks up the active `Connection`** for the store and channel. If no connected integration is found, the webhook is logged as `SKIPPED` and HTTP 200 is returned (prevents platform retries for mis-configured stores).
+5. **Normalizes the payload** into `CreateCanonicalOrderInput` and calls `createCanonicalOrderFromInbound()`. Deduplication is enforced by `canonicalOrderKey`.
+6. **Marks the webhook log** as `PROCESSED` or `FAILED`.
+
+Environment variables for webhook signature verification:
+
+```
+UBER_EATS_WEBHOOK_SECRET=<your-uber-eats-signing-secret>
+DOORDASH_WEBHOOK_SECRET=<your-doordash-signing-secret>
+```
 
 ---
 
