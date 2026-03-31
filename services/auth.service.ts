@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { createSession, verifySession, getSessionCookieOptions } from "@/lib/auth/session";
+import { createSession } from "@/lib/auth/session";
 import { resolvePostLoginRedirect } from "@/lib/auth/redirect";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 import type { PlatformRoleKey, MembershipRoleKey, StoreRoleKey } from "@/lib/auth/constants";
@@ -13,6 +13,7 @@ export interface LoginCredentials {
 
 export interface LoginResult {
   success: boolean;
+  token?: string;
   redirectTo?: string;
   error?: string;
 }
@@ -64,8 +65,6 @@ export async function loginUser(credentials: LoginCredentials): Promise<LoginRes
   };
 
   const token = await createSession(sessionPayload);
-  const cookieStore = await cookies();
-  cookieStore.set(getSessionCookieOptions(token));
 
   await prisma.user.update({
     where: { id: user.id },
@@ -73,7 +72,7 @@ export async function loginUser(credentials: LoginCredentials): Promise<LoginRes
   });
 
   const redirectTo = await resolvePostLoginRedirect(sessionPayload);
-  return { success: true, redirectTo };
+  return { success: true, token, redirectTo };
 }
 
 export async function logoutUser(): Promise<void> {
