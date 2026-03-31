@@ -11,6 +11,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import type {
   Order,
   OrderItem,
@@ -719,7 +720,7 @@ export async function listOrders(
 ): Promise<ListOrdersResult> {
   const { limit = 50, offset = 0, status, sourceChannel, from, to } = opts;
 
-  const where: Parameters<typeof prisma.order.findMany>[0]["where"] = {
+  const where: Prisma.OrderWhereInput = {
     storeId,
     ...(status
       ? { status: Array.isArray(status) ? { in: status } : status }
