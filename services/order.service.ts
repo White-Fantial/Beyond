@@ -137,6 +137,7 @@ function channelTypeToSourceChannel(
     DOORDASH: "DOORDASH",
     ONLINE: "ONLINE",
     SUBSCRIPTION: "SUBSCRIPTION",
+    MANUAL: "MANUAL",
   };
   return map[channelType];
 }

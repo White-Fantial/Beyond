@@ -1,6 +1,8 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { loginUser } from "@/services/auth.service";
+import { getSessionCookieOptions } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 
 export type LoginState = { error?: string };
@@ -21,6 +23,9 @@ export async function loginAction(
   if (!result.success) {
     return { error: result.error ?? "로그인에 실패했습니다." };
   }
+
+  const cookieStore = await cookies();
+  cookieStore.set(getSessionCookieOptions(result.token!));
 
   redirect(result.redirectTo ?? "/");
 }

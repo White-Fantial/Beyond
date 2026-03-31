@@ -620,6 +620,7 @@ enum OrderChannelType {
   DOORDASH
   ONLINE
   SUBSCRIPTION
+  MANUAL
 }
 
 /// Role of a channel link relative to an order.
