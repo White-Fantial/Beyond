@@ -170,7 +170,62 @@ beyond/
 
 ---
 
-## Design Principles
+## Portal Access Model & Workspace Switching
+
+### Portal Structure
+
+Beyond is organised into four separate portals, each with its own URL namespace, layout, and access rules:
+
+| Portal | URL Prefix | Purpose |
+|--------|-----------|---------|
+| **Customer App** | `/app` | Order management, subscriptions, account |
+| **Back Office** | `/backoffice` | Store operations — orders, inventory, menus |
+| **Owner Console** | `/owner` | Multi-store management — team, billing, integrations |
+| **Admin Console** | `/admin` | Platform administration |
+
+### Role Hierarchy & Portal Access
+
+| Role | Customer App `/app` | Back Office `/backoffice` | Owner Console `/owner` | Admin Console `/admin` |
+|------|:---:|:---:|:---:|:---:|
+| CUSTOMER (platform `USER`, no store) | ✅ | — | — | — |
+| STAFF | ✅ | ✅ | — | — |
+| SUPERVISOR | ✅ | ✅ | — | — |
+| MANAGER | ✅ | ✅ | — | — |
+| OWNER (membership `OWNER`/`ADMIN`) | ✅ | ✅ | ✅ | — |
+| ADMIN (`PLATFORM_ADMIN`) | — | — | — | ✅ |
+
+Higher-privilege roles inherit access to lower portals. OWNER users in particular have full access to both `/backoffice` and `/owner`.
+
+### Default Post-Login Redirect
+
+After a successful login, users are redirected based on their highest role:
+
+| Role | Has `primaryStoreId`? | Redirected to |
+|------|----------------------|--------------|
+| `PLATFORM_ADMIN` | — | `/admin` |
+| OWNER membership | ✅ Yes | `/backoffice/store/{primaryStoreId}/orders` |
+| OWNER membership | ❌ No | `/owner` |
+| STAFF / SUPERVISOR / MANAGER | ✅ Yes | `/backoffice/store/{primaryStoreId}/orders` |
+| STAFF / SUPERVISOR / MANAGER | ❌ No | `/app` |
+| CUSTOMER | — | `/app` |
+
+**Why does OWNER land in Back Office?** Owners spend the majority of their time on daily operations (orders, inventory). The Owner Console (`/owner`) is reserved for administrative tasks (billing, team, integrations). OWNER users can switch to the Owner Console at any time via the **Workspace Switcher** in the header.
+
+### Workspace Switcher
+
+The `WorkspaceSwitcher` component (`components/layout/WorkspaceSwitcher.tsx`) appears in the header of every portal. It reads the current user's session and surfaces links to all portals they are permitted to access, with the current portal highlighted.
+
+Example for an OWNER user in Back Office:
+
+```
+Current: Back Office  |  Switch to:  Customer App   Owner Console
+```
+
+The `/backoffice` link always uses the `primaryStoreId` from the session (or the current `[storeId]` URL param when already inside a store layout).
+
+---
+
+
 
 - **Domain-Driven Structure** — each business domain (order, catalog, payment…) owns its types and logic.
 - **Adapter Pattern** — POS, delivery, and payment integrations are isolated behind adapter interfaces, making it easy to add new providers without touching core logic.

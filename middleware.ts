@@ -74,10 +74,14 @@ export async function middleware(request: NextRequest) {
   // --- /login redirect if already authenticated ---
   if (pathname === "/login" && session) {
     if (session.platformRole === "PLATFORM_ADMIN") return NextResponse.redirect(new URL("/admin", request.url));
+    // OWNER: send to backoffice first if they have a primary store; otherwise /owner
     if (
       session.primaryMembershipRole !== null &&
       OWNER_PORTAL_MEMBERSHIP_ROLES.includes(session.primaryMembershipRole)
     ) {
+      if (session.primaryStoreId) {
+        return NextResponse.redirect(new URL(`/backoffice/store/${session.primaryStoreId}/orders`, request.url));
+      }
       return NextResponse.redirect(new URL("/owner", request.url));
     }
     if (session.primaryStoreId) {
