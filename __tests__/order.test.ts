@@ -46,6 +46,7 @@ import {
   DuplicateOrderError,
   OrderNotFoundError,
 } from "@/services/order.service";
+import type { Order } from "@prisma/client";
 
 const mockPrisma = prisma as ReturnType<typeof vi.mocked<typeof prisma>>;
 
@@ -55,45 +56,46 @@ const TENANT = "tenant-001";
 const STORE = "store-001";
 const CONN = "conn-uber-001";
 
-function makeOrder(overrides: Partial<ReturnType<typeof makeOrder>> = {}) {
-  return {
-    id: "order-uuid-001",
-    tenantId: TENANT,
-    storeId: STORE,
-    sourceChannel: "UBER_EATS" as const,
-    sourceConnectionId: CONN,
-    sourceOrderRef: "uber-ext-001",
-    sourceCustomerRef: null,
-    originSubmittedAt: null,
-    orderedAt: new Date("2026-01-01T12:00:00Z"),
-    acceptedAt: null,
-    completedAt: null,
-    cancelledAt: null,
-    status: "RECEIVED" as const,
-    subtotalAmount: 1500,
-    discountAmount: 0,
-    taxAmount: 150,
-    tipAmount: 0,
-    totalAmount: 1650,
-    currencyCode: "NZD",
-    customerId: null,
-    customerName: "Alice",
-    customerPhone: null,
-    customerEmail: null,
-    posForwardingRequired: false,
-    posConnectionId: null,
-    posSubmissionStatus: "NOT_REQUIRED" as const,
-    posOrderRef: null,
-    posSubmittedAt: null,
-    posAcceptedAt: null,
-    canonicalOrderKey: "UBER_EATS:store-001:uber-ext-001",
-    externalCreatedByBeyond: false,
-    notes: null,
-    rawSourcePayload: {},
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    ...overrides,
-  };
+const BASE_ORDER: Order = {
+  id: "order-uuid-001",
+  tenantId: TENANT,
+  storeId: STORE,
+  sourceChannel: "UBER_EATS",
+  sourceConnectionId: CONN,
+  sourceOrderRef: "uber-ext-001",
+  sourceCustomerRef: null,
+  originSubmittedAt: null,
+  orderedAt: new Date("2026-01-01T12:00:00Z"),
+  acceptedAt: null,
+  completedAt: null,
+  cancelledAt: null,
+  status: "RECEIVED",
+  subtotalAmount: 1500,
+  discountAmount: 0,
+  taxAmount: 150,
+  tipAmount: 0,
+  totalAmount: 1650,
+  currencyCode: "NZD",
+  customerId: null,
+  customerName: "Alice",
+  customerPhone: null,
+  customerEmail: null,
+  posForwardingRequired: false,
+  posConnectionId: null,
+  posSubmissionStatus: "NOT_REQUIRED",
+  posOrderRef: null,
+  posSubmittedAt: null,
+  posAcceptedAt: null,
+  canonicalOrderKey: "UBER_EATS:store-001:uber-ext-001",
+  externalCreatedByBeyond: false,
+  notes: null,
+  rawSourcePayload: {},
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
+function makeOrder(overrides: Partial<Order> = {}): Order {
+  return { ...BASE_ORDER, ...overrides };
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
