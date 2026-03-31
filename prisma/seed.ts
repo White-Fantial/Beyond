@@ -6,13 +6,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Starting seed...\n");
 
-  // ── Idempotency Guard ──────────────────────────────────────────────────
-  const existingUserCount = await prisma.user.count();
-  if (existingUserCount > 0) {
-    console.log("⏭️  Users already exist — skipping seed.\n");
-    return;
-  }
-
   // ── Tenant ──────────────────────────────────────────────────────────────
   console.log("🏢 Seeding tenant...");
   const tenant = await prisma.tenant.upsert({
@@ -35,7 +28,7 @@ async function main() {
   const adminPasswordHash = await bcrypt.hash("Bchfhd$16", 10);
   const adminUser = await prisma.user.upsert({
     where: { email: "nomadongho@gmail.com" },
-    update: {},
+    update: { passwordHash: adminPasswordHash },
     create: {
       email: "nomadongho@gmail.com",
       name: "Dongho Park",
