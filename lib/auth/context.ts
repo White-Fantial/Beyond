@@ -86,7 +86,12 @@ export async function getCurrentUserAuthContext(): Promise<UserAuthContext | nul
   const allStoreMemberships = tenantMemberships.flatMap((tm) => tm.storeMemberships);
 
   const allPermissions = new Set<PermissionKey>();
-  if (isPlatformAdmin) allPermissions.add("PLATFORM_ADMIN");
+  if (isPlatformAdmin) {
+    allPermissions.add("PLATFORM_ADMIN");
+  } else {
+    // All authenticated non-admin users can access the customer app
+    allPermissions.add("CUSTOMER_APP");
+  }
   tenantMemberships.forEach((tm) => {
     (MEMBERSHIP_ROLE_PERMISSIONS[tm.membershipRole] ?? []).forEach((p) => allPermissions.add(p));
     tm.storeMemberships.forEach((sm) => sm.permissions.forEach((p) => allPermissions.add(p)));
