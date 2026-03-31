@@ -7,6 +7,7 @@ import AdminKeyValueList from "@/components/admin/AdminKeyValueList";
 import AdminEmptyState from "@/components/admin/AdminEmptyState";
 import StatusBadge from "@/components/admin/StatusBadge";
 import AdminStatusChangeForm from "@/components/admin/AdminStatusChangeForm";
+import ImpersonateButton from "@/components/admin/ImpersonateButton";
 
 const USER_STATUS_OPTIONS = [
   { value: "ACTIVE", label: "활성" },
@@ -24,6 +25,11 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
   const { userId } = await params;
   const user = await getAdminUserDetail(userId);
 
+  // Impersonation is allowed for non-admin active users
+  const canImpersonate =
+    user.platformRole !== "PLATFORM_ADMIN" &&
+    user.status === "ACTIVE";
+
   return (
     <div>
       <div className="mb-2">
@@ -32,7 +38,30 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
         </Link>
       </div>
 
-      <AdminPageHeader title={user.name} description={user.email} />
+      <div className="flex items-start justify-between gap-4">
+        <AdminPageHeader title={user.name} description={user.email} />
+        {canImpersonate && (
+          <div className="shrink-0 pt-1">
+            <ImpersonateButton
+              targetUserId={user.id}
+              targetName={user.name}
+              targetEmail={user.email}
+            />
+          </div>
+        )}
+        {!canImpersonate && (
+          <div className="shrink-0 pt-1">
+            <span className="inline-block px-3 py-1.5 text-sm text-gray-400 bg-gray-100 border border-gray-200 rounded-md cursor-not-allowed">
+              👁 View as user
+            </span>
+            <p className="mt-1 text-xs text-gray-400">
+              {user.platformRole === "PLATFORM_ADMIN"
+                ? "Cannot impersonate another admin"
+                : "User must be active"}
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Summary KPI */}
       <div className="grid grid-cols-2 gap-4 mb-8">

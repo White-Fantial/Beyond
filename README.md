@@ -532,6 +532,64 @@ Status changes are performed from entity detail pages. Each detail page shows a 
 
 Changes call `PATCH /api/admin/{entity}/{id}/status` and refresh the page on success.
 
+### User Impersonation (Phase 2 Admin Feature)
+
+`PLATFORM_ADMIN` can view the app from any user's point of view for support and issue reproduction.
+
+#### Key Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **actor** | The real logged-in admin — always `PLATFORM_ADMIN`. Recorded in all audit logs. |
+| **effective user** | The impersonated target — governs UI, permissions, and portal routing during the session. |
+
+#### How It Works
+
+1. On `/admin/users/[userId]`, admins see a **"View as user"** button (hidden for other admins and inactive users).
+2. Clicking the button shows a confirmation dialog explaining the impersonation scope.
+3. On confirm, `POST /api/admin/impersonate` is called:
+   - Validates actor is `PLATFORM_ADMIN` and target is eligible.
+   - Creates a signed `beyond_impersonation` JWT cookie (separate from `beyond_session`).
+   - Resolves the effective user's landing page and redirects there.
+   - Writes an `impersonation.started` audit log entry with actor identity.
+4. While impersonating, a **full-width sticky amber banner** is shown at the very top of every page across all portals (`/admin`, `/owner`, `/backoffice`, `/app`).
+5. The banner shows: effective user name/email, signed-in admin email, start time, and an **"Exit impersonation"** button.
+6. Exiting via `DELETE /api/admin/impersonate` clears the cookie, logs `impersonation.ended`, and redirects back to `/admin/users/[userId]`.
+
+#### Policy
+
+| Rule | Detail |
+|------|--------|
+| Who can impersonate | `PLATFORM_ADMIN` only |
+| Allowed targets | Any active user who is not a `PLATFORM_ADMIN` |
+| Blocked targets | Other `PLATFORM_ADMIN` users, `SUSPENDED` / `ARCHIVED` / `INVITED` inactive accounts |
+| Concurrent impersonations | One per session — starting a new one replaces the previous |
+| Audit logging | `impersonation.started`, `impersonation.ended`, `impersonation.denied` events |
+
+#### Session Architecture
+
+Two cookies are used simultaneously:
+
+| Cookie | Purpose |
+|--------|---------|
+| `beyond_session` | Actor's original JWT — **unchanged** throughout impersonation |
+| `beyond_impersonation` | Signed JWT overlay with effective user's identity and routing hints |
+
+`getCurrentUserAuthContext()` returns the **effective user's** memberships and permissions when the impersonation cookie is present. All portal layouts, permission guards, and redirect logic see the effective user transparently.
+
+The middleware reads both cookies: `/admin/**` still requires the actor's session to be `PLATFORM_ADMIN`; all other portals use the effective user's roles.
+
+#### Technical Files
+
+| File | Role |
+|------|------|
+| `lib/auth/impersonation.ts` | `ImpersonationPayload` type, JWT helpers (`createImpersonationToken`, `verifyImpersonationToken`, `getImpersonationState`) |
+| `app/api/admin/impersonate/route.ts` | `POST` (start) and `DELETE` (end) API endpoints |
+| `components/admin/ImpersonationBanner.tsx` | Server component — reads cookie server-side, renders client banner |
+| `components/admin/ImpersonationBannerClient.tsx` | Client component — sticky banner UI with exit button |
+| `components/admin/ImpersonateButton.tsx` | Client component — "View as user" button + confirmation dialog |
+| `app/layout.tsx` | Root layout — mounts `ImpersonationBanner` globally |
+
 ### Implementation Notes
 
 - **Service layer**: `services/admin/` is separate from owner/backoffice services
@@ -576,6 +634,7 @@ Changes call `PATCH /api/admin/{entity}/{id}/status` and refresh the page on suc
 - [x] Product availability control — `isSoldOut` per product, inventory management page, operations overview
 - [x] **Admin Console MVP (read-only)** — dashboard KPIs, tenant/user/store list+detail, search/filter/pagination, PLATFORM_ADMIN guard
 - [x] **Admin Console Phase 2** — write actions (status change), integrations list, webhook log viewer, connection action log viewer, billing/subscription overview, full sidebar navigation
+- [x] **Admin User Impersonation** — PLATFORM_ADMIN can view the app as any active non-admin user; sticky amber banner on all pages; full audit trail; actor/effective-user session separation
 - [ ] Admin Console Phase 3 — tenant/user/store create/edit, integration force-reconnect/sync, analytics charts
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)

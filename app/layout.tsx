@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 
 export const metadata: Metadata = {
   title: "Beyond - Food Business Management",
@@ -14,7 +15,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        <ImpersonationBanner />
+        {children}
+      </body>
     </html>
   );
 }
