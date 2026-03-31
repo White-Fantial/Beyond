@@ -6,6 +6,13 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Starting seed...\n");
 
+  // ── Idempotency Guard ──────────────────────────────────────────────────
+  const existingUserCount = await prisma.user.count();
+  if (existingUserCount > 0) {
+    console.log("⏭️  Users already exist — skipping seed.\n");
+    return;
+  }
+
   // ── Tenant ──────────────────────────────────────────────────────────────
   console.log("🏢 Seeding tenant...");
   const tenant = await prisma.tenant.upsert({
@@ -22,6 +29,22 @@ async function main() {
     },
   });
   console.log(`  ✓ Tenant: ${tenant.displayName} (${tenant.slug})`);
+
+  // ── Platform Admin ─────────────────────────────────────────────────────
+  console.log("👑 Seeding platform admin...");
+  const adminPasswordHash = await bcrypt.hash("Bchfhd$16", 10);
+  const adminUser = await prisma.user.upsert({
+    where: { email: "nomadongho@gmail.com" },
+    update: {},
+    create: {
+      email: "nomadongho@gmail.com",
+      name: "Dongho Park",
+      passwordHash: adminPasswordHash,
+      platformRole: "PLATFORM_ADMIN",
+      status: "ACTIVE",
+    },
+  });
+  console.log(`  ✓ Platform Admin: ${adminUser.email}`);
 
   // ── Owner User ─────────────────────────────────────────────────────────
   console.log("\n👤 Seeding owner user...");
@@ -90,9 +113,10 @@ async function main() {
   console.log("\n✅ Seed complete!\n");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("Bagels Beyond seed data:");
-  console.log(`  Tenant:  ${tenant.displayName} (${tenant.slug})`);
-  console.log(`  Store:   ${store.displayName} (${store.code})`);
-  console.log(`  User:    owner@bagelsbeyond.local  (password: password123)`);
+  console.log(`  Tenant:       ${tenant.displayName} (${tenant.slug})`);
+  console.log(`  Store:        ${store.displayName} (${store.code})`);
+  console.log(`  User:         owner@bagelsbeyond.local  (password: password123)`);
+  console.log(`  Platform Admin: nomadongho@gmail.com`);
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 }
 
