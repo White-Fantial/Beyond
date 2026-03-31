@@ -157,3 +157,21 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
     storeCount: storeMemberships.length,
   };
 }
+
+const ALLOWED_USER_STATUSES = ["ACTIVE", "INVITED", "SUSPENDED", "ARCHIVED"] as const;
+type AllowedUserStatus = (typeof ALLOWED_USER_STATUSES)[number];
+
+export async function setAdminUserStatus(
+  userId: string,
+  status: string
+): Promise<void> {
+  if (!ALLOWED_USER_STATUSES.includes(status as AllowedUserStatus)) {
+    throw new Error(`Invalid user status: ${status}`);
+  }
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+  if (!user) notFound();
+  await prisma.user.update({
+    where: { id: userId },
+    data: { status: status as never, updatedAt: new Date() },
+  });
+}

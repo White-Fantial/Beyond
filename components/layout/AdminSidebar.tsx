@@ -8,13 +8,10 @@ const navItems = [
   { href: "/admin/tenants", label: "테넌트", icon: "🏢" },
   { href: "/admin/users", label: "사용자", icon: "👥" },
   { href: "/admin/stores", label: "매장", icon: "🏪" },
-];
-
-const comingSoonItems = [
-  { label: "연동", icon: "🔌" },
-  { label: "작업", icon: "⚙️" },
-  { label: "로그", icon: "📋" },
-  { label: "결제", icon: "💳" },
+  { href: "/admin/integrations", label: "연동", icon: "🔌" },
+  { href: "/admin/jobs", label: "작업 로그", icon: "⚙️" },
+  { href: "/admin/logs", label: "웹훅 로그", icon: "📋" },
+  { href: "/admin/billing", label: "결제", icon: "💳" },
 ];
 
 export default function AdminSidebar() {
@@ -49,23 +46,6 @@ export default function AdminSidebar() {
             </Link>
           );
         })}
-
-        {comingSoonItems.length > 0 && (
-          <div className="pt-3">
-            <div className="px-3 pb-1.5 text-xs font-medium text-gray-600 uppercase tracking-wide">
-              Coming Soon
-            </div>
-            {comingSoonItems.map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium text-gray-600 cursor-not-allowed"
-              >
-                <span className="text-base opacity-50">{item.icon}</span>
-                <span>{item.label}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </nav>
 
       <div className="px-3 py-4 border-t border-gray-700">

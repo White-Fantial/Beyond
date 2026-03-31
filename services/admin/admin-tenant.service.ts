@@ -161,3 +161,21 @@ export async function getAdminTenantDetail(tenantId: string): Promise<AdminTenan
     connectionSummary,
   };
 }
+
+const ALLOWED_TENANT_STATUSES = ["ACTIVE", "TRIAL", "SUSPENDED", "ARCHIVED"] as const;
+type AllowedTenantStatus = (typeof ALLOWED_TENANT_STATUSES)[number];
+
+export async function setAdminTenantStatus(
+  tenantId: string,
+  status: string
+): Promise<void> {
+  if (!ALLOWED_TENANT_STATUSES.includes(status as AllowedTenantStatus)) {
+    throw new Error(`Invalid tenant status: ${status}`);
+  }
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
+  if (!tenant) notFound();
+  await prisma.tenant.update({
+    where: { id: tenantId },
+    data: { status: status as never, updatedAt: new Date() },
+  });
+}

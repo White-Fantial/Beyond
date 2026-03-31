@@ -12,6 +12,10 @@ import type {
   UserStoreMembershipRow,
   StoreMembershipRow,
   StoreConnectionRow,
+  AdminConnectionListItem,
+  AdminWebhookLogItem,
+  AdminConnectionActionLogItem,
+  AdminSubscriptionPlanRow,
 } from "@/types/admin";
 
 // ─── Tenant mappers ───────────────────────────────────────────────────────────
@@ -236,5 +240,124 @@ export function mapStoreConnectionRow(c: {
     lastConnectedAt: c.lastConnectedAt,
     lastSyncAt: c.lastSyncAt,
     lastSyncStatus: c.lastSyncStatus,
+  };
+}
+
+// ─── Platform-wide Connection mappers ─────────────────────────────────────────
+
+export function mapConnectionListItem(c: {
+  id: string;
+  tenantId: string;
+  storeId: string;
+  provider: string;
+  type: string;
+  status: string;
+  externalStoreName: string | null;
+  lastConnectedAt: Date | null;
+  lastSyncAt: Date | null;
+  lastSyncStatus: string | null;
+  createdAt: Date;
+  store: { name: string };
+  tenant: { displayName: string };
+}): AdminConnectionListItem {
+  return {
+    id: c.id,
+    tenantId: c.tenantId,
+    tenantDisplayName: c.tenant.displayName,
+    storeId: c.storeId,
+    storeName: c.store.name,
+    provider: c.provider,
+    type: c.type,
+    status: c.status,
+    externalStoreName: c.externalStoreName,
+    lastConnectedAt: c.lastConnectedAt,
+    lastSyncAt: c.lastSyncAt,
+    lastSyncStatus: c.lastSyncStatus,
+    createdAt: c.createdAt,
+  };
+}
+
+// ─── Webhook log mappers ──────────────────────────────────────────────────────
+
+export function mapWebhookLogItem(w: {
+  id: string;
+  tenantId: string | null;
+  storeId: string | null;
+  channelType: string | null;
+  eventName: string | null;
+  externalEventRef: string | null;
+  signatureValid: boolean | null;
+  processingStatus: string;
+  receivedAt: Date;
+  processedAt: Date | null;
+  errorMessage: string | null;
+}): AdminWebhookLogItem {
+  return {
+    id: w.id,
+    tenantId: w.tenantId,
+    storeId: w.storeId,
+    channelType: w.channelType,
+    eventName: w.eventName,
+    externalEventRef: w.externalEventRef,
+    signatureValid: w.signatureValid,
+    processingStatus: w.processingStatus,
+    receivedAt: w.receivedAt,
+    processedAt: w.processedAt,
+    errorMessage: w.errorMessage,
+  };
+}
+
+// ─── Connection action log mappers ────────────────────────────────────────────
+
+export function mapConnectionActionLogItem(l: {
+  id: string;
+  tenantId: string;
+  storeId: string;
+  provider: string;
+  actionType: string;
+  status: string;
+  message: string | null;
+  errorCode: string | null;
+  createdAt: Date;
+}): AdminConnectionActionLogItem {
+  return {
+    id: l.id,
+    tenantId: l.tenantId,
+    storeId: l.storeId,
+    provider: l.provider,
+    actionType: l.actionType,
+    status: l.status,
+    message: l.message,
+    errorCode: l.errorCode,
+    createdAt: l.createdAt,
+  };
+}
+
+// ─── Billing mappers ──────────────────────────────────────────────────────────
+
+export function mapSubscriptionPlanRow(
+  p: {
+    id: string;
+    storeId: string;
+    name: string;
+    price: number;
+    interval: string;
+    isActive: boolean;
+    createdAt: Date;
+    store: { name: string; tenant: { displayName: string } };
+  },
+  activeSubscriptions: number
+): AdminSubscriptionPlanRow {
+  return {
+    id: p.id,
+    storeId: p.storeId,
+    storeName: p.store.name,
+    tenantDisplayName: p.store.tenant.displayName,
+    name: p.name,
+    price: p.price,
+    interval: p.interval,
+    isActive: p.isActive,
+    activeSubscriptions,
+    createdAt: p.createdAt,
   };
 }

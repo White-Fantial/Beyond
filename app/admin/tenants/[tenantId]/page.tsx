@@ -5,8 +5,16 @@ import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import AdminKeyValueList from "@/components/admin/AdminKeyValueList";
 import StatusBadge from "@/components/admin/StatusBadge";
+import AdminStatusChangeForm from "@/components/admin/AdminStatusChangeForm";
 import MembershipTable from "@/components/admin/MembershipTable";
 import ConnectionSummaryTable from "@/components/admin/ConnectionSummaryTable";
+
+const TENANT_STATUS_OPTIONS = [
+  { value: "ACTIVE", label: "활성" },
+  { value: "TRIAL", label: "체험" },
+  { value: "SUSPENDED", label: "정지" },
+  { value: "ARCHIVED", label: "보관" },
+];
 
 interface PageProps {
   params: Promise<{ tenantId: string }>;
@@ -51,6 +59,17 @@ export default async function AdminTenantDetailPage({ params }: PageProps) {
             { label: "생성일", value: tenant.createdAt.toLocaleString("ko-KR") },
             { label: "수정일", value: tenant.updatedAt.toLocaleString("ko-KR") },
           ]}
+        />
+      </div>
+
+      {/* Status Change */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">상태 변경</h2>
+        <AdminStatusChangeForm
+          entityType="tenants"
+          entityId={tenant.id}
+          currentStatus={tenant.status}
+          options={TENANT_STATUS_OPTIONS}
         />
       </div>
 

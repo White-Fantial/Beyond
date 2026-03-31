@@ -5,8 +5,15 @@ import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import AdminKeyValueList from "@/components/admin/AdminKeyValueList";
 import StatusBadge from "@/components/admin/StatusBadge";
+import AdminStatusChangeForm from "@/components/admin/AdminStatusChangeForm";
 import StoreMembershipTable from "@/components/admin/StoreMembershipTable";
 import StoreConnectionTable from "@/components/admin/StoreConnectionTable";
+
+const STORE_STATUS_OPTIONS = [
+  { value: "ACTIVE", label: "활성" },
+  { value: "INACTIVE", label: "비활성" },
+  { value: "ARCHIVED", label: "보관" },
+];
 
 interface PageProps {
   params: Promise<{ storeId: string }>;
@@ -58,6 +65,17 @@ export default async function AdminStoreDetailPage({ params }: PageProps) {
             { label: "생성일", value: store.createdAt.toLocaleString("ko-KR") },
             { label: "수정일", value: store.updatedAt.toLocaleString("ko-KR") },
           ]}
+        />
+      </div>
+
+      {/* Status Change */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">상태 변경</h2>
+        <AdminStatusChangeForm
+          entityType="stores"
+          entityId={store.id}
+          currentStatus={store.status}
+          options={STORE_STATUS_OPTIONS}
         />
       </div>
 

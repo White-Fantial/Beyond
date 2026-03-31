@@ -146,3 +146,21 @@ export async function getAdminStoreDetail(storeId: string): Promise<AdminStoreDe
     ),
   };
 }
+
+const ALLOWED_STORE_STATUSES = ["ACTIVE", "INACTIVE", "ARCHIVED"] as const;
+type AllowedStoreStatus = (typeof ALLOWED_STORE_STATUSES)[number];
+
+export async function setAdminStoreStatus(
+  storeId: string,
+  status: string
+): Promise<void> {
+  if (!ALLOWED_STORE_STATUSES.includes(status as AllowedStoreStatus)) {
+    throw new Error(`Invalid store status: ${status}`);
+  }
+  const store = await prisma.store.findUnique({ where: { id: storeId }, select: { id: true } });
+  if (!store) notFound();
+  await prisma.store.update({
+    where: { id: storeId },
+    data: { status: status as never, updatedAt: new Date() },
+  });
+}

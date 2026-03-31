@@ -487,9 +487,9 @@ Open [http://localhost:3000](http://localhost:3000) to view the landing page.
 
 ---
 
-## Admin Console (Platform Admin MVP)
+## Admin Console (Platform Admin)
 
-The `/admin` portal is a **PLATFORM_ADMIN-only, read-only operations console** for monitoring the entire platform.
+The `/admin` portal is a **PLATFORM_ADMIN-only operations console** for managing the entire platform.
 
 ### Access Control
 
@@ -506,11 +506,15 @@ The `/admin` portal is a **PLATFORM_ADMIN-only, read-only operations console** f
 |-------|-------------|
 | `/admin` | Platform dashboard — KPI cards + recent tenants/users/stores |
 | `/admin/tenants` | Tenant list with search, status filter, pagination |
-| `/admin/tenants/[tenantId]` | Tenant detail — info, stores, memberships, connection summary |
+| `/admin/tenants/[tenantId]` | Tenant detail — info, stores, memberships, connection summary, **status change** |
 | `/admin/users` | User list with search, status filter, pagination |
-| `/admin/users/[userId]` | User detail — info, tenant memberships, store memberships |
+| `/admin/users/[userId]` | User detail — info, tenant memberships, store memberships, **status change** |
 | `/admin/stores` | Store list with search, status filter, pagination |
-| `/admin/stores/[storeId]` | Store detail — info, memberships, connections |
+| `/admin/stores/[storeId]` | Store detail — info, memberships, connections, **status change** |
+| `/admin/integrations` | Platform-wide connection list — filter by status/provider, pagination |
+| `/admin/jobs` | Connection action log viewer — filter by provider/status, pagination |
+| `/admin/logs` | Inbound webhook log viewer — filter by channel/status, pagination |
+| `/admin/billing` | Subscription plan & subscription overview |
 
 ### Dashboard KPIs
 
@@ -518,45 +522,28 @@ The `/admin` portal is a **PLATFORM_ADMIN-only, read-only operations console** f
 - New tenants / users / stores in last 7 days
 - Recent 5 items each for tenants, users, stores
 
-### Tenant Detail
+### Write Actions (Phase 2)
 
-- Basic info (id, slug, legalName, status, timezone, currency, countryCode)
-- Summary counts (stores, memberships, users, connections)
-- Store list → links to store detail
-- Membership list (role, status, joinedAt)
-- Connection summary by provider
+Status changes are performed from entity detail pages. Each detail page shows a **상태 변경** (Status Change) section with a dropdown and save button:
 
-### User Detail
+- **Tenant**: ACTIVE / TRIAL / SUSPENDED / ARCHIVED
+- **User**: ACTIVE / INVITED / SUSPENDED / ARCHIVED
+- **Store**: ACTIVE / INACTIVE / ARCHIVED
 
-- Basic info (id, name, email, phone, platformRole, status, lastLoginAt)
-- Tenant membership list → links to tenant detail
-- Store membership list → links to store/tenant detail
-
-### Store Detail
-
-- Basic info (id, tenantId, name, code, status, timezone, currency)
-- Summary counts (memberships, connections, active connections)
-- Membership list
-- Connection list (provider, type, status, authScheme, lastConnectedAt, lastSyncAt)
-- Tenant link → tenant detail
+Changes call `PATCH /api/admin/{entity}/{id}/status` and refresh the page on success.
 
 ### Implementation Notes
 
-- **Read-only**: no create/update/delete/status-change actions anywhere
-- **Existing fields only**: only fields present in the Prisma schema are shown; no speculative data
 - **Service layer**: `services/admin/` is separate from owner/backoffice services
+- **Write API routes**: `app/api/admin/tenants/[id]/status`, `app/api/admin/users/[id]/status`, `app/api/admin/stores/[id]/status`
 - **No sensitive data**: passwordHash, tokens, session data are never exposed
 - **Mobile support**: sidebar hidden on mobile with a compact navigation bar
 - **Pagination**: 20 items per page, query-string based (`?q=...&status=...&page=...`)
 
-### 2차 Admin 확장 예정
+### Phase 3 예정
 
-다음 기능은 2차에서 구현 예정입니다:
-
-- Write actions: tenant/user/store 상태 변경, 생성/수정/삭제
-- Integration management: connection 강제 reconnect / sync
-- Jobs & Logs: background job 모니터링, 시스템 로그 뷰어
-- Billing: 플랫폼 결제 현황
+- Tenant/user/store 생성, 수정
+- Integration force-reconnect / sync trigger
 - Analytics: 차트 기반 트렌드 분석
 
 ---
@@ -588,7 +575,8 @@ The `/admin` portal is a **PLATFORM_ADMIN-only, read-only operations console** f
 - [x] Backoffice orders page — live order list with status transitions
 - [x] Product availability control — `isSoldOut` per product, inventory management page, operations overview
 - [x] **Admin Console MVP (read-only)** — dashboard KPIs, tenant/user/store list+detail, search/filter/pagination, PLATFORM_ADMIN guard
-- [ ] Admin Console Phase 2 — write actions, jobs, logs, billing, integrations
+- [x] **Admin Console Phase 2** — write actions (status change), integrations list, webhook log viewer, connection action log viewer, billing/subscription overview, full sidebar navigation
+- [ ] Admin Console Phase 3 — tenant/user/store create/edit, integration force-reconnect/sync, analytics charts
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)

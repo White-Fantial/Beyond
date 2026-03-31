@@ -1,0 +1,24 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
+import { setAdminUserStatus } from "@/services/admin/admin-user.service";
+
+interface Params {
+  params: Promise<{ userId: string }>;
+}
+
+export async function PATCH(req: NextRequest, { params }: Params) {
+  try {
+    await requirePlatformAdmin();
+    const { userId } = await params;
+    const body = await req.json();
+    const { status } = body;
+    if (!status || typeof status !== "string") {
+      return NextResponse.json({ error: "status is required" }, { status: 400 });
+    }
+    await setAdminUserStatus(userId, status);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}

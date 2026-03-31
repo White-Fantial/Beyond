@@ -6,6 +6,14 @@ import AdminStatCard from "@/components/admin/AdminStatCard";
 import AdminKeyValueList from "@/components/admin/AdminKeyValueList";
 import AdminEmptyState from "@/components/admin/AdminEmptyState";
 import StatusBadge from "@/components/admin/StatusBadge";
+import AdminStatusChangeForm from "@/components/admin/AdminStatusChangeForm";
+
+const USER_STATUS_OPTIONS = [
+  { value: "ACTIVE", label: "활성" },
+  { value: "INVITED", label: "초대됨" },
+  { value: "SUSPENDED", label: "정지" },
+  { value: "ARCHIVED", label: "보관" },
+];
 
 interface PageProps {
   params: Promise<{ userId: string }>;
@@ -47,6 +55,17 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
             { label: "생성일", value: user.createdAt.toLocaleString("ko-KR") },
             { label: "수정일", value: user.updatedAt.toLocaleString("ko-KR") },
           ]}
+        />
+      </div>
+
+      {/* Status Change */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">상태 변경</h2>
+        <AdminStatusChangeForm
+          entityType="users"
+          entityId={user.id}
+          currentStatus={user.status}
+          options={USER_STATUS_OPTIONS}
         />
       </div>
 

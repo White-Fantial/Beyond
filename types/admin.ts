@@ -237,3 +237,95 @@ export interface StoreConnectionRow {
   lastSyncAt: Date | null;
   lastSyncStatus: string | null;
 }
+
+// ─── Platform-wide Connection list ────────────────────────────────────────────
+
+export interface AdminConnectionListItem {
+  id: string;
+  tenantId: string;
+  tenantDisplayName: string;
+  storeId: string;
+  storeName: string;
+  provider: string;
+  type: string;
+  status: string;
+  externalStoreName: string | null;
+  lastConnectedAt: Date | null;
+  lastSyncAt: Date | null;
+  lastSyncStatus: string | null;
+  createdAt: Date;
+}
+
+export interface AdminConnectionListParams {
+  q?: string;
+  status?: string;
+  provider?: string;
+  page?: number | string;
+  pageSize?: number | string;
+}
+
+// ─── Inbound Webhook Logs ─────────────────────────────────────────────────────
+
+export interface AdminWebhookLogItem {
+  id: string;
+  tenantId: string | null;
+  storeId: string | null;
+  channelType: string | null;
+  eventName: string | null;
+  externalEventRef: string | null;
+  signatureValid: boolean | null;
+  processingStatus: string;
+  receivedAt: Date;
+  processedAt: Date | null;
+  errorMessage: string | null;
+}
+
+export interface AdminWebhookLogParams {
+  status?: string;
+  channelType?: string;
+  page?: number | string;
+  pageSize?: number | string;
+}
+
+// ─── Connection Action Logs (Jobs) ────────────────────────────────────────────
+
+export interface AdminConnectionActionLogItem {
+  id: string;
+  tenantId: string;
+  storeId: string;
+  provider: string;
+  actionType: string;
+  status: string;
+  message: string | null;
+  errorCode: string | null;
+  createdAt: Date;
+}
+
+export interface AdminConnectionActionLogParams {
+  provider?: string;
+  status?: string;
+  page?: number | string;
+  pageSize?: number | string;
+}
+
+// ─── Billing ──────────────────────────────────────────────────────────────────
+
+export interface AdminBillingSummary {
+  totalSubscriptionPlans: number;
+  totalActiveSubscriptions: number;
+  totalSubscriptions: number;
+  recentPlans: AdminSubscriptionPlanRow[];
+}
+
+export interface AdminSubscriptionPlanRow {
+  id: string;
+  storeId: string;
+  storeName: string;
+  tenantDisplayName: string;
+  name: string;
+  price: number;
+  interval: string;
+  isActive: boolean;
+  activeSubscriptions: number;
+  createdAt: Date;
+}
