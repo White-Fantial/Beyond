@@ -9,11 +9,15 @@ export async function resolvePostLoginRedirect(session: SessionPayload): Promise
   // 1. Platform admin → /admin
   if (platformRole === PLATFORM_ROLES.PLATFORM_ADMIN) return "/admin";
 
-  // 2. Tenant owner/admin → /owner
+  // 2. Tenant owner/admin → /backoffice first (operators primarily work there);
+  //    fall back to /owner if they have no store assigned yet.
   if (
     primaryMembershipRole !== null &&
     OWNER_PORTAL_MEMBERSHIP_ROLES.includes(primaryMembershipRole as MembershipRoleKey)
   ) {
+    if (primaryStoreId) {
+      return `/backoffice/store/${primaryStoreId}/orders`;
+    }
     return "/owner";
   }
 
