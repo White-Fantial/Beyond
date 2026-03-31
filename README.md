@@ -446,11 +446,17 @@ Open [http://localhost:3000](http://localhost:3000) to view the landing page.
 - [x] Backoffice catalog pages (categories, products, modifiers) — operational UX
 - [x] Channel entity mapping for outbound ID resolution
 - [x] Vitest test suite (catalog service, sync, parsers, foundation integrity)
+- [x] Canonical order model (multi-channel: Uber Eats / DoorDash / Online / Subscription / POS)
+- [x] POS forwarding + docket-print pipeline with submission status tracking
+- [x] POS webhook/sync reconciliation (idempotent — no duplicate orders)
+- [x] OrderChannelLink for SOURCE / FORWARDED / MIRROR channel tracking
+- [x] OrderEvent immutable audit trail
+- [x] InboundWebhookLog for raw webhook storage and signature-verification audit
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)
 - [ ] Real-time order notifications (WebSocket / SSE)
-- [ ] Sales analytics charts
+- [ ] Sales analytics charts (canonical order aggregation)
 - [ ] Subscription billing engine
 
 ---
@@ -496,11 +502,188 @@ Never fall back to using internal UUIDs as Loyverse IDs. If the mapping is missi
 
 ---
 
-© 2024 Beyond. All rights reserved.
+## Order Architecture
+
+### Overview — Canonical Order Model
+
+Beyond uses a **canonical order model**: every real customer purchase is stored as exactly **one `Order` row** in the database, regardless of which channel the order came from or how many systems it was forwarded to.
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  External channels (inbound)           │  Execution targets (outbound) │
+│  Uber Eats / DoorDash / Online         │  POS (docket print)           │
+│  Subscription / POS-direct             │                               │
+└───────────────────┬───────────────────────────────┬──────────────────┘
+                    │                               │
+                    ▼                               ▼
+        ┌───────────────────────┐       ┌─────────────────────┐
+        │   OrderChannelLink    │       │   OrderChannelLink  │
+        │   role = SOURCE       │       │   role = FORWARDED  │
+        │   direction = INBOUND │       │   direction = OUTBOUND│
+        └───────────┬───────────┘       └──────────┬──────────┘
+                    │                              │
+                    └──────────────┬───────────────┘
+                                   ▼
+                         ┌──────────────────┐
+                         │   Order (canonical)│
+                         │   1 row per purchase│
+                         │   sourceChannel    │
+                         │   status           │
+                         │   totalAmount      │
+                         └────────┬───────────┘
+                                  │
+                    ┌─────────────┼─────────────┐
+                    ▼             ▼             ▼
+               OrderItem    OrderEvent    InboundWebhookLog
+             (line items)  (audit trail)  (raw webhook log)
+```
+
+### Key Design Principles
+
+| Principle | Description |
+|-----------|-------------|
+| **One order per purchase** | One real purchase = one `Order` row, regardless of channel path. |
+| **source_channel ≠ forwarding** | `orders.sourceChannel` records where the order originated. `OrderChannelLink` records every channel it touched (source, forwarded-to, mirrored). |
+| **Internal ID / external ID strictly separated** | `orders.id` is an internal UUID only. All external refs (`uberOrderId`, `posOrderRef`, etc.) are stored in separate fields or `OrderChannelLink.externalOrderRef`. |
+| **Raw payload always stored** | Every inbound order event stores its raw payload in `orders.rawSourcePayload` and `InboundWebhookLog.requestBody`. |
+| **POS is dual-role** | POS can be the *source* of an order (staff inputs directly), or a *forwarding target* (Beyond sends a delivery order to POS for docket printing). |
+| **Reconciliation before creation** | On every POS webhook/sync, the service checks for an existing `FORWARDED` link before creating a new order. |
 
 ---
 
-## Architecture
+### Database Tables — Order Domain
+
+| Table | Purpose |
+|-------|---------|
+| `orders` | Canonical order record (one per real purchase). |
+| `order_items` | Line items within a canonical order. |
+| `order_item_modifiers` | Modifier/option selections within a line item. |
+| `order_channel_links` | Per-channel connection records (SOURCE / FORWARDED / MIRROR). |
+| `order_events` | Immutable audit trail for order lifecycle events. |
+| `inbound_webhook_logs` | Raw log of every inbound webhook call from external channels. |
+| `legacy_orders` | *(deprecated)* Previous simple order table (not used for new orders). |
+| `legacy_order_items` | *(deprecated)* Previous order items table. |
+| `legacy_payments` | *(deprecated)* Previous payment table. |
+
+---
+
+### Order Enums
+
+| Enum | Values |
+|------|--------|
+| `OrderSourceChannel` | `POS`, `UBER_EATS`, `DOORDASH`, `ONLINE`, `SUBSCRIPTION`, `MANUAL`, `UNKNOWN` |
+| `OrderChannelType` | `POS`, `UBER_EATS`, `DOORDASH`, `ONLINE`, `SUBSCRIPTION` |
+| `OrderChannelRole` | `SOURCE`, `FORWARDED`, `MIRROR` |
+| `OrderLinkDirection` | `INBOUND`, `OUTBOUND` |
+| `OrderStatus` | `RECEIVED`, `ACCEPTED`, `IN_PROGRESS`, `READY`, `COMPLETED`, `CANCELLED`, `FAILED` |
+| `PosSubmissionStatus` | `NOT_REQUIRED`, `PENDING`, `SENT`, `ACCEPTED`, `FAILED`, `SKIPPED` |
+| `OrderEventType` | `ORDER_RECEIVED`, `ORDER_CREATED`, `ORDER_UPDATED`, `ORDER_STATUS_CHANGED`, `POS_FORWARD_REQUESTED`, `POS_FORWARD_SENT`, `POS_FORWARD_ACCEPTED`, `POS_FORWARD_FAILED`, `POS_RECONCILED`, `ORDER_CANCELLED`, `RAW_WEBHOOK_RECEIVED`, `RAW_SYNC_RECEIVED` |
+
+---
+
+### POS Order Cases
+
+Beyond distinguishes two fundamentally different POS order scenarios:
+
+#### Case 1 — POS is the source
+
+Staff inputs an order directly on the POS terminal. The POS sends a webhook to Beyond.
+
+```
+POS → webhook → reconcilePosWebhookOrSync()
+  → No FORWARDED link found
+  → No posOrderRef match found
+  → Create new Order { sourceChannel: "POS" }
+  → Create OrderChannelLink { role: SOURCE, direction: INBOUND }
+```
+
+#### Case 2 — External order forwarded to POS
+
+An Uber Eats or DoorDash order arrives. Beyond creates the canonical order, then forwards it to POS so a docket can be printed.
+
+```
+Uber Eats → webhook → createCanonicalOrderFromInbound()
+  → Create Order { sourceChannel: "UBER_EATS" }
+  → Create OrderChannelLink { role: SOURCE, direction: INBOUND }
+
+Beyond → forwardOrderToPos()
+  → Order { posSubmissionStatus: PENDING }
+  → Create OrderChannelLink { role: FORWARDED, direction: OUTBOUND, createdByBeyond: true }
+
+POS → webhook (echo) → reconcilePosWebhookOrSync()
+  → FORWARDED link found → update existing order (NOT created again)
+  → Create/update OrderChannelLink { role: MIRROR, direction: INBOUND }
+  → Emit POS_RECONCILED event
+```
+
+---
+
+### Idempotency / Deduplication
+
+Every inbound order with an external ref gets a `canonicalOrderKey`:
+
+```
+canonicalOrderKey = "<OrderChannelType>:<storeId>:<externalOrderRef>"
+# e.g. "UBER_EATS:store-uuid-001:uber-order-XYZ"
+```
+
+A **partial unique index** (`WHERE canonical_order_key IS NOT NULL`) enforces uniqueness at the database level, allowing `null` for orders without external refs.
+
+`createCanonicalOrderFromInbound()` checks the key before inserting — if it already exists, the existing order is returned and `created: false` is reported. No duplicate is created.
+
+---
+
+### POS Reconciliation Lookup Order
+
+`reconcilePosWebhookOrSync()` always checks in this order before creating:
+
+1. **FORWARDED link lookup** — find `OrderChannelLink` where `role=FORWARDED`, `direction=OUTBOUND`, `connectionId=<posConnectionId>`, `externalOrderRef=<posOrderRef>`. If found → update existing order.
+2. **posOrderRef direct match** — find `Order` where `posConnectionId=<conn>` and `posOrderRef=<ref>`. If found → update.
+3. **canonicalOrderKey idempotency** — check `POS:<storeId>:<posOrderRef>`. If found → return existing order.
+4. **Create new POS-origin order** — only if all lookups fail.
+
+---
+
+### Order Service API (`services/order.service.ts`)
+
+| Function | Description |
+|----------|-------------|
+| `createCanonicalOrderFromInbound(input)` | Create a canonical order from an inbound channel event. Idempotent via `canonicalOrderKey`. |
+| `forwardOrderToPos(input)` | Mark an order as forwarded to POS, create OUTBOUND channel link. |
+| `recordPosForwardResponse(input)` | Record POS acceptance or rejection of a forwarded order. |
+| `reconcilePosWebhookOrSync(input)` | Reconcile a POS webhook/sync event — update or create. |
+| `updateOrderStatus(orderId, status)` | Transition order status, record event. |
+| `logInboundWebhook(params)` | Write a raw `InboundWebhookLog` at the start of webhook handling. |
+| `markWebhookLogProcessed(logId, status)` | Mark a webhook log as processed (or failed). |
+
+---
+
+### Sales Analytics
+
+The canonical `orders` table supports multi-channel sales aggregation directly:
+
+```sql
+-- Revenue by channel
+SELECT source_channel, SUM(total_amount) AS revenue, COUNT(*) AS order_count
+FROM orders
+WHERE tenant_id = $1
+  AND store_id  = $2
+  AND status    = 'COMPLETED'
+  AND ordered_at BETWEEN $3 AND $4
+GROUP BY source_channel;
+
+-- Revenue by day
+SELECT DATE_TRUNC('day', ordered_at) AS day, SUM(total_amount) AS revenue
+FROM orders
+WHERE tenant_id = $1 AND store_id = $2 AND status = 'COMPLETED'
+GROUP BY 1 ORDER BY 1;
+```
+
+All amounts are stored as integer minor units (e.g. NZD cents). `currencyCode` is per-order. Never aggregate across different currencies.
+
+---
+
+
 
 ### Multi-Tenant Data Model
 
