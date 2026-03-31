@@ -38,16 +38,18 @@ beyond/
 │   ├── (dashboard)/            # Legacy dashboard route group
 │   │   ├── layout.tsx
 │   │   └── dashboard/page.tsx
-│   ├── admin/                  # /admin — platform admin portal
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
+│   ├── admin/                  # /admin — PLATFORM_ADMIN only, read-only console
+│   │   ├── layout.tsx          # Auth guard (PLATFORM_ADMIN only) + mobile nav
+│   │   ├── page.tsx            # Dashboard: KPI + recent tenants/users/stores
 │   │   ├── tenants/
+│   │   │   ├── page.tsx        # Tenant list (search, status filter, pagination)
+│   │   │   └── [tenantId]/     # Tenant detail (stores, memberships, connections)
 │   │   ├── users/
-│   │   ├── stores/
-│   │   ├── billing/
-│   │   ├── integrations/
-│   │   ├── jobs/
-│   │   └── logs/
+│   │   │   ├── page.tsx        # User list (search, status filter, pagination)
+│   │   │   └── [userId]/       # User detail (tenant+store memberships)
+│   │   └── stores/
+│   │       ├── page.tsx        # Store list (search, status filter, pagination)
+│   │       └── [storeId]/      # Store detail (memberships, connections)
 │   ├── backoffice/             # /backoffice — store operations portal
 │   │   ├── select-store/       # Store picker page
 │   │   └── store/[storeId]/    # Per-store operations
@@ -485,7 +487,81 @@ Open [http://localhost:3000](http://localhost:3000) to view the landing page.
 
 ---
 
-## Roadmap
+## Admin Console (Platform Admin MVP)
+
+The `/admin` portal is a **PLATFORM_ADMIN-only, read-only operations console** for monitoring the entire platform.
+
+### Access Control
+
+- Protected at three levels:
+  1. `middleware.ts` — edge-level route guard, blocks non-`PLATFORM_ADMIN` before any page loads
+  2. `app/admin/layout.tsx` — server component auth check via `requireAuth()`
+  3. Service layer — `requirePlatformAdmin()` helper in each page
+- `OWNER`, `MANAGER`, `STAFF`, and other roles **cannot** access `/admin`
+- Unauthorized users are redirected to `/unauthorized`
+
+### Routes
+
+| Route | Description |
+|-------|-------------|
+| `/admin` | Platform dashboard — KPI cards + recent tenants/users/stores |
+| `/admin/tenants` | Tenant list with search, status filter, pagination |
+| `/admin/tenants/[tenantId]` | Tenant detail — info, stores, memberships, connection summary |
+| `/admin/users` | User list with search, status filter, pagination |
+| `/admin/users/[userId]` | User detail — info, tenant memberships, store memberships |
+| `/admin/stores` | Store list with search, status filter, pagination |
+| `/admin/stores/[storeId]` | Store detail — info, memberships, connections |
+
+### Dashboard KPIs
+
+- Total tenants, stores, users, connections
+- New tenants / users / stores in last 7 days
+- Recent 5 items each for tenants, users, stores
+
+### Tenant Detail
+
+- Basic info (id, slug, legalName, status, timezone, currency, countryCode)
+- Summary counts (stores, memberships, users, connections)
+- Store list → links to store detail
+- Membership list (role, status, joinedAt)
+- Connection summary by provider
+
+### User Detail
+
+- Basic info (id, name, email, phone, platformRole, status, lastLoginAt)
+- Tenant membership list → links to tenant detail
+- Store membership list → links to store/tenant detail
+
+### Store Detail
+
+- Basic info (id, tenantId, name, code, status, timezone, currency)
+- Summary counts (memberships, connections, active connections)
+- Membership list
+- Connection list (provider, type, status, authScheme, lastConnectedAt, lastSyncAt)
+- Tenant link → tenant detail
+
+### Implementation Notes
+
+- **Read-only**: no create/update/delete/status-change actions anywhere
+- **Existing fields only**: only fields present in the Prisma schema are shown; no speculative data
+- **Service layer**: `services/admin/` is separate from owner/backoffice services
+- **No sensitive data**: passwordHash, tokens, session data are never exposed
+- **Mobile support**: sidebar hidden on mobile with a compact navigation bar
+- **Pagination**: 20 items per page, query-string based (`?q=...&status=...&page=...`)
+
+### 2차 Admin 확장 예정
+
+다음 기능은 2차에서 구현 예정입니다:
+
+- Write actions: tenant/user/store 상태 변경, 생성/수정/삭제
+- Integration management: connection 강제 reconnect / sync
+- Jobs & Logs: background job 모니터링, 시스템 로그 뷰어
+- Billing: 플랫폼 결제 현황
+- Analytics: 차트 기반 트렌드 분석
+
+---
+
+
 
 - [x] Project scaffolding (Next.js 14, Prisma, Tailwind)
 - [x] Domain types & adapter interfaces

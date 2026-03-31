@@ -1,33 +1,105 @@
-import { requirePermission } from "@/lib/auth/permissions";
-import { PERMISSIONS } from "@/lib/auth/constants";
+import Link from "next/link";
+import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
+import { getAdminDashboardSummary } from "@/services/admin/admin-dashboard.service";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminStatCard from "@/components/admin/AdminStatCard";
+import StatusBadge from "@/components/admin/StatusBadge";
 
 export default async function AdminHomePage() {
-  await requirePermission(PERMISSIONS.PLATFORM_ADMIN);
+  await requirePlatformAdmin();
+  const summary = await getAdminDashboardSummary();
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">플랫폼 관리</h1>
-      <p className="text-gray-500 mb-6">SaaS 플랫폼 전체를 관리합니다.</p>
-      <div className="grid grid-cols-2 gap-4">
-        {[
-          { href: "/admin/tenants", icon: "🏢", title: "테넌트", desc: "테넌트 관리" },
-          { href: "/admin/stores", icon: "🏪", title: "매장", desc: "전체 매장 관리" },
-          { href: "/admin/users", icon: "👥", title: "사용자", desc: "전체 사용자 관리" },
-          { href: "/admin/integrations", icon: "🔌", title: "연동", desc: "플랫폼 연동 관리" },
-          { href: "/admin/jobs", icon: "⚙️", title: "작업", desc: "백그라운드 작업" },
-          { href: "/admin/logs", icon: "📋", title: "로그", desc: "시스템 로그" },
-          { href: "/admin/billing", icon: "💳", title: "결제", desc: "플랫폼 결제 관리" },
-        ].map((item) => (
-          <a
-            key={item.href}
-            href={item.href}
-            className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition"
-          >
-            <div className="text-2xl mb-2">{item.icon}</div>
-            <div className="font-medium text-gray-900">{item.title}</div>
-            <div className="text-sm text-gray-500">{item.desc}</div>
-          </a>
-        ))}
+      <AdminPageHeader
+        title="플랫폼 대시보드"
+        description="플랫폼 전체 현황을 한눈에 확인합니다."
+      />
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <AdminStatCard label="전체 테넌트" value={summary.totalTenants} sub={`+${summary.newTenantsLast7Days} (7일)`} />
+        <AdminStatCard label="전체 매장" value={summary.totalStores} sub={`+${summary.newStoresLast7Days} (7일)`} />
+        <AdminStatCard label="전체 사용자" value={summary.totalUsers} sub={`+${summary.newUsersLast7Days} (7일)`} />
+        <AdminStatCard label="전체 연결" value={summary.totalConnections} />
+      </div>
+
+      {/* Recent lists */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Tenants */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-gray-700">최근 테넌트</h2>
+            <Link href="/admin/tenants" className="text-xs text-blue-600 hover:underline">전체 보기 →</Link>
+          </div>
+          {summary.recentTenants.length === 0 ? (
+            <p className="text-xs text-gray-400 py-4 text-center">데이터가 없습니다.</p>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {summary.recentTenants.map((t) => (
+                <li key={t.id} className="py-2 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <Link href={`/admin/tenants/${t.id}`} className="text-sm font-medium text-gray-900 hover:underline truncate block">
+                      {t.displayName}
+                    </Link>
+                    <span className="text-xs text-gray-400">{t.slug}</span>
+                  </div>
+                  <StatusBadge value={t.status} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Recent Users */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-gray-700">최근 사용자</h2>
+            <Link href="/admin/users" className="text-xs text-blue-600 hover:underline">전체 보기 →</Link>
+          </div>
+          {summary.recentUsers.length === 0 ? (
+            <p className="text-xs text-gray-400 py-4 text-center">데이터가 없습니다.</p>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {summary.recentUsers.map((u) => (
+                <li key={u.id} className="py-2 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <Link href={`/admin/users/${u.id}`} className="text-sm font-medium text-gray-900 hover:underline truncate block">
+                      {u.name}
+                    </Link>
+                    <span className="text-xs text-gray-400 truncate block">{u.email}</span>
+                  </div>
+                  <StatusBadge value={u.platformRole} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Recent Stores */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-gray-700">최근 매장</h2>
+            <Link href="/admin/stores" className="text-xs text-blue-600 hover:underline">전체 보기 →</Link>
+          </div>
+          {summary.recentStores.length === 0 ? (
+            <p className="text-xs text-gray-400 py-4 text-center">데이터가 없습니다.</p>
+          ) : (
+            <ul className="divide-y divide-gray-100">
+              {summary.recentStores.map((s) => (
+                <li key={s.id} className="py-2 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <Link href={`/admin/stores/${s.id}`} className="text-sm font-medium text-gray-900 hover:underline truncate block">
+                      {s.name}
+                    </Link>
+                    <span className="text-xs text-gray-400 truncate block">{s.tenantDisplayName}</span>
+                  </div>
+                  <StatusBadge value={s.status} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
