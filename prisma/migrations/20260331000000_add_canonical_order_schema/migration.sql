@@ -10,16 +10,27 @@
 
 -- ──────────────────────────────────────────────────────────────────────────────
 -- 1. Rename legacy tables so the canonical tables can use their original names.
+--    Guarded by an existence check so the block is safely skipped on a fresh
+--    database where these tables have never been created.
 -- ──────────────────────────────────────────────────────────────────────────────
 
-ALTER TABLE "orders"      RENAME TO "legacy_orders";
-ALTER TABLE "order_items" RENAME TO "legacy_order_items";
-ALTER TABLE "payments"    RENAME TO "legacy_payments";
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'orders'
+  ) THEN
+    ALTER TABLE "orders"      RENAME TO "legacy_orders";
+    ALTER TABLE "order_items" RENAME TO "legacy_order_items";
+    ALTER TABLE "payments"    RENAME TO "legacy_payments";
 
--- Rename foreign-key constraints to match the new table names.
-ALTER TABLE "legacy_order_items" RENAME CONSTRAINT "order_items_orderId_fkey"   TO "legacy_order_items_orderId_fkey";
-ALTER TABLE "legacy_order_items" RENAME CONSTRAINT "order_items_menuItemId_fkey" TO "legacy_order_items_menuItemId_fkey";
-ALTER TABLE "legacy_payments"    RENAME CONSTRAINT "payments_orderId_fkey"        TO "legacy_payments_orderId_fkey";
+    -- Rename foreign-key constraints to match the new table names.
+    ALTER TABLE "legacy_order_items" RENAME CONSTRAINT "order_items_orderId_fkey"    TO "legacy_order_items_orderId_fkey";
+    ALTER TABLE "legacy_order_items" RENAME CONSTRAINT "order_items_menuItemId_fkey" TO "legacy_order_items_menuItemId_fkey";
+    ALTER TABLE "legacy_payments"    RENAME CONSTRAINT "payments_orderId_fkey"        TO "legacy_payments_orderId_fkey";
+  END IF;
+END;
+$$;
 
 -- ──────────────────────────────────────────────────────────────────────────────
 -- 2. Create enums
