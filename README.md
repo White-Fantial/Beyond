@@ -41,6 +41,8 @@ beyond/
 │   ├── admin/                  # /admin — PLATFORM_ADMIN only, read-only console
 │   │   ├── layout.tsx          # Auth guard (PLATFORM_ADMIN only) + mobile nav
 │   │   ├── page.tsx            # Dashboard: KPI + recent tenants/users/stores
+│   │   ├── system/
+│   │   │   └── page.tsx        # System Monitoring / Health Dashboard (Phase 8)
 │   │   ├── tenants/
 │   │   │   ├── page.tsx        # Tenant list (search, status filter, pagination)
 │   │   │   └── [tenantId]/     # Tenant detail (stores, memberships, connections)
@@ -505,6 +507,7 @@ The `/admin` portal is a **PLATFORM_ADMIN-only operations console** for managing
 | Route | Description |
 |-------|-------------|
 | `/admin` | Platform dashboard — KPI cards + recent tenants/users/stores |
+| `/admin/system` | **System Monitoring / Health Dashboard** — platform health, operational metrics, incidents, drill-down links |
 | `/admin/tenants` | Tenant list with search, status filter, pagination |
 | `/admin/tenants/[tenantId]` | Tenant detail — info, stores, memberships, connection summary, **status change** |
 | `/admin/users` | User list with search, status filter, pagination |
@@ -693,6 +696,7 @@ Detail pages for tenants, stores, and users include quick links to their related
 - **Phase 5 — Jobs Console**: ✅ Implemented — see below
 - **Phase 6 — Billing Panel**: ✅ Implemented — subscription plan CRUD, billing history, invoice details
 - **Phase 7 — Integrations Admin Panel**: ✅ Implemented — connection management, credential rotation, action log
+- **Phase 8 — System Monitoring / Health Dashboard**: ✅ Implemented — see below
 - **Phase 9 — Feature Flags**: ✅ Implemented — runtime config, controlled rollout, assignment management
 
 ---
