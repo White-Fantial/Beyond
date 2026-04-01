@@ -31,19 +31,19 @@ export default function TenantDetailActions({ tenant }: Props) {
           onClick={() => setEditOpen(true)}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
         >
-          ✏️ 테넌트 편집
+          ✏️ Edit tenant
         </button>
         <button
           onClick={() => setStoreOpen(true)}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
         >
-          + 매장 추가
+          + Add store
         </button>
         <button
           onClick={() => setMembershipOpen(true)}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
         >
-          + 멤버십 추가
+          + Add membership
         </button>
       </div>
 

@@ -10,7 +10,7 @@ interface TenantListTableProps {
 
 export default function TenantListTable({ items, emptyMessage }: TenantListTableProps) {
   if (items.length === 0) {
-    return <AdminEmptyState message={emptyMessage ?? "테넌트가 없습니다."} />;
+    return <AdminEmptyState message={emptyMessage ?? "No tenants found."} />;
   }
 
   return (
@@ -18,14 +18,14 @@ export default function TenantListTable({ items, emptyMessage }: TenantListTable
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">이름</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">슬러그</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">시간대</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">통화</th>
-            <th className="px-4 py-3 text-right font-medium text-gray-500 hidden sm:table-cell">매장</th>
-            <th className="px-4 py-3 text-right font-medium text-gray-500 hidden sm:table-cell">멤버</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">생성일</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Name</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Slug</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Timezone</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Currency</th>
+            <th className="px-4 py-3 text-right font-medium text-gray-500 hidden sm:table-cell">Stores</th>
+            <th className="px-4 py-3 text-right font-medium text-gray-500 hidden sm:table-cell">Members</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Created</th>
             <th className="px-4 py-3"></th>
           </tr>
         </thead>
@@ -44,14 +44,14 @@ export default function TenantListTable({ items, emptyMessage }: TenantListTable
               <td className="px-4 py-3 text-right text-gray-700 hidden sm:table-cell">{t.storeCount}</td>
               <td className="px-4 py-3 text-right text-gray-700 hidden sm:table-cell">{t.membershipCount}</td>
               <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell">
-                {t.createdAt.toLocaleDateString("ko-KR")}
+                {t.createdAt.toLocaleDateString("en-US")}
               </td>
               <td className="px-4 py-3 text-right">
                 <Link
                   href={`/admin/tenants/${t.id}`}
                   className="text-xs text-blue-600 hover:underline whitespace-nowrap"
                 >
-                  상세 →
+                  Details →
                 </Link>
               </td>
             </tr>

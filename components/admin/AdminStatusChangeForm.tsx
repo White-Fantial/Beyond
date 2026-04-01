@@ -43,13 +43,13 @@ export default function AdminStatusChangeForm({
         });
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error ?? "상태 변경에 실패했습니다.");
+          setError(data.error ?? "Failed to update status.");
           return;
         }
         setSuccess(true);
         router.refresh();
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred. Please try again.");
       }
     });
   }
@@ -77,10 +77,10 @@ export default function AdminStatusChangeForm({
         disabled={!isDirty || isPending}
         className="text-xs px-3 py-1.5 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
-        {isPending ? "저장 중..." : "저장"}
+        {isPending ? "Saving..." : "Save"}
       </button>
       {success && (
-        <span className="text-xs text-green-600 font-medium">저장되었습니다.</span>
+        <span className="text-xs text-green-600 font-medium">Changes saved.</span>
       )}
       {error && (
         <span className="text-xs text-red-600 font-medium">{error}</span>

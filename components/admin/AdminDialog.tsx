@@ -34,7 +34,7 @@ export default function AdminDialog({ open, onClose, title, children }: AdminDia
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-            aria-label="닫기"
+            aria-label="Close"
           >
             ×
           </button>

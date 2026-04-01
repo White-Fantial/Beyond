@@ -17,7 +17,7 @@ export default function MembershipEditButton({ membershipId, currentRole, curren
         onClick={() => setOpen(true)}
         className="text-xs text-blue-600 hover:underline whitespace-nowrap"
       >
-        편집
+        Edit
       </button>
       <EditMembershipDialog
         open={open}

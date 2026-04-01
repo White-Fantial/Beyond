@@ -42,44 +42,44 @@ export default function CreateTenantDialog({ open, onClose }: Props) {
         });
         const data = await res.json();
         if (!res.ok) {
-          setError(data.error ?? "테넌트 생성에 실패했습니다.");
+          setError(data.error ?? "Failed to create tenant.");
           return;
         }
         onClose();
         router.push(`/admin/tenants/${data.id}`);
         router.refresh();
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred. Please try again.");
       }
     });
   }
 
   return (
-    <AdminDialog open={open} onClose={onClose} title="테넌트 생성">
+    <AdminDialog open={open} onClose={onClose} title="Create tenant">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Field label="슬러그 *" hint="소문자·숫자·하이픈만 허용 (예: my-tenant)">
+        <Field label="Slug *" hint="Lowercase letters, numbers, and hyphens only (e.g. my-tenant)">
           <input name="slug" value={form.slug} onChange={handleChange} required
             className={inputCls} placeholder="my-tenant" />
         </Field>
-        <Field label="법인명 *">
+        <Field label="Legal name *">
           <input name="legalName" value={form.legalName} onChange={handleChange} required className={inputCls} />
         </Field>
-        <Field label="표시명 *">
+        <Field label="Display name *">
           <input name="displayName" value={form.displayName} onChange={handleChange} required className={inputCls} />
         </Field>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="시간대 *">
+          <Field label="Timezone *">
             <input name="timezone" value={form.timezone} onChange={handleChange} required className={inputCls} />
           </Field>
-          <Field label="통화 *">
+          <Field label="Currency *">
             <input name="currency" value={form.currency} onChange={handleChange} required maxLength={3} className={inputCls} />
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="국가 코드 *">
+          <Field label="Country code *">
             <input name="countryCode" value={form.countryCode} onChange={handleChange} required maxLength={2} className={inputCls} />
           </Field>
-          <Field label="상태">
+          <Field label="Status">
             <select name="status" value={form.status} onChange={handleChange} className={inputCls}>
               {TENANT_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -89,11 +89,11 @@ export default function CreateTenantDialog({ open, onClose }: Props) {
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" onClick={onClose} disabled={isPending}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-60">
-            취소
+            Cancel
           </button>
           <button type="submit" disabled={isPending}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60">
-            {isPending ? "생성 중..." : "테넌트 생성"}
+            {isPending ? "Creating..." : "Create tenant"}
           </button>
         </div>
       </form>

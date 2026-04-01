@@ -17,7 +17,7 @@ export default function StoreMembershipEditButton({ storeMembershipId, currentRo
         onClick={() => setOpen(true)}
         className="text-xs text-blue-600 hover:underline whitespace-nowrap"
       >
-        편집
+        Edit
       </button>
       <EditStoreMembershipDialog
         open={open}

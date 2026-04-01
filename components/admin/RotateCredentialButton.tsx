@@ -29,7 +29,7 @@ export default function RotateCredentialButton({ connectionId }: RotateCredentia
         );
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error ?? "자격 증명 교체에 실패했습니다.");
+          setError(data.error ?? "Failed to rotate credential.");
           setConfirmed(false);
           return;
         }
@@ -37,7 +37,7 @@ export default function RotateCredentialButton({ connectionId }: RotateCredentia
         setConfirmed(false);
         router.refresh();
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred. Please try again.");
         setConfirmed(false);
       }
     });
@@ -56,10 +56,10 @@ export default function RotateCredentialButton({ connectionId }: RotateCredentia
         }`}
       >
         {isPending
-          ? "처리 중..."
+          ? "Processing..."
           : confirmed
-          ? "정말로 교체하시겠습니까? 다시 클릭하여 확인"
-          : "자격 증명 교체 (Rotate Credential)"}
+          ? "Rotate credential? Click again to confirm."
+          : "Rotate credential"}
       </button>
       {confirmed && !isPending && (
         <button
@@ -67,12 +67,12 @@ export default function RotateCredentialButton({ connectionId }: RotateCredentia
           onClick={() => setConfirmed(false)}
           className="text-xs px-2 py-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50"
         >
-          취소
+          Cancel
         </button>
       )}
       {success && (
         <span className="text-xs text-green-600 font-medium">
-          자격 증명이 교체되었습니다. 테넌트가 재인증해야 합니다.
+          Credential rotated. Tenant must re-authenticate.
         </span>
       )}
       {error && (

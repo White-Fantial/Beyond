@@ -10,7 +10,7 @@ interface AllConnectionsTableProps {
 
 export default function AllConnectionsTable({
   items,
-  emptyMessage = "연결이 없습니다.",
+  emptyMessage = "No connections found.",
 }: AllConnectionsTableProps) {
   if (items.length === 0) {
     return <AdminEmptyState message={emptyMessage} />;
@@ -21,13 +21,13 @@ export default function AllConnectionsTable({
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">매장</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">테넌트</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">공급자</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">유형</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">마지막 연결</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">마지막 동기화</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Store</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">Tenant</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Provider</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Type</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Last connection</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Last sync</th>
             <th className="px-4 py-3"></th>
           </tr>
         </thead>
@@ -51,10 +51,10 @@ export default function AllConnectionsTable({
               <td className="px-4 py-3 text-gray-500 hidden md:table-cell font-mono text-xs">{c.type}</td>
               <td className="px-4 py-3"><StatusBadge value={c.status} /></td>
               <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell">
-                {c.lastConnectedAt ? c.lastConnectedAt.toLocaleString("ko-KR") : "—"}
+                {c.lastConnectedAt ? c.lastConnectedAt.toLocaleString("en-US") : "—"}
               </td>
               <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell">
-                {c.lastSyncAt ? c.lastSyncAt.toLocaleString("ko-KR") : "—"}
+                {c.lastSyncAt ? c.lastSyncAt.toLocaleString("en-US") : "—"}
                 {c.lastSyncStatus && (
                   <span className="ml-1">
                     <StatusBadge value={c.lastSyncStatus} />
@@ -66,7 +66,7 @@ export default function AllConnectionsTable({
                   href={`/admin/integrations/${c.id}`}
                   className="text-xs text-blue-600 hover:underline whitespace-nowrap"
                 >
-                  상세 →
+                  Details →
                 </Link>
               </td>
             </tr>
