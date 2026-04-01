@@ -41,6 +41,8 @@ beyond/
 │   ├── admin/                  # /admin — PLATFORM_ADMIN only, read-only console
 │   │   ├── layout.tsx          # Auth guard (PLATFORM_ADMIN only) + mobile nav
 │   │   ├── page.tsx            # Dashboard: KPI + recent tenants/users/stores
+│   │   ├── system/
+│   │   │   └── page.tsx        # System Monitoring / Health Dashboard (Phase 8)
 │   │   ├── tenants/
 │   │   │   ├── page.tsx        # Tenant list (search, status filter, pagination)
 │   │   │   └── [tenantId]/     # Tenant detail (stores, memberships, connections)
@@ -505,6 +507,7 @@ The `/admin` portal is a **PLATFORM_ADMIN-only operations console** for managing
 | Route | Description |
 |-------|-------------|
 | `/admin` | Platform dashboard — KPI cards + recent tenants/users/stores |
+| `/admin/system` | **System Monitoring / Health Dashboard** — platform health, operational metrics, incidents, drill-down links |
 | `/admin/tenants` | Tenant list with search, status filter, pagination |
 | `/admin/tenants/[tenantId]` | Tenant detail — info, stores, memberships, connection summary, **status change** |
 | `/admin/users` | User list with search, status filter, pagination |
@@ -690,6 +693,7 @@ Detail pages for tenants, stores, and users include quick links to their related
 - **Phase 5 — Jobs Console**: ✅ Implemented — see below
 - **Phase 6 — Billing Panel**: subscription plan CRUD, billing history, invoice details
 - **Phase 7 — Integrations Admin Panel**: connection management, credential rotation, provider-level dashboards
+- **Phase 8 — System Monitoring / Health Dashboard**: ✅ Implemented — see below
 
 ---
 
@@ -796,6 +800,90 @@ Retry creates a new `JobRun` with `triggerSource = ADMIN_RETRY` and `parentRunId
 
 ---
 
+### System Monitoring / Health Dashboard (Admin Phase 8)
+
+`/admin/system` — Platform-wide observability dashboard for PLATFORM_ADMIN.
+
+**Purpose:** Read-only monitoring dashboard. Detect problems fast; navigate to detail screens for action.
+
+#### Dashboard Sections
+
+| Section | Description |
+|---------|-------------|
+| Overall status banner | Aggregated platform health (HEALTHY / DEGRADED / DOWN) + counts of critical components and incidents |
+| Component health cards | Per-subsystem health card with status badge, summary, key metrics, and drill-down link |
+| Service status table | Tabular view of all components — sortable at a glance |
+| Operational metrics | 24h / 7d toggle — KPI counters per subsystem group, error-highlighted in red |
+| Incident table | Active incidents sorted by severity with subsystem, count, window, and deep link |
+| Drill-down shortcuts | Quick links to Logs / Jobs / Integrations / Billing filtered views |
+
+#### Health Components
+
+| Component | Data Source | Health Evaluator |
+|-----------|-------------|-----------------|
+| Database | `prisma.tenant.count()` connectivity probe | HEALTHY / DOWN |
+| Jobs Runner | `JobRun` counts (24h) + long-running detection | `evaluateJobRunnerHealth()` |
+| Webhook Pipeline | `InboundWebhookLog` received/failed/signatureInvalid (24h) | `evaluateWebhookHealth()` |
+| Integrations | `ConnectionActionLog` refresh/connect/reauth counts (24h) | `evaluateProviderHealth()` |
+| Order Pipeline | `OrderEvent` POS forward attempts/failures + reconciliation retries (24h) | `evaluateOrderPipelineHealth()` |
+| Catalog Sync | `JobRun` CATALOG_SYNC job failures (24h) | `evaluateCatalogSyncHealth()` |
+| Billing | `TenantSubscription` ACTIVE / TRIAL / PAST_DUE counts | `evaluateBillingHealth()` |
+
+#### Health Status Normalization
+
+| Status | Meaning |
+|--------|---------|
+| `HEALTHY` | No significant failures in the window |
+| `DEGRADED` | Elevated failure rate or anomaly — partial degradation |
+| `DOWN` | Core function effectively unavailable |
+| `UNKNOWN` | Insufficient data to evaluate |
+
+Severity: `INFO` → `WARN` → `CRITICAL`  
+All thresholds and evaluation rules are defined in `lib/admin/system/thresholds.ts`.
+
+#### File Structure
+
+```
+app/admin/system/
+  page.tsx                          # Server component — auth guard + data fetch
+
+components/admin/system/
+  AdminSystemDashboardClient.tsx    # Client shell — window toggle state
+  AdminSystemWarningBanner.tsx      # Critical/degraded banner (hidden when healthy)
+  AdminSystemHealthOverview.tsx     # Top overview card with overall status + KPIs
+  AdminSystemHealthCard.tsx         # Per-component card
+  AdminSystemServiceStatusTable.tsx # Tabular status view
+  AdminSystemMetricsSection.tsx     # 24h/7d metrics grid
+  AdminSystemIncidentTable.tsx      # Incident rows with severity + drill-down
+  AdminSystemDrilldownLinks.tsx     # Quick-link grid to operational screens
+  AdminSystemEmptyState.tsx         # Error fallback
+
+services/admin/
+  admin-system.service.ts           # Dashboard orchestrator (getAdminSystemDashboard)
+  admin-health.service.ts           # Per-component health checks
+  admin-metrics.service.ts          # Metrics aggregation by window
+  admin-incident.service.ts         # Incident derivation from metrics
+
+lib/admin/system/
+  thresholds.ts                     # All health evaluation rules and threshold helpers
+  health.ts                         # Display helpers (colors, summaries)
+  metrics.ts                        # Window helpers
+  incidents.ts                      # Incident detection logic
+  labels.ts                         # Korean display labels
+
+types/
+  admin-system.ts                   # All system monitoring types
+```
+
+#### Security
+
+- Route protected at middleware level (`PLATFORM_ADMIN` only)
+- `requirePlatformAdmin()` called in the server component
+- No secrets, tokens, connection strings, or credentials are ever exposed
+- Impersonation banner retained during impersonation sessions
+
+---
+
 ## Roadmap
 
 - [x] Project scaffolding (Next.js 14, Prisma, Tailwind)
@@ -826,10 +914,11 @@ Retry creates a new `JobRun` with `triggerSource = ADMIN_RETRY` and `parentRunId
 - [x] **Admin Console Phase 2** — write actions (status change), integrations list, webhook log viewer, connection action log viewer, billing/subscription overview, full sidebar navigation
 - [x] **Admin User Impersonation** — PLATFORM_ADMIN can view the app as any active non-admin user; sticky amber banner on all pages; full audit trail; actor/effective-user session separation
 - [x] **Admin Console Phase 4 — Logs Console** — unified read-only log console for AuditLog / ConnectionActionLog / InboundWebhookLog / OrderEvent; multi-filter support; sensitive-data masking; related entity deep links
+- [x] **Admin Console Phase 6 — Billing Panel** — plan CRUD (limits & features), tenant subscription management (plan change, trial extend, status change), billing account editor, billing records & subscription event history, MRR estimate dashboard
+- [x] **Admin Console Phase 7 — Integrations Admin Panel** — connection detail page, status change, credential rotation
+- [x] **Admin Console Phase 8 — System Monitoring / Health Dashboard** — platform health overview (DB/Jobs/Webhooks/Integrations/Orders/Catalog/Billing), 24h/7d operational metrics, incident detection, drill-down deep links; read-only observability dashboard at `/admin/system`
 - [ ] Admin Console Phase 3 — tenant/user/store create/edit, integration force-reconnect/sync, analytics charts
 - [ ] Admin Console Phase 5 — Jobs Panel (background task management, sync force-run)
-- [x] **Admin Console Phase 6 — Billing Panel** — plan CRUD (limits & features), tenant subscription management (plan change, trial extend, status change), billing account editor, billing records & subscription event history, MRR estimate dashboard
-- [ ] Admin Console Phase 7 — Integrations Admin Panel (connection management, credential rotation)
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)
