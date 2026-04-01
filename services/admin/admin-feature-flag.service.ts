@@ -140,7 +140,7 @@ export async function updateAdminFeatureFlag(
         defaultJsonValue:
           input.defaultJsonValue != null
             ? (input.defaultJsonValue as Prisma.InputJsonValue)
-            : null,
+            : Prisma.JsonNull,
       }),
       ...(input.isExperiment !== undefined && { isExperiment: input.isExperiment }),
       ...(input.ownerNote !== undefined && {
