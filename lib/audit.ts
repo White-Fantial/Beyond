@@ -220,3 +220,33 @@ export async function auditAdminFeatureFlagAssignmentToggled(assignmentId: strin
 export async function auditAdminFeatureFlagAssignmentDeleted(assignmentId: string, flagId: string, actorUserId: string, metadata?: Record<string, unknown>) {
   await logAuditEvent({ actorUserId, action: "FEATURE_FLAG_ASSIGNMENT_DELETED", targetType: "FeatureFlagAssignment", targetId: assignmentId, metadata: { ...metadata, flagId } });
 }
+
+// ─── Admin Integration Recovery audit helpers ─────────────────────────────────
+
+export async function auditAdminConnectionForceReconnectRequested(connectionId: string, tenantId: string, storeId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, storeId, actorUserId, action: "ADMIN_CONNECTION_FORCE_RECONNECT_REQUESTED", targetType: "Connection", targetId: connectionId, metadata });
+}
+
+export async function auditAdminConnectionValidationRequested(connectionId: string, tenantId: string, storeId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, storeId, actorUserId, action: "ADMIN_CONNECTION_VALIDATION_REQUESTED", targetType: "Connection", targetId: connectionId, metadata });
+}
+
+export async function auditAdminConnectionValidationSucceeded(connectionId: string, tenantId: string, storeId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, storeId, actorUserId, action: "ADMIN_CONNECTION_VALIDATION_SUCCEEDED", targetType: "Connection", targetId: connectionId, metadata });
+}
+
+export async function auditAdminConnectionValidationFailed(connectionId: string, tenantId: string, storeId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, storeId, actorUserId, action: "ADMIN_CONNECTION_VALIDATION_FAILED", targetType: "Connection", targetId: connectionId, metadata });
+}
+
+export async function auditAdminConnectionCatalogSyncRequested(connectionId: string, tenantId: string, storeId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, storeId, actorUserId, action: "ADMIN_CONNECTION_CATALOG_SYNC_REQUESTED", targetType: "Connection", targetId: connectionId, metadata });
+}
+
+export async function auditAdminConnectionRefreshCheckRequested(connectionId: string, tenantId: string, storeId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, storeId, actorUserId, action: "ADMIN_CONNECTION_REFRESH_CHECK_REQUESTED", targetType: "Connection", targetId: connectionId, metadata });
+}
+
+export async function auditAdminAnalyticsViewed(actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "ADMIN_ANALYTICS_VIEWED", targetType: "AdminAnalytics", targetId: "platform", metadata });
+}
