@@ -7,7 +7,7 @@ import type {
   AdminSystemMetrics,
   MetricsWindow,
 } from "@/types/admin-system";
-import { deriveIncidents } from "@/lib/admin/system/incidents";
+import { deriveIncidents, INCIDENT_SEVERITY_ORDER } from "@/lib/admin/system/incidents";
 
 /**
  * Derive incidents from 24h and 7d metrics snapshots.
@@ -29,10 +29,10 @@ export function getRecentAdminIncidents(
   const merged = [...incidents24h, ...extra7d];
 
   // Sort CRITICAL first, then WARN, then INFO; within same severity sort by count desc
-  const order: Record<string, number> = { CRITICAL: 0, WARN: 1, INFO: 2 };
   merged.sort(
     (a, b) =>
-      (order[a.severity] ?? 3) - (order[b.severity] ?? 3) || b.count - a.count
+      INCIDENT_SEVERITY_ORDER[a.severity] - INCIDENT_SEVERITY_ORDER[b.severity] ||
+      b.count - a.count
   );
 
   return merged;

@@ -11,6 +11,13 @@ import type {
   SystemSeverity,
 } from "@/types/admin-system";
 
+/** Severity ordering map — lower number = higher priority. */
+export const INCIDENT_SEVERITY_ORDER: Record<SystemSeverity, number> = {
+  CRITICAL: 0,
+  WARN: 1,
+  INFO: 2,
+};
+
 /** Evaluate the severity of an incident based on its count. */
 export function evaluateIncidentSeverity(
   count: number,
@@ -155,12 +162,11 @@ export function deriveIncidents(
   );
 
   // Sort: CRITICAL first, then WARN, then INFO
-  const order: Record<SystemSeverity, number> = {
-    CRITICAL: 0,
-    WARN: 1,
-    INFO: 2,
-  };
-  incidents.sort((a, b) => order[a.severity] - order[b.severity] || b.count - a.count);
+  incidents.sort(
+    (a, b) =>
+      INCIDENT_SEVERITY_ORDER[a.severity] - INCIDENT_SEVERITY_ORDER[b.severity] ||
+      b.count - a.count
+  );
 
   return incidents;
 }

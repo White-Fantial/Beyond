@@ -67,16 +67,17 @@ export function statusToSeverity(status: SystemHealthStatus): SystemSeverity {
 
 /**
  * Aggregate multiple component statuses into a single platform-level status.
- * Worst status wins.
+ * Worst status wins.  UNKNOWN is treated as WARN-level — not as healthy.
  */
 export function aggregateHealth(
   statuses: SystemHealthStatus[]
 ): SystemHealthStatus {
+  if (statuses.length === 0) return "UNKNOWN";
   if (statuses.includes("DOWN")) return "DOWN";
   if (statuses.includes("DEGRADED")) return "DEGRADED";
   if (statuses.every((s) => s === "UNKNOWN")) return "UNKNOWN";
-  if (statuses.includes("HEALTHY")) return "HEALTHY";
-  return "UNKNOWN";
+  if (statuses.includes("UNKNOWN")) return "DEGRADED";
+  return "HEALTHY";
 }
 
 // ─── Domain-specific evaluators ───────────────────────────────────────────────

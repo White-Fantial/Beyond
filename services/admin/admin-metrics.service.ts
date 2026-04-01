@@ -86,9 +86,12 @@ async function getWebhookMetrics(
     | "webhooksSignatureInvalid"
   >
 > {
-  const [webhooksReceived, webhooksFailed, webhooksSignatureInvalid] =
+  const [webhooksReceived, webhooksProcessed, webhooksFailed, webhooksSignatureInvalid] =
     await Promise.all([
       prisma.inboundWebhookLog.count({ where: { receivedAt: { gte: since } } }),
+      prisma.inboundWebhookLog.count({
+        where: { receivedAt: { gte: since }, processingStatus: "PROCESSED" },
+      }),
       prisma.inboundWebhookLog.count({
         where: { receivedAt: { gte: since }, processingStatus: "FAILED" },
       }),
@@ -97,11 +100,9 @@ async function getWebhookMetrics(
       }),
     ]);
 
-  const webhooksProcessed = webhooksReceived - webhooksFailed;
-
   return {
     webhooksReceived,
-    webhooksProcessed: Math.max(0, webhooksProcessed),
+    webhooksProcessed,
     webhooksFailed,
     webhooksSignatureInvalid,
   };
