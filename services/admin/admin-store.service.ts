@@ -12,6 +12,11 @@ import {
   mapStoreMembershipRow,
   mapStoreConnectionRow,
 } from "@/lib/admin/mappers";
+import {
+  auditAdminStoreCreated,
+  auditAdminStoreUpdated,
+  auditAdminStoreStatusChanged,
+} from "@/lib/audit";
 
 export async function listAdminStores(
   params: AdminStoreListParams
@@ -150,17 +155,126 @@ export async function getAdminStoreDetail(storeId: string): Promise<AdminStoreDe
 const ALLOWED_STORE_STATUSES = ["ACTIVE", "INACTIVE", "ARCHIVED"] as const;
 type AllowedStoreStatus = (typeof ALLOWED_STORE_STATUSES)[number];
 
+// ─── Write operations ─────────────────────────────────────────────────────────
+
+export interface CreateAdminStoreInput {
+  tenantId: string;
+  code: string;
+  name: string;
+  displayName: string;
+  timezone: string;
+  currency: string;
+  countryCode: string;
+  status?: string;
+}
+
+export async function createAdminStore(
+  input: CreateAdminStoreInput,
+  actorUserId: string
+): Promise<{ id: string }> {
+  const { tenantId, code, name, displayName, timezone, currency, countryCode, status = "ACTIVE" } = input;
+
+  if (!tenantId?.trim()) throw new Error("테넌트 ID는 필수입니다.");
+  if (!code?.trim()) throw new Error("코드는 필수입니다.");
+  if (!name?.trim()) throw new Error("매장명은 필수입니다.");
+  if (!displayName?.trim()) throw new Error("표시명은 필수입니다.");
+  if (!timezone?.trim()) throw new Error("시간대는 필수입니다.");
+  if (!currency?.trim()) throw new Error("통화는 필수입니다.");
+  if (!countryCode?.trim()) throw new Error("국가 코드는 필수입니다.");
+  if (!ALLOWED_STORE_STATUSES.includes(status as AllowedStoreStatus)) {
+    throw new Error(`올바르지 않은 상태값입니다: ${status}`);
+  }
+
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
+  if (!tenant) throw new Error("테넌트를 찾을 수 없습니다.");
+
+  const existing = await prisma.store.findUnique({
+    where: { tenantId_code: { tenantId, code: code.trim() } },
+    select: { id: true },
+  });
+  if (existing) throw new Error("같은 테넌트 내에 이미 사용 중인 코드입니다.");
+
+  const store = await prisma.store.create({
+    data: {
+      tenantId,
+      code: code.trim(),
+      name: name.trim(),
+      displayName: displayName.trim(),
+      timezone: timezone.trim(),
+      currency: currency.trim().toUpperCase(),
+      countryCode: countryCode.trim().toUpperCase(),
+      status: status as never,
+    },
+    select: { id: true },
+  });
+
+  await auditAdminStoreCreated(store.id, tenantId, actorUserId, { code, name });
+  return { id: store.id };
+}
+
+export interface UpdateAdminStoreInput {
+  name?: string;
+  displayName?: string;
+  timezone?: string;
+  currency?: string;
+  countryCode?: string;
+  status?: string;
+}
+
+export async function updateAdminStore(
+  storeId: string,
+  input: UpdateAdminStoreInput,
+  actorUserId: string
+): Promise<void> {
+  const store = await prisma.store.findUnique({
+    where: { id: storeId },
+    select: { id: true, tenantId: true, name: true, displayName: true, timezone: true, currency: true, countryCode: true, status: true },
+  });
+  if (!store) notFound();
+
+  const data: Record<string, unknown> = {};
+  if (input.name !== undefined) {
+    if (!input.name.trim()) throw new Error("매장명은 필수입니다.");
+    data.name = input.name.trim();
+  }
+  if (input.displayName !== undefined) {
+    if (!input.displayName.trim()) throw new Error("표시명은 필수입니다.");
+    data.displayName = input.displayName.trim();
+  }
+  if (input.timezone !== undefined) data.timezone = input.timezone.trim();
+  if (input.currency !== undefined) data.currency = input.currency.trim().toUpperCase();
+  if (input.countryCode !== undefined) data.countryCode = input.countryCode.trim().toUpperCase();
+  if (input.status !== undefined) {
+    if (!ALLOWED_STORE_STATUSES.includes(input.status as AllowedStoreStatus)) {
+      throw new Error(`올바르지 않은 상태값입니다: ${input.status}`);
+    }
+    data.status = input.status;
+  }
+
+  if (Object.keys(data).length === 0) return;
+
+  await prisma.store.update({ where: { id: storeId }, data: { ...data, updatedAt: new Date() } });
+  await auditAdminStoreUpdated(storeId, store.tenantId, actorUserId, {
+    before: { name: store.name, displayName: store.displayName, timezone: store.timezone, status: store.status },
+    after: data,
+  });
+}
+
 export async function setAdminStoreStatus(
   storeId: string,
-  status: string
+  status: string,
+  actorUserId?: string
 ): Promise<void> {
   if (!ALLOWED_STORE_STATUSES.includes(status as AllowedStoreStatus)) {
     throw new Error(`Invalid store status: ${status}`);
   }
-  const store = await prisma.store.findUnique({ where: { id: storeId }, select: { id: true } });
+  const store = await prisma.store.findUnique({ where: { id: storeId }, select: { id: true, tenantId: true, status: true } });
   if (!store) notFound();
   await prisma.store.update({
     where: { id: storeId },
     data: { status: status as never, updatedAt: new Date() },
   });
+  if (actorUserId) {
+    await auditAdminStoreStatusChanged(storeId, store.tenantId, actorUserId, { before: store.status, after: status });
+  }
 }

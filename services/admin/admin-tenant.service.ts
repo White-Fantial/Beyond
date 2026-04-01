@@ -16,6 +16,11 @@ import {
   mapTenantStoreRow,
   mapTenantMembershipRow,
 } from "@/lib/admin/mappers";
+import {
+  auditAdminTenantCreated,
+  auditAdminTenantUpdated,
+  auditAdminTenantStatusChanged,
+} from "@/lib/audit";
 
 export async function listAdminTenants(
   params: AdminTenantListParams
@@ -165,17 +170,121 @@ export async function getAdminTenantDetail(tenantId: string): Promise<AdminTenan
 const ALLOWED_TENANT_STATUSES = ["ACTIVE", "TRIAL", "SUSPENDED", "ARCHIVED"] as const;
 type AllowedTenantStatus = (typeof ALLOWED_TENANT_STATUSES)[number];
 
+const SLUG_RE = /^[a-z0-9-]+$/;
+
+// ─── Write operations ─────────────────────────────────────────────────────────
+
+export interface CreateAdminTenantInput {
+  slug: string;
+  legalName: string;
+  displayName: string;
+  timezone: string;
+  currency: string;
+  countryCode: string;
+  status?: string;
+}
+
+export async function createAdminTenant(
+  input: CreateAdminTenantInput,
+  actorUserId: string
+): Promise<{ id: string }> {
+  const { slug, legalName, displayName, timezone, currency, countryCode, status = "ACTIVE" } = input;
+
+  if (!slug || !SLUG_RE.test(slug)) {
+    throw new Error("slug은 소문자, 숫자, 하이픈만 허용됩니다.");
+  }
+  if (!legalName?.trim()) throw new Error("법인명은 필수입니다.");
+  if (!displayName?.trim()) throw new Error("표시명은 필수입니다.");
+  if (!timezone?.trim()) throw new Error("시간대는 필수입니다.");
+  if (!currency?.trim()) throw new Error("통화는 필수입니다.");
+  if (!countryCode?.trim()) throw new Error("국가 코드는 필수입니다.");
+  if (!ALLOWED_TENANT_STATUSES.includes(status as AllowedTenantStatus)) {
+    throw new Error(`올바르지 않은 상태값입니다: ${status}`);
+  }
+
+  const existing = await prisma.tenant.findUnique({ where: { slug }, select: { id: true } });
+  if (existing) throw new Error("이미 사용 중인 슬러그입니다.");
+
+  const tenant = await prisma.tenant.create({
+    data: {
+      slug,
+      legalName: legalName.trim(),
+      displayName: displayName.trim(),
+      timezone: timezone.trim(),
+      currency: currency.trim().toUpperCase(),
+      countryCode: countryCode.trim().toUpperCase(),
+      status: status as never,
+    },
+    select: { id: true },
+  });
+
+  await auditAdminTenantCreated(tenant.id, actorUserId, { slug, displayName });
+  return { id: tenant.id };
+}
+
+export interface UpdateAdminTenantInput {
+  legalName?: string;
+  displayName?: string;
+  timezone?: string;
+  currency?: string;
+  countryCode?: string;
+  status?: string;
+}
+
+export async function updateAdminTenant(
+  tenantId: string,
+  input: UpdateAdminTenantInput,
+  actorUserId: string
+): Promise<void> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: { id: true, legalName: true, displayName: true, timezone: true, currency: true, countryCode: true, status: true },
+  });
+  if (!tenant) notFound();
+
+  const data: Record<string, unknown> = {};
+  if (input.legalName !== undefined) {
+    if (!input.legalName.trim()) throw new Error("법인명은 필수입니다.");
+    data.legalName = input.legalName.trim();
+  }
+  if (input.displayName !== undefined) {
+    if (!input.displayName.trim()) throw new Error("표시명은 필수입니다.");
+    data.displayName = input.displayName.trim();
+  }
+  if (input.timezone !== undefined) data.timezone = input.timezone.trim();
+  if (input.currency !== undefined) data.currency = input.currency.trim().toUpperCase();
+  if (input.countryCode !== undefined) data.countryCode = input.countryCode.trim().toUpperCase();
+  if (input.status !== undefined) {
+    if (!ALLOWED_TENANT_STATUSES.includes(input.status as AllowedTenantStatus)) {
+      throw new Error(`올바르지 않은 상태값입니다: ${input.status}`);
+    }
+    data.status = input.status;
+  }
+
+  if (Object.keys(data).length === 0) return;
+
+  await prisma.tenant.update({ where: { id: tenantId }, data: { ...data, updatedAt: new Date() } });
+  await auditAdminTenantUpdated(tenantId, actorUserId, {
+    before: { legalName: tenant.legalName, displayName: tenant.displayName, timezone: tenant.timezone, status: tenant.status },
+    after: data,
+  });
+}
+
 export async function setAdminTenantStatus(
   tenantId: string,
-  status: string
+  status: string,
+  actorUserId?: string
 ): Promise<void> {
   if (!ALLOWED_TENANT_STATUSES.includes(status as AllowedTenantStatus)) {
     throw new Error(`Invalid tenant status: ${status}`);
   }
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true, status: true } });
   if (!tenant) notFound();
   await prisma.tenant.update({
     where: { id: tenantId },
     data: { status: status as never, updatedAt: new Date() },
   });
+  if (actorUserId) {
+    await auditAdminTenantStatusChanged(tenantId, actorUserId, { before: tenant.status, after: status });
+  }
 }

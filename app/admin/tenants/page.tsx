@@ -6,6 +6,7 @@ import AdminSearchInput from "@/components/admin/AdminSearchInput";
 import AdminStatusFilter from "@/components/admin/AdminStatusFilter";
 import AdminPagination from "@/components/admin/AdminPagination";
 import TenantListTable from "@/components/admin/TenantListTable";
+import TenantListActions from "@/components/admin/TenantListActions";
 
 const TENANT_STATUS_OPTIONS = [
   { value: "ACTIVE", label: "활성" },
@@ -32,7 +33,12 @@ export default async function AdminTenantsPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <AdminPageHeader title="테넌트" description="플랫폼에 등록된 전체 테넌트 목록입니다." />
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <AdminPageHeader title="테넌트" description="플랫폼에 등록된 전체 테넌트 목록입니다." />
+        <div className="shrink-0 pt-1">
+          <TenantListActions />
+        </div>
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <Suspense>

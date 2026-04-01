@@ -6,6 +6,7 @@ import AdminSearchInput from "@/components/admin/AdminSearchInput";
 import AdminStatusFilter from "@/components/admin/AdminStatusFilter";
 import AdminPagination from "@/components/admin/AdminPagination";
 import UserListTable from "@/components/admin/UserListTable";
+import UserListActions from "@/components/admin/UserListActions";
 
 const USER_STATUS_OPTIONS = [
   { value: "ACTIVE", label: "활성" },
@@ -32,7 +33,12 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <AdminPageHeader title="사용자" description="플랫폼에 등록된 전체 사용자 목록입니다." />
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <AdminPageHeader title="사용자" description="플랫폼에 등록된 전체 사용자 목록입니다." />
+        <div className="shrink-0 pt-1">
+          <UserListActions />
+        </div>
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <Suspense>
