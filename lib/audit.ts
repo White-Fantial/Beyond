@@ -120,3 +120,29 @@ export async function auditAdminStoreUpdated(storeId: string, tenantId: string, 
 export async function auditAdminStoreStatusChanged(storeId: string, tenantId: string, actorUserId: string, metadata?: Record<string, unknown>) {
   await logAuditEvent({ tenantId, storeId, actorUserId, action: "STORE_STATUS_CHANGED", targetType: "Store", targetId: storeId, metadata });
 }
+
+// ─── Job audit helpers ────────────────────────────────────────────────────────
+
+export async function auditJobManualRunRequested(jobRunId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "JOB_MANUAL_RUN_REQUESTED", targetType: "JobRun", targetId: jobRunId, metadata });
+}
+
+export async function auditJobRunCreated(jobRunId: string, actorUserId: string | undefined, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "JOB_RUN_CREATED", targetType: "JobRun", targetId: jobRunId, metadata });
+}
+
+export async function auditJobRunStarted(jobRunId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ action: "JOB_RUN_STARTED", targetType: "JobRun", targetId: jobRunId, metadata });
+}
+
+export async function auditJobRunSucceeded(jobRunId: string, actorUserId: string | undefined, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "JOB_RUN_SUCCEEDED", targetType: "JobRun", targetId: jobRunId, metadata });
+}
+
+export async function auditJobRunFailed(jobRunId: string, actorUserId: string | undefined, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "JOB_RUN_FAILED", targetType: "JobRun", targetId: jobRunId, metadata });
+}
+
+export async function auditJobRunRetried(jobRunId: string, originalRunId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "JOB_RUN_RETRIED", targetType: "JobRun", targetId: jobRunId, metadata: { ...metadata, originalRunId } });
+}
