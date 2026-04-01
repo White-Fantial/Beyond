@@ -512,6 +512,7 @@ The `/admin` portal is a **PLATFORM_ADMIN-only operations console** for managing
 | `/admin/stores` | Store list with search, status filter, pagination |
 | `/admin/stores/[storeId]` | Store detail — info, memberships, connections, **status change** |
 | `/admin/integrations` | Platform-wide connection list — filter by status/provider, pagination |
+| `/admin/integrations/[connectionId]` | Connection detail — status change, credential rotation, action log |
 | `/admin/jobs` | **Jobs Console** — view, manually trigger, and safely retry operational recovery jobs |
 | `/admin/jobs/[jobRunId]` | Job Run detail — input/result/error with sensitive-field masking, retry lineage, context links |
 | `/admin/logs` | **Unified Logs Console** — audit, connection, webhook, and order event logs with multi-source filters |
@@ -521,6 +522,8 @@ The `/admin` portal is a **PLATFORM_ADMIN-only operations console** for managing
 | `/admin/billing/plans/[planId]` | Plan detail — edit info, manage limits & features, view subscribed tenants |
 | `/admin/billing/tenants` | Tenant billing list — subscription status, usage, over-limit indicator |
 | `/admin/billing/tenants/[tenantId]` | Tenant billing detail — subscription management, usage vs limits, billing account, records & event history |
+| `/admin/feature-flags` | **Feature Flags Console** — list, create, filter by status/search |
+| `/admin/feature-flags/[flagKey]` | Feature flag detail — assignments, status change, audit history |
 
 ### Dashboard KPIs
 
@@ -688,8 +691,9 @@ Detail pages for tenants, stores, and users include quick links to their related
 #### Roadmap
 
 - **Phase 5 — Jobs Console**: ✅ Implemented — see below
-- **Phase 6 — Billing Panel**: subscription plan CRUD, billing history, invoice details
-- **Phase 7 — Integrations Admin Panel**: connection management, credential rotation, provider-level dashboards
+- **Phase 6 — Billing Panel**: ✅ Implemented — subscription plan CRUD, billing history, invoice details
+- **Phase 7 — Integrations Admin Panel**: ✅ Implemented — connection management, credential rotation, action log
+- **Phase 9 — Feature Flags**: ✅ Implemented — runtime config, controlled rollout, assignment management
 
 ---
 
@@ -788,11 +792,112 @@ Retry creates a new `JobRun` with `triggerSource = ADMIN_RETRY` and `parentRunId
 | `app/api/admin/jobs/[jobRunId]/retry/route.ts` | `POST` retry endpoint (PLATFORM_ADMIN, impersonation blocked) |
 | `components/admin/jobs/` | UI components: table, filters, badges, manual run dialog, retry button, payload viewer |
 
-### Phase 3 예정
+### Phase 3 부분 완료 / 예정
 
-- Tenant/user/store 생성, 수정
+Completed:
+- Tenant / User / Store create + edit dialogs (API routes, service layer, audit trail)
+
+Remaining:
 - Integration force-reconnect / sync trigger
 - Analytics: 차트 기반 트렌드 분석
+
+---
+
+### Integrations Admin Panel (Admin Phase 7)
+
+The `/admin/integrations` section lets PLATFORM_ADMINs inspect and act on any store connection.
+
+#### Routes
+
+| Route | Description |
+|-------|-------------|
+| `/admin/integrations` | Platform-wide connection list — filter by status/provider, paginated |
+| `/admin/integrations/[connectionId]` | Connection detail — edit status, rotate credentials, view action log |
+
+#### Actions
+
+| Action | HTTP | Description |
+|--------|------|-------------|
+| Status change | `PATCH /api/admin/integrations/[connectionId]/status` | Force a connection to `CONNECTED`, `DISCONNECTED`, `ERROR`, `REAUTH_REQUIRED`, or `NOT_CONNECTED` |
+| Credential rotation | `POST /api/admin/integrations/[connectionId]/rotate-credential` | Deactivate current active credential and generate a placeholder for re-auth |
+
+Both actions are blocked during active impersonation and emit audit events.
+
+#### Technical Files
+
+| File | Role |
+|------|------|
+| `services/admin/admin-integration.service.ts` | `getAdminConnectionDetail`, `updateAdminConnectionStatus`, `adminRotateCredential` |
+| `app/api/admin/integrations/[connectionId]/status/route.ts` | `PATCH` status change endpoint |
+| `app/api/admin/integrations/[connectionId]/rotate-credential/route.ts` | `POST` credential rotation endpoint |
+| `components/admin/ConnectionCredentialTable.tsx` | Credential lifecycle table |
+| `components/admin/ConnectionStatusChangeForm.tsx` | Inline status select + submit |
+| `components/admin/RotateCredentialButton.tsx` | Credential rotation trigger button |
+
+---
+
+### Feature Flags Console (Admin Phase 9)
+
+The `/admin/feature-flags` section provides runtime feature control, percentage rollout, and per-scope overrides without deployments.
+
+#### Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **FeatureFlag** | A named toggle with a stable `key`, a `flagType` (BOOLEAN / STRING / INTEGER / JSON / VARIANT), global default values, and a lifecycle `status` (ACTIVE / INACTIVE / ARCHIVED) |
+| **FeatureFlagAssignment** | A scoped override: a specific value applied when the evaluation context matches `scopeType` + `scopeKey` (e.g. a tenant, store, user, or percentage bucket) |
+| **Evaluation** | At runtime `evaluateFlag(flagKey, context)` walks assignments ordered by priority. First match wins; falls back to flag default, then hard-coded default. |
+| **Percentage rollout** | Assignments with `scopeType=PERCENTAGE` use a deterministic hash of `flagKey + userId/tenantId` to assign users to a bucket, enabling stable 0–100% gradual rollouts |
+
+#### Scope Types
+
+| Scope | Description |
+|-------|-------------|
+| `GLOBAL` | Applies to everyone regardless of context |
+| `TENANT` | Matches a specific `tenantId` |
+| `STORE` | Matches a specific `storeId` |
+| `USER` | Matches a specific `userId` |
+| `ROLE` | Matches a platform or store role string |
+| `PORTAL` | Matches the portal name (`admin`, `backoffice`, `owner`, `customer`) |
+| `PROVIDER` | Matches a connection provider (`loyverse`, `uber_eats`, `doordash`) |
+| `ENVIRONMENT` | Matches an environment string (`production`, `staging`) |
+| `PERCENTAGE` | Assigns a bucket percentage (0–100) using deterministic hashing |
+
+#### Routes
+
+| Route | Description |
+|-------|-------------|
+| `/admin/feature-flags` | Flag list — filter by status/search, stats cards, create new flag |
+| `/admin/feature-flags/[flagKey]` | Flag detail — flag info, assignment table, status change, audit history |
+
+#### API
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/admin/feature-flags` | List flags |
+| `POST` | `/api/admin/feature-flags` | Create flag |
+| `GET` | `/api/admin/feature-flags/[flagKey]` | Get flag detail |
+| `PATCH` | `/api/admin/feature-flags/[flagKey]` | Update flag fields or change status |
+| `POST` | `/api/admin/feature-flags/[flagKey]/assignments` | Add assignment |
+| `PATCH` | `/api/admin/feature-flags/[flagKey]/assignments/[assignmentId]` | Toggle assignment active/inactive |
+| `DELETE` | `/api/admin/feature-flags/[flagKey]/assignments/[assignmentId]` | Delete assignment |
+
+#### Technical Files
+
+| File | Role |
+|------|------|
+| `prisma/schema.prisma` | `FeatureFlag` + `FeatureFlagAssignment` models and enums |
+| `prisma/seeds/feature-flags.ts` | Default flag seed (7 platform flags) |
+| `types/feature-flags.ts` | View model types, input types, evaluation types |
+| `lib/flags/evaluate.ts` | `evaluateFlag(flagKey, context)` — priority-ordered scope matching, percentage hashing |
+| `lib/flags/defaults.ts` | `KNOWN_FLAGS` constants + hard-coded fallback defaults |
+| `lib/flags/guards.ts` | Typed convenience helpers (`isCatalogSyncV2Enabled`, etc.) |
+| `lib/flags/context.ts` | `buildFlagContextFromSession()` — builds evaluation context from auth session |
+| `lib/flags/hashing.ts` | `hashToPercentage(key, seed)` — deterministic 0–100 bucket assignment |
+| `lib/flags/labels.ts` | Human-readable labels for flag types, statuses, scope types |
+| `services/admin/admin-feature-flag.service.ts` | CRUD + assignment management service |
+| `app/api/admin/feature-flags/` | REST API routes |
+| `components/admin/feature-flags/` | 8 UI components (table, create dialog, assignment dialog, status form, etc.) |
 
 ---
 
@@ -826,10 +931,11 @@ Retry creates a new `JobRun` with `triggerSource = ADMIN_RETRY` and `parentRunId
 - [x] **Admin Console Phase 2** — write actions (status change), integrations list, webhook log viewer, connection action log viewer, billing/subscription overview, full sidebar navigation
 - [x] **Admin User Impersonation** — PLATFORM_ADMIN can view the app as any active non-admin user; sticky amber banner on all pages; full audit trail; actor/effective-user session separation
 - [x] **Admin Console Phase 4 — Logs Console** — unified read-only log console for AuditLog / ConnectionActionLog / InboundWebhookLog / OrderEvent; multi-filter support; sensitive-data masking; related entity deep links
-- [ ] Admin Console Phase 3 — tenant/user/store create/edit, integration force-reconnect/sync, analytics charts
-- [ ] Admin Console Phase 5 — Jobs Panel (background task management, sync force-run)
+- [ ] Admin Console Phase 3 — integration force-reconnect/sync, analytics charts (create/edit already done)
+- [x] **Admin Console Phase 5 — Jobs Panel** — background task management, manual run, retry with immutable lineage, safe job types only
 - [x] **Admin Console Phase 6 — Billing Panel** — plan CRUD (limits & features), tenant subscription management (plan change, trial extend, status change), billing account editor, billing records & subscription event history, MRR estimate dashboard
-- [ ] Admin Console Phase 7 — Integrations Admin Panel (connection management, credential rotation)
+- [x] **Admin Console Phase 7 — Integrations Admin Panel** — connection detail page, status change, credential rotation, action log viewer
+- [x] **Admin Console Phase 9 — Feature Flags / Runtime Config** — flag lifecycle management, scoped assignments, percentage rollout, evaluation engine, audit trail
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)
