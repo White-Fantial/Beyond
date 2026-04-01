@@ -6,7 +6,6 @@ import AdminStatCard from "@/components/admin/AdminStatCard";
 import AdminKeyValueList from "@/components/admin/AdminKeyValueList";
 import StatusBadge from "@/components/admin/StatusBadge";
 import AdminStatusChangeForm from "@/components/admin/AdminStatusChangeForm";
-import MembershipTable from "@/components/admin/MembershipTable";
 import ConnectionSummaryTable from "@/components/admin/ConnectionSummaryTable";
 import TenantDetailActions from "@/components/admin/TenantDetailActions";
 import MembershipEditButton from "@/components/admin/MembershipEditButton";

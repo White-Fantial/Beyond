@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
 
 // ─── DELETE /api/admin/impersonate — end impersonation ───────────────────────
 
-export async function DELETE(_request: NextRequest) {
+export async function DELETE() {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
