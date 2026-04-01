@@ -9,7 +9,7 @@ const navItems = [
   { href: "/admin/users", label: "사용자", icon: "👥" },
   { href: "/admin/stores", label: "매장", icon: "🏪" },
   { href: "/admin/integrations", label: "연동", icon: "🔌" },
-  { href: "/admin/jobs", label: "작업 로그", icon: "⚙️" },
+  { href: "/admin/jobs", label: "Jobs Console", icon: "⚙️" },
   { href: "/admin/logs", label: "로그", icon: "📋" },
   { href: "/admin/billing", label: "결제", icon: "💳" },
 ];

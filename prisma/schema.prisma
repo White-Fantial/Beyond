@@ -204,6 +204,7 @@ model User {
   memberships        Membership[] @relation("UserMemberships")
   invitedMemberships Membership[] @relation("MembershipInvitedBy")
   auditLogs          AuditLog[]   @relation("AuditLogActor")
+  jobRuns            JobRun[]
 
   @@map("users")
 }
@@ -1263,4 +1264,64 @@ model ChannelEntityMapping {
   @@index([storeId, entityType, internalEntityId])
   @@index([storeId, connectionId, entityType])
   @@map("channel_entity_mappings")
+}
+
+// ─── Admin Jobs ───────────────────────────────────────────────────────────────
+
+enum JobType {
+  CATALOG_SYNC
+  CONNECTION_VALIDATE
+  CONNECTION_REFRESH_CHECK
+  ORDER_RECOVERY_RETRY
+  ORDER_RECONCILIATION_RETRY
+  ANALYTICS_REBUILD
+}
+
+enum JobRunStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  SKIPPED
+}
+
+enum JobTriggerSource {
+  SYSTEM
+  ADMIN_MANUAL
+  ADMIN_RETRY
+}
+
+model JobRun {
+  id                  String           @id @default(uuid())
+  tenantId            String?
+  storeId             String?
+  provider            String?
+  jobType             JobType
+  status              JobRunStatus     @default(QUEUED)
+  triggerSource       JobTriggerSource
+  triggeredByUserId   String?
+  parentRunId         String?
+  relatedEntityType   String?
+  relatedEntityId     String?
+  inputJson           Json?
+  resultJson          Json?
+  errorCode           String?
+  errorMessage        String?
+  queuedAt            DateTime?
+  startedAt           DateTime?
+  finishedAt          DateTime?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  triggeredByUser User?    @relation(fields: [triggeredByUserId], references: [id], onDelete: SetNull)
+  parentRun       JobRun?  @relation("JobRunRetries", fields: [parentRunId], references: [id], onDelete: SetNull)
+  childRuns       JobRun[] @relation("JobRunRetries")
+
+  @@index([tenantId, storeId])
+  @@index([status, createdAt])
+  @@index([jobType, status])
+  @@index([triggeredByUserId])
+  @@index([parentRunId])
+  @@map("job_runs")
 }

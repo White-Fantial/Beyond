@@ -512,7 +512,8 @@ The `/admin` portal is a **PLATFORM_ADMIN-only operations console** for managing
 | `/admin/stores` | Store list with search, status filter, pagination |
 | `/admin/stores/[storeId]` | Store detail — info, memberships, connections, **status change** |
 | `/admin/integrations` | Platform-wide connection list — filter by status/provider, pagination |
-| `/admin/jobs` | Connection action log viewer — filter by provider/status, pagination |
+| `/admin/jobs` | **Jobs Console** — view, manually trigger, and safely retry operational recovery jobs |
+| `/admin/jobs/[jobRunId]` | Job Run detail — input/result/error with sensitive-field masking, retry lineage, context links |
 | `/admin/logs` | **Unified Logs Console** — audit, connection, webhook, and order event logs with multi-source filters |
 | `/admin/logs/[logType]/[logId]` | Log detail — source-specific metadata, sanitized payload, context links |
 | `/admin/billing` | Subscription plan & subscription overview |
@@ -682,9 +683,106 @@ Detail pages for tenants, stores, and users include quick links to their related
 
 #### Roadmap
 
-- **Phase 5 — Jobs Panel**: operational management of background tasks, connection sync, and force re-runs
+- **Phase 5 — Jobs Console**: ✅ Implemented — see below
 - **Phase 6 — Billing Panel**: subscription plan CRUD, billing history, invoice details
 - **Phase 7 — Integrations Admin Panel**: connection management, credential rotation, provider-level dashboards
+
+---
+
+### Jobs Console (Admin Phase 5)
+
+The `/admin/jobs` page is a **PLATFORM_ADMIN-only operational console** for viewing, manually triggering, and safely retrying platform recovery jobs.
+
+#### Key Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **JobRun** | A single execution record for a job (created on each manual run or retry) |
+| **Manual Run** | Admin-triggered execution of a safe job type |
+| **Retry** | Re-execution of a `FAILED` run — always creates a **new** `JobRun`, never mutates the original |
+| **parentRunId** | Links a retry run to its original run, forming an immutable retry lineage |
+| **triggerSource** | `SYSTEM`, `ADMIN_MANUAL`, or `ADMIN_RETRY` |
+
+#### Job Types (Phase 5 — Safe Jobs Only)
+
+| Job Type | Description | Risk Level |
+|----------|-------------|------------|
+| `CATALOG_SYNC` | Loyverse full catalog sync for a store | LOW |
+| `CONNECTION_VALIDATE` | Read-only credential/status check for a connection | LOW |
+| `CONNECTION_REFRESH_CHECK` | Safe token refresh via existing `refreshConnectionCredentials` | MEDIUM |
+| `ORDER_RECOVERY_RETRY` | Re-send a failed POS order via `forwardOrderToPos` (idempotency preserved) | MEDIUM |
+| `ORDER_RECONCILIATION_RETRY` | Batch retry of PENDING/FAILED POS orders for a store | MEDIUM |
+| `ANALYTICS_REBUILD` | Rebuild store-scoped order aggregation snapshot | LOW |
+
+All executors **wrap existing domain services** — no business logic is duplicated.
+
+HIGH-risk job types (billing charge retry, destructive cleanup, credential overwrite, webhook mass replay) are **not implemented** and not exposed in Phase 5.
+
+#### Routes
+
+| Route | Description |
+|-------|-------------|
+| `/admin/jobs` | Job Run list — filter by type/status/tenant/store/provider/triggerSource, paginated |
+| `/admin/jobs/[jobRunId]` | Job Run detail — context, sanitized input/result/error, retry lineage, related links |
+
+#### Filters
+
+Query parameters accepted by `/admin/jobs`:
+
+| Param | Description |
+|-------|-------------|
+| `jobType` | Filter by job type |
+| `status` | `QUEUED` / `RUNNING` / `SUCCEEDED` / `FAILED` / `CANCELLED` / `SKIPPED` |
+| `tenantId` | Filter by tenant |
+| `storeId` | Filter by store |
+| `provider` | Filter by provider (`LOYVERSE`, `UBER_EATS`, `DOORDASH`) |
+| `triggerSource` | `SYSTEM` / `ADMIN_MANUAL` / `ADMIN_RETRY` |
+| `failedOnly` | `true` — show only FAILED runs |
+| `from` / `to` | Date range (ISO 8601) |
+| `page` | Pagination (default 1, page size 20) |
+
+#### Status Lifecycle
+
+```
+QUEUED → RUNNING → SUCCEEDED
+                 → FAILED
+       → SKIPPED (when no action needed)
+       → CANCELLED
+```
+
+Retry creates a new `JobRun` with `triggerSource = ADMIN_RETRY` and `parentRunId = originalRun.id`. The original FAILED run is **never modified** — it is immutable history.
+
+#### Security
+
+- All routes and API endpoints require `PLATFORM_ADMIN`
+- Manual run and retry are **blocked during impersonation** — admin must exit impersonation first
+- All `inputJson` / `resultJson` / `errorMessage` fields are passed through `sanitizeJsonValue` before display
+
+#### Audit Events
+
+| Event | When |
+|-------|------|
+| `JOB_MANUAL_RUN_REQUESTED` | Admin submits the manual run form |
+| `JOB_RUN_CREATED` | `JobRun` record inserted |
+| `JOB_RUN_STARTED` | Status transitions to `RUNNING` |
+| `JOB_RUN_SUCCEEDED` | Status transitions to `SUCCEEDED` |
+| `JOB_RUN_FAILED` | Status transitions to `FAILED` |
+| `JOB_RUN_RETRIED` | Retry run created, linking back to original |
+
+#### Technical Files
+
+| File | Role |
+|------|------|
+| `prisma/schema.prisma` | `JobRun` model + `JobType`, `JobRunStatus`, `JobTriggerSource` enums |
+| `types/admin-jobs.ts` | View model types (`AdminJobRunListItem`, `AdminJobRunDetail`, filter params) |
+| `lib/admin/jobs/filters.ts` | Filter query-param parsing |
+| `lib/admin/jobs/labels.ts` | Human-readable labels for job types, statuses, trigger sources |
+| `lib/admin/jobs/guards.ts` | `canRetryJobRun`, `canManuallyRunJobType`, per-type risk config |
+| `lib/admin/jobs/normalize.ts` | Prisma row → view model (with sanitization) |
+| `services/admin/admin-job.service.ts` | Orchestration service — list, detail, manual run, retry, execute |
+| `app/api/admin/jobs/run/route.ts` | `POST` manual run endpoint (PLATFORM_ADMIN, impersonation blocked) |
+| `app/api/admin/jobs/[jobRunId]/retry/route.ts` | `POST` retry endpoint (PLATFORM_ADMIN, impersonation blocked) |
+| `components/admin/jobs/` | UI components: table, filters, badges, manual run dialog, retry button, payload viewer |
 
 ### Phase 3 예정
 
