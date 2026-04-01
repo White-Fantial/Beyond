@@ -171,6 +171,13 @@ export async function updateAdminConnectionStatus(
     },
   });
 
+  const actionTypeMap: Record<string, string> = {
+    DISCONNECTED: "DISCONNECT",
+    REAUTH_REQUIRED: "REAUTHORIZE",
+    CONNECTED: "CONNECT_SUCCESS",
+  };
+  const actionType = actionTypeMap[status] ?? "CONNECT_SUCCESS";
+
   // Write a ConnectionActionLog entry
   await prisma.connectionActionLog.create({
     data: {
@@ -178,7 +185,7 @@ export async function updateAdminConnectionStatus(
       storeId: conn.storeId,
       connectionId: conn.id,
       provider: conn.provider,
-      actionType: status === "DISCONNECTED" ? "DISCONNECT" : status === "REAUTH_REQUIRED" ? "REAUTHORIZE" : "CONNECT_SUCCESS",
+      actionType: actionType as never,
       status: "SUCCESS",
       actorUserId,
       message: `Admin forced status change to ${status}`,
