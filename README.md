@@ -516,7 +516,11 @@ The `/admin` portal is a **PLATFORM_ADMIN-only operations console** for managing
 | `/admin/jobs/[jobRunId]` | Job Run detail — input/result/error with sensitive-field masking, retry lineage, context links |
 | `/admin/logs` | **Unified Logs Console** — audit, connection, webhook, and order event logs with multi-source filters |
 | `/admin/logs/[logType]/[logId]` | Log detail — source-specific metadata, sanitized payload, context links |
-| `/admin/billing` | Subscription plan & subscription overview |
+| `/admin/billing` | **Billing Overview** — MRR estimate, plan distribution, recent subscription events & billing records |
+| `/admin/billing/plans` | Plan list with status filter; create new plan |
+| `/admin/billing/plans/[planId]` | Plan detail — edit info, manage limits & features, view subscribed tenants |
+| `/admin/billing/tenants` | Tenant billing list — subscription status, usage, over-limit indicator |
+| `/admin/billing/tenants/[tenantId]` | Tenant billing detail — subscription management, usage vs limits, billing account, records & event history |
 
 ### Dashboard KPIs
 
@@ -824,7 +828,7 @@ Retry creates a new `JobRun` with `triggerSource = ADMIN_RETRY` and `parentRunId
 - [x] **Admin Console Phase 4 — Logs Console** — unified read-only log console for AuditLog / ConnectionActionLog / InboundWebhookLog / OrderEvent; multi-filter support; sensitive-data masking; related entity deep links
 - [ ] Admin Console Phase 3 — tenant/user/store create/edit, integration force-reconnect/sync, analytics charts
 - [ ] Admin Console Phase 5 — Jobs Panel (background task management, sync force-run)
-- [ ] Admin Console Phase 6 — Billing Panel (subscription CRUD, invoice history)
+- [x] **Admin Console Phase 6 — Billing Panel** — plan CRUD (limits & features), tenant subscription management (plan change, trial extend, status change), billing account editor, billing records & subscription event history, MRR estimate dashboard
 - [ ] Admin Console Phase 7 — Integrations Admin Panel (connection management, credential rotation)
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)

@@ -146,3 +146,41 @@ export async function auditJobRunFailed(jobRunId: string, actorUserId: string | 
 export async function auditJobRunRetried(jobRunId: string, originalRunId: string, actorUserId: string, metadata?: Record<string, unknown>) {
   await logAuditEvent({ actorUserId, action: "JOB_RUN_RETRIED", targetType: "JobRun", targetId: jobRunId, metadata: { ...metadata, originalRunId } });
 }
+
+// ─── Billing audit helpers ────────────────────────────────────────────────────
+
+export async function auditAdminPlanCreated(planId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "PLAN_CREATED", targetType: "Plan", targetId: planId, metadata });
+}
+
+export async function auditAdminPlanUpdated(planId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "PLAN_UPDATED", targetType: "Plan", targetId: planId, metadata });
+}
+
+export async function auditAdminPlanStatusChanged(planId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "PLAN_STATUS_CHANGED", targetType: "Plan", targetId: planId, metadata });
+}
+
+export async function auditAdminTenantPlanAssigned(tenantId: string, subscriptionId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, actorUserId, action: "TENANT_PLAN_ASSIGNED", targetType: "TenantSubscription", targetId: subscriptionId, metadata });
+}
+
+export async function auditAdminTenantPlanChanged(tenantId: string, subscriptionId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, actorUserId, action: "TENANT_PLAN_CHANGED", targetType: "TenantSubscription", targetId: subscriptionId, metadata });
+}
+
+export async function auditAdminTenantTrialExtended(tenantId: string, subscriptionId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, actorUserId, action: "TENANT_TRIAL_EXTENDED", targetType: "TenantSubscription", targetId: subscriptionId, metadata });
+}
+
+export async function auditAdminTenantSubscriptionStatusChanged(tenantId: string, subscriptionId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, actorUserId, action: "TENANT_SUBSCRIPTION_STATUS_CHANGED", targetType: "TenantSubscription", targetId: subscriptionId, metadata });
+}
+
+export async function auditAdminTenantBillingAccountUpdated(tenantId: string, billingAccountId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, actorUserId, action: "TENANT_BILLING_ACCOUNT_UPDATED", targetType: "TenantBillingAccount", targetId: billingAccountId, metadata });
+}
+
+export async function auditAdminTenantBillingRecordAdded(tenantId: string, recordId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, actorUserId, action: "TENANT_BILLING_RECORD_ADDED", targetType: "BillingRecord", targetId: recordId, metadata });
+}

@@ -1,0 +1,110 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
+import { getAdminTenantBillingDetail } from "@/services/admin/admin-subscription.service";
+import { listAdminPlans } from "@/services/admin/admin-plan.service";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminTenantSubscriptionCard from "@/components/admin/billing/AdminTenantSubscriptionCard";
+import AdminBillingAccountCard from "@/components/admin/billing/AdminBillingAccountCard";
+import AdminUsageSummaryCard from "@/components/admin/billing/AdminUsageSummaryCard";
+import AdminBillingRecordTable from "@/components/admin/billing/AdminBillingRecordTable";
+import AdminSubscriptionEventTable from "@/components/admin/billing/AdminSubscriptionEventTable";
+import AdminBillingNoteForm from "@/components/admin/billing/AdminBillingNoteForm";
+
+interface PageProps {
+  params: Promise<{ tenantId: string }>;
+}
+
+export default async function AdminTenantBillingDetailPage({ params }: PageProps) {
+  await requirePlatformAdmin();
+  const { tenantId } = await params;
+
+  let detail;
+  try {
+    detail = await getAdminTenantBillingDetail(tenantId);
+  } catch {
+    notFound();
+  }
+
+  const plansResult = await listAdminPlans({ status: "ACTIVE", pageSize: 100 });
+  const availablePlans = plansResult.items.map((p) => ({
+    id: p.id,
+    code: p.code,
+    name: p.name,
+  }));
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center gap-3">
+        <Link href="/admin/billing/tenants" className="text-xs text-gray-400 hover:underline">
+          ← Billing 테넌트 목록
+        </Link>
+        <span className="text-gray-300">·</span>
+        <Link
+          href={`/admin/tenants/${tenantId}`}
+          className="text-xs text-gray-400 hover:underline"
+        >
+          테넌트 상세 보기 →
+        </Link>
+      </div>
+
+      <AdminPageHeader
+        title={detail.tenantDisplayName}
+        description={`슬러그: ${detail.tenantSlug} · 상태: ${detail.tenantStatus}`}
+      />
+
+      {/* Subscription */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">구독 정보</h2>
+        <AdminTenantSubscriptionCard
+          subscription={detail.subscription}
+          tenantId={tenantId}
+          availablePlans={availablePlans}
+        />
+      </div>
+
+      {/* Usage vs Limits */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">사용량 vs 한도</h2>
+        <AdminUsageSummaryCard
+          usage={detail.usage}
+          comparisons={detail.usageComparisons}
+        />
+      </div>
+
+      {/* Billing Account */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">결제 계정</h2>
+        <AdminBillingAccountCard
+          billingAccount={detail.billingAccount}
+          tenantId={tenantId}
+        />
+      </div>
+
+      {/* Add billing note */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">내부 메모 / 기록 추가</h2>
+        <AdminBillingNoteForm
+          tenantId={tenantId}
+          subscriptionId={detail.subscription?.id}
+        />
+      </div>
+
+      {/* Billing Records */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">
+          결제 기록 ({detail.billingRecords.length})
+        </h2>
+        <AdminBillingRecordTable records={detail.billingRecords} />
+      </div>
+
+      {/* Subscription Events */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">
+          구독 이벤트 이력 ({detail.subscriptionEvents.length})
+        </h2>
+        <AdminSubscriptionEventTable events={detail.subscriptionEvents} />
+      </div>
+    </div>
+  );
+}

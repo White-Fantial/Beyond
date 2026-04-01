@@ -7,6 +7,11 @@ const statusStyles: Record<string, string> = {
   SUSPENDED: "bg-yellow-50 text-yellow-700 border border-yellow-200",
   ARCHIVED: "bg-gray-100 text-gray-500 border border-gray-200",
   INVITED: "bg-purple-50 text-purple-700 border border-purple-200",
+  // Subscription billing status
+  PAST_DUE: "bg-orange-50 text-orange-700 border border-orange-200",
+  CANCELLED: "bg-gray-100 text-gray-500 border border-gray-200",
+  EXPIRED: "bg-gray-100 text-gray-500 border border-gray-200",
+  INCOMPLETE: "bg-red-50 text-red-700 border border-red-200",
   // Membership status
   REMOVED: "bg-red-50 text-red-600 border border-red-200",
   INACTIVE: "bg-gray-100 text-gray-500 border border-gray-200",

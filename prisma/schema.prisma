@@ -162,6 +162,57 @@ enum SyncStatus {
   PARTIAL
 }
 
+// ─── Billing Enums ────────────────────────────────────────────────────────────
+
+enum PlanStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+  CUSTOM
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  CANCELLED
+  EXPIRED
+  INCOMPLETE
+}
+
+enum SubscriptionEventType {
+  PLAN_ASSIGNED
+  PLAN_CHANGED
+  TRIAL_EXTENDED
+  STATUS_CHANGED
+  CANCEL_AT_PERIOD_END_SET
+  SUBSCRIPTION_REACTIVATED
+  BILLING_OVERRIDE_APPLIED
+  BILLING_NOTE_ADDED
+}
+
+enum BillingRecordType {
+  INVOICE
+  PAYMENT
+  ADJUSTMENT
+  CREDIT
+  NOTE
+}
+
+enum BillingRecordStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+  UNCOLLECTIBLE
+}
+
 // ─── Foundation Models ────────────────────────────────────────────────────────
 
 model Tenant {
@@ -182,6 +233,12 @@ model Tenant {
   storeMemberships StoreMembership[]
   connections      Connection[]
   auditLogs        AuditLog[]
+
+  billingAccount       TenantBillingAccount?
+  subscriptions        TenantSubscription[]
+  subscriptionEvents   TenantSubscriptionEvent[]
+  billingRecords       BillingRecord[]
+  usageSnapshots       UsageSnapshot[]
 
   @@map("tenants")
 }
@@ -1324,4 +1381,186 @@ model JobRun {
   @@index([triggeredByUserId])
   @@index([parentRunId])
   @@map("job_runs")
+}
+
+// ─── Billing Models ───────────────────────────────────────────────────────────
+
+model Plan {
+  id               String          @id @default(uuid())
+  code             String          @unique
+  name             String
+  description      String?
+  status           PlanStatus      @default(ACTIVE)
+  billingInterval  BillingInterval @default(MONTHLY)
+  priceAmountMinor Int             @default(0)
+  currencyCode     String          @default("NZD")
+  trialDays        Int?
+  isDefault        Boolean         @default(false)
+  sortOrder        Int             @default(0)
+  metadataJson     Json?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  limits        PlanLimit[]
+  features      PlanFeature[]
+  subscriptions TenantSubscription[]
+
+  @@index([status, sortOrder])
+  @@map("plans")
+}
+
+model PlanLimit {
+  id        String   @id @default(uuid())
+  planId    String
+  key       String
+  valueInt  Int?
+  valueText String?
+  valueBool Boolean?
+  unit      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, key])
+  @@index([planId])
+  @@map("plan_limits")
+}
+
+model PlanFeature {
+  id         String   @id @default(uuid())
+  planId     String
+  key        String
+  enabled    Boolean  @default(true)
+  configJson Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, key])
+  @@index([planId])
+  @@map("plan_features")
+}
+
+model TenantBillingAccount {
+  id                  String   @id @default(uuid())
+  tenantId            String   @unique
+  billingEmail        String
+  companyName         String?
+  legalName           String?
+  taxNumber           String?
+  addressLine1        String?
+  addressLine2        String?
+  city                String?
+  region              String?
+  postalCode          String?
+  countryCode         String?
+  externalCustomerRef String?
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_billing_accounts")
+}
+
+model TenantSubscription {
+  id                    String             @id @default(uuid())
+  tenantId              String
+  planId                String
+  status                SubscriptionStatus @default(TRIAL)
+  billingInterval       BillingInterval    @default(MONTHLY)
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  trialStart            DateTime?
+  trialEnd              DateTime?
+  cancelAtPeriodEnd     Boolean            @default(false)
+  cancelledAt           DateTime?
+  suspendedAt           DateTime?
+  reactivatedAt         DateTime?
+  externalSubscriptionRef String?
+  externalPriceRef      String?
+  overrideJson          Json?
+  startedAt             DateTime           @default(now())
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  tenant  Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan    Plan                @relation(fields: [planId], references: [id])
+  events  TenantSubscriptionEvent[]
+  billingRecords BillingRecord[]
+
+  @@index([tenantId, status])
+  @@index([status, currentPeriodEnd])
+  @@map("tenant_subscriptions")
+}
+
+model TenantSubscriptionEvent {
+  id                   String                @id @default(uuid())
+  tenantSubscriptionId String
+  tenantId             String
+  eventType            SubscriptionEventType
+  actorUserId          String?
+  actorLabel           String?
+  fromStatus           String?
+  toStatus             String?
+  fromPlanId           String?
+  toPlanId             String?
+  note                 String?
+  metadataJson         Json?
+  createdAt            DateTime              @default(now())
+
+  tenantSubscription TenantSubscription @relation(fields: [tenantSubscriptionId], references: [id], onDelete: Cascade)
+  tenant             Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantSubscriptionId, createdAt])
+  @@index([tenantId, createdAt])
+  @@map("tenant_subscription_events")
+}
+
+model BillingRecord {
+  id                   String              @id @default(uuid())
+  tenantId             String
+  tenantSubscriptionId String?
+  recordType           BillingRecordType
+  status               BillingRecordStatus @default(DRAFT)
+  amountMinor          Int?
+  currencyCode         String?
+  dueAt                DateTime?
+  paidAt               DateTime?
+  externalInvoiceRef   String?
+  summary              String
+  metadataJson         Json?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  tenant             Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantSubscription TenantSubscription? @relation(fields: [tenantSubscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, recordType, status])
+  @@map("billing_records")
+}
+
+model UsageSnapshot {
+  id                       String   @id @default(uuid())
+  tenantId                 String
+  periodStart              DateTime
+  periodEnd                DateTime
+  storesCount              Int      @default(0)
+  usersCount               Int      @default(0)
+  activeIntegrationsCount  Int      @default(0)
+  ordersCount              Int      @default(0)
+  subscriptionsCount       Int?
+  metricsJson              Json?
+  capturedAt               DateTime @default(now())
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, capturedAt])
+  @@map("usage_snapshots")
 }
