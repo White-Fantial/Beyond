@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { AdminPlanDetail, BillingInterval, CreatePlanInput, UpdatePlanInput } from "@/types/admin-billing";
+import type { AdminPlanDetail, BillingInterval } from "@/types/admin-billing";
 
 const INTERVAL_OPTIONS: { value: BillingInterval; label: string }[] = [
   { value: "MONTHLY", label: "월간" },
