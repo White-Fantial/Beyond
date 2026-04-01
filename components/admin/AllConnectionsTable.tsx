@@ -28,6 +28,7 @@ export default function AllConnectionsTable({
             <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">마지막 연결</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">마지막 동기화</th>
+            <th className="px-4 py-3"></th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
@@ -59,6 +60,14 @@ export default function AllConnectionsTable({
                     <StatusBadge value={c.lastSyncStatus} />
                   </span>
                 )}
+              </td>
+              <td className="px-4 py-3 text-right">
+                <Link
+                  href={`/admin/integrations/${c.id}`}
+                  className="text-xs text-blue-600 hover:underline whitespace-nowrap"
+                >
+                  상세 →
+                </Link>
               </td>
             </tr>
           ))}

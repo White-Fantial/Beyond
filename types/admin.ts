@@ -309,6 +309,70 @@ export interface AdminConnectionActionLogParams {
   pageSize?: number | string;
 }
 
+// ─── Connection Detail (Phase 7) ─────────────────────────────────────────────
+
+export interface AdminConnectionDetail {
+  id: string;
+  tenantId: string;
+  tenantDisplayName: string;
+  storeId: string;
+  storeName: string;
+  provider: string;
+  type: string;
+  status: string;
+  displayName: string | null;
+  externalMerchantId: string | null;
+  externalStoreId: string | null;
+  externalStoreName: string | null;
+  externalLocationId: string | null;
+  authScheme: string | null;
+  lastConnectedAt: Date | null;
+  lastAuthValidatedAt: Date | null;
+  lastSyncAt: Date | null;
+  lastSyncStatus: string | null;
+  lastErrorCode: string | null;
+  lastErrorMessage: string | null;
+  reauthRequiredAt: Date | null;
+  disconnectedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  credentials: AdminConnectionCredentialRow[];
+  recentActionLogs: AdminConnectionActionLogRow[];
+}
+
+export interface AdminConnectionCredentialRow {
+  id: string;
+  credentialType: string;
+  authScheme: string;
+  label: string | null;
+  version: number;
+  isActive: boolean;
+  canRefresh: boolean;
+  requiresReauth: boolean;
+  issuedAt: Date | null;
+  expiresAt: Date | null;
+  refreshAfter: Date | null;
+  lastUsedAt: Date | null;
+  lastRefreshAt: Date | null;
+  lastRefreshStatus: string | null;
+  lastRefreshError: string | null;
+  rotatedAt: Date | null;
+  createdAt: Date;
+}
+
+export interface AdminConnectionActionLogRow {
+  id: string;
+  tenantId: string;
+  storeId: string;
+  provider: string;
+  actionType: string;
+  status: string;
+  actorUserId: string | null;
+  message: string | null;
+  errorCode: string | null;
+  createdAt: Date;
+}
+
 // ─── Billing ──────────────────────────────────────────────────────────────────
 
 export interface AdminBillingSummary {

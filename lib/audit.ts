@@ -184,3 +184,13 @@ export async function auditAdminTenantBillingAccountUpdated(tenantId: string, bi
 export async function auditAdminTenantBillingRecordAdded(tenantId: string, recordId: string, actorUserId: string, metadata?: Record<string, unknown>) {
   await logAuditEvent({ tenantId, actorUserId, action: "TENANT_BILLING_RECORD_ADDED", targetType: "BillingRecord", targetId: recordId, metadata });
 }
+
+// ─── Integration admin audit helpers ─────────────────────────────────────────
+
+export async function auditAdminConnectionStatusChanged(connectionId: string, tenantId: string, storeId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, storeId, actorUserId, action: "CONNECTION_STATUS_CHANGED", targetType: "Connection", targetId: connectionId, metadata });
+}
+
+export async function auditAdminCredentialRotated(connectionId: string, tenantId: string, storeId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, storeId, actorUserId, action: "CONNECTION_CREDENTIAL_ROTATED", targetType: "Connection", targetId: connectionId, metadata });
+}
