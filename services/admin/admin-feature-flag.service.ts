@@ -10,7 +10,7 @@ import type {
   FlagType,
   FlagScopeType,
 } from "@/types/feature-flags";
-import type { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 // ─── List ──────────────────────────────────────────────────────────────────────
 
