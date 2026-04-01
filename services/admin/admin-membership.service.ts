@@ -208,3 +208,27 @@ export async function updateStoreMembership(
     after: data,
   });
 }
+
+// ─── Read helpers for dropdowns ───────────────────────────────────────────────
+
+/**
+ * Returns active tenant memberships for a given tenant so the UI can populate
+ * a dropdown when adding a store membership.
+ */
+export async function listActiveTenantMembershipsForDropdown(
+  tenantId: string
+): Promise<{ id: string; userName: string; userEmail: string }[]> {
+  const memberships = await prisma.membership.findMany({
+    where: { tenantId, status: { not: "REMOVED" } },
+    select: {
+      id: true,
+      user: { select: { name: true, email: true } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  return memberships.map((m) => ({
+    id: m.id,
+    userName: m.user.name,
+    userEmail: m.user.email,
+  }));
+}

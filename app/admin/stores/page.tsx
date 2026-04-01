@@ -6,6 +6,7 @@ import AdminSearchInput from "@/components/admin/AdminSearchInput";
 import AdminStatusFilter from "@/components/admin/AdminStatusFilter";
 import AdminPagination from "@/components/admin/AdminPagination";
 import StoreListTable from "@/components/admin/StoreListTable";
+import StoreListActions from "@/components/admin/StoreListActions";
 
 const STORE_STATUS_OPTIONS = [
   { value: "ACTIVE", label: "활성" },
@@ -31,7 +32,12 @@ export default async function AdminStoresPage({ searchParams }: PageProps) {
 
   return (
     <div>
-      <AdminPageHeader title="매장" description="플랫폼에 등록된 전체 매장 목록입니다." />
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <AdminPageHeader title="매장" description="플랫폼에 등록된 전체 매장 목록입니다." />
+        <div className="shrink-0 pt-1">
+          <StoreListActions />
+        </div>
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <Suspense>

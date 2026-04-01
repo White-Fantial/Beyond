@@ -69,6 +69,7 @@ export function mapTenantStoreRow(s: {
 
 export function mapTenantMembershipRow(m: {
   id: string;
+  userId: string;
   role: string;
   status: string;
   joinedAt: Date | null;
@@ -77,6 +78,7 @@ export function mapTenantMembershipRow(m: {
 }): TenantMembershipRow {
   return {
     id: m.id,
+    userId: m.userId,
     userName: m.user.name,
     userEmail: m.user.email,
     role: m.role,

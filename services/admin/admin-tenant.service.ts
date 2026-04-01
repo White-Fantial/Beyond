@@ -107,6 +107,7 @@ export async function getAdminTenantDetail(tenantId: string): Promise<AdminTenan
       where: { tenantId },
       select: {
         id: true,
+        userId: true,
         role: true,
         status: true,
         joinedAt: true,
