@@ -119,7 +119,16 @@ function buildContextRows(log: Awaited<ReturnType<typeof getAdminLogDetail>>): K
       }
       add("Processing Status", log.processingStatus);
       add("Connection ID", log.connectionId);
-      add("Processed At", log.processedAt ? new Date(log.processedAt).toISOString() : null);
+      add(
+        "Processed At",
+        log.processedAt
+          ? new Intl.DateTimeFormat("ko-KR", {
+              dateStyle: "medium",
+              timeStyle: "medium",
+              hour12: false,
+            }).format(new Date(log.processedAt))
+          : null
+      );
       add("Error", log.errorMessage);
       break;
 

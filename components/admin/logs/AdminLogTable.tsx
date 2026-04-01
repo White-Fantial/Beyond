@@ -99,7 +99,10 @@ export default function AdminLogTable({ items, hasFilters }: AdminLogTableProps)
                   {getProviderLabel(item.provider)}
                 </td>
                 <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap max-w-[160px]">
-                  <span className="truncate block" title={item.actionType ?? undefined}>
+                  <span
+                    className="truncate block"
+                    {...(item.actionType ? { title: item.actionType } : {})}
+                  >
                     {getActionTypeLabel(item.logType, item.actionType)}
                   </span>
                 </td>

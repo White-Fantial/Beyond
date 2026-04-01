@@ -94,10 +94,6 @@ export async function listAdminLogs(
   ]);
 
   const totalBeforeErrorOnly = auditCount + connectionCount + webhookCount + orderCount;
-  // For errorOnly we report the filtered subset size (approximate)
-  const total = filters.errorOnly
-    ? filtered.length + Math.max(0, totalBeforeErrorOnly - windowSize * querySources.length)
-    : totalBeforeErrorOnly;
 
   // Slice the correct page from merged
   const items = filtered.slice(filters.skip, filters.skip + pageSize);
@@ -105,7 +101,7 @@ export async function listAdminLogs(
   return {
     items,
     pagination: buildPaginationMeta(
-      filters.errorOnly ? filtered.length : total,
+      filters.errorOnly ? filtered.length : totalBeforeErrorOnly,
       page,
       pageSize
     ),
@@ -542,14 +538,18 @@ async function getOrderEventDetail(id: string) {
   if (!row) return null;
 
   const [tenant, store] = await Promise.all([
-    prisma.tenant.findUnique({
-      where: { id: row.tenantId },
-      select: { displayName: true },
-    }),
-    prisma.store.findUnique({
-      where: { id: row.storeId },
-      select: { name: true },
-    }),
+    row.tenantId
+      ? prisma.tenant.findUnique({
+          where: { id: row.tenantId },
+          select: { displayName: true },
+        })
+      : Promise.resolve(null),
+    row.storeId
+      ? prisma.store.findUnique({
+          where: { id: row.storeId },
+          select: { name: true },
+        })
+      : Promise.resolve(null),
   ]);
 
   return normalizeOrderEventDetail({

@@ -40,6 +40,9 @@ function isSensitiveKey(key: string): boolean {
   return SENSITIVE_KEYS.some((s) => lower.includes(s));
 }
 
+/** Maximum recursion depth to prevent circular-reference runaway. */
+const MAX_SANITIZE_DEPTH = 20;
+
 /**
  * Recursively sanitize an object, replacing sensitive values with "[REDACTED]".
  * Returns a new object — does not mutate the input.
@@ -49,7 +52,7 @@ export function sanitizeObject(
   depth = 0
 ): unknown {
   // Guard against circular references / runaway depth
-  if (depth > 20) return "[TRUNCATED]";
+  if (depth > MAX_SANITIZE_DEPTH) return "[TRUNCATED]";
 
   if (value === null || value === undefined) return value;
 
