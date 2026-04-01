@@ -1,0 +1,54 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requirePlatformAdminNotImpersonating } from "@/lib/admin/auth-guard";
+import {
+  getAdminFeatureFlagByKey,
+  toggleFlagAssignment,
+  deleteFlagAssignment,
+} from "@/services/admin/admin-feature-flag.service";
+import {
+  auditAdminFeatureFlagAssignmentToggled,
+  auditAdminFeatureFlagAssignmentDeleted,
+} from "@/lib/audit";
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { flagKey: string; assignmentId: string } }
+) {
+  try {
+    const ctx = await requirePlatformAdminNotImpersonating();
+    const flag = await getAdminFeatureFlagByKey(params.flagKey);
+    if (!flag) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const body = await req.json();
+    await toggleFlagAssignment(params.assignmentId, body.isActive);
+    await auditAdminFeatureFlagAssignmentToggled(
+      params.assignmentId,
+      flag.id,
+      ctx.userId,
+      { flagKey: flag.key, isActive: body.isActive }
+    );
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 400 });
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { flagKey: string; assignmentId: string } }
+) {
+  try {
+    const ctx = await requirePlatformAdminNotImpersonating();
+    const flag = await getAdminFeatureFlagByKey(params.flagKey);
+    if (!flag) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    await deleteFlagAssignment(params.assignmentId);
+    await auditAdminFeatureFlagAssignmentDeleted(
+      params.assignmentId,
+      flag.id,
+      ctx.userId,
+      { flagKey: flag.key }
+    );
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 400 });
+  }
+}

@@ -1564,3 +1564,78 @@ model UsageSnapshot {
   @@index([tenantId, capturedAt])
   @@map("usage_snapshots")
 }
+
+// ─── Feature Flags ────────────────────────────────────────────────────────────
+
+enum FlagType {
+  BOOLEAN
+  STRING
+  INTEGER
+  JSON
+  VARIANT
+}
+
+enum FlagStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum FlagScopeType {
+  GLOBAL
+  TENANT
+  STORE
+  USER
+  ROLE
+  PORTAL
+  PROVIDER
+  ENVIRONMENT
+  PERCENTAGE
+}
+
+model FeatureFlag {
+  id                 String      @id @default(uuid())
+  key                String      @unique
+  name               String
+  description        String?
+  flagType           FlagType    @default(BOOLEAN)
+  status             FlagStatus  @default(INACTIVE)
+  defaultBoolValue   Boolean?
+  defaultStringValue String?
+  defaultIntValue    Int?
+  defaultJsonValue   Json?
+  isExperiment       Boolean     @default(false)
+  ownerNote          String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  assignments FeatureFlagAssignment[]
+
+  @@index([status])
+  @@index([key])
+  @@map("feature_flags")
+}
+
+model FeatureFlagAssignment {
+  id            String        @id @default(uuid())
+  featureFlagId String
+  scopeType     FlagScopeType @default(GLOBAL)
+  scopeKey      String?
+  boolValue     Boolean?
+  stringValue   String?
+  intValue      Int?
+  jsonValue     Json?
+  priority      Int           @default(0)
+  isActive      Boolean       @default(true)
+  startsAt      DateTime?
+  endsAt        DateTime?
+  note          String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  featureFlag FeatureFlag @relation(fields: [featureFlagId], references: [id], onDelete: Cascade)
+
+  @@index([featureFlagId])
+  @@index([scopeType, scopeKey])
+  @@map("feature_flag_assignments")
+}

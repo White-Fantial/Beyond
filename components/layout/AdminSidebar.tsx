@@ -11,6 +11,7 @@ const navItems = [
   { href: "/admin/integrations", label: "연동", icon: "🔌" },
   { href: "/admin/jobs", label: "Jobs Console", icon: "⚙️" },
   { href: "/admin/logs", label: "로그", icon: "📋" },
+  { href: "/admin/feature-flags", label: "Feature Flags", icon: "🚩" },
 ];
 
 const billingSubItems = [
