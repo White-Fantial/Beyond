@@ -9,7 +9,7 @@ interface WebhookLogTableProps {
 
 export default function WebhookLogTable({
   items,
-  emptyMessage = "웹훅 로그가 없습니다.",
+  emptyMessage = "No webhook logs.",
 }: WebhookLogTableProps) {
   if (items.length === 0) {
     return <AdminEmptyState message={emptyMessage} />;
@@ -20,19 +20,19 @@ export default function WebhookLogTable({
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">수신 시간</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">채널</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">이벤트</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">처리 상태</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">서명 검증</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">오류</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Received</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Channel</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Event</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Processing status</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">Signature</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Error</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
           {items.map((w) => (
             <tr key={w.id} className="hover:bg-gray-50">
               <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
-                {w.receivedAt.toLocaleString("ko-KR")}
+                {w.receivedAt.toLocaleString("en-US")}
               </td>
               <td className="px-4 py-3 font-mono text-xs text-gray-700">
                 {w.channelType ?? "—"}
@@ -52,9 +52,9 @@ export default function WebhookLogTable({
                 {w.signatureValid === null ? (
                   <span className="text-xs text-gray-400">—</span>
                 ) : w.signatureValid ? (
-                  <span className="text-xs text-green-600 font-medium">✓ 유효</span>
+                  <span className="text-xs text-green-600 font-medium">✓ Valid</span>
                 ) : (
-                  <span className="text-xs text-red-600 font-medium">✗ 실패</span>
+                  <span className="text-xs text-red-600 font-medium">✗ Failed</span>
                 )}
               </td>
               <td className="px-4 py-3 text-xs text-red-500 hidden lg:table-cell truncate max-w-[200px]">

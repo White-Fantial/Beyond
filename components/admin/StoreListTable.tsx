@@ -10,7 +10,7 @@ interface StoreListTableProps {
 
 export default function StoreListTable({ items, emptyMessage }: StoreListTableProps) {
   if (items.length === 0) {
-    return <AdminEmptyState message={emptyMessage ?? "매장이 없습니다."} />;
+    return <AdminEmptyState message={emptyMessage ?? "No stores found."} />;
   }
 
   return (
@@ -18,13 +18,13 @@ export default function StoreListTable({ items, emptyMessage }: StoreListTablePr
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">매장명</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">코드</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">테넌트</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">시간대</th>
-            <th className="px-4 py-3 text-right font-medium text-gray-500 hidden md:table-cell">연결</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">생성일</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Store name</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">Code</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Tenant</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Timezone</th>
+            <th className="px-4 py-3 text-right font-medium text-gray-500 hidden md:table-cell">Connections</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Created</th>
             <th className="px-4 py-3"></th>
           </tr>
         </thead>
@@ -47,14 +47,14 @@ export default function StoreListTable({ items, emptyMessage }: StoreListTablePr
               <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{s.timezone}</td>
               <td className="px-4 py-3 text-right text-gray-700 hidden md:table-cell">{s.connectionCount}</td>
               <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell">
-                {s.createdAt.toLocaleDateString("ko-KR")}
+                {s.createdAt.toLocaleDateString("en-US")}
               </td>
               <td className="px-4 py-3 text-right">
                 <Link
                   href={`/admin/stores/${s.id}`}
                   className="text-xs text-blue-600 hover:underline whitespace-nowrap"
                 >
-                  상세 →
+                  Details →
                 </Link>
               </td>
             </tr>

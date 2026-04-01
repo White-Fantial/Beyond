@@ -40,26 +40,25 @@ export default function ChangePlatformRoleDialog({ open, onClose, userId, curren
         });
         const data = await res.json();
         if (!res.ok) {
-          setError(data.error ?? "역할 변경에 실패했습니다.");
+          setError(data.error ?? "Failed to change role.");
           return;
         }
         onClose();
         router.refresh();
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred. Please try again.");
       }
     });
   }
 
   return (
-    <AdminDialog open={open} onClose={onClose} title="플랫폼 역할 변경">
+    <AdminDialog open={open} onClose={onClose} title="Change platform role">
       <form onSubmit={handleSubmit} className="space-y-4">
         <p className="text-sm text-gray-600">
-          이 사용자의 플랫폼 전체 역할을 변경합니다.
-          테넌트/매장 멤버십 역할과는 별개입니다.
+          Changes the user&apos;s platform-wide role. This is separate from tenant and store membership roles.
         </p>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">플랫폼 역할</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Platform role</label>
           <select value={platformRole} onChange={(e) => setPlatformRole(e.target.value)} className={inputCls}>
             {PLATFORM_ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
           </select>
@@ -68,11 +67,11 @@ export default function ChangePlatformRoleDialog({ open, onClose, userId, curren
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" onClick={onClose} disabled={isPending}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-60">
-            취소
+            Cancel
           </button>
           <button type="submit" disabled={isPending || platformRole === currentRole}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60">
-            {isPending ? "저장 중..." : "변경"}
+            {isPending ? "Saving..." : "Change role"}
           </button>
         </div>
       </form>

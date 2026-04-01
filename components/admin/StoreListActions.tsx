@@ -11,7 +11,7 @@ export default function StoreListActions() {
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
       >
-        + 매장 생성
+        + Create store
       </button>
       <CreateStoreDialog open={open} onClose={() => setOpen(false)} />
     </>

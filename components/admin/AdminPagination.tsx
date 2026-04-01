@@ -27,7 +27,7 @@ export default function AdminPagination({ pagination }: AdminPaginationProps) {
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-200">
       <p className="text-sm text-gray-500">
-        {start}–{end} / 총 {total}건
+        {start}–{end} of {total}
       </p>
       <div className="flex items-center gap-1">
         {page > 1 && (
@@ -35,7 +35,7 @@ export default function AdminPagination({ pagination }: AdminPaginationProps) {
             href={buildUrl(page - 1)}
             className="px-3 py-1.5 text-sm rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
           >
-            이전
+            Previous
           </Link>
         )}
         {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
@@ -69,7 +69,7 @@ export default function AdminPagination({ pagination }: AdminPaginationProps) {
             href={buildUrl(page + 1)}
             className="px-3 py-1.5 text-sm rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
           >
-            다음
+            Next
           </Link>
         )}
       </div>

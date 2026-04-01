@@ -29,19 +29,19 @@ export default function UserDetailActions({ user }: Props) {
           onClick={() => setEditOpen(true)}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
         >
-          ✏️ 사용자 편집
+          ✏️ Edit user
         </button>
         <button
           onClick={() => setRoleOpen(true)}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
         >
-          🔑 플랫폼 역할 변경
+          🔑 Change platform role
         </button>
         <button
           onClick={() => setMembershipOpen(true)}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
         >
-          + 테넌트 멤버십 추가
+          + Add tenant membership
         </button>
       </div>
 

@@ -8,7 +8,7 @@ interface StoreConnectionTableProps {
 
 export default function StoreConnectionTable({ connections }: StoreConnectionTableProps) {
   if (connections.length === 0) {
-    return <AdminEmptyState message="연결 정보가 없습니다." />;
+    return <AdminEmptyState message="No connection information." />;
   }
 
   return (
@@ -16,13 +16,13 @@ export default function StoreConnectionTable({ connections }: StoreConnectionTab
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">제공자</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">유형</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">인증 방식</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">외부 매장명</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">마지막 연결</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">마지막 동기화</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Provider</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">Type</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Auth scheme</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">External store name</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Last connected</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Last synced</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
@@ -38,10 +38,10 @@ export default function StoreConnectionTable({ connections }: StoreConnectionTab
                 {c.externalStoreName ?? "—"}
               </td>
               <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell">
-                {c.lastConnectedAt ? c.lastConnectedAt.toLocaleDateString("ko-KR") : "—"}
+                {c.lastConnectedAt ? c.lastConnectedAt.toLocaleDateString("en-US") : "—"}
               </td>
               <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell">
-                {c.lastSyncAt ? c.lastSyncAt.toLocaleDateString("ko-KR") : "—"}
+                {c.lastSyncAt ? c.lastSyncAt.toLocaleDateString("en-US") : "—"}
                 {c.lastSyncStatus && (
                   <span className="ml-1 text-gray-400">({c.lastSyncStatus})</span>
                 )}

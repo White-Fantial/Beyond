@@ -7,7 +7,7 @@ interface ConnectionSummaryTableProps {
 
 export default function ConnectionSummaryTable({ rows }: ConnectionSummaryTableProps) {
   if (rows.length === 0) {
-    return <AdminEmptyState message="연결 정보가 없습니다." />;
+    return <AdminEmptyState message="No connection information." />;
   }
 
   return (
@@ -15,9 +15,9 @@ export default function ConnectionSummaryTable({ rows }: ConnectionSummaryTableP
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">제공자</th>
-            <th className="px-4 py-3 text-right font-medium text-gray-500">전체</th>
-            <th className="px-4 py-3 text-right font-medium text-gray-500">연결됨</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Provider</th>
+            <th className="px-4 py-3 text-right font-medium text-gray-500">Total</th>
+            <th className="px-4 py-3 text-right font-medium text-gray-500">Connected</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
