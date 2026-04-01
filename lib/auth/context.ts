@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "./session";
+import { getImpersonationState } from "./impersonation";
 import {
   STORE_ROLE_PERMISSIONS,
   MEMBERSHIP_ROLE_PERMISSIONS,
@@ -36,14 +37,53 @@ export interface UserAuthContext {
   // Flattened store memberships across all tenants
   storeMemberships: StoreMembershipContext[];
   permissions: PermissionKey[];
+  /** Present only when a PLATFORM_ADMIN is impersonating another user. */
+  impersonation?: {
+    actorUserId: string;
+    actorEmail: string;
+    actorName: string;
+    startedAt: string;
+  };
 }
 
 export async function getCurrentUserAuthContext(): Promise<UserAuthContext | null> {
   const session = await getSession();
   if (!session) return null;
 
+  // When impersonating, load the effective user instead of the actor.
+  const impersonation = await getImpersonationState();
+  const targetUserId = impersonation ? impersonation.effectiveUserId : session.userId;
+
+  const ctx = await buildUserAuthContext(targetUserId);
+  if (!ctx) return null;
+
+  return impersonation
+    ? {
+        ...ctx,
+        impersonation: {
+          actorUserId: impersonation.actorUserId,
+          actorEmail: impersonation.actorEmail,
+          actorName: impersonation.actorName,
+          startedAt: impersonation.startedAt,
+        },
+      }
+    : ctx;
+}
+
+/**
+ * Returns the auth context for the *actor* (the real logged-in user),
+ * ignoring any active impersonation overlay. Used by admin-area guards so
+ * that PLATFORM_ADMIN retains access to /admin while impersonating.
+ */
+export async function getActorUserAuthContext(): Promise<UserAuthContext | null> {
+  const session = await getSession();
+  if (!session) return null;
+  return buildUserAuthContext(session.userId);
+}
+
+async function buildUserAuthContext(userId: string): Promise<UserAuthContext | null> {
   const user = await prisma.user.findUnique({
-    where: { id: session.userId },
+    where: { id: userId },
     include: {
       memberships: {
         where: { status: "ACTIVE" },

@@ -108,4 +108,5 @@ export const OWNER_PORTAL_MEMBERSHIP_ROLES: MembershipRoleKey[] = ["OWNER", "ADM
 export const BACKOFFICE_STORE_ROLES: StoreRoleKey[] = ["OWNER", "ADMIN", "MANAGER", "SUPERVISOR", "STAFF"];
 
 export const SESSION_COOKIE_NAME = "beyond_session";
+export const IMPERSONATION_COOKIE_NAME = "beyond_impersonation";
 export const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7; // 7 days
