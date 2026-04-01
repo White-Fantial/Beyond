@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
 import { getAdminPlanDetail } from "@/services/admin/admin-plan.service";
-import { listAdminPlans } from "@/services/admin/admin-plan.service";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import StatusBadge from "@/components/admin/StatusBadge";
 import AdminPlanForm from "@/components/admin/billing/AdminPlanForm";
