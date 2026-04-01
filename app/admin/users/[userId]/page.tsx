@@ -199,6 +199,31 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           </div>
         )}
       </div>
+
+      {/* Log Links */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">로그</h2>
+        <div className="flex flex-wrap gap-3 text-sm">
+          <Link
+            href={`/admin/logs?userId=${userId}`}
+            className="text-blue-600 hover:underline"
+          >
+            📋 이 사용자 관련 로그 →
+          </Link>
+          <Link
+            href={`/admin/logs?userId=${userId}&logType=AUDIT`}
+            className="text-blue-600 hover:underline"
+          >
+            Audit 로그 →
+          </Link>
+          <Link
+            href={`/admin/logs?q=IMPERSONATION&userId=${userId}`}
+            className="text-blue-600 hover:underline"
+          >
+            Impersonation 기록 →
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,75 +1,62 @@
 import { Suspense } from "react";
 import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
-import { listAdminWebhookLogs } from "@/services/admin/admin-logs.service";
+import { listAdminLogs } from "@/services/admin/admin-log.service";
+import { parseAdminLogFilters } from "@/lib/admin/logs/filters";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
-import AdminStatusFilter from "@/components/admin/AdminStatusFilter";
 import AdminPagination from "@/components/admin/AdminPagination";
-import WebhookLogTable from "@/components/admin/WebhookLogTable";
-
-const PROCESSING_STATUS_OPTIONS = [
-  { value: "SUCCESS", label: "성공" },
-  { value: "FAILED", label: "실패" },
-  { value: "SKIPPED", label: "건너뜀" },
-  { value: "PENDING", label: "대기 중" },
-];
-
-const CHANNEL_TYPE_OPTIONS = [
-  { value: "UBER_EATS", label: "Uber Eats" },
-  { value: "DOORDASH", label: "DoorDash" },
-  { value: "ONLINE", label: "온라인" },
-  { value: "SUBSCRIPTION", label: "구독" },
-  { value: "POS", label: "POS" },
-  { value: "MANUAL", label: "수동" },
-];
+import AdminLogTable from "@/components/admin/logs/AdminLogTable";
+import AdminLogFilters from "@/components/admin/logs/AdminLogFilters";
+import type { AdminLogFilterParams } from "@/types/admin-logs";
 
 interface PageProps {
-  searchParams: Promise<{ status?: string; channelType?: string; page?: string }>;
+  searchParams: Promise<AdminLogFilterParams>;
 }
 
 export default async function AdminLogsPage({ searchParams }: PageProps) {
   await requirePlatformAdmin();
-  const params = await searchParams;
+  const rawParams = await searchParams;
+  const filters = parseAdminLogFilters(rawParams);
 
-  const { items, pagination } = await listAdminWebhookLogs({
-    status: params.status,
-    channelType: params.channelType,
-    page: params.page ? Number(params.page) : 1,
-  });
+  const { items, pagination } = await listAdminLogs(filters);
 
-  const hasFilter = !!(params.status || params.channelType);
+  const hasFilters = !!(
+    rawParams.q ||
+    rawParams.logType ||
+    rawParams.from ||
+    rawParams.to ||
+    rawParams.tenantId ||
+    rawParams.storeId ||
+    rawParams.provider ||
+    rawParams.status ||
+    rawParams.actionType ||
+    rawParams.errorOnly
+  );
 
   return (
     <div>
       <AdminPageHeader
-        title="웹훅 로그"
-        description="수신된 인바운드 웹훅 이벤트 로그를 조회합니다."
+        title="로그"
+        description="플랫폼 전체의 audit, integration, webhook, order 로그를 통합 조회합니다."
       />
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-4 flex-wrap">
-        <Suspense>
-          <AdminStatusFilter
-            options={PROCESSING_STATUS_OPTIONS}
-            allLabel="모든 처리 상태"
-            paramName="status"
-          />
-        </Suspense>
-        <Suspense>
-          <AdminStatusFilter
-            options={CHANNEL_TYPE_OPTIONS}
-            allLabel="모든 채널"
-            paramName="channelType"
-          />
-        </Suspense>
-      </div>
+      <Suspense>
+        <AdminLogFilters
+          current={{
+            q: rawParams.q,
+            logType: rawParams.logType,
+            from: rawParams.from,
+            to: rawParams.to,
+            tenantId: rawParams.tenantId,
+            storeId: rawParams.storeId,
+            provider: rawParams.provider,
+            status: rawParams.status,
+            actionType: rawParams.actionType,
+            errorOnly: rawParams.errorOnly,
+          }}
+        />
+      </Suspense>
 
-      <WebhookLogTable
-        items={items}
-        emptyMessage={
-          hasFilter
-            ? "조건에 맞는 로그가 없습니다."
-            : "웹훅 로그가 없습니다."
-        }
-      />
+      <AdminLogTable items={items} hasFilters={hasFilters} />
 
       <div className="mt-4">
         <Suspense>
