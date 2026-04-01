@@ -13,6 +13,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { buildPaginationMeta } from "@/lib/admin/filters";
 import { canRetryJobRun, canManuallyRunJobType } from "@/lib/admin/jobs/guards";
 import { normalizeJobRunListItem, normalizeJobRunDetail } from "@/lib/admin/jobs/normalize";
@@ -179,7 +180,7 @@ export async function createManualJobRun(
       provider: input.provider ?? null,
       relatedEntityType: input.relatedEntityType ?? null,
       relatedEntityId: input.relatedEntityId ?? null,
-      inputJson: buildInputJson(input),
+      inputJson: buildInputJson(input) as Prisma.InputJsonValue,
       queuedAt: now,
     },
     include: {
@@ -237,7 +238,7 @@ export async function retryAdminJobRun(
       provider: originalRun.provider,
       relatedEntityType: originalRun.relatedEntityType,
       relatedEntityId: originalRun.relatedEntityId,
-      inputJson: originalRun.inputJson,
+      inputJson: (originalRun.inputJson ?? Prisma.JsonNull) as Prisma.InputJsonValue,
       queuedAt: now,
     },
     include: {
@@ -331,7 +332,7 @@ async function markJobRunSucceeded(
 ): Promise<void> {
   await prisma.jobRun.update({
     where: { id: jobRunId },
-    data: { status: "SUCCEEDED", finishedAt: new Date(), resultJson: result },
+    data: { status: "SUCCEEDED", finishedAt: new Date(), resultJson: result as Prisma.InputJsonValue },
   });
 }
 
@@ -527,7 +528,6 @@ async function runOrderRecoveryRetryJob(
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: { store: true },
   });
 
   if (!order) {
@@ -700,7 +700,7 @@ async function runAnalyticsRebuildJob(
   await prisma.jobRun.update({
     where: { id: jobRunId },
     data: {
-      resultJson: rebuildResult,
+      resultJson: rebuildResult as unknown as Prisma.InputJsonValue,
     },
   });
 
