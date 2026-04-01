@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/app", label: "홈", icon: "🏠" },
-  { href: "/app/orders", label: "내 주문", icon: "📦" },
-  { href: "/app/subscriptions", label: "구독", icon: "🔄" },
-  { href: "/app/account", label: "내 계정", icon: "👤" },
+  { href: "/app", label: "Home", icon: "🏠" },
+  { href: "/app/orders", label: "My Orders", icon: "📦" },
+  { href: "/app/subscriptions", label: "Subscriptions", icon: "🔄" },
+  { href: "/app/account", label: "My Account", icon: "👤" },
 ];
 
 export default function CustomerNav() {

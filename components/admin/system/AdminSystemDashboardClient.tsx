@@ -41,7 +41,7 @@ export function AdminSystemDashboardClient({
       {/* Component health cards */}
       <section>
         <h2 className="mb-4 text-sm font-semibold text-gray-700">
-          컴포넌트 상태
+          Service status
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {components.map((c) => (
@@ -53,7 +53,7 @@ export function AdminSystemDashboardClient({
       {/* Service status table */}
       <section>
         <h2 className="mb-4 text-sm font-semibold text-gray-700">
-          서비스 상태 테이블
+          Service status table
         </h2>
         <AdminSystemServiceStatusTable components={components} />
       </section>
@@ -61,7 +61,7 @@ export function AdminSystemDashboardClient({
       {/* Operational metrics */}
       <section>
         <div className="mb-4 flex items-center justify-between gap-4">
-          <h2 className="text-sm font-semibold text-gray-700">운영 메트릭</h2>
+          <h2 className="text-sm font-semibold text-gray-700">Operational metrics</h2>
           <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs">
             {(["24h", "7d"] as MetricsWindow[]).map((w) => (
               <button
@@ -73,7 +73,7 @@ export function AdminSystemDashboardClient({
                     : "bg-white text-gray-600 hover:bg-gray-50"
                 }`}
               >
-                {w === "24h" ? "최근 24시간" : "최근 7일"}
+                {w === "24h" ? "Last 24 hours" : "Last 7 days"}
               </button>
             ))}
           </div>
@@ -88,7 +88,7 @@ export function AdminSystemDashboardClient({
       {/* Incident / warning table */}
       <section>
         <h2 className="mb-4 text-sm font-semibold text-gray-700">
-          인시던트 / 경고 현황
+          Incidents / warnings
         </h2>
         <AdminSystemIncidentTable incidents={incidents} />
       </section>
@@ -96,7 +96,7 @@ export function AdminSystemDashboardClient({
       {/* Deep links */}
       <section>
         <h2 className="mb-4 text-sm font-semibold text-gray-700">
-          운영 화면 바로가기
+          Quick links
         </h2>
         <AdminSystemDrilldownLinks />
       </section>

@@ -57,7 +57,7 @@ export default function AdminManualJobActions({
   async function handleSubmit() {
     setError(null);
     if (!selectedConfig) {
-      setError("유효하지 않은 작업 유형입니다.");
+      setError("Invalid job type.");
       return;
     }
 
@@ -78,14 +78,14 @@ export default function AdminManualJobActions({
         });
         const data = (await res.json()) as { id?: string; error?: string };
         if (!res.ok) {
-          setError(data.error ?? "실행에 실패했습니다.");
+          setError(data.error ?? "Failed to run job.");
           return;
         }
         setOpen(false);
         router.push(`/admin/jobs/${data.id}`);
         router.refresh();
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred. Please try again.");
       }
     });
   }
@@ -100,12 +100,12 @@ export default function AdminManualJobActions({
         <span>▶</span> Manual Run
       </button>
 
-      <AdminDialog open={open} onClose={() => setOpen(false)} title="수동 작업 실행">
+      <AdminDialog open={open} onClose={() => setOpen(false)} title="Manual jobs">
         <div className="space-y-4">
           {/* Job type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              작업 유형 <span className="text-red-500">*</span>
+              Job type <span className="text-red-500">*</span>
             </label>
             <select
               value={form.jobType}
@@ -155,7 +155,7 @@ export default function AdminManualJobActions({
               onChange={(e) => handleChange("provider", e.target.value)}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
             >
-              <option value="">선택 안 함</option>
+              <option value="">None</option>
               <option value="LOYVERSE">Loyverse</option>
               <option value="UBER_EATS">Uber Eats</option>
               <option value="DOORDASH">DoorDash</option>
@@ -180,12 +180,12 @@ export default function AdminManualJobActions({
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">메모 (선택)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
             <input
               type="text"
               value={form.notes}
               onChange={(e) => handleChange("notes", e.target.value)}
-              placeholder="이 실행에 대한 메모"
+              placeholder="Notes for this run"
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
           </div>
@@ -209,7 +209,7 @@ export default function AdminManualJobActions({
               onClick={() => setOpen(false)}
               className="px-4 py-2 text-sm rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
             >
-              취소
+              Cancel
             </button>
             <button
               type="button"
@@ -217,7 +217,7 @@ export default function AdminManualJobActions({
               disabled={isPending}
               className="px-4 py-2 text-sm rounded-md bg-gray-900 text-white hover:bg-gray-700 disabled:opacity-50"
             >
-              {isPending ? "실행 중…" : "실행"}
+              {isPending ? "Processing..." : "Run"}
             </button>
           </div>
         </div>

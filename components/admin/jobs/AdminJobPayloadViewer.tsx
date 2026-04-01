@@ -65,7 +65,7 @@ export default function AdminJobPayloadViewer({ title, data, defaultOpen = false
     return (
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
         <h2 className="text-sm font-semibold text-gray-700 mb-2">{title}</h2>
-        <p className="text-sm text-gray-400 italic">데이터 없음</p>
+        <p className="text-sm text-gray-400 italic">No data available.</p>
       </div>
     );
   }
@@ -80,10 +80,10 @@ export default function AdminJobPayloadViewer({ title, data, defaultOpen = false
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-semibold text-gray-700">{title}</h2>
           <span className="text-xs text-yellow-700 bg-yellow-100 border border-yellow-200 rounded px-1.5 py-0.5">
-            민감정보 마스킹됨
+            Sensitive data masked
           </span>
         </div>
-        <span className="text-gray-400 text-xs">{isOpen ? "▲ 접기" : "▼ 펼치기"}</span>
+        <span className="text-gray-400 text-xs">{isOpen ? "▲ Collapse" : "▼ Expand"}</span>
       </button>
       {isOpen && (
         <div className="px-5 pb-5 pt-1 overflow-x-auto text-xs font-mono max-h-[600px] overflow-y-auto">

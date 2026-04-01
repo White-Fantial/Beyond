@@ -14,7 +14,7 @@ export function AdminSystemIncidentTable({
   if (incidents.length === 0) {
     return (
       <div className="rounded-lg border border-gray-200 bg-gray-50 py-8 text-center text-sm text-gray-400">
-        감지된 인시던트 없음
+        No incidents.
       </div>
     );
   }
@@ -24,12 +24,12 @@ export function AdminSystemIncidentTable({
       <table className="w-full text-sm">
         <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
           <tr>
-            <th className="px-4 py-2 text-left">인시던트</th>
-            <th className="px-4 py-2 text-left">서브시스템</th>
-            <th className="px-4 py-2 text-left">심각도</th>
-            <th className="px-4 py-2 text-right">건수</th>
-            <th className="px-4 py-2 text-left">기간</th>
-            <th className="px-4 py-2 text-left">상세</th>
+            <th className="px-4 py-2 text-left">Incident</th>
+            <th className="px-4 py-2 text-left">Subsystem</th>
+            <th className="px-4 py-2 text-left">Severity</th>
+            <th className="px-4 py-2 text-right">Count</th>
+            <th className="px-4 py-2 text-left">Period</th>
+            <th className="px-4 py-2 text-left">Details</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -62,7 +62,7 @@ export function AdminSystemIncidentTable({
                     href={incident.drilldownHref}
                     className="text-xs text-blue-600 hover:underline"
                   >
-                    이동 →
+                    Go →
                   </Link>
                 ) : (
                   <span className="text-xs text-gray-300">—</span>

@@ -1,0 +1,87 @@
+// Common UI text constants — single English source for shared labels
+
+export const COMMON = {
+  // Buttons
+  save: "Save",
+  saving: "Saving...",
+  cancel: "Cancel",
+  close: "Close",
+  delete: "Delete",
+  edit: "Edit",
+  back: "Back",
+  retry: "Retry",
+  confirm: "Confirm",
+  apply: "Apply",
+  reset: "Reset",
+  create: "Create",
+  creating: "Creating...",
+  add: "Add",
+  adding: "Adding...",
+  change: "Change",
+  update: "Update",
+  updating: "Updating...",
+  remove: "Remove",
+  search: "Search",
+  submit: "Submit",
+  next: "Next",
+  previous: "Previous",
+  logout: "Log out",
+  loading: "Loading...",
+  processing: "Processing...",
+
+  // Common field labels
+  name: "Name",
+  email: "Email",
+  phone: "Phone",
+  status: "Status",
+  role: "Role",
+  type: "Type",
+  label: "Label",
+  description: "Description",
+  slug: "Slug",
+  timezone: "Timezone",
+  currency: "Currency",
+  countryCode: "Country Code",
+  legalName: "Legal Name",
+  password: "Password",
+  createdAt: "Created",
+  updatedAt: "Updated",
+  optional: "Optional",
+  required: "Required",
+  version: "Version",
+  notes: "Notes",
+
+  // Common states
+  active: "Active",
+  inactive: "Inactive",
+  archived: "Archived",
+  connected: "Connected",
+  disconnected: "Disconnected",
+  error: "Error",
+  pending: "Pending",
+  completed: "Completed",
+  failed: "Failed",
+  valid: "Valid",
+  invalid: "Invalid",
+  enabled: "Enabled",
+  disabled: "Disabled",
+
+  // Empty states
+  noResults: "No results found",
+  noData: "No data available",
+  nothingToShow: "Nothing to show yet",
+
+  // Feedback messages
+  changesSaved: "Changes saved.",
+  updateFailed: "Update failed.",
+  saveFailed: "Failed to save changes.",
+  tryAgain: "Please try again.",
+  unauthorized: "You do not have permission to perform this action.",
+  networkError: "A network error occurred. Please try again.",
+  unknownError: "An unexpected error occurred. Please try again.",
+
+  // Pagination
+  total: (total: number) => `Total: ${total}`,
+  pageRange: (start: number, end: number, total: number) =>
+    `${start}–${end} of ${total}`,
+} as const;

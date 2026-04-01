@@ -14,14 +14,14 @@ function getNavItems(storeId: string, storeRole: StoreRoleKey) {
   const base = `/backoffice/store/${storeId}`;
 
   const allItems = [
-    { href: `${base}/dashboard`, label: "대시보드", icon: "📊", roles: ["MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/orders`, label: "주문 관리", icon: "📦", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/operations`, label: "운영 관리", icon: "🔧", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/inventory`, label: "재고/품절", icon: "📋", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/products`, label: "상품 관리", icon: "🍽️", roles: ["MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/categories`, label: "카테고리", icon: "🗂️", roles: ["SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/modifiers`, label: "옵션/수식어", icon: "⚙️", roles: ["MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/reports`, label: "리포트", icon: "📈", roles: ["SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/dashboard`, label: "Dashboard", icon: "📊", roles: ["MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/orders`, label: "Orders", icon: "📦", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/operations`, label: "Operations", icon: "🔧", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/inventory`, label: "Inventory", icon: "📋", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/products`, label: "Products", icon: "🍽️", roles: ["MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/categories`, label: "Categories", icon: "🗂️", roles: ["SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/modifiers`, label: "Modifiers", icon: "⚙️", roles: ["MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/reports`, label: "Reports", icon: "📈", roles: ["SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
   ];
 
   return allItems.filter((item) => item.roles.includes(storeRole));
@@ -64,7 +64,7 @@ export default function BackofficeSidebar({ storeId, storeRole, storeName }: Bac
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 w-full"
         >
           <span>🔀</span>
-          <span>매장 전환</span>
+          <span>Switch store</span>
         </Link>
         <form action="/api/auth/logout" method="POST">
           <button
@@ -72,7 +72,7 @@ export default function BackofficeSidebar({ storeId, storeRole, storeName }: Bac
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 w-full mt-1"
           >
             <span>🚪</span>
-            <span>로그아웃</span>
+            <span>Log out</span>
           </button>
         </form>
       </div>

@@ -10,7 +10,7 @@ interface AdminJobTableProps {
 }
 
 function formatDate(d: Date): string {
-  return new Intl.DateTimeFormat("ko-KR", {
+  return new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -40,16 +40,16 @@ export default function AdminJobTable({ items, hasFilters }: AdminJobTableProps)
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
             <tr>
-              <th className="px-4 py-3 whitespace-nowrap">생성 시각</th>
-              <th className="px-4 py-3 whitespace-nowrap">작업 유형</th>
-              <th className="px-4 py-3 whitespace-nowrap">상태</th>
+              <th className="px-4 py-3 whitespace-nowrap">Created</th>
+              <th className="px-4 py-3 whitespace-nowrap">Job type</th>
+              <th className="px-4 py-3 whitespace-nowrap">Status</th>
               <th className="px-4 py-3 whitespace-nowrap">Tenant / Store</th>
               <th className="px-4 py-3 whitespace-nowrap">Provider</th>
-              <th className="px-4 py-3 whitespace-nowrap">트리거</th>
-              <th className="px-4 py-3 whitespace-nowrap">실행자</th>
-              <th className="px-4 py-3 whitespace-nowrap">소요 시간</th>
-              <th className="px-4 py-3">결과 / 오류</th>
-              <th className="px-4 py-3 whitespace-nowrap">액션</th>
+              <th className="px-4 py-3 whitespace-nowrap">Trigger</th>
+              <th className="px-4 py-3 whitespace-nowrap">Triggered by</th>
+              <th className="px-4 py-3 whitespace-nowrap">Duration</th>
+              <th className="px-4 py-3">Result / Error</th>
+              <th className="px-4 py-3 whitespace-nowrap">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
@@ -116,7 +116,7 @@ export default function AdminJobTable({ items, hasFilters }: AdminJobTableProps)
                       href={`/admin/jobs/${item.id}`}
                       className="text-xs text-blue-600 hover:underline"
                     >
-                      상세
+                      Details
                     </Link>
                     {item.canRetry && <AdminRetryJobButton jobRunId={item.id} />}
                   </div>
@@ -145,11 +145,11 @@ export default function AdminJobTable({ items, hasFilters }: AdminJobTableProps)
               {item.storeName && <div>Store: {item.storeName}</div>}
               {item.provider && <div>Provider: {item.provider}</div>}
               <div className="flex items-center gap-1">
-                <span>트리거:</span>
+                <span>Trigger:</span>
                 <AdminJobTriggerBadge triggerSource={item.triggerSource} />
               </div>
               {item.durationMs !== null && (
-                <div>소요: {formatDuration(item.durationMs)}</div>
+                <div>Duration: {formatDuration(item.durationMs)}</div>
               )}
               {item.status === "FAILED" && item.errorSummary && (
                 <div className="text-red-600 truncate">{item.errorSummary}</div>
@@ -160,7 +160,7 @@ export default function AdminJobTable({ items, hasFilters }: AdminJobTableProps)
                 href={`/admin/jobs/${item.id}`}
                 className="text-xs text-blue-600 hover:underline"
               >
-                상세 보기
+                View details
               </Link>
               {item.canRetry && <AdminRetryJobButton jobRunId={item.id} />}
             </div>

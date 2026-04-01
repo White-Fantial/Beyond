@@ -7,7 +7,7 @@ interface AdminJobRunHeaderProps {
 
 function formatDate(d: Date | null | undefined): string {
   if (!d) return "—";
-  return new Intl.DateTimeFormat("ko-KR", {
+  return new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -39,26 +39,26 @@ export default function AdminJobRunHeader({ run }: AdminJobRunHeaderProps) {
 
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
         <div>
-          <dt className="text-xs text-gray-500">생성</dt>
+          <dt className="text-xs text-gray-500">Created</dt>
           <dd className="text-gray-800 text-xs mt-0.5 font-mono">{formatDate(run.createdAt)}</dd>
         </div>
         <div>
-          <dt className="text-xs text-gray-500">시작</dt>
+          <dt className="text-xs text-gray-500">Started</dt>
           <dd className="text-gray-800 text-xs mt-0.5 font-mono">{formatDate(run.startedAt)}</dd>
         </div>
         <div>
-          <dt className="text-xs text-gray-500">완료</dt>
+          <dt className="text-xs text-gray-500">Finished</dt>
           <dd className="text-gray-800 text-xs mt-0.5 font-mono">{formatDate(run.finishedAt)}</dd>
         </div>
         <div>
-          <dt className="text-xs text-gray-500">소요 시간</dt>
+          <dt className="text-xs text-gray-500">Duration</dt>
           <dd className="text-gray-800 text-xs mt-0.5 font-mono">{formatDuration(run.durationMs)}</dd>
         </div>
       </div>
 
       {run.triggeredByUserLabel && (
         <div className="mt-3 text-xs text-gray-500">
-          실행자: <span className="text-gray-800">{run.triggeredByUserLabel}</span>
+          Triggered by: <span className="text-gray-800">{run.triggeredByUserLabel}</span>
         </div>
       )}
     </div>

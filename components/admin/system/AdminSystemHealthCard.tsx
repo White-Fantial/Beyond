@@ -53,7 +53,7 @@ export function AdminSystemHealthCard({ component }: AdminSystemHealthCardProps)
             href={component.drilldownHref}
             className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
           >
-            상세 보기 →
+            View details →
           </Link>
         </div>
       )}
@@ -61,7 +61,7 @@ export function AdminSystemHealthCard({ component }: AdminSystemHealthCardProps)
       {/* Last checked */}
       {component.lastCheckedAt && (
         <p className="text-[10px] text-gray-400">
-          마지막 체크: {new Date(component.lastCheckedAt).toLocaleTimeString("ko-KR")}
+          Last checked: {new Date(component.lastCheckedAt).toLocaleTimeString("en-US")}
         </p>
       )}
     </div>
