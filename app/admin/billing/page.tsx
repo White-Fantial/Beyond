@@ -1,12 +1,11 @@
 import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
-import { getAdminBillingSummary } from "@/services/admin/admin-billing.service";
+import { getAdminBillingOverview } from "@/services/admin/admin-billing.service";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminStatCard from "@/components/admin/AdminStatCard";
-import BillingSubscriptionTable from "@/components/admin/BillingSubscriptionTable";
 
 export default async function AdminBillingPage() {
   await requirePlatformAdmin();
-  const billing = await getAdminBillingSummary();
+  const overview = await getAdminBillingOverview();
 
   return (
     <div>
@@ -16,16 +15,12 @@ export default async function AdminBillingPage() {
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        <AdminStatCard label="구독 플랜 수" value={billing.totalSubscriptionPlans} />
-        <AdminStatCard label="전체 구독 수" value={billing.totalSubscriptions} />
-        <AdminStatCard label="활성 구독 수" value={billing.totalActiveSubscriptions} />
-      </div>
-
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">
-          구독 플랜 목록 ({billing.totalSubscriptionPlans})
-        </h2>
-        <BillingSubscriptionTable plans={billing.recentPlans} />
+        <AdminStatCard label="전체 구독 수" value={overview.totalTenantsWithSubscription} />
+        <AdminStatCard label="활성 구독 수" value={overview.activeSubscriptions} />
+        <AdminStatCard label="트라이얼 구독 수" value={overview.trialSubscriptions} />
+        <AdminStatCard label="연체 구독 수" value={overview.pastDueSubscriptions} />
+        <AdminStatCard label="정지 구독 수" value={overview.suspendedSubscriptions} />
+        <AdminStatCard label="취소 구독 수" value={overview.cancelledSubscriptions} />
       </div>
     </div>
   );
