@@ -147,11 +147,42 @@ export default async function AdminStoreDetailPage({ params }: PageProps) {
       </div>
 
       {/* Connections */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">
           연결 ({store.connectionCount})
         </h2>
         <StoreConnectionTable connections={store.connections} />
+      </div>
+
+      {/* Log Links */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">로그</h2>
+        <div className="flex flex-wrap gap-3 text-sm">
+          <Link
+            href={`/admin/logs?storeId=${storeId}`}
+            className="text-blue-600 hover:underline"
+          >
+            📋 이 매장의 전체 로그 →
+          </Link>
+          <Link
+            href={`/admin/logs?storeId=${storeId}&logType=CONNECTION_ACTION`}
+            className="text-blue-600 hover:underline"
+          >
+            Connection 로그 →
+          </Link>
+          <Link
+            href={`/admin/logs?storeId=${storeId}&logType=WEBHOOK`}
+            className="text-blue-600 hover:underline"
+          >
+            Webhook 로그 →
+          </Link>
+          <Link
+            href={`/admin/logs?storeId=${storeId}&logType=ORDER_EVENT`}
+            className="text-blue-600 hover:underline"
+          >
+            Order Event 로그 →
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -513,7 +513,8 @@ The `/admin` portal is a **PLATFORM_ADMIN-only operations console** for managing
 | `/admin/stores/[storeId]` | Store detail — info, memberships, connections, **status change** |
 | `/admin/integrations` | Platform-wide connection list — filter by status/provider, pagination |
 | `/admin/jobs` | Connection action log viewer — filter by provider/status, pagination |
-| `/admin/logs` | Inbound webhook log viewer — filter by channel/status, pagination |
+| `/admin/logs` | **Unified Logs Console** — audit, connection, webhook, and order event logs with multi-source filters |
+| `/admin/logs/[logType]/[logId]` | Log detail — source-specific metadata, sanitized payload, context links |
 | `/admin/billing` | Subscription plan & subscription overview |
 
 ### Dashboard KPIs
@@ -598,6 +599,93 @@ The middleware reads both cookies: `/admin/**` still requires the actor's sessio
 - **Mobile support**: sidebar hidden on mobile with a compact navigation bar
 - **Pagination**: 20 items per page, query-string based (`?q=...&status=...&page=...`)
 
+---
+
+### Logs Console (Admin Phase 4 — Read-Only)
+
+The `/admin/logs` page is a **unified, read-only log console** for platform operators to diagnose issues across all log sources.
+
+#### Log Sources
+
+| Source | Description |
+|--------|-------------|
+| `AuditLog` | Admin write actions, impersonation events, critical system changes |
+| `ConnectionActionLog` | Integration connect / callback / refresh / disconnect / re-auth |
+| `InboundWebhookLog` | Inbound webhook reception and processing results |
+| `OrderEvent` | Order lifecycle events — status changes, POS forwarding, reconciliation |
+
+Impersonation events (`impersonation.started`, `impersonation.ended`, `impersonation.denied`) appear in the Audit log and can be quickly filtered via `?q=IMPERSONATION`.
+
+#### Routes
+
+| Route | Description |
+|-------|-------------|
+| `/admin/logs` | Unified log list — all four sources, normalized and sorted by recency |
+| `/admin/logs/[logType]/[logId]` | Log detail — context, sanitized metadata/payload, related entity links |
+
+#### Filters
+
+Query parameters accepted by `/admin/logs`:
+
+| Param | Description |
+|-------|-------------|
+| `q` | Free-text search (action, message, event name, order ID) |
+| `logType` | `AUDIT` / `CONNECTION_ACTION` / `WEBHOOK` / `ORDER_EVENT` |
+| `from` / `to` | Date range (ISO 8601 or `YYYY-MM-DD`) |
+| `tenantId` | Filter by tenant |
+| `storeId` | Filter by store |
+| `userId` | Filter by actor user |
+| `provider` | Filter by provider (`LOYVERSE`, `UBER_EATS`, `DOORDASH`, `STRIPE`) |
+| `actionType` | Filter by action/event type |
+| `status` | Filter by status |
+| `errorOnly` | `1` — show only ERROR-severity logs |
+| `page` | Pagination (default 1, page size 20) |
+
+#### Sensitive Data Masking
+
+All raw payloads and metadata surfaced in the detail view are processed by `lib/admin/logs/sanitize.ts` before display. The following field keys (case-insensitive, matched as substring) are **always** replaced with `[REDACTED]`:
+
+`password`, `passwordHash`, `token`, `accessToken`, `refreshToken`, `secret`, `clientSecret`, `signingKey`, `signature`, `authorization`, `cookie`, `session`, `configEncrypted`, `rawCredential`, `webhookSecret`, `apiKey`, `credential`, `privateKey`
+
+The sanitizer recurses into nested objects and arrays. Original database records are **never modified**.
+
+#### Scope Restrictions
+
+This console is **read-only**. The following are intentionally excluded:
+
+- Log deletion or modification
+- Webhook replay / retry
+- Job force re-run
+- Billing event mutation
+- Integration credential raw view
+
+#### Deep Links
+
+Detail pages for tenants, stores, and users include quick links to their related logs:
+
+- `/admin/logs?tenantId=…` — all logs for a tenant
+- `/admin/logs?storeId=…` — all logs for a store
+- `/admin/logs?userId=…` — audit/impersonation events for a user
+
+#### Technical Files
+
+| File | Role |
+|------|------|
+| `types/admin-logs.ts` | Normalized type definitions (`AdminLogListItem`, `AdminLogDetail`, filter params) |
+| `lib/admin/logs/sanitize.ts` | Sensitive-field masking (recursive, tested) |
+| `lib/admin/logs/normalize.ts` | Per-source normalizers for list and detail views |
+| `lib/admin/logs/labels.ts` | Human-readable labels for log types, actions, providers |
+| `lib/admin/logs/filters.ts` | Filter query-param parsing |
+| `services/admin/admin-log.service.ts` | Unified log query service — `listAdminLogs`, `getAdminLogDetail` |
+| `components/admin/logs/` | UI components: table, filters, badges, detail header, metadata/payload viewers, context links |
+| `__tests__/sanitize.test.ts` | Unit tests for the sanitize module |
+
+#### Roadmap
+
+- **Phase 5 — Jobs Panel**: operational management of background tasks, connection sync, and force re-runs
+- **Phase 6 — Billing Panel**: subscription plan CRUD, billing history, invoice details
+- **Phase 7 — Integrations Admin Panel**: connection management, credential rotation, provider-level dashboards
+
 ### Phase 3 예정
 
 - Tenant/user/store 생성, 수정
@@ -635,7 +723,11 @@ The middleware reads both cookies: `/admin/**` still requires the actor's sessio
 - [x] **Admin Console MVP (read-only)** — dashboard KPIs, tenant/user/store list+detail, search/filter/pagination, PLATFORM_ADMIN guard
 - [x] **Admin Console Phase 2** — write actions (status change), integrations list, webhook log viewer, connection action log viewer, billing/subscription overview, full sidebar navigation
 - [x] **Admin User Impersonation** — PLATFORM_ADMIN can view the app as any active non-admin user; sticky amber banner on all pages; full audit trail; actor/effective-user session separation
+- [x] **Admin Console Phase 4 — Logs Console** — unified read-only log console for AuditLog / ConnectionActionLog / InboundWebhookLog / OrderEvent; multi-filter support; sensitive-data masking; related entity deep links
 - [ ] Admin Console Phase 3 — tenant/user/store create/edit, integration force-reconnect/sync, analytics charts
+- [ ] Admin Console Phase 5 — Jobs Panel (background task management, sync force-run)
+- [ ] Admin Console Phase 6 — Billing Panel (subscription CRUD, invoice history)
+- [ ] Admin Console Phase 7 — Integrations Admin Panel (connection management, credential rotation)
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)

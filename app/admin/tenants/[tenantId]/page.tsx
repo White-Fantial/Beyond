@@ -177,9 +177,40 @@ export default async function AdminTenantDetailPage({ params }: PageProps) {
       </div>
 
       {/* Connection Summary */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">연결 요약</h2>
         <ConnectionSummaryTable rows={tenant.connectionSummary} />
+      </div>
+
+      {/* Log Links */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">로그</h2>
+        <div className="flex flex-wrap gap-3 text-sm">
+          <Link
+            href={`/admin/logs?tenantId=${tenantId}`}
+            className="text-blue-600 hover:underline"
+          >
+            📋 이 테넌트의 전체 로그 →
+          </Link>
+          <Link
+            href={`/admin/logs?tenantId=${tenantId}&logType=AUDIT`}
+            className="text-blue-600 hover:underline"
+          >
+            Audit 로그 →
+          </Link>
+          <Link
+            href={`/admin/logs?tenantId=${tenantId}&logType=CONNECTION_ACTION`}
+            className="text-blue-600 hover:underline"
+          >
+            Connection 로그 →
+          </Link>
+          <Link
+            href={`/admin/logs?tenantId=${tenantId}&logType=WEBHOOK`}
+            className="text-blue-600 hover:underline"
+          >
+            Webhook 로그 →
+          </Link>
+        </div>
       </div>
     </div>
   );
