@@ -194,3 +194,29 @@ export async function auditAdminConnectionStatusChanged(connectionId: string, te
 export async function auditAdminCredentialRotated(connectionId: string, tenantId: string, storeId: string, actorUserId: string, metadata?: Record<string, unknown>) {
   await logAuditEvent({ tenantId, storeId, actorUserId, action: "CONNECTION_CREDENTIAL_ROTATED", targetType: "Connection", targetId: connectionId, metadata });
 }
+
+// ─── Feature Flag audit helpers ───────────────────────────────────────────────
+
+export async function auditAdminFeatureFlagCreated(flagId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "FEATURE_FLAG_CREATED", targetType: "FeatureFlag", targetId: flagId, metadata });
+}
+
+export async function auditAdminFeatureFlagUpdated(flagId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "FEATURE_FLAG_UPDATED", targetType: "FeatureFlag", targetId: flagId, metadata });
+}
+
+export async function auditAdminFeatureFlagStatusChanged(flagId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "FEATURE_FLAG_STATUS_CHANGED", targetType: "FeatureFlag", targetId: flagId, metadata });
+}
+
+export async function auditAdminFeatureFlagAssignmentCreated(assignmentId: string, flagId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "FEATURE_FLAG_ASSIGNMENT_CREATED", targetType: "FeatureFlagAssignment", targetId: assignmentId, metadata: { ...metadata, flagId } });
+}
+
+export async function auditAdminFeatureFlagAssignmentToggled(assignmentId: string, flagId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "FEATURE_FLAG_ASSIGNMENT_TOGGLED", targetType: "FeatureFlagAssignment", targetId: assignmentId, metadata: { ...metadata, flagId } });
+}
+
+export async function auditAdminFeatureFlagAssignmentDeleted(assignmentId: string, flagId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "FEATURE_FLAG_ASSIGNMENT_DELETED", targetType: "FeatureFlagAssignment", targetId: assignmentId, metadata: { ...metadata, flagId } });
+}
