@@ -8,6 +8,8 @@ import AdminEmptyState from "@/components/admin/AdminEmptyState";
 import StatusBadge from "@/components/admin/StatusBadge";
 import AdminStatusChangeForm from "@/components/admin/AdminStatusChangeForm";
 import ImpersonateButton from "@/components/admin/ImpersonateButton";
+import UserDetailActions from "@/components/admin/UserDetailActions";
+import MembershipEditButton from "@/components/admin/MembershipEditButton";
 
 const USER_STATUS_OPTIONS = [
   { value: "ACTIVE", label: "활성" },
@@ -40,27 +42,35 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
 
       <div className="flex items-start justify-between gap-4">
         <AdminPageHeader title={user.name} description={user.email} />
-        {canImpersonate && (
-          <div className="shrink-0 pt-1">
+        <div className="shrink-0 pt-1 flex flex-col items-end gap-2">
+          {canImpersonate ? (
             <ImpersonateButton
               targetUserId={user.id}
               targetName={user.name}
               targetEmail={user.email}
             />
-          </div>
-        )}
-        {!canImpersonate && (
-          <div className="shrink-0 pt-1">
-            <span className="inline-block px-3 py-1.5 text-sm text-gray-400 bg-gray-100 border border-gray-200 rounded-md cursor-not-allowed">
-              👁 View as user
-            </span>
-            <p className="mt-1 text-xs text-gray-400">
-              {user.platformRole === "PLATFORM_ADMIN"
-                ? "Cannot impersonate another admin"
-                : "User must be active"}
-            </p>
-          </div>
-        )}
+          ) : (
+            <div>
+              <span className="inline-block px-3 py-1.5 text-sm text-gray-400 bg-gray-100 border border-gray-200 rounded-md cursor-not-allowed">
+                👁 View as user
+              </span>
+              <p className="mt-1 text-xs text-gray-400">
+                {user.platformRole === "PLATFORM_ADMIN"
+                  ? "Cannot impersonate another admin"
+                  : "User must be active"}
+              </p>
+            </div>
+          )}
+          <UserDetailActions
+            user={{
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              phone: user.phone,
+              platformRole: user.platformRole,
+            }}
+          />
+        </div>
       </div>
 
       {/* Summary KPI */}
@@ -114,6 +124,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
                   <th className="px-4 py-3 text-left font-medium text-gray-500">역할</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
                   <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">가입일</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
@@ -128,6 +139,13 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
                     <td className="px-4 py-3"><StatusBadge value={m.status} /></td>
                     <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
                       {m.joinedAt ? m.joinedAt.toLocaleDateString("ko-KR") : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <MembershipEditButton
+                        membershipId={m.id}
+                        currentRole={m.role}
+                        currentStatus={m.status}
+                      />
                     </td>
                   </tr>
                 ))}

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import bcrypt from "bcryptjs";
 import type {
   AdminUserListItem,
   AdminUserListParams,
@@ -12,6 +13,12 @@ import {
   mapUserTenantMembershipRow,
   mapUserStoreMembershipRow,
 } from "@/lib/admin/mappers";
+import {
+  auditAdminUserCreated,
+  auditAdminUserUpdated,
+  auditAdminUserStatusChanged,
+  auditAdminUserPlatformRoleChanged,
+} from "@/lib/audit";
 
 export async function listAdminUsers(
   params: AdminUserListParams
@@ -161,17 +168,154 @@ export async function getAdminUserDetail(userId: string): Promise<AdminUserDetai
 const ALLOWED_USER_STATUSES = ["ACTIVE", "INVITED", "SUSPENDED", "ARCHIVED"] as const;
 type AllowedUserStatus = (typeof ALLOWED_USER_STATUSES)[number];
 
+const ALLOWED_PLATFORM_ROLES = ["USER", "PLATFORM_ADMIN", "PLATFORM_SUPPORT"] as const;
+type AllowedPlatformRole = (typeof ALLOWED_PLATFORM_ROLES)[number];
+
+// ─── Write operations ─────────────────────────────────────────────────────────
+
+export interface CreateAdminUserInput {
+  name: string;
+  email: string;
+  password: string;
+  platformRole?: string;
+  status?: string;
+}
+
+export async function createAdminUser(
+  input: CreateAdminUserInput,
+  actorUserId: string
+): Promise<{ id: string }> {
+  const { name, email, password, platformRole = "USER", status = "ACTIVE" } = input;
+
+  if (!name?.trim()) throw new Error("이름은 필수입니다.");
+  if (!email?.trim()) throw new Error("이메일은 필수입니다.");
+  if (!password || password.length < 8) throw new Error("비밀번호는 최소 8자 이상이어야 합니다.");
+  if (!ALLOWED_PLATFORM_ROLES.includes(platformRole as AllowedPlatformRole)) {
+    throw new Error(`올바르지 않은 플랫폼 역할입니다: ${platformRole}`);
+  }
+  if (!ALLOWED_USER_STATUSES.includes(status as AllowedUserStatus)) {
+    throw new Error(`올바르지 않은 상태값입니다: ${status}`);
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const existing = await prisma.user.findUnique({ where: { email: normalizedEmail }, select: { id: true } });
+  if (existing) throw new Error("이미 사용 중인 이메일입니다.");
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  const user = await prisma.user.create({
+    data: {
+      name: name.trim(),
+      email: normalizedEmail,
+      passwordHash,
+      platformRole: platformRole as never,
+      status: status as never,
+    },
+    select: { id: true },
+  });
+
+  await auditAdminUserCreated(user.id, actorUserId, { name: name.trim(), email: normalizedEmail, platformRole, status });
+  return { id: user.id };
+}
+
+export interface UpdateAdminUserInput {
+  name?: string;
+  email?: string;
+  phone?: string | null;
+}
+
+export async function updateAdminUser(
+  userId: string,
+  input: UpdateAdminUserInput,
+  actorUserId: string
+): Promise<void> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, name: true, email: true, phone: true },
+  });
+  if (!user) notFound();
+
+  const data: Record<string, unknown> = {};
+
+  if (input.name !== undefined) {
+    if (!input.name.trim()) throw new Error("이름은 필수입니다.");
+    data.name = input.name.trim();
+  }
+  if (input.email !== undefined) {
+    const normalizedEmail = input.email.trim().toLowerCase();
+    if (normalizedEmail !== user.email) {
+      const existing = await prisma.user.findUnique({ where: { email: normalizedEmail }, select: { id: true } });
+      if (existing) throw new Error("이미 사용 중인 이메일입니다.");
+    }
+    data.email = normalizedEmail;
+  }
+  if (input.phone !== undefined) {
+    data.phone = input.phone;
+  }
+
+  if (Object.keys(data).length === 0) return;
+
+  await prisma.user.update({ where: { id: userId }, data: { ...data, updatedAt: new Date() } });
+  await auditAdminUserUpdated(userId, actorUserId, {
+    before: { name: user.name, email: user.email, phone: user.phone },
+    after: data,
+  });
+}
+
+export async function updateAdminUserPlatformRole(
+  userId: string,
+  platformRole: string,
+  actorUserId: string
+): Promise<void> {
+  if (!ALLOWED_PLATFORM_ROLES.includes(platformRole as AllowedPlatformRole)) {
+    throw new Error(`올바르지 않은 플랫폼 역할입니다: ${platformRole}`);
+  }
+  // Cannot demote self
+  if (userId === actorUserId && platformRole !== "PLATFORM_ADMIN") {
+    throw new Error("자신의 PLATFORM_ADMIN 권한은 제거할 수 없습니다.");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, platformRole: true, email: true },
+  });
+  if (!user) notFound();
+
+  // Cannot modify another PLATFORM_ADMIN's role (unless it's yourself — blocked above)
+  if (user.platformRole === "PLATFORM_ADMIN" && userId !== actorUserId) {
+    throw new Error("다른 PLATFORM_ADMIN의 역할은 변경할 수 없습니다.");
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { platformRole: platformRole as never, updatedAt: new Date() },
+  });
+  await auditAdminUserPlatformRoleChanged(userId, actorUserId, {
+    before: user.platformRole,
+    after: platformRole,
+  });
+}
+
 export async function setAdminUserStatus(
   userId: string,
-  status: string
+  status: string,
+  actorUserId?: string,
+  selfGuardUserId?: string
 ): Promise<void> {
   if (!ALLOWED_USER_STATUSES.includes(status as AllowedUserStatus)) {
     throw new Error(`Invalid user status: ${status}`);
   }
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+  // Cannot suspend/archive self
+  if (selfGuardUserId && selfGuardUserId === userId && (status === "SUSPENDED" || status === "ARCHIVED")) {
+    throw new Error("자신의 계정을 정지하거나 보관할 수 없습니다.");
+  }
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, status: true } });
   if (!user) notFound();
   await prisma.user.update({
     where: { id: userId },
     data: { status: status as never, updatedAt: new Date() },
   });
+  if (actorUserId) {
+    await auditAdminUserStatusChanged(userId, actorUserId, { before: user.status, after: status });
+  }
 }

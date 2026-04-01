@@ -104,6 +104,7 @@ export interface TenantStoreRow {
 
 export interface TenantMembershipRow {
   id: string;
+  userId: string;
   userName: string;
   userEmail: string;
   role: string;

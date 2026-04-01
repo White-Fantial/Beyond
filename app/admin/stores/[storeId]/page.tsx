@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
 import { getAdminStoreDetail } from "@/services/admin/admin-store.service";
+import { listActiveTenantMembershipsForDropdown } from "@/services/admin/admin-membership.service";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import AdminKeyValueList from "@/components/admin/AdminKeyValueList";
 import StatusBadge from "@/components/admin/StatusBadge";
 import AdminStatusChangeForm from "@/components/admin/AdminStatusChangeForm";
-import StoreMembershipTable from "@/components/admin/StoreMembershipTable";
 import StoreConnectionTable from "@/components/admin/StoreConnectionTable";
+import StoreDetailActions from "@/components/admin/StoreDetailActions";
+import StoreMembershipEditButton from "@/components/admin/StoreMembershipEditButton";
 
 const STORE_STATUS_OPTIONS = [
   { value: "ACTIVE", label: "활성" },
@@ -23,6 +25,7 @@ export default async function AdminStoreDetailPage({ params }: PageProps) {
   await requirePlatformAdmin();
   const { storeId } = await params;
   const store = await getAdminStoreDetail(storeId);
+  const tenantMemberships = await listActiveTenantMembershipsForDropdown(store.tenantId);
 
   return (
     <div>
@@ -32,7 +35,23 @@ export default async function AdminStoreDetailPage({ params }: PageProps) {
         </Link>
       </div>
 
-      <AdminPageHeader title={store.name} description={`코드: ${store.code}`} />
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <AdminPageHeader title={store.name} description={`코드: ${store.code}`} />
+        <div className="shrink-0 pt-1">
+          <StoreDetailActions
+            store={{
+              id: store.id,
+              name: store.name,
+              displayName: store.displayName,
+              timezone: store.timezone,
+              currency: store.currency,
+              countryCode: store.countryCode,
+              status: store.status,
+            }}
+            tenantMemberships={tenantMemberships}
+          />
+        </div>
+      </div>
 
       {/* Summary KPI */}
       <div className="grid grid-cols-3 gap-4 mb-8">
@@ -84,7 +103,47 @@ export default async function AdminStoreDetailPage({ params }: PageProps) {
         <h2 className="text-sm font-semibold text-gray-700 mb-3">
           매장 멤버십 ({store.membershipCount})
         </h2>
-        <StoreMembershipTable memberships={store.memberships} />
+        {store.memberships.length === 0 ? (
+          <p className="text-sm text-gray-400">멤버십이 없습니다.</p>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">사용자</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">역할</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">생성일</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {store.memberships.map((m) => (
+                  <tr key={m.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <Link href={`/admin/users/${m.userId}`} className="text-blue-600 hover:underline">
+                        {m.userName}
+                      </Link>
+                      <div className="text-xs text-gray-400">{m.userEmail}</div>
+                    </td>
+                    <td className="px-4 py-3"><StatusBadge value={m.role} /></td>
+                    <td className="px-4 py-3"><StatusBadge value={m.status} /></td>
+                    <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
+                      {m.createdAt.toLocaleDateString("ko-KR")}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <StoreMembershipEditButton
+                        storeMembershipId={m.id}
+                        currentRole={m.role}
+                        currentStatus={m.status}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Connections */}

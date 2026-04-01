@@ -1,0 +1,19 @@
+"use client";
+
+import { useState } from "react";
+import CreateStoreDialog from "./CreateStoreDialog";
+
+export default function StoreListActions() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+      >
+        + 매장 생성
+      </button>
+      <CreateStoreDialog open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}

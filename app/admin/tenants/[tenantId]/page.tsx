@@ -8,6 +8,8 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import AdminStatusChangeForm from "@/components/admin/AdminStatusChangeForm";
 import MembershipTable from "@/components/admin/MembershipTable";
 import ConnectionSummaryTable from "@/components/admin/ConnectionSummaryTable";
+import TenantDetailActions from "@/components/admin/TenantDetailActions";
+import MembershipEditButton from "@/components/admin/MembershipEditButton";
 
 const TENANT_STATUS_OPTIONS = [
   { value: "ACTIVE", label: "활성" },
@@ -33,7 +35,22 @@ export default async function AdminTenantDetailPage({ params }: PageProps) {
         </Link>
       </div>
 
-      <AdminPageHeader title={tenant.displayName} description={`슬러그: ${tenant.slug}`} />
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <AdminPageHeader title={tenant.displayName} description={`슬러그: ${tenant.slug}`} />
+        <div className="shrink-0 pt-1">
+          <TenantDetailActions
+            tenant={{
+              id: tenant.id,
+              legalName: tenant.legalName,
+              displayName: tenant.displayName,
+              timezone: tenant.timezone,
+              currency: tenant.currency,
+              countryCode: tenant.countryCode,
+              status: tenant.status,
+            }}
+          />
+        </div>
+      </div>
 
       {/* Summary KPI */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -117,7 +134,47 @@ export default async function AdminTenantDetailPage({ params }: PageProps) {
       {/* Memberships */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">멤버십 ({tenant.membershipCount})</h2>
-        <MembershipTable memberships={tenant.memberships} />
+        {tenant.memberships.length === 0 ? (
+          <p className="text-sm text-gray-400">멤버십이 없습니다.</p>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">사용자</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">역할</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">가입일</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {tenant.memberships.map((m) => (
+                  <tr key={m.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <Link href={`/admin/users/${m.userId}`} className="text-blue-600 hover:underline">
+                        {m.userName}
+                      </Link>
+                      <div className="text-xs text-gray-400">{m.userEmail}</div>
+                    </td>
+                    <td className="px-4 py-3"><StatusBadge value={m.role} /></td>
+                    <td className="px-4 py-3"><StatusBadge value={m.status} /></td>
+                    <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
+                      {m.joinedAt ? m.joinedAt.toLocaleDateString("ko-KR") : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <MembershipEditButton
+                        membershipId={m.id}
+                        currentRole={m.role}
+                        currentStatus={m.status}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Connection Summary */}

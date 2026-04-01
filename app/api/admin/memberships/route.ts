@@ -1,22 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePlatformAdminNotImpersonating } from "@/lib/admin/auth-guard";
-import { setAdminUserStatus } from "@/services/admin/admin-user.service";
+import { createTenantMembership } from "@/services/admin/admin-membership.service";
 
-interface Params {
-  params: Promise<{ userId: string }>;
-}
-
-export async function PATCH(req: NextRequest, { params }: Params) {
+export async function POST(req: NextRequest) {
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
-    const { userId } = await params;
     const body = await req.json();
-    const { status } = body;
-    if (!status || typeof status !== "string") {
-      return NextResponse.json({ error: "status is required" }, { status: 400 });
-    }
-    await setAdminUserStatus(userId, status, ctx.userId, ctx.userId);
-    return NextResponse.json({ ok: true });
+    const { tenantId, userId, role, status } = body;
+    const result = await createTenantMembership(
+      { tenantId, userId, role, status },
+      ctx.userId
+    );
+    return NextResponse.json(result, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     if (message.startsWith("impersonation_active")) {

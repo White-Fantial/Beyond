@@ -62,3 +62,61 @@ export async function auditConnectionStatusChanged(tenantId: string, storeId: st
     metadata: { newStatus },
   });
 }
+
+// ─── Admin write audit helpers ────────────────────────────────────────────────
+
+export async function auditAdminTenantCreated(tenantId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, actorUserId, action: "TENANT_CREATED", targetType: "Tenant", targetId: tenantId, metadata });
+}
+
+export async function auditAdminTenantUpdated(tenantId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, actorUserId, action: "TENANT_UPDATED", targetType: "Tenant", targetId: tenantId, metadata });
+}
+
+export async function auditAdminTenantStatusChanged(tenantId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, actorUserId, action: "TENANT_STATUS_CHANGED", targetType: "Tenant", targetId: tenantId, metadata });
+}
+
+export async function auditAdminUserCreated(userId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "USER_CREATED", targetType: "User", targetId: userId, metadata });
+}
+
+export async function auditAdminUserUpdated(userId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "USER_UPDATED", targetType: "User", targetId: userId, metadata });
+}
+
+export async function auditAdminUserStatusChanged(userId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "USER_STATUS_CHANGED", targetType: "User", targetId: userId, metadata });
+}
+
+export async function auditAdminUserPlatformRoleChanged(userId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ actorUserId, action: "USER_PLATFORM_ROLE_CHANGED", targetType: "User", targetId: userId, metadata });
+}
+
+export async function auditAdminTenantMembershipCreated(membershipId: string, tenantId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, actorUserId, action: "TENANT_MEMBERSHIP_CREATED", targetType: "Membership", targetId: membershipId, metadata });
+}
+
+export async function auditAdminTenantMembershipUpdated(membershipId: string, tenantId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, actorUserId, action: "TENANT_MEMBERSHIP_UPDATED", targetType: "Membership", targetId: membershipId, metadata });
+}
+
+export async function auditAdminStoreMembershipCreated(storeMembershipId: string, tenantId: string, storeId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, storeId, actorUserId, action: "STORE_MEMBERSHIP_CREATED", targetType: "StoreMembership", targetId: storeMembershipId, metadata });
+}
+
+export async function auditAdminStoreMembershipUpdated(storeMembershipId: string, tenantId: string, storeId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, storeId, actorUserId, action: "STORE_MEMBERSHIP_UPDATED", targetType: "StoreMembership", targetId: storeMembershipId, metadata });
+}
+
+export async function auditAdminStoreCreated(storeId: string, tenantId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, storeId, actorUserId, action: "STORE_CREATED", targetType: "Store", targetId: storeId, metadata });
+}
+
+export async function auditAdminStoreUpdated(storeId: string, tenantId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, storeId, actorUserId, action: "STORE_UPDATED", targetType: "Store", targetId: storeId, metadata });
+}
+
+export async function auditAdminStoreStatusChanged(storeId: string, tenantId: string, actorUserId: string, metadata?: Record<string, unknown>) {
+  await logAuditEvent({ tenantId, storeId, actorUserId, action: "STORE_STATUS_CHANGED", targetType: "Store", targetId: storeId, metadata });
+}
