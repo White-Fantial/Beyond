@@ -64,15 +64,27 @@ beyond/
 │   │       ├── categories/
 │   │       ├── modifiers/
 │   │       └── reports/
-│   ├── owner/                  # /owner — multi-store owner portal
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
+│   ├── owner/                  # /owner — multi-store owner portal (Phase 2)
+│   │   ├── layout.tsx          # Auth guard + OwnerSidebar + WorkspaceSwitcher
+│   │   ├── page.tsx            # Redirects to /owner/stores
 │   │   ├── stores/
-│   │   ├── team/
-│   │   ├── reports/
+│   │   │   ├── page.tsx        # Store picker (single-store: auto-redirects)
+│   │   │   └── [storeId]/
+│   │   │       ├── layout.tsx  # Store context header + sub-nav tabs
+│   │   │       ├── page.tsx    # Store dashboard (KPIs, channel breakdown, sold-out, subs)
+│   │   │       ├── settings/   # Store info, operation settings, hours
+│   │   │       ├── staff/      # Staff list with roles & status
+│   │   │       ├── products/   # Product list (owner-local fields)
+│   │   │       ├── categories/ # Category list (display order, visibility)
+│   │   │       ├── modifiers/  # Modifier groups + options (sold-out toggles)
+│   │   │       ├── integrations/ # Channel connection cards (Loyverse, Uber, DoorDash)
+│   │   │       └── subscriptions/
+│   │   │           ├── page.tsx       # Subscription summary
+│   │   │           ├── customers/     # Per-customer subscription view
+│   │   │           └── upcoming/      # Upcoming subscription orders (30 days)
 │   │   ├── billing/
-│   │   ├── integrations/
-│   │   └── settings/
+│   │   ├── reports/
+│   │   └── logs/
 │   ├── store/[storeSlug]/      # /store — public customer ordering portal
 │   │   ├── layout.tsx          # Minimal public layout (no auth)
 │   │   ├── page.tsx            # Order entry page (menu browse + add to cart)
@@ -328,7 +340,7 @@ now + prepMinutes (default: 15 min) + buffer → round up to nearest 10-min slot
 
 Customers can tap the pickup time chip to open `PickupTimeSelector` and choose a different slot.
 
-> TODO: Filter slots against store opening hours once `StoreHours` table is added.
+> Slot filtering against store opening hours uses the `StoreHours` table (`store_hours`, `@@unique([storeId, dayOfWeek])`), populated via the Owner Settings UI.
 
 ### Cart State
 
@@ -910,113 +922,183 @@ The `/admin/feature-flags` section provides runtime feature control, percentage 
 
 ---
 
-## Owner Console (Phase 1)
+## Owner Console (Phase 2)
 
-The **Owner Console** (`/owner`) is the portal for store owners and managers to manage their business. It is protected by the `OWNER`, `ADMIN`, and `MANAGER` membership roles.
+The **Owner Console** (`/owner`) is the daily operations portal for store owners. Every meaningful action is scoped to a specific store (`/owner/stores/[storeId]/*`), enforcing multi-tenant isolation. Owners manage store settings, staff, catalog merchandising, channel connections, and subscriptions without ever touching platform-level admin tools.
+
+> **Key separation**: Admin (`/admin`) manages the platform. Owner (`/owner`) manages the store business. These roles never overlap.
 
 ### Owner Portal Structure
 
 ```
 app/owner/
-├── layout.tsx          # Auth guard + OwnerSidebar + WorkspaceSwitcher
-├── page.tsx            # Redirects to /owner/dashboard
-├── dashboard/          # /owner/dashboard — KPI cards + connection status + recent logs
-├── store/              # /owner/store — Store Settings (OWNER/ADMIN only)
-├── users/              # /owner/users — Users & Roles list (OWNER/ADMIN only)
-├── connections/        # /owner/connections — POS/Delivery/Payment connection list
-├── catalog/            # /owner/catalog — Catalog Source Settings per store
-├── operations/         # /owner/operations — Operations Settings per store
-├── billing/            # /owner/billing — Billing & Subscription (OWNER/ADMIN only)
-├── reports/            # /owner/reports — Sales & operation reports
-└── logs/               # /owner/logs — Recent 50 connection action log entries
+├── layout.tsx                    # Auth guard (OWNER/ADMIN/MANAGER) + OwnerSidebar
+├── page.tsx                      # Redirects to /owner/stores
+├── stores/
+│   ├── page.tsx                  # Store picker; single-store owners auto-redirect
+│   └── [storeId]/
+│       ├── layout.tsx            # Store context header + sub-nav (breadcrumb back to store list)
+│       ├── page.tsx              # Store dashboard — summary cards, channel breakdown, sold-out, upcoming subs
+│       ├── settings/page.tsx     # Store info, operation settings, subscription policy, store hours
+│       ├── staff/page.tsx        # Staff list with tenant/store roles and status
+│       ├── products/page.tsx     # Product list — owner-local fields + source-lock badges
+│       ├── categories/page.tsx   # Category list — display order, visibility, image/color
+│       ├── modifiers/page.tsx    # Modifier groups + options with sold-out indicators
+│       ├── integrations/page.tsx # Channel connection cards (Loyverse POS, Uber Eats, DoorDash)
+│       └── subscriptions/
+│           ├── page.tsx          # Subscription summary cards + navigation
+│           ├── customers/        # Per-customer subscription view
+│           └── upcoming/         # Upcoming subscription orders (next 30 days)
+├── billing/                      # Tenant-level billing
+├── reports/                      # Tenant-level reports
+└── logs/                         # Recent connection action logs
 ```
 
-### Owner Menu Roles
+### Store Dashboard (`/owner/stores/[storeId]`)
 
-| Page | OWNER | ADMIN | MANAGER |
-|------|:-----:|:-----:|:-------:|
-| Dashboard | ✅ | ✅ | ✅ |
-| Connections | ✅ | ✅ | ✅ |
-| Catalog Source | ✅ | ✅ | ✅ |
-| Operations | ✅ | ✅ | ✅ |
-| Reports | ✅ | ✅ | ✅ |
-| Logs | ✅ | ✅ | ✅ |
-| Store Settings | ✅ | ✅ | ❌ |
-| Users & Roles | ✅ | ✅ | ❌ |
-| Billing | ✅ | ✅ | ❌ |
+The store dashboard gives a real-time snapshot of daily operations:
 
-Guards are implemented via `lib/owner/auth-guard.ts`:
-- `requireOwnerPortalAccess()` — OWNER, ADMIN, MANAGER
-- `requireOwnerAdminAccess()` — OWNER, ADMIN only
+| Card | Description |
+|------|-------------|
+| Today Sales | Aggregate revenue for today (minor unit → formatted) |
+| Today Orders | Total orders received today |
+| Completed Orders | Orders with COMPLETED status |
+| Cancelled Orders | Orders with CANCELLED status |
+| Sold-Out Products | Count of `isSoldOut = true` active products |
+| Active Subscriptions | Active subscription count for this store's plans |
+| Connected Channels | `connected / total` provider connections |
+| Upcoming Sub Orders | Active subscriptions billing within next 7 days |
 
-### Store Settings (`/owner/store`)
+Channel breakdown table shows `today revenue` and `today order count` per channel (POS / UBER_EATS / DOORDASH / ONLINE / SUBSCRIPTION). Live figures require analytics integration (see roadmap); the breakdown skeleton is in place.
 
-Displays and manages per-store basic information:
+### Store Settings (`/owner/stores/[storeId]/settings`)
 
-| Field | Description |
-|-------|-------------|
-| Store Name | Display name of the store |
-| Email | Contact email |
-| Phone | Contact phone |
-| Address | Store address |
-| Timezone | Operating timezone |
-| Currency | Store currency code |
-| Tax Rate | Tax rate (%) stored in `store_settings.tax_rate` |
-| Service Fee | Service fee rate (%) in `store_settings.service_fee_rate` |
-| Pickup Interval | Minutes between pickup slots (`pickup_interval_minutes`) |
-| Default Prep Time | Default preparation time in minutes (`default_prep_time_minutes`) |
-| Logo | Logo URL for the store |
+Three sections — all backed by `store_settings` + `store_operation_settings` + `store_hours` tables:
 
-Backed by the `store_settings` table (one row per store, FK → `stores.id`).
+**Basic Info** — displayName, phone, email, address, timezone, currency (PATCH `/api/owner/stores/[storeId]/settings`)
 
-### Catalog Source Settings (`/owner/catalog`)
+**Operation Settings** — storeOpen, holidayMode, pickupIntervalMinutes, pickupLeadMinutes, minPrepTimeMinutes, maxOrdersPerSlot, allowSameDayOrders, sameDayOrderCutoffMinutesBeforeClose, autoSelectPickupTime, subscriptionEnabled, subscriptionPauseAllowed, subscriptionSkipAllowed, subscriptionMinimumAmount, subscriptionDiscountBps, subscriptionOrderLeadDays, soldOutResetMode, soldOutResetHourLocal, defaultAvailabilityMode (PATCH `/api/owner/stores/[storeId]/settings/operations`)
 
-Configure the catalog data source per store:
+**Store Hours** — per-day `isOpen`, `openTimeLocal`, `closeTimeLocal`, `pickupStartTimeLocal`, `pickupEndTimeLocal`. Upserted via `@@unique([storeId, dayOfWeek])` (PUT `/api/owner/stores/[storeId]/hours`)
 
-| Field | Description |
-|-------|-------------|
-| Source Type | `POS`, `LOCAL`, `MERGED`, `DELIVERY`, or `IMPORTED` |
-| Source Connection | FK to `connections` table (optional) |
-| Auto Sync | Enable automatic catalog synchronisation |
-| Sync Interval | Minutes between auto-sync runs |
+### Staff Management (`/owner/stores/[storeId]/staff`)
 
-Backed by the `catalog_settings` table (one row per store).
+Displays all active/inactive store memberships with tenant role, store role, and status. Write operations via API:
 
-### Operations Settings (`/owner/operations`)
+| Endpoint | Action |
+|----------|--------|
+| `POST /api/owner/stores/[storeId]/staff` | Invite staff by email (creates INVITED user if new) |
+| `PATCH /api/owner/stores/[storeId]/staff/[membershipId]` | Change role or toggle active/inactive |
+| `DELETE /api/owner/stores/[storeId]/staff/[membershipId]` | Remove from store |
 
-Toggle and configure operational behaviour per store:
+**Safety rule**: The last OWNER of a store cannot be demoted, deactivated, or removed. `assertNotLastOwner()` enforces this at the service layer for every write path.
 
-| Field | Description |
-|-------|-------------|
-| Store Open | Whether the store is accepting orders |
-| Holiday Mode | Temporarily suspends new orders |
-| Pickup Interval | Minutes between pickup time slots |
-| Min Prep Time | Minimum preparation time in minutes |
-| Max Orders / Slot | Maximum concurrent orders per time slot |
-| Auto Accept Orders | Automatically confirm incoming orders |
-| Auto Print POS | Send orders to POS printer automatically |
-| Subscription Enabled | Enable subscription ordering channel |
-| Online Order Enabled | Enable online ordering channel |
+### Catalog Management (Owner-Local Fields Only)
 
-Backed by the `store_operation_settings` table (one row per store).
+> **Critical principle**: POS source-of-truth fields are **never modified** by the owner portal. Only local merchandising/operations fields are editable.
 
-### Permission Structure (Owner / Manager / Staff)
+| Entity | Read-Only (POS locked 🔒) | Editable by Owner ✏️ |
+|--------|--------------------------|----------------------|
+| Category | `name`, `sourceType`, `sourceCategoryRef` | `displayOrder`, `isVisibleOnOnlineOrder`, `isVisibleOnSubscription`, `imageUrl`, `onlineImageUrl`, `subscriptionImageUrl`, `localUiColor` |
+| Product | `name`, `basePriceAmount`, `sku`, `barcode`, `sourceType` | `onlineName`, `subscriptionName`, `shortDescription`, `imageUrl`, `isFeatured`, `isVisibleOnOnlineOrder`, `isVisibleOnSubscription`, `displayOrder`, `internalNote` |
+| Modifier Option | `name`, `priceDeltaAmount`, `sourceType` | `isSoldOut`, `isDefault`, `displayOrder` |
+| Modifier Group | `name`, `sourceType` | `isVisibleOnOnlineOrder`, `displayOrder` |
+
+API handlers strip source-locked fields before delegating to the service layer, providing defence-in-depth:
+```
+PATCH /api/owner/stores/[storeId]/products/[productId]
+PATCH /api/owner/stores/[storeId]/categories/[categoryId]
+PATCH /api/owner/stores/[storeId]/modifier-options/[optionId]
+```
+
+### Channel Connections (`/owner/stores/[storeId]/integrations`)
+
+Provider cards for Loyverse POS, Uber Eats, and DoorDash. Each card shows:
+- Connection status, auth scheme, external store/merchant name
+- `lastConnectedAt`, `lastAuthValidatedAt`, `lastSyncAt`, `lastSyncStatus`
+- `reauthRequired` flag + last error message
+- Connect / Reconnect / Disconnect actions
+
+### Subscription Overview (`/owner/stores/[storeId]/subscriptions`)
+
+| Route | Content |
+|-------|---------|
+| `/subscriptions` | Summary cards: active, paused, next-7-days expected orders, subscription-eligible product count |
+| `/subscriptions/customers` | Grouped by `customerId`: active/paused counts, next order date, monthly amount estimate |
+| `/subscriptions/upcoming` | Orders expected within 30 days with plan name, date, and estimated amount |
+
+> Note: `Subscription.customerId` currently stores a string ID. Full customer profile names require a `Customer` table join — planned for the subscription engine phase.
+
+### New Prisma Models & Fields (Phase 2)
+
+**New model: `StoreHours`** (`store_hours`)
+```prisma
+model StoreHours {
+  id                   String   @id @default(uuid())
+  tenantId             String
+  storeId              String
+  dayOfWeek            Int      // 0 = Sunday … 6 = Saturday
+  isOpen               Boolean  @default(true)
+  openTimeLocal        String   @default("09:00")
+  closeTimeLocal       String   @default("17:00")
+  pickupStartTimeLocal String?
+  pickupEndTimeLocal   String?
+  @@unique([storeId, dayOfWeek])
+}
+```
+
+**New enums**: `SoldOutResetMode` (NONE / DAILY_AUTO_RESET), `DefaultAvailabilityMode` (AVAILABLE / MANUAL_CONTROLLED)
+
+**Extended `StoreOperationSettings`**: 13 new fields covering subscription policy (`pauseAllowed`, `skipAllowed`, `discountBps`, `orderLeadDays`, `minimumAmount`, `allowedWeekdaysJson`), pickup policy (`leadMinutes`, `allowSameDayOrders`, `sameDayOrderCutoffMinutesBeforeClose`, `autoSelectPickupTime`), and availability (`soldOutResetMode`, `soldOutResetHourLocal`, `defaultAvailabilityMode`).
+
+**Extended `CatalogCategory`**: `onlineImageUrl`, `subscriptionImageUrl`, `localUiColor` (owner-local fields).
+
+### Authorization
+
+| Guard | Where Used | Requirement |
+|-------|-----------|-------------|
+| `requireOwnerPortalAccess()` | `app/owner/layout.tsx` | OWNER, ADMIN, or MANAGER membership |
+| `requireOwnerAdminAccess()` | Billing, sensitive settings | OWNER or ADMIN membership only |
+| `requireOwnerStoreAccess(storeId)` | Every store-context page/API | OWNER/ADMIN membership **and** store belongs to actor's tenant |
+| `resolveActorTenantId(ctx, storeId)` | Every store-context write | Throws `CROSS_TENANT_ACCESS_DENIED` if storeId is not in actor's tenant |
+
+### Audit Events (Phase 2)
+
+All owner write operations emit typed `AuditLog` entries with `tenantId`, `storeId`, `actorUserId`, `targetType`, `targetId`:
+
+`OWNER_STORE_SETTINGS_UPDATED` · `OWNER_STORE_HOURS_UPDATED` · `OWNER_STAFF_INVITED` · `OWNER_STAFF_ROLE_UPDATED` · `OWNER_STAFF_DEACTIVATED` · `OWNER_STAFF_REACTIVATED` · `OWNER_STAFF_REMOVED` · `OWNER_PRODUCT_UPDATED` · `OWNER_CATEGORY_UPDATED` · `OWNER_MODIFIER_OPTION_UPDATED` · `OWNER_CONNECTION_DISCONNECTED` · `OWNER_CATALOG_SYNC_REQUESTED`
+
+### Services (`services/owner/`)
+
+| Service | Responsibility |
+|---------|---------------|
+| `owner-authz.service.ts` | Cross-tenant store access guard + tenant ID resolution |
+| `owner-dashboard.service.ts` | Store-context KPI aggregation; legacy tenant-level summary kept |
+| `owner-settings.service.ts` | Read/upsert store info, operation settings, store hours |
+| `owner-staff.service.ts` | Invite, role change, deactivate/remove with last-owner guard |
+| `owner-catalog.service.ts` | List/update categories, products, modifier options — local fields only |
+| `owner-integrations.service.ts` | Connection card view model facade |
+| `owner-subscriptions.service.ts` | Subscription summary, customer grouping, upcoming orders |
+
+### Permission Structure
 
 ```
 OWNER membership role
-└── Full access to all /owner pages
-    └── Inherits all store permissions (orders, inventory, menu, billing, integrations)
+└── requireOwnerStoreAccess passes for all stores in their tenant
+└── Full access to all /owner/stores/[storeId]/* pages and APIs
+└── Inherits all store permissions (orders, inventory, menu, billing, integrations)
 
 ADMIN membership role
-└── Full access to all /owner pages
-    └── Inherits store permissions except billing
+└── Same store-context access as OWNER
+└── Cannot access billing
 
 MANAGER membership role
-└── Limited access: dashboard, connections, catalog, operations, reports, logs
-    └── Cannot access: store settings, users management, billing
+└── requireOwnerPortalAccess passes (can see /owner)
+└── requireOwnerStoreAccess passes for their stores
+└── Catalog/operations/integrations: ✅  |  Staff/settings/billing: ❌
 
 SUPERVISOR / STAFF store roles
-└── No access to /owner portal (backoffice only)
+└── No /owner portal access (backoffice only)
 ```
 
 ---
@@ -1057,6 +1139,7 @@ SUPERVISOR / STAFF store roles
 - [x] **Admin Console Phase 7 — Integrations Admin Panel** — connection detail page, status change, credential rotation, action log viewer
 - [x] **Admin Console Phase 9 — Feature Flags / Runtime Config** — flag lifecycle management, scoped assignments, percentage rollout, evaluation engine, audit trail
 - [x] **Owner Console Phase 1** — dashboard (KPI + connection status + logs), store settings, users & roles, connections, catalog source settings, operations settings, billing, reports, logs pages; OWNER/ADMIN/MANAGER role guards; Prisma models for `store_settings`, `catalog_settings`, `store_operation_settings`
+- [x] **Owner Console Phase 2** — store-context portal (`/owner/stores/[storeId]/*`); store dashboard (KPIs, channel breakdown, sold-out list, upcoming subscriptions); store settings (basic info + operation policy + store hours); staff management (invite / role change / deactivate / remove with last-owner guard); owner-local catalog fields (products, categories, modifier options — POS fields immutable); channel connection cards; subscription summary + customer + upcoming order pages; 8 write API routes; 12 AuditLog event types; cross-tenant access enforcement; new `StoreHours` model + `SoldOutResetMode` / `DefaultAvailabilityMode` enums
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)
