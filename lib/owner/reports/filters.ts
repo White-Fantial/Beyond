@@ -186,12 +186,37 @@ function toLocalParts(date: Date, timezone: string): LocalDate {
 }
 
 function localToUtc(localStr: string, timezone: string): Date {
+  // Treat the local string as UTC to get a starting estimate.
   const naive = new Date(`${localStr}Z`);
-  const localParts = toLocalParts(naive, timezone);
-  const naiveLocal = new Date(
-    `${localParts.year}-${pad(localParts.month)}-${pad(localParts.day)}T${localStr.slice(11)}Z`
+
+  // Format naive in the target timezone (full date + time) to find the actual offset.
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(naive);
+  const get = (type: string) =>
+    parseInt(parts.find((p) => p.type === type)?.value ?? "0");
+
+  // Build the UTC ms that naive "looks like" in local time.
+  const naiveAsLocalMs = Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour"),
+    get("minute"),
+    get("second")
   );
-  const offsetMs = naiveLocal.getTime() - naive.getTime();
+
+  // Round to the nearest minute to avoid sub-second precision loss from Intl.
+  const offsetMs =
+    Math.round((naiveAsLocalMs - naive.getTime()) / 60000) * 60000;
   return new Date(naive.getTime() - offsetMs);
 }
 
