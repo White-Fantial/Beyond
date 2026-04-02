@@ -4,12 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/owner/dashboard", label: "Dashboard", icon: "🏠", exact: true },
-  { href: "/owner/store", label: "Store Settings", icon: "⚙️" },
-  { href: "/owner/users", label: "Users & Roles", icon: "👥" },
-  { href: "/owner/connections", label: "Connections", icon: "🔌" },
-  { href: "/owner/catalog", label: "Catalog Source", icon: "📦" },
-  { href: "/owner/operations", label: "Operations", icon: "🔧" },
+  { href: "/owner/stores", label: "내 매장", icon: "🏬", exact: false },
+  { href: "/owner/dashboard", label: "테넌트 대시보드", icon: "🏠", exact: true },
   { href: "/owner/billing", label: "Billing", icon: "💳" },
   { href: "/owner/reports", label: "Reports", icon: "📈" },
   { href: "/owner/logs", label: "Logs", icon: "📋" },
@@ -21,7 +17,7 @@ export default function OwnerSidebar() {
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
       <div className="px-6 py-5 border-b border-gray-100">
-        <Link href="/owner/dashboard" className="text-xl font-bold text-brand-700">
+        <Link href="/owner/stores" className="text-xl font-bold text-brand-700">
           Beyond
         </Link>
         <div className="text-xs text-gray-400 mt-0.5">Owner Portal</div>
