@@ -168,7 +168,7 @@ export async function updateOwnerSubscriptionNextDate(
   if (sub.status === "CANCELLED") {
     throw new SubscriptionTransitionError("Cannot update next date on a cancelled subscription.");
   }
-  if (nextDate <= new Date()) {
+  if (nextDate < new Date()) {
     throw new Error("Next order date must be in the future.");
   }
 

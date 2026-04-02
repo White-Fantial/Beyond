@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type {
   OwnerCustomerDetail,
   OwnerCustomerOrderRow,
@@ -411,6 +412,7 @@ type DialogState =
   | null;
 
 function SubscriptionCard({ sub }: { sub: OwnerCustomerSubscriptionRow }) {
+  const router = useRouter();
   const [dialog, setDialog] = useState<DialogState>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -429,7 +431,7 @@ function SubscriptionCard({ sub }: { sub: OwnerCustomerSubscriptionRow }) {
         const data = await res.json().catch(() => ({}));
         throw new Error((data as { error?: string }).error ?? `HTTP ${res.status}`);
       }
-      window.location.reload();
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "An error occurred");
     }
@@ -444,9 +446,7 @@ function SubscriptionCard({ sub }: { sub: OwnerCustomerSubscriptionRow }) {
   }
 
   function handleCancel() {
-    startTransition(() => {
-      callAction(`/api/owner/subscriptions/${sub.id}/cancel`, "POST");
-    });
+    callAction(`/api/owner/subscriptions/${sub.id}/cancel`, "POST");
   }
 
   function handleSaveDate(date: string) {

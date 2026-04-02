@@ -329,9 +329,10 @@ export async function getOwnerCustomerDetail(
   if (orders.length === 0 && subscriptions.length === 0) return null;
 
   // Lookup stored Customer profile (for internalNote)
-  const profile = await prisma.customer.findFirst({
-    where: { tenantId, email: orders[0]?.customerEmail ?? undefined },
-  });
+  const customerEmail = orders.length > 0 ? orders[0].customerEmail : null;
+  const profile = customerEmail
+    ? await prisma.customer.findFirst({ where: { tenantId, email: customerEmail } })
+    : null;
 
   // Aggregate
   let name: string | null = null;
