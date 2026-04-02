@@ -10,7 +10,7 @@ interface UserListTableProps {
 
 export default function UserListTable({ items, emptyMessage }: UserListTableProps) {
   if (items.length === 0) {
-    return <AdminEmptyState message={emptyMessage ?? "사용자가 없습니다."} />;
+    return <AdminEmptyState message={emptyMessage ?? "No users found."} />;
   }
 
   return (
@@ -18,13 +18,13 @@ export default function UserListTable({ items, emptyMessage }: UserListTableProp
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">이름</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">이메일</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">플랫폼 역할</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
-            <th className="px-4 py-3 text-right font-medium text-gray-500 hidden md:table-cell">테넌트</th>
-            <th className="px-4 py-3 text-right font-medium text-gray-500 hidden md:table-cell">매장</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">생성일</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Name</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Email</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">Platform role</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+            <th className="px-4 py-3 text-right font-medium text-gray-500 hidden md:table-cell">Tenants</th>
+            <th className="px-4 py-3 text-right font-medium text-gray-500 hidden md:table-cell">Stores</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Created</th>
             <th className="px-4 py-3"></th>
           </tr>
         </thead>
@@ -42,14 +42,14 @@ export default function UserListTable({ items, emptyMessage }: UserListTableProp
               <td className="px-4 py-3 text-right text-gray-700 hidden md:table-cell">{u.tenantCount}</td>
               <td className="px-4 py-3 text-right text-gray-700 hidden md:table-cell">{u.storeCount}</td>
               <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell">
-                {u.createdAt.toLocaleDateString("ko-KR")}
+                {u.createdAt.toLocaleDateString("en-US")}
               </td>
               <td className="px-4 py-3 text-right">
                 <Link
                   href={`/admin/users/${u.id}`}
                   className="text-xs text-blue-600 hover:underline whitespace-nowrap"
                 >
-                  상세 →
+                  Details →
                 </Link>
               </td>
             </tr>

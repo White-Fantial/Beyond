@@ -9,7 +9,7 @@ interface AdminSearchInputProps {
 }
 
 export default function AdminSearchInput({
-  placeholder = "검색...",
+  placeholder = "Search...",
   paramName = "q",
 }: AdminSearchInputProps) {
   const router = useRouter();

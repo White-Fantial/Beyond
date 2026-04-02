@@ -9,7 +9,7 @@ interface ConnectionActionLogTableProps {
 
 export default function ConnectionActionLogTable({
   items,
-  emptyMessage = "작업 로그가 없습니다.",
+  emptyMessage = "No action logs.",
 }: ConnectionActionLogTableProps) {
   if (items.length === 0) {
     return <AdminEmptyState message={emptyMessage} />;
@@ -20,19 +20,19 @@ export default function ConnectionActionLogTable({
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">시간</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">공급자</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">작업 유형</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">메시지</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">오류 코드</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Time</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Provider</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">Action type</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Message</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Error code</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
           {items.map((l) => (
             <tr key={l.id} className="hover:bg-gray-50">
               <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
-                {l.createdAt.toLocaleString("ko-KR")}
+                {l.createdAt.toLocaleString("en-US")}
               </td>
               <td className="px-4 py-3 font-mono text-xs text-gray-700">{l.provider}</td>
               <td className="px-4 py-3 font-mono text-xs text-gray-500 hidden sm:table-cell">

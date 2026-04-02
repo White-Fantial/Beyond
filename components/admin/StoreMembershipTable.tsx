@@ -8,7 +8,7 @@ interface StoreMembershipTableProps {
 
 export default function StoreMembershipTable({ memberships }: StoreMembershipTableProps) {
   if (memberships.length === 0) {
-    return <AdminEmptyState message="멤버십이 없습니다." />;
+    return <AdminEmptyState message="No memberships found." />;
   }
 
   return (
@@ -16,11 +16,11 @@ export default function StoreMembershipTable({ memberships }: StoreMembershipTab
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">이름</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">이메일</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">매장 역할</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">생성일</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Name</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Email</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Store role</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Created</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
@@ -35,7 +35,7 @@ export default function StoreMembershipTable({ memberships }: StoreMembershipTab
                 <StatusBadge value={sm.status} />
               </td>
               <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
-                {sm.createdAt.toLocaleDateString("ko-KR")}
+                {sm.createdAt.toLocaleDateString("en-US")}
               </td>
             </tr>
           ))}

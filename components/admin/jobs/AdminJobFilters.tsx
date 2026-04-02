@@ -61,7 +61,7 @@ export default function AdminJobFilters({ current }: AdminJobFiltersProps) {
         onChange={(e) => update("jobType", e.target.value)}
         className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400"
       >
-        <option value="">모든 작업 유형</option>
+        <option value="">All job types</option>
         {JOB_TYPE_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
@@ -75,7 +75,7 @@ export default function AdminJobFilters({ current }: AdminJobFiltersProps) {
         onChange={(e) => update("status", e.target.value)}
         className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400"
       >
-        <option value="">모든 상태</option>
+        <option value="">All statuses</option>
         {STATUS_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
@@ -89,7 +89,7 @@ export default function AdminJobFilters({ current }: AdminJobFiltersProps) {
         onChange={(e) => update("triggerSource", e.target.value)}
         className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400"
       >
-        <option value="">모든 트리거</option>
+        <option value="">All triggers</option>
         {TRIGGER_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
@@ -105,7 +105,7 @@ export default function AdminJobFilters({ current }: AdminJobFiltersProps) {
           onChange={(e) => update("failedOnly", e.target.checked ? "true" : "")}
           className="rounded"
         />
-        실패만 보기
+        Failed only
       </label>
 
       {/* Clear filters */}
@@ -115,7 +115,7 @@ export default function AdminJobFilters({ current }: AdminJobFiltersProps) {
           onClick={clearAll}
           className="px-3 py-2 rounded-md border border-gray-300 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700"
         >
-          필터 초기화
+          Clear filters
         </button>
       )}
     </div>

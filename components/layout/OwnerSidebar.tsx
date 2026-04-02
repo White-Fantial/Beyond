@@ -4,13 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/owner", label: "오너 홈", icon: "🏠" },
-  { href: "/owner/stores", label: "매장 관리", icon: "🏪" },
-  { href: "/owner/team", label: "팀 관리", icon: "👥" },
-  { href: "/owner/billing", label: "결제/구독", icon: "💳" },
-  { href: "/owner/integrations", label: "연동 관리", icon: "🔌" },
-  { href: "/owner/settings", label: "매장 설정", icon: "⚙️" },
-  { href: "/owner/reports", label: "리포트", icon: "📈" },
+  { href: "/owner", label: "Owner Home", icon: "🏠" },
+  { href: "/owner/stores", label: "Stores", icon: "🏪" },
+  { href: "/owner/team", label: "Team", icon: "👥" },
+  { href: "/owner/billing", label: "Billing & Subscriptions", icon: "💳" },
+  { href: "/owner/integrations", label: "Integrations", icon: "🔌" },
+  { href: "/owner/settings", label: "Settings", icon: "⚙️" },
+  { href: "/owner/reports", label: "Reports", icon: "📈" },
 ];
 
 export default function OwnerSidebar() {
@@ -49,7 +49,7 @@ export default function OwnerSidebar() {
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 w-full"
           >
             <span>🚪</span>
-            <span>로그아웃</span>
+            <span>Log out</span>
           </button>
         </form>
       </div>

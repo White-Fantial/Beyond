@@ -4,21 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/admin", label: "대시보드", icon: "🏠", exact: true },
-  { href: "/admin/system", label: "시스템 모니터링", icon: "🖥️" },
-  { href: "/admin/tenants", label: "테넌트", icon: "🏢" },
-  { href: "/admin/users", label: "사용자", icon: "👥" },
-  { href: "/admin/stores", label: "매장", icon: "🏪" },
-  { href: "/admin/integrations", label: "연동", icon: "🔌" },
+  { href: "/admin", label: "Dashboard", icon: "🏠", exact: true },
+  { href: "/admin/system", label: "System Monitoring", icon: "🖥️" },
+  { href: "/admin/tenants", label: "Tenants", icon: "🏢" },
+  { href: "/admin/users", label: "Users", icon: "👥" },
+  { href: "/admin/stores", label: "Stores", icon: "🏪" },
+  { href: "/admin/integrations", label: "Integrations", icon: "🔌" },
   { href: "/admin/jobs", label: "Jobs Console", icon: "⚙️" },
-  { href: "/admin/logs", label: "로그", icon: "📋" },
+  { href: "/admin/logs", label: "Logs", icon: "📋" },
   { href: "/admin/feature-flags", label: "Feature Flags", icon: "🚩" },
 ];
 
 const billingSubItems = [
   { href: "/admin/billing", label: "Overview", exact: true },
-  { href: "/admin/billing/plans", label: "요금제" },
-  { href: "/admin/billing/tenants", label: "테넌트 Billing" },
+  { href: "/admin/billing/plans", label: "Plans" },
+  { href: "/admin/billing/tenants", label: "Tenant Billing" },
 ];
 
 export default function AdminSidebar() {
@@ -100,7 +100,7 @@ export default function AdminSidebar() {
             className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white w-full"
           >
             <span>🚪</span>
-            <span>로그아웃</span>
+            <span>Log out</span>
           </button>
         </form>
       </div>

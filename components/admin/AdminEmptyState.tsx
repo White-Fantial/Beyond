@@ -3,7 +3,7 @@ interface AdminEmptyStateProps {
 }
 
 export default function AdminEmptyState({
-  message = "표시할 데이터가 없습니다.",
+  message = "No data available.",
 }: AdminEmptyStateProps) {
   return (
     <div className="py-12 text-center">

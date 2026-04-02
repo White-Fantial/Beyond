@@ -16,7 +16,7 @@ interface AdminStatusFilterProps {
 export default function AdminStatusFilter({
   options,
   paramName = "status",
-  allLabel = "전체",
+  allLabel = "All",
 }: AdminStatusFilterProps) {
   const router = useRouter();
   const pathname = usePathname();

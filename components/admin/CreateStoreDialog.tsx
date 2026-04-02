@@ -44,58 +44,58 @@ export default function CreateStoreDialog({ open, onClose, tenantId }: Props) {
         });
         const data = await res.json();
         if (!res.ok) {
-          setError(data.error ?? "매장 생성에 실패했습니다.");
+          setError(data.error ?? "Failed to create store.");
           return;
         }
         onClose();
         router.push(`/admin/stores/${data.id}`);
         router.refresh();
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred. Please try again.");
       }
     });
   }
 
   return (
-    <AdminDialog open={open} onClose={onClose} title="매장 생성">
+    <AdminDialog open={open} onClose={onClose} title="Create store">
       <form onSubmit={handleSubmit} className="space-y-4">
         {!tenantId && (
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">테넌트 ID *</label>
-            <input name="tenantId" value={form.tenantId} onChange={handleChange} required className={inputCls} placeholder="테넌트 UUID" />
+            <label className="block text-xs font-medium text-gray-700 mb-1">Tenant ID *</label>
+            <input name="tenantId" value={form.tenantId} onChange={handleChange} required className={inputCls} placeholder="Tenant UUID" />
           </div>
         )}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">코드 *</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Code *</label>
             <input name="code" value={form.code} onChange={handleChange} required className={inputCls} placeholder="store-001" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">상태</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
             <select name="status" value={form.status} onChange={handleChange} className={inputCls}>
               {STORE_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">매장명 *</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Store name *</label>
           <input name="name" value={form.name} onChange={handleChange} required className={inputCls} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">표시명 *</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Display name *</label>
           <input name="displayName" value={form.displayName} onChange={handleChange} required className={inputCls} />
         </div>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">시간대</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Timezone</label>
             <input name="timezone" value={form.timezone} onChange={handleChange} className={inputCls} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">통화</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Currency</label>
             <input name="currency" value={form.currency} onChange={handleChange} maxLength={3} className={inputCls} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">국가 코드</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Country code</label>
             <input name="countryCode" value={form.countryCode} onChange={handleChange} maxLength={2} className={inputCls} />
           </div>
         </div>
@@ -103,11 +103,11 @@ export default function CreateStoreDialog({ open, onClose, tenantId }: Props) {
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" onClick={onClose} disabled={isPending}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-60">
-            취소
+            Cancel
           </button>
           <button type="submit" disabled={isPending}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60">
-            {isPending ? "생성 중..." : "매장 생성"}
+            {isPending ? "Creating..." : "Create store"}
           </button>
         </div>
       </form>
