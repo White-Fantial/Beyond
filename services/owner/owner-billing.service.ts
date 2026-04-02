@@ -56,6 +56,15 @@ const METRIC_MAP: MetricMapEntry[] = [
   { metricKey: "subscriptions.monthly", limitKeys: ["subscriptions.monthly"], getValue: (u) => u.subscriptionsCount },
 ];
 
+// Statuses that represent a current/active subscription for query filtering
+const ACTIVE_SUBSCRIPTION_STATUSES = [
+  "ACTIVE",
+  "TRIAL",
+  "PAST_DUE",
+  "SUSPENDED",
+  "INCOMPLETE",
+] as const;
+
 // ─── Private helpers ───────────────────────────────────────────────────────────
 
 function mapSubscriptionToSummary(
@@ -180,7 +189,7 @@ export async function getBillingOverview(tenantId: string): Promise<OwnerBilling
   const sub = await prisma.tenantSubscription.findFirst({
     where: {
       tenantId,
-      status: { in: ["ACTIVE", "TRIAL", "PAST_DUE", "SUSPENDED", "INCOMPLETE"] as never[] },
+      status: { in: [...ACTIVE_SUBSCRIPTION_STATUSES] as never[] },
     },
     include: {
       plan: {
@@ -253,7 +262,7 @@ export async function getUsageVsLimits(tenantId: string): Promise<OwnerUsageMetr
   const sub = await prisma.tenantSubscription.findFirst({
     where: {
       tenantId,
-      status: { in: ["ACTIVE", "TRIAL", "PAST_DUE", "SUSPENDED", "INCOMPLETE"] as never[] },
+      status: { in: [...ACTIVE_SUBSCRIPTION_STATUSES] as never[] },
     },
     include: {
       plan: { include: { limits: true } },
@@ -413,7 +422,7 @@ export async function getPlanCatalog(tenantId: string): Promise<OwnerPlanCatalog
   const sub = await prisma.tenantSubscription.findFirst({
     where: {
       tenantId,
-      status: { in: ["ACTIVE", "TRIAL", "PAST_DUE", "SUSPENDED", "INCOMPLETE"] as never[] },
+      status: { in: [...ACTIVE_SUBSCRIPTION_STATUSES] as never[] },
     },
     include: { plan: { include: { limits: true, features: true } } },
     orderBy: { createdAt: "desc" },
@@ -482,7 +491,7 @@ export async function previewPlanChange(
   const sub = await prisma.tenantSubscription.findFirst({
     where: {
       tenantId,
-      status: { in: ["ACTIVE", "TRIAL", "PAST_DUE", "SUSPENDED", "INCOMPLETE"] as never[] },
+      status: { in: [...ACTIVE_SUBSCRIPTION_STATUSES] as never[] },
     },
     include: { plan: { include: { limits: true, features: true } } },
     orderBy: { createdAt: "desc" },
@@ -611,7 +620,7 @@ export async function requestPlanChange(
   const sub = await prisma.tenantSubscription.findFirst({
     where: {
       tenantId,
-      status: { in: ["ACTIVE", "TRIAL", "PAST_DUE", "SUSPENDED", "INCOMPLETE"] as never[] },
+      status: { in: [...ACTIVE_SUBSCRIPTION_STATUSES] as never[] },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -736,7 +745,7 @@ export async function getBillingAlerts(tenantId: string): Promise<BillingAlert[]
   const sub = await prisma.tenantSubscription.findFirst({
     where: {
       tenantId,
-      status: { in: ["ACTIVE", "TRIAL", "PAST_DUE", "SUSPENDED", "INCOMPLETE"] as never[] },
+      status: { in: [...ACTIVE_SUBSCRIPTION_STATUSES] as never[] },
     },
     orderBy: { createdAt: "desc" },
   });
