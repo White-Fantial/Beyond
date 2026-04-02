@@ -213,6 +213,16 @@ enum BillingRecordStatus {
   UNCOLLECTIBLE
 }
 
+enum SoldOutResetMode {
+  NONE
+  DAILY_AUTO_RESET
+}
+
+enum DefaultAvailabilityMode {
+  AVAILABLE
+  MANUAL_CONTROLLED
+}
+
 // ─── Foundation Models ────────────────────────────────────────────────────────
 
 model Tenant {
@@ -326,6 +336,7 @@ model Store {
   storeSettings          StoreSettings?
   catalogSettings        CatalogSettings?
   storeOperationSettings StoreOperationSettings?
+  storeHours             StoreHours[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -1044,6 +1055,9 @@ model CatalogCategory {
   isVisibleOnOnlineOrder   Boolean           @default(true)
   isVisibleOnSubscription  Boolean           @default(false)
   imageUrl                 String?
+  onlineImageUrl          String?
+  subscriptionImageUrl    String?
+  localUiColor            String?
   metadata                 Json              @default("{}")
   createdAt                DateTime          @default(now())
   updatedAt                DateTime          @updatedAt
@@ -1693,6 +1707,19 @@ model StoreOperationSettings {
   autoPrintPos         Boolean  @default(false)
   subscriptionEnabled  Boolean  @default(false)
   onlineOrderEnabled   Boolean  @default(true)
+  pickupLeadMinutes                    Int      @default(15)
+  allowSameDayOrders                   Boolean  @default(true)
+  sameDayOrderCutoffMinutesBeforeClose Int      @default(60)
+  autoSelectPickupTime                 Boolean  @default(false)
+  subscriptionPauseAllowed             Boolean  @default(true)
+  subscriptionSkipAllowed              Boolean  @default(true)
+  subscriptionMinimumAmount            Int      @default(0)
+  subscriptionDiscountBps              Int      @default(0)
+  subscriptionOrderLeadDays            Int      @default(3)
+  subscriptionAllowedWeekdaysJson      String?
+  soldOutResetMode                     SoldOutResetMode @default(NONE)
+  soldOutResetHourLocal                Int      @default(6)
+  defaultAvailabilityMode              DefaultAvailabilityMode @default(AVAILABLE)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
@@ -1701,3 +1728,23 @@ model StoreOperationSettings {
   @@map("store_operation_settings")
 }
 
+
+model StoreHours {
+  id                   String   @id @default(uuid())
+  tenantId             String
+  storeId              String
+  dayOfWeek            Int
+  isOpen               Boolean  @default(true)
+  openTimeLocal        String   @default("09:00")
+  closeTimeLocal       String   @default("17:00")
+  pickupStartTimeLocal String?
+  pickupEndTimeLocal   String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, dayOfWeek])
+  @@index([tenantId, storeId])
+  @@map("store_hours")
+}
