@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { seedBilling } from "./seeds/billing";
 
 const prisma = new PrismaClient();
 
@@ -102,6 +103,8 @@ async function main() {
     },
   });
   console.log(`  ✓ StoreMembership: OWNER at ${store.displayName}`);
+
+  await seedBilling();
 
   console.log("\n✅ Seed complete!\n");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
