@@ -308,3 +308,105 @@ export interface OwnerUpcomingSubscriptionRow {
   expectedAmountMinorUnit: number;
   status: string;
 }
+
+// ─── Phase 5: Customer & Subscription Management ─────────────────────────────
+
+export interface OwnerCustomerRow {
+  id: string; // = Order.customerId (the stable string identifier)
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  primaryStoreName: string | null;
+  totalOrders: number;
+  lifetimeRevenueMinorUnit: number;
+  activeSubscriptionCount: number;
+  firstOrderAt: string | null;
+  lastOrderAt: string | null;
+  recent30dOrderCount: number;
+  joinedAt: string | null; // first order date as proxy
+}
+
+export interface OwnerCustomerListResult {
+  customers: OwnerCustomerRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface OwnerCustomerKpi {
+  totalCustomers: number;
+  customersWithActiveSubscriptions: number;
+  customersOrderedLast30Days: number;
+  totalActiveSubscriptions: number;
+}
+
+export interface OwnerCustomerDetail {
+  id: string; // = Order.customerId
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  internalNote: string | null;
+  noteUpdatedAt: string | null;
+  // KPIs
+  totalOrders: number;
+  lifetimeRevenueMinorUnit: number;
+  activeSubscriptionCount: number;
+  pausedSubscriptionCount: number;
+  cancelledSubscriptionCount: number;
+  firstOrderAt: string | null;
+  lastOrderAt: string | null;
+  recent30dOrderCount: number;
+  recent90dRevenueMinorUnit: number;
+  // Breakdowns
+  storeBreakdown: OwnerCustomerStoreBreakdown[];
+  channelBreakdown: OwnerCustomerChannelBreakdown[];
+}
+
+export interface OwnerCustomerStoreBreakdown {
+  storeId: string;
+  storeName: string;
+  orderCount: number;
+  revenueMinorUnit: number;
+}
+
+export interface OwnerCustomerChannelBreakdown {
+  channel: string;
+  orderCount: number;
+  revenueMinorUnit: number;
+}
+
+export interface OwnerCustomerOrderRow {
+  id: string;
+  storeId: string;
+  storeName: string;
+  sourceChannel: string;
+  status: string;
+  totalAmountMinorUnit: number;
+  currencyCode: string;
+  orderedAt: string;
+  createdAt: string;
+}
+
+export interface OwnerCustomerSubscriptionRow {
+  id: string;
+  planId: string;
+  planName: string;
+  storeId: string;
+  storeName: string;
+  interval: string;
+  status: string;
+  startDate: string;
+  nextBillingDate: string;
+  nextOrderAt: string | null;
+  cancelledAt: string | null;
+  pausedAt: string | null;
+  cancelReason: string | null;
+  internalNote: string | null;
+  updatedAt: string;
+}
+
+export interface OwnerSubscriptionActionResult {
+  success: boolean;
+  subscriptionId: string;
+  newStatus: string;
+}
