@@ -38,6 +38,7 @@
 - [x] **Owner Console Phase 2** — store-context portal (`/owner/stores/[storeId]/*`); store dashboard (KPIs, channel breakdown, sold-out list, upcoming subscriptions); store settings; staff management; owner-local catalog fields; channel connection cards; subscription summary pages; 8 write API routes; 12 AuditLog event types; cross-tenant access enforcement
 - [x] **Owner Console Phase 3 — Owner Dashboard** — tenant-scoped multi-store business overview at `/owner`; Business Overview (7 metric cards), Store Summary table (per-store connection health + daily revenue), Alerts panel (POS/delivery/sync/invitation/billing issues)
 - [x] **Owner Console Phase 4 — Reports & Analytics** — tenant-level and store-level reports with KPI cards, revenue trend, channel breakdown, store comparison, top products, subscription summary, rule-based insights; URL-persisted filters with preset ranges and compare-to-previous; 13 UI components; 3 service files; 2 API routes; 3 test files
+- [x] **Owner Console Phase 5 — Customer & Subscription Management** — tenant-scoped customer list (`/owner/customers`) with search/filter/sort/pagination and 4-card KPI strip; customer detail (`/owner/customers/[customerId]`) with Overview, Orders, Subscriptions, Notes tabs; subscription lifecycle actions (pause/resume/cancel/next-date/note) with state-machine validation; owner-only `internalNote` on Customer profile; 5 audit log event types (`OWNER_CUSTOMER_NOTE_UPDATED`, `OWNER_SUBSCRIPTION_PAUSED`, `OWNER_SUBSCRIPTION_RESUMED`, `OWNER_SUBSCRIPTION_CANCELLED`, `OWNER_SUBSCRIPTION_NEXT_DATE_UPDATED`, `OWNER_SUBSCRIPTION_NOTE_UPDATED`); cross-tenant access guard on all routes; `Customer` model + `Subscription` extended with `tenantId`, `storeId`, `nextOrderAt`, `internalNote`, `pausedAt`, `cancelReason`; 10 API routes; 2 service files; 44 unit tests
 
 ## In Progress
 
@@ -56,14 +57,11 @@
 
 ## Future Owner Console Phases
 
-The following phases extend the Owner Console beyond Phase 4.
+The following phases extend the Owner Console beyond Phase 5.
 
-### Phase 5 — Customer & Subscription Management
+### ~~Phase 5 — Customer & Subscription Management~~ ✅ Complete
 
-- Customer list with search and filter (name, email, subscription status)
-- Customer detail view: full order history, active subscriptions, lifetime value
-- Subscription lifecycle management: view, pause, cancel, add notes
-- Retention and churn signals: paused-rate trend, cancellation reasons, reactivation opportunities
+See Completed section above.
 
 ### Phase 6 — Billing Deep Dive
 

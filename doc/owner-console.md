@@ -303,3 +303,92 @@ model StoreHours {
 **Extended `StoreOperationSettings`**: 13 new fields covering subscription policy, pickup policy, and availability settings.
 
 **Extended `CatalogCategory`**: `onlineImageUrl`, `subscriptionImageUrl`, `localUiColor` (owner-local fields).
+
+---
+
+## Phase 5 — Customer & Subscription Management
+
+### New Routes
+
+| Route | Method | Description |
+|-------|--------|-------------|
+| `/owner/customers` | GET (page) | Customer list with search, filter, sort, pagination |
+| `/owner/customers/[customerId]` | GET (page) | Customer detail — Overview / Orders / Subscriptions / Notes tabs |
+| `/api/owner/customers` | GET | JSON: customer list + KPI |
+| `/api/owner/customers/[customerId]` | GET | JSON: customer detail (KPIs, breakdowns, note) |
+| `/api/owner/customers/[customerId]/orders` | GET | JSON: customer order history |
+| `/api/owner/customers/[customerId]/subscriptions` | GET | JSON: customer subscription list |
+| `/api/owner/customers/[customerId]/notes` | PATCH | Save owner internal note |
+| `/api/owner/subscriptions/[subscriptionId]/pause` | POST | Pause subscription |
+| `/api/owner/subscriptions/[subscriptionId]/resume` | POST | Resume subscription |
+| `/api/owner/subscriptions/[subscriptionId]/cancel` | POST | Cancel subscription (with reason) |
+| `/api/owner/subscriptions/[subscriptionId]/next-date` | PATCH | Update next order/billing date |
+| `/api/owner/subscriptions/[subscriptionId]/note` | PATCH | Update subscription internal note |
+
+### New Service Files
+
+| File | Exports |
+|------|---------|
+| `services/owner/customer-service.ts` | `getOwnerCustomers`, `getOwnerCustomerKpi`, `getOwnerCustomerDetail`, `getOwnerCustomerOrders`, `getOwnerCustomerSubscriptions`, `updateOwnerCustomerNote` |
+| `services/owner/subscription-management-service.ts` | `pauseOwnerSubscription`, `resumeOwnerSubscription`, `cancelOwnerSubscription`, `updateOwnerSubscriptionNextDate`, `updateOwnerSubscriptionNote` |
+
+### Subscription State Machine
+
+```
+ACTIVE ──pause──► PAUSED ──resume──► ACTIVE
+ACTIVE ──cancel─► CANCELLED (terminal)
+PAUSED ──cancel─► CANCELLED (terminal)
+CANCELLED ──✗──── any (blocked)
+```
+
+Invalid transitions return `SubscriptionTransitionError` (HTTP 422).
+
+### Permission & Tenant Scope
+
+- All customer/order/subscription queries require `OWNER_PORTAL_MEMBERSHIP_ROLES` membership.
+- `customerId` in URLs = `Order.customerId` string field (cross-tenant access returns 404).
+- Subscription tenant verification: `subscription.plan.store.tenantId === actorTenantId`.
+- Cross-tenant access returns `CROSS_TENANT_ACCESS_DENIED` (HTTP 403).
+
+### Audit Events (Phase 5)
+
+`OWNER_CUSTOMER_NOTE_UPDATED` · `OWNER_SUBSCRIPTION_PAUSED` · `OWNER_SUBSCRIPTION_RESUMED` · `OWNER_SUBSCRIPTION_CANCELLED` · `OWNER_SUBSCRIPTION_NEXT_DATE_UPDATED` · `OWNER_SUBSCRIPTION_NOTE_UPDATED`
+
+All events include: `actorUserId`, `tenantId`, `storeId`, `customerId`, `before`/`after` values, `reason` where applicable.
+
+### Prisma Changes (Phase 5)
+
+**New model: `Customer`** (`customers`)
+```prisma
+model Customer {
+  id                  String    @id @default(cuid())
+  tenantId            String
+  name                String?
+  email               String?
+  phone               String?
+  internalNote        String?   // owner-only, never exposed to customer-facing surfaces
+  noteUpdatedAt       DateTime?
+  noteUpdatedByUserId String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+```
+
+**Extended `Subscription`** model with new optional fields:
+- `tenantId String?` — denormalized for direct tenant scoping
+- `storeId String?` — denormalized
+- `nextOrderAt DateTime?` — owner-managed next order date
+- `internalNote String?` — owner-only subscription note
+- `pausedAt DateTime?` — timestamp when paused
+- `cancelReason String?` — reason for cancellation
+
+### UI Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `CustomerFilterBar` | `app/owner/customers/` | URL-param search/filter/sort bar |
+| `CustomerDetailTabs` | `components/owner/customers/` | Tabbed customer detail (Overview/Orders/Subscriptions/Notes) |
+
+### Customer Data Model
+
+"Customers" are identified by the `Order.customerId` string field. The customer list is derived by grouping tenant orders by `customerId`. The `Customer` table stores owner-only metadata (internalNote) keyed by email within the tenant. This approach preserves backward compatibility with existing order data.
