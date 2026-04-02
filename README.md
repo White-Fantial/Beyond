@@ -194,7 +194,7 @@ Beyond is organised into four separate portals, each with its own URL namespace,
 | CUSTOMER (platform `USER`, no store) | ✅ | — | — | — |
 | STAFF | ✅ | ✅ | — | — |
 | SUPERVISOR | ✅ | ✅ | — | — |
-| MANAGER | ✅ | ✅ | — | — |
+| MANAGER | ✅ | ✅ | ✅ (limited) | — |
 | OWNER (membership `OWNER`/`ADMIN`) | ✅ | ✅ | ✅ | — |
 | ADMIN (`PLATFORM_ADMIN`) | — | — | — | ✅ |
 
@@ -208,9 +208,11 @@ After a successful login, users are redirected based on their highest role:
 |------|----------------------|--------------|
 | `PLATFORM_ADMIN` | — | `/admin` |
 | OWNER membership | ✅ Yes | `/backoffice/store/{primaryStoreId}/orders` |
-| OWNER membership | ❌ No | `/owner` |
-| STAFF / SUPERVISOR / MANAGER | ✅ Yes | `/backoffice/store/{primaryStoreId}/orders` |
-| STAFF / SUPERVISOR / MANAGER | ❌ No | `/app` |
+| OWNER membership | ❌ No | `/owner/dashboard` |
+| MANAGER membership | ✅ Yes | `/backoffice/store/{primaryStoreId}/orders` |
+| MANAGER membership | ❌ No | `/owner/dashboard` |
+| STAFF / SUPERVISOR | ✅ Yes | `/backoffice/store/{primaryStoreId}/orders` |
+| STAFF / SUPERVISOR | ❌ No | `/app` |
 | CUSTOMER | — | `/app` |
 
 **Why does OWNER land in Back Office?** Owners spend the majority of their time on daily operations (orders, inventory). The Owner Console (`/owner`) is reserved for administrative tasks (billing, team, integrations). OWNER users can switch to the Owner Console at any time via the **Workspace Switcher** in the header.
@@ -433,9 +435,12 @@ After login, each role is redirected to its home portal:
 | Role | Default Redirect |
 |------|-----------------|
 | `CUSTOMER` | `/app` |
-| `STAFF` / `SUPERVISOR` / `MANAGER` | `/backoffice/store` |
-| `OWNER` | `/owner` |
-| `ADMIN` | `/admin` |
+| `STAFF` / `SUPERVISOR` | `/backoffice/store` |
+| `MANAGER` (with store) | `/backoffice/store` |
+| `MANAGER` (no store) | `/owner/dashboard` |
+| `OWNER` / `ADMIN` (with store) | `/backoffice/store` |
+| `OWNER` / `ADMIN` (no store) | `/owner/dashboard` |
+| `PLATFORM_ADMIN` | `/admin` |
 
 ---
 
@@ -905,6 +910,117 @@ The `/admin/feature-flags` section provides runtime feature control, percentage 
 
 ---
 
+## Owner Console (Phase 1)
+
+The **Owner Console** (`/owner`) is the portal for store owners and managers to manage their business. It is protected by the `OWNER`, `ADMIN`, and `MANAGER` membership roles.
+
+### Owner Portal Structure
+
+```
+app/owner/
+├── layout.tsx          # Auth guard + OwnerSidebar + WorkspaceSwitcher
+├── page.tsx            # Redirects to /owner/dashboard
+├── dashboard/          # /owner/dashboard — KPI cards + connection status + recent logs
+├── store/              # /owner/store — Store Settings (OWNER/ADMIN only)
+├── users/              # /owner/users — Users & Roles list (OWNER/ADMIN only)
+├── connections/        # /owner/connections — POS/Delivery/Payment connection list
+├── catalog/            # /owner/catalog — Catalog Source Settings per store
+├── operations/         # /owner/operations — Operations Settings per store
+├── billing/            # /owner/billing — Billing & Subscription (OWNER/ADMIN only)
+├── reports/            # /owner/reports — Sales & operation reports
+└── logs/               # /owner/logs — Recent 50 connection action log entries
+```
+
+### Owner Menu Roles
+
+| Page | OWNER | ADMIN | MANAGER |
+|------|:-----:|:-----:|:-------:|
+| Dashboard | ✅ | ✅ | ✅ |
+| Connections | ✅ | ✅ | ✅ |
+| Catalog Source | ✅ | ✅ | ✅ |
+| Operations | ✅ | ✅ | ✅ |
+| Reports | ✅ | ✅ | ✅ |
+| Logs | ✅ | ✅ | ✅ |
+| Store Settings | ✅ | ✅ | ❌ |
+| Users & Roles | ✅ | ✅ | ❌ |
+| Billing | ✅ | ✅ | ❌ |
+
+Guards are implemented via `lib/owner/auth-guard.ts`:
+- `requireOwnerPortalAccess()` — OWNER, ADMIN, MANAGER
+- `requireOwnerAdminAccess()` — OWNER, ADMIN only
+
+### Store Settings (`/owner/store`)
+
+Displays and manages per-store basic information:
+
+| Field | Description |
+|-------|-------------|
+| Store Name | Display name of the store |
+| Email | Contact email |
+| Phone | Contact phone |
+| Address | Store address |
+| Timezone | Operating timezone |
+| Currency | Store currency code |
+| Tax Rate | Tax rate (%) stored in `store_settings.tax_rate` |
+| Service Fee | Service fee rate (%) in `store_settings.service_fee_rate` |
+| Pickup Interval | Minutes between pickup slots (`pickup_interval_minutes`) |
+| Default Prep Time | Default preparation time in minutes (`default_prep_time_minutes`) |
+| Logo | Logo URL for the store |
+
+Backed by the `store_settings` table (one row per store, FK → `stores.id`).
+
+### Catalog Source Settings (`/owner/catalog`)
+
+Configure the catalog data source per store:
+
+| Field | Description |
+|-------|-------------|
+| Source Type | `POS`, `LOCAL`, `MERGED`, `DELIVERY`, or `IMPORTED` |
+| Source Connection | FK to `connections` table (optional) |
+| Auto Sync | Enable automatic catalog synchronisation |
+| Sync Interval | Minutes between auto-sync runs |
+
+Backed by the `catalog_settings` table (one row per store).
+
+### Operations Settings (`/owner/operations`)
+
+Toggle and configure operational behaviour per store:
+
+| Field | Description |
+|-------|-------------|
+| Store Open | Whether the store is accepting orders |
+| Holiday Mode | Temporarily suspends new orders |
+| Pickup Interval | Minutes between pickup time slots |
+| Min Prep Time | Minimum preparation time in minutes |
+| Max Orders / Slot | Maximum concurrent orders per time slot |
+| Auto Accept Orders | Automatically confirm incoming orders |
+| Auto Print POS | Send orders to POS printer automatically |
+| Subscription Enabled | Enable subscription ordering channel |
+| Online Order Enabled | Enable online ordering channel |
+
+Backed by the `store_operation_settings` table (one row per store).
+
+### Permission Structure (Owner / Manager / Staff)
+
+```
+OWNER membership role
+└── Full access to all /owner pages
+    └── Inherits all store permissions (orders, inventory, menu, billing, integrations)
+
+ADMIN membership role
+└── Full access to all /owner pages
+    └── Inherits store permissions except billing
+
+MANAGER membership role
+└── Limited access: dashboard, connections, catalog, operations, reports, logs
+    └── Cannot access: store settings, users management, billing
+
+SUPERVISOR / STAFF store roles
+└── No access to /owner portal (backoffice only)
+```
+
+---
+
 ## Roadmap
 
 - [x] Project scaffolding (Next.js 14, Prisma, Tailwind)
@@ -940,6 +1056,7 @@ The `/admin/feature-flags` section provides runtime feature control, percentage 
 - [x] **Admin Console Phase 6 — Billing Panel** — plan CRUD (limits & features), tenant subscription management (plan change, trial extend, status change), billing account editor, billing records & subscription event history, MRR estimate dashboard
 - [x] **Admin Console Phase 7 — Integrations Admin Panel** — connection detail page, status change, credential rotation, action log viewer
 - [x] **Admin Console Phase 9 — Feature Flags / Runtime Config** — flag lifecycle management, scoped assignments, percentage rollout, evaluation engine, audit trail
+- [x] **Owner Console Phase 1** — dashboard (KPI + connection status + logs), store settings, users & roles, connections, catalog source settings, operations settings, billing, reports, logs pages; OWNER/ADMIN/MANAGER role guards; Prisma models for `store_settings`, `catalog_settings`, `store_operation_settings`
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)

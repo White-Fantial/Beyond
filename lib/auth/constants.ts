@@ -102,7 +102,10 @@ export const ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
 };
 
 // Which membership roles route to /owner portal
-export const OWNER_PORTAL_MEMBERSHIP_ROLES: MembershipRoleKey[] = ["OWNER", "ADMIN"];
+export const OWNER_PORTAL_MEMBERSHIP_ROLES: MembershipRoleKey[] = ["OWNER", "ADMIN", "MANAGER"];
+
+// Which membership roles have full write access in the owner portal (store settings, users, billing)
+export const OWNER_ADMIN_MEMBERSHIP_ROLES: MembershipRoleKey[] = ["OWNER", "ADMIN"];
 
 // Which store roles route to /backoffice portal
 export const BACKOFFICE_STORE_ROLES: StoreRoleKey[] = ["OWNER", "ADMIN", "MANAGER", "SUPERVISOR", "STAFF"];
