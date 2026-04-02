@@ -134,7 +134,7 @@ export function resolveComparePeriod(from: Date, to: Date): ReportDateRange {
 export function formatDateKey(date: Date, timezone: string = DEFAULT_TIMEZONE): string {
   const tz = safeTimezone(timezone);
   const parts = toLocalParts(date, tz);
-  return `${parts.year}-${pad(parts.month)}-${parts.day.toString().padStart(2, "0")}`;
+  return `${parts.year}-${pad(parts.month)}-${pad(parts.day)}`;
 }
 
 /** Generates an ordered list of YYYY-MM-DD keys from from to to (inclusive) in timezone. */
@@ -189,7 +189,7 @@ function localToUtc(localStr: string, timezone: string): Date {
   const naive = new Date(`${localStr}Z`);
   const localParts = toLocalParts(naive, timezone);
   const naiveLocal = new Date(
-    `${localParts.year}-${pad(localParts.month)}-${String(localParts.day).padStart(2, "0")}T${localStr.slice(11)}Z`
+    `${localParts.year}-${pad(localParts.month)}-${pad(localParts.day)}T${localStr.slice(11)}Z`
   );
   const offsetMs = naiveLocal.getTime() - naive.getTime();
   return new Date(naive.getTime() - offsetMs);
@@ -197,14 +197,14 @@ function localToUtc(localStr: string, timezone: string): Date {
 
 function localMidnight(d: LocalDate, tz: string): Date {
   return localToUtc(
-    `${d.year}-${pad(d.month)}-${String(d.day).padStart(2, "0")}T00:00:00`,
+    `${d.year}-${pad(d.month)}-${pad(d.day)}T00:00:00`,
     tz
   );
 }
 
 function localEndOfDay(d: LocalDate, tz: string): Date {
   return localToUtc(
-    `${d.year}-${pad(d.month)}-${String(d.day).padStart(2, "0")}T23:59:59.999`,
+    `${d.year}-${pad(d.month)}-${pad(d.day)}T23:59:59.999`,
     tz
   );
 }
