@@ -13,7 +13,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const body = await req.json();
 
     // Strip source-locked fields
-    const { name, sourceType, sourceCategoryRef, sourceOfTruthConnectionId, ...safeData } = body;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { name: _name, sourceType: _sourceType, sourceCategoryRef: _sourceCategoryRef, sourceOfTruthConnectionId: _sourceOfTruthConnectionId, ...safeData } = body;
 
     await updateOwnerCategory({
       categoryId: params.categoryId,
@@ -24,7 +25,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 400 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

@@ -23,7 +23,7 @@ export default async function BackofficeOperationsPage({
   return (
     <div>
       <h1 className="text-xl font-bold text-gray-900 mb-1">Operations</h1>
-      <p className="text-sm text-gray-500 mb-6">Today's operations overview.</p>
+      <p className="text-sm text-gray-500 mb-6">Today&apos;s operations overview.</p>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
         <div className="rounded-lg border border-gray-200 bg-white p-4">

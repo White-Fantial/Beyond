@@ -12,8 +12,9 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const tenantId = resolveActorTenantId(ctx, params.storeId);
     const staff = await listOwnerStoreStaff(params.storeId, tenantId);
     return NextResponse.json(staff);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 403 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 403 });
   }
 }
 
@@ -37,7 +38,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 400 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

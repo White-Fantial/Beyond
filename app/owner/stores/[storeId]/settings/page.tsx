@@ -1,4 +1,4 @@
-import { requireOwnerStoreAccess, resolveActorTenantId } from "@/services/owner/owner-authz.service";
+import { requireOwnerStoreAccess } from "@/services/owner/owner-authz.service";
 import { getOwnerStoreSettings } from "@/services/owner/owner-settings.service";
 
 interface Props {
@@ -9,8 +9,7 @@ const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
 export default async function StoreSettingsPage({ params }: Props) {
   const { storeId } = params;
-  const ctx = await requireOwnerStoreAccess(storeId);
-  const tenantId = resolveActorTenantId(ctx, storeId);
+  await requireOwnerStoreAccess(storeId);
   const settings = await getOwnerStoreSettings(storeId);
 
   return (

@@ -15,7 +15,8 @@ const PRESETS: OwnerReportRangePreset[] = [
   "today", "yesterday", "last7", "last30", "thisMonth", "lastMonth",
 ];
 
-export default function OwnerReportsFilterBar({ filters, showStoreFilter = false }: Props) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default function OwnerReportsFilterBar({ filters, showStoreFilter: _showStoreFilter = false }: Props) {
   const router = useRouter();
   const pathname = usePathname();
 

@@ -18,7 +18,7 @@ export default function LoginPage() {
           <h1 className="text-xl font-semibold text-gray-900 mb-6">Sign In</h1>
           <LoginForm />
           <p className="text-center text-sm text-gray-500 mt-6">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="#" className="text-brand-600 hover:text-brand-700 font-medium">
               Contact Sales
             </Link>
