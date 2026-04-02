@@ -13,9 +13,9 @@ export default async function StoreModifiersPage({ params }: Props) {
   return (
     <div className="max-w-4xl mx-auto px-4 pb-10 space-y-4">
       <div>
-        <h2 className="text-base font-semibold text-gray-800">옵션 그룹 목록</h2>
+        <h2 className="text-base font-semibold text-gray-800">Modifier Groups</h2>
         <p className="text-xs text-gray-500 mt-0.5">
-          * 옵션 품절 상태, 온라인 노출 설정만 수정 가능합니다. 옵션명·가격은 POS 기준 읽기 전용입니다.
+          * Only modifier sold-out status and online visibility can be edited. Modifier name and price are POS read-only.
         </p>
       </div>
 
@@ -33,10 +33,10 @@ export default async function StoreModifiersPage({ params }: Props) {
                   <span className="text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">
                     {group.sourceType}
                   </span>
-                  <span className="text-xs text-gray-400">순서 {group.displayOrder}</span>
+                  <span className="text-xs text-gray-400">Order {group.displayOrder}</span>
                 </div>
                 <span className={`text-xs font-medium px-2 py-0.5 rounded ${group.isVisibleOnOnlineOrder ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"}`}>
-                  온라인 {group.isVisibleOnOnlineOrder ? "노출" : "숨김"}
+                  온라인 {group.isVisibleOnOnlineOrder ? "노출" : "Hidden"}
                 </span>
               </div>
               <div className="divide-y divide-gray-100">
@@ -49,10 +49,10 @@ export default async function StoreModifiersPage({ params }: Props) {
                     <span className="flex-1 text-gray-800">{opt.name}</span>
                     <span className="text-gray-400 text-xs">🔒 {opt.priceDeltaAmount > 0 ? `+${opt.priceDeltaAmount / 100}` : opt.priceDeltaAmount < 0 ? `${opt.priceDeltaAmount / 100}` : "기본"}</span>
                     {opt.isSoldOut && (
-                      <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">품절</span>
+                      <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">Sold Out</span>
                     )}
                     {opt.isDefault && (
-                      <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">기본선택</span>
+                      <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Default</span>
                     )}
                   </div>
                 ))}
@@ -62,7 +62,7 @@ export default async function StoreModifiersPage({ params }: Props) {
         </div>
       )}
       <p className="text-xs text-gray-400">
-        옵션 수정 API: PATCH /api/owner/stores/{storeId}/modifier-options/[optionId]
+        옵션 Edit API: PATCH /api/owner/stores/{storeId}/modifier-options/[optionId]
       </p>
     </div>
   );

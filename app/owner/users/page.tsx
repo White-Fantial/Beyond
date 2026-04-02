@@ -27,13 +27,13 @@ export default async function OwnerUsersPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Users &amp; Roles</h1>
-          <p className="mt-1 text-sm text-gray-500">매장 멤버 및 역할을 관리합니다.</p>
+          <p className="mt-1 text-sm text-gray-500">Manage store members and roles.</p>
         </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {users.length === 0 ? (
-          <div className="p-8 text-center text-gray-400 text-sm">등록된 멤버가 없습니다.</div>
+          <div className="p-8 text-center text-gray-400 text-sm">No members registered.</div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">

@@ -64,7 +64,7 @@ export function deriveIncidents(
   // Integration / auth
   add(
     "oauth_callback_failure",
-    "OAuth 콜백 실패",
+    "OAuth Callback Failures",
     "Integrations",
     metrics.oauthCallbackFailures,
     2,
@@ -73,7 +73,7 @@ export function deriveIncidents(
   );
   add(
     "token_refresh_failure",
-    "토큰 갱신 실패",
+    "Token Refresh Failures",
     "Integrations",
     metrics.tokenRefreshFailures,
     3,
@@ -82,7 +82,7 @@ export function deriveIncidents(
   );
   add(
     "connection_validation_failure",
-    "연결 검증 실패",
+    "Connection Validation Failed",
     "Integrations",
     metrics.connectionValidationFailures,
     3,
@@ -91,7 +91,7 @@ export function deriveIncidents(
   );
   add(
     "reauth_required",
-    "재인증 필요 급증",
+    "Surge in Reauth Required connections",
     "Integrations",
     metrics.reauthRequiredTriggered,
     3,
@@ -102,7 +102,7 @@ export function deriveIncidents(
   // Webhooks
   add(
     "webhook_failures",
-    "웹훅 처리 실패",
+    "Webhook Processing Failure",
     "Webhooks",
     metrics.webhooksFailed,
     5,
@@ -111,7 +111,7 @@ export function deriveIncidents(
   );
   add(
     "webhook_signature_invalid",
-    "웹훅 서명 검증 실패",
+    "Webhook Signature Validation Failed",
     "Webhooks",
     metrics.webhooksSignatureInvalid,
     3,
@@ -122,7 +122,7 @@ export function deriveIncidents(
   // Jobs
   add(
     "job_failures",
-    "Job 실행 실패",
+    "Job Execution Failure",
     "Jobs",
     metrics.jobFailures,
     3,
@@ -133,7 +133,7 @@ export function deriveIncidents(
   // Orders
   add(
     "pos_forward_failures",
-    "POS 주문 전달 실패",
+    "POS Order Forward Failure",
     "Orders",
     metrics.posForwardFailures,
     3,
@@ -142,7 +142,7 @@ export function deriveIncidents(
   );
   add(
     "reconciliation_retries",
-    "주문 재조정 재시도 급증",
+    "Surge in Order Reconciliation Retries",
     "Orders",
     metrics.reconciliationRetries,
     5,
@@ -153,7 +153,7 @@ export function deriveIncidents(
   // Billing
   add(
     "past_due_subscriptions",
-    "연체 구독 급증",
+    "Surge in Past Due subscriptions",
     "Billing",
     metrics.pastDueSubscriptions,
     3,

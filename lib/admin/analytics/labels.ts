@@ -8,16 +8,16 @@ export const PROVIDER_LABELS: Record<string, string> = {
   UBER_EATS: "Uber Eats",
   DOORDASH: "DoorDash",
   STRIPE: "Stripe",
-  OTHER: "기타",
+  OTHER: "Other",
 };
 
 export const CONNECTION_STATUS_LABELS: Record<string, string> = {
-  CONNECTED: "연결됨",
-  NOT_CONNECTED: "미연결",
-  CONNECTING: "연결 중",
-  ERROR: "오류",
-  REAUTH_REQUIRED: "재인증 필요",
-  DISCONNECTED: "연결 해제",
+  CONNECTED: "Connected",
+  NOT_CONNECTED: "Not Connected",
+  CONNECTING: "Connecting",
+  ERROR: "Error",
+  REAUTH_REQUIRED: "Reauth Required",
+  DISCONNECTED: "Disconnect",
 };
 
 export const CONNECTION_TYPE_LABELS: Record<string, string> = {
@@ -27,33 +27,33 @@ export const CONNECTION_TYPE_LABELS: Record<string, string> = {
 };
 
 export const ATTENTION_TYPE_LABELS: Record<AdminAttentionItemType, string> = {
-  REAUTH_REQUIRED_CONNECTION: "재인증 필요 연결",
-  REPEATED_SYNC_FAILURE: "반복 동기화 실패",
-  WEBHOOK_ERROR_SPIKE: "Webhook 오류 급증",
-  POS_FORWARD_FAILURE_SPIKE: "POS 전달 실패 급증",
+  REAUTH_REQUIRED_CONNECTION: "Reauth Required 연결",
+  REPEATED_SYNC_FAILURE: "반복 Sync 실패",
+  WEBHOOK_ERROR_SPIKE: "Webhook Error 급증",
+  POS_FORWARD_FAILURE_SPIKE: "Forward to POS 실패 급증",
   FAILED_JOBS_BACKLOG: "실패 작업 백로그",
-  STORE_NO_RECENT_ORDERS: "최근 주문 없는 매장",
+  STORE_NO_RECENT_ORDERS: "Recent Orders 없는 Store",
   BILLING_FAILURE_RECENT: "최근 결제 실패",
 };
 
 export const KPI_LABELS: Record<string, string> = {
-  totalOrders: "전체 주문",
-  completedOrders: "완료 주문",
-  grossSales: "총 매출",
-  avgOrderValue: "평균 주문 금액",
-  activeConnections: "활성 연결",
-  reauthRequiredConnections: "재인증 필요 연결",
+  totalOrders: "All 주문",
+  completedOrders: "Completed Orders",
+  grossSales: "Total Revenue",
+  avgOrderValue: "평균 Order Amount",
+  activeConnections: "Active Connections",
+  reauthRequiredConnections: "Reauth Required 연결",
   webhookFailureRate: "Webhook 실패율",
-  posForwardFailureRate: "POS 전달 실패율",
-  catalogSyncSuccessRate: "카탈로그 동기화 성공률",
+  posForwardFailureRate: "Forward to POS 실패율",
+  catalogSyncSuccessRate: "Catalog Sync 성공률",
   failedJobs: "실패 작업",
 };
 
 export const FAILURE_CATEGORY_LABELS: Record<string, string> = {
-  webhook: "Webhook 실패",
-  sync: "동기화 실패",
-  refresh: "토큰 갱신 실패",
-  pos_forwarding: "POS 전달 실패",
+  webhook: "Webhook Failures",
+  sync: "Sync 실패",
+  refresh: "Token Refresh Failures",
+  pos_forwarding: "Forward to POS 실패",
 };
 
 export function formatDelta(delta: number): string {

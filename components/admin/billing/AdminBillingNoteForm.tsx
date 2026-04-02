@@ -22,7 +22,7 @@ export default function AdminBillingNoteForm({ tenantId, subscriptionId, onSucce
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!summary.trim()) {
-      setError("내용을 입력해주세요.");
+      setError("Please enter a note.");
       return;
     }
     setError(null);
@@ -48,7 +48,7 @@ export default function AdminBillingNoteForm({ tenantId, subscriptionId, onSucce
         });
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error ?? "저장에 실패했습니다.");
+          setError(data.error ?? "Failed to save.");
           return;
         }
         setSummary("");
@@ -57,7 +57,7 @@ export default function AdminBillingNoteForm({ tenantId, subscriptionId, onSucce
         router.refresh();
         onSuccess?.();
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred.");
       }
     });
   }
@@ -66,13 +66,13 @@ export default function AdminBillingNoteForm({ tenantId, subscriptionId, onSucce
     <form onSubmit={handleSubmit} className="space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">유형</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
           <select
             value={recordType}
             onChange={(e) => setRecordType(e.target.value as BillingRecordType)}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="NOTE">메모</option>
+            <option value="NOTE">Note</option>
             <option value="ADJUSTMENT">조정</option>
             <option value="CREDIT">크레딧</option>
           </select>
@@ -80,13 +80,13 @@ export default function AdminBillingNoteForm({ tenantId, subscriptionId, onSucce
 
         {(recordType === "ADJUSTMENT" || recordType === "CREDIT") && (
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">금액 (센트)</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Amount (cents)</label>
             <input
               type="number"
               min={0}
               value={amountMinor}
               onChange={(e) => setAmountMinor(e.target.value)}
-              placeholder="예: 4900 = $49.00"
+              placeholder="e.g. 4900 = $49.00"
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -99,7 +99,7 @@ export default function AdminBillingNoteForm({ tenantId, subscriptionId, onSucce
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
           rows={2}
-          placeholder="메모 또는 조정 내용..."
+          placeholder="Note or adjustment details..."
           required
           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -112,7 +112,7 @@ export default function AdminBillingNoteForm({ tenantId, subscriptionId, onSucce
       )}
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-md px-3 py-2">
-          기록이 추가되었습니다.
+          Record added.
         </div>
       )}
 
@@ -122,7 +122,7 @@ export default function AdminBillingNoteForm({ tenantId, subscriptionId, onSucce
           disabled={isPending}
           className="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-900 disabled:opacity-50"
         >
-          {isPending ? "저장 중..." : "기록 추가"}
+          {isPending ? "Saving..." : "Add Record"}
         </button>
       </div>
     </form>

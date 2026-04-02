@@ -30,7 +30,7 @@ export default function AdminFeatureFlagStatusChangeForm({ flagKey, currentStatu
       });
       if (!res.ok) {
         const d = await res.json();
-        setError(d.error ?? "오류가 발생했습니다.");
+        setError(d.error ?? "Error가 발생했습니다.");
         return;
       }
       setStatus(newStatus);

@@ -22,12 +22,12 @@ export default async function BackofficeOperationsPage({
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-1">운영 관리</h1>
-      <p className="text-sm text-gray-500 mb-6">오늘의 운영 현황입니다.</p>
+      <h1 className="text-xl font-bold text-gray-900 mb-1">Operations</h1>
+      <p className="text-sm text-gray-500 mb-6">Today's operations overview.</p>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
         <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">전체 상품</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">All Products</p>
           <p className="mt-1 text-3xl font-bold text-gray-900">{totalProducts}</p>
         </div>
         <div
@@ -37,7 +37,7 @@ export default async function BackofficeOperationsPage({
               : "border-gray-200 bg-white"
           }`}
         >
-          <p className="text-xs text-gray-500 uppercase tracking-wide">품절 상품</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">Sold Out Products</p>
           <p
             className={`mt-1 text-3xl font-bold ${
               soldOutProducts > 0 ? "text-red-700" : "text-gray-900"
@@ -53,7 +53,7 @@ export default async function BackofficeOperationsPage({
               : "border-gray-200 bg-white"
           }`}
         >
-          <p className="text-xs text-gray-500 uppercase tracking-wide">영향 받는 카테고리</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">Affected Categories</p>
           <p
             className={`mt-1 text-3xl font-bold ${
               affectedCategories > 0 ? "text-orange-700" : "text-gray-900"
@@ -68,7 +68,7 @@ export default async function BackofficeOperationsPage({
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6">
           <div className="flex items-start justify-between">
             <div>
-              <p className="font-semibold text-red-800 mb-1">품절 상품이 있습니다</p>
+              <p className="font-semibold text-red-800 mb-1">Some products are sold out</p>
               <ul className="space-y-0.5">
                 {groups
                   .filter((g) => g.products.some((p) => p.isSoldOut))
@@ -87,13 +87,13 @@ export default async function BackofficeOperationsPage({
               href={`/backoffice/store/${storeId}/inventory`}
               className="ml-4 shrink-0 rounded bg-red-100 px-3 py-1.5 text-xs font-semibold text-red-800 hover:bg-red-200"
             >
-              재고 관리 →
+              Inventory Management →
             </Link>
           </div>
         </div>
       ) : (
         <div className="rounded-lg border border-green-200 bg-green-50 p-4 mb-6">
-          <p className="font-semibold text-green-800">모든 상품이 정상 판매 중입니다.</p>
+          <p className="font-semibold text-green-800">All products are available.</p>
         </div>
       )}
     </div>

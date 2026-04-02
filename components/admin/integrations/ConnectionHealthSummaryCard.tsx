@@ -8,34 +8,34 @@ interface Props {
 export default function ConnectionHealthSummaryCard({ ctx }: Props) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-      <h2 className="text-sm font-semibold text-gray-700 mb-4">연결 건강도 요약</h2>
+      <h2 className="text-sm font-semibold text-gray-700 mb-4">Connection Health Summary</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-        <Row label="현재 상태">
+        <Row label="Current Status">
           <StatusBadge value={ctx.status} />
         </Row>
-        <Row label="공급자">
+        <Row label="Provider">
           <span className="font-mono text-xs text-gray-700">{ctx.provider}</span>
         </Row>
-        <Row label="유형">
+        <Row label="Type">
           <span className="font-mono text-xs text-gray-700">{ctx.type}</span>
         </Row>
-        <Row label="인증 방식">
+        <Row label="Auth Method">
           <span className="font-mono text-xs text-gray-700">{ctx.authScheme ?? "—"}</span>
         </Row>
-        <Row label="마지막 연결">
+        <Row label="Last Connected">
           {ctx.lastConnectedAt
-            ? ctx.lastConnectedAt.toLocaleString("ko-KR")
+            ? ctx.lastConnectedAt.toLocaleString("en-US")
             : "—"}
         </Row>
-        <Row label="마지막 인증 검증">
+        <Row label="Last Auth Validated">
           {ctx.lastAuthValidatedAt
-            ? ctx.lastAuthValidatedAt.toLocaleString("ko-KR")
+            ? ctx.lastAuthValidatedAt.toLocaleString("en-US")
             : "—"}
         </Row>
-        <Row label="마지막 동기화">
-          {ctx.lastSyncAt ? ctx.lastSyncAt.toLocaleString("ko-KR") : "—"}
+        <Row label="Last Sync">
+          {ctx.lastSyncAt ? ctx.lastSyncAt.toLocaleString("en-US") : "—"}
         </Row>
-        <Row label="동기화 상태">
+        <Row label="Sync Status">
           {ctx.lastSyncStatus ? (
             <StatusBadge value={ctx.lastSyncStatus} />
           ) : (
@@ -43,22 +43,22 @@ export default function ConnectionHealthSummaryCard({ ctx }: Props) {
           )}
         </Row>
         {ctx.lastErrorCode && (
-          <Row label="마지막 오류 코드">
+          <Row label="Last Error Code">
             <span className="font-mono text-xs text-red-600">{ctx.lastErrorCode}</span>
           </Row>
         )}
         {ctx.lastErrorMessage && (
           <div className="sm:col-span-2">
-            <Row label="마지막 오류 메시지">
+            <Row label="Last Error Message">
               <span className="text-xs text-red-600">{ctx.lastErrorMessage}</span>
             </Row>
           </div>
         )}
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        <Tag active={ctx.canRefreshCredentials} label="토큰 갱신 가능" />
-        <Tag active={ctx.supportsCatalogSync} label="카탈로그 동기화 지원" />
-        <Tag active={ctx.isReauthRequired} label="재인증 필요" warn />
+        <Tag active={ctx.canRefreshCredentials} label="Token Refresh Supported" />
+        <Tag active={ctx.supportsCatalogSync} label="Catalog Sync Supported" />
+        <Tag active={ctx.isReauthRequired} label="Reauth Required" warn />
       </div>
     </div>
   );

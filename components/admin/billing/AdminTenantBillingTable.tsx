@@ -11,7 +11,7 @@ interface Props {
 
 export default function AdminTenantBillingTable({ items }: Props) {
   if (items.length === 0) {
-    return <p className="text-sm text-gray-400 py-4 text-center">데이터가 없습니다.</p>;
+    return <p className="text-sm text-gray-400 py-4 text-center">No data available.</p>;
   }
 
   return (
@@ -19,14 +19,14 @@ export default function AdminTenantBillingTable({ items }: Props) {
       <table className="w-full text-sm">
         <thead>
           <tr className="text-xs text-gray-500 border-b border-gray-200">
-            <th className="text-left pb-2 pr-3">테넌트</th>
-            <th className="text-left pb-2 pr-3">플랜</th>
-            <th className="text-left pb-2 pr-3">상태</th>
-            <th className="text-right pb-2 pr-3">매장</th>
-            <th className="text-right pb-2 pr-3">사용자</th>
-            <th className="text-right pb-2 pr-3">연동</th>
-            <th className="text-center pb-2 pr-3">한도초과</th>
-            <th className="text-right pb-2 pr-3">기간종료</th>
+            <th className="text-left pb-2 pr-3">Tenant</th>
+            <th className="text-left pb-2 pr-3">Plan</th>
+            <th className="text-left pb-2 pr-3">Status</th>
+            <th className="text-right pb-2 pr-3">Store</th>
+            <th className="text-right pb-2 pr-3">User</th>
+            <th className="text-right pb-2 pr-3">Integrations</th>
+            <th className="text-center pb-2 pr-3">Over Limit</th>
+            <th className="text-right pb-2 pr-3">Period종료</th>
             <th className="text-right pb-2"></th>
           </tr>
         </thead>
@@ -71,7 +71,7 @@ export default function AdminTenantBillingTable({ items }: Props) {
                   href={`/admin/billing/tenants/${item.tenantId}`}
                   className="text-blue-600 hover:underline text-xs"
                 >
-                  보기
+                  View
                 </Link>
               </td>
             </tr>

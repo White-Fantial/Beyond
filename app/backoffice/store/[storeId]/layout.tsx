@@ -13,7 +13,7 @@ export default async function BackofficeLayout({
   const ctx = await requireStoreAccess(storeId);
   const membership = ctx.storeMemberships.find((m) => m.storeId === storeId);
   const storeRole = membership?.storeRole ?? "STAFF";
-  const storeName = membership?.storeName ?? "매장";
+  const storeName = membership?.storeName ?? "Store";
 
   return (
     <div className="flex h-screen bg-gray-50">

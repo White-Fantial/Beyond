@@ -16,7 +16,7 @@ export default function AdminKpiGrid({ overview }: Props) {
     },
     {
       ...overview.avgOrderValue,
-      displayValue: `${(overview.avgOrderValue.value / 100).toLocaleString("ko-KR")} ${overview.currencyCode}`,
+      displayValue: `${(overview.avgOrderValue.value / 100).toLocaleString("en-US")} ${overview.currencyCode}`,
       inverseGood: false,
     },
     { ...overview.activeConnections, inverseGood: false },
@@ -47,15 +47,15 @@ export default function AdminKpiGrid({ overview }: Props) {
           <div className="text-xl font-bold text-gray-900 mb-1">
             {"displayValue" in card && card.displayValue
               ? (card as { displayValue: string }).displayValue
-              : card.value.toLocaleString("ko-KR")}
+              : card.value.toLocaleString("en-US")}
           </div>
           {card.delta !== 0 && (
             <div className={`text-xs font-medium ${getDeltaColor(card.delta, card.inverseGood)}`}>
-              {formatDelta(card.delta)} vs 이전 기간
+              {formatDelta(card.delta)} vs 이전 Period
             </div>
           )}
           {card.delta === 0 && (
-            <div className="text-xs text-gray-400">변동 없음</div>
+            <div className="text-xs text-gray-400">No change</div>
           )}
         </div>
       ))}

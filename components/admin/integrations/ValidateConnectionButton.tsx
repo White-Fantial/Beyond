@@ -30,12 +30,12 @@ export default function ValidateConnectionButton({ connectionId }: Props) {
         );
         const data = await res.json();
         if (!res.ok) {
-          setResult({ error: data.error ?? "검증 실패" });
+          setResult({ error: data.error ?? "Validation failed" });
         } else {
           setResult(data);
         }
       } catch {
-        setResult({ error: "네트워크 오류가 발생했습니다." });
+        setResult({ error: "A network error occurred." });
       }
     });
   }
@@ -47,7 +47,7 @@ export default function ValidateConnectionButton({ connectionId }: Props) {
         disabled={isPending}
         className="inline-flex items-center px-3 py-2 border border-blue-300 rounded text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors disabled:opacity-50"
       >
-        {isPending ? "검증 중..." : "🔍 연결 검증"}
+        {isPending ? "Validating..." : "🔍 Validate Connection"}
       </button>
       {result && (
         <div
@@ -62,20 +62,20 @@ export default function ValidateConnectionButton({ connectionId }: Props) {
           ) : (
             <>
               <p className="font-semibold mb-1">
-                {result.success ? "✓ 검증 성공" : "✗ 검증 실패"}
+                {result.success ? "✓ Validation successful" : "✗ Validation failed"}
               </p>
               <p>{result.message}</p>
               {result.connectionStatus && (
                 <p className="mt-1 text-gray-500">
-                  현재 상태: <span className="font-mono">{result.connectionStatus}</span>
+                  Current status: <span className="font-mono">{result.connectionStatus}</span>
                 </p>
               )}
               {!result.success && (
                 <p className="mt-2 text-xs text-gray-600">
-                  권장 조치:{" "}
+                  Recommended action:{" "}
                   {result.connectionStatus === "REAUTH_REQUIRED"
-                    ? "Force Reconnect를 실행하거나 스토어 소유자에게 재인증을 요청하세요."
-                    : "연결 상태와 자격 증명을 확인하세요."}
+                    ? "Run Force Reconnect or ask the store owner to re-authenticate."
+                    : "Check the connection status and credentials."}
                 </p>
               )}
             </>

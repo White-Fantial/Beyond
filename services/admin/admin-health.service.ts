@@ -37,7 +37,7 @@ export async function getDatabaseHealth(): Promise<AdminSystemComponentHealth> {
       label: "Database",
       status: "HEALTHY",
       severity: "INFO",
-      summary: `DB 연결 정상 (테넌트 ${tenantCount.toLocaleString()}개)`,
+      summary: `DB 연결 Healthy (Tenant ${tenantCount.toLocaleString()} more)`,
       lastCheckedAt: checkedAt,
       metrics: { tenantCount },
       drilldownHref: undefined,
@@ -82,9 +82,9 @@ export async function getJobsHealth(): Promise<AdminSystemComponentHealth> {
   const severity = statusToSeverity(status);
   const summary = buildHealthSummary(status, {
     total,
-    totalLabel: "실행",
+    totalLabel: "Runs",
     failures: failed,
-    failLabel: "실패",
+    failLabel: "Failures",
     window: WINDOW,
   });
 
@@ -120,9 +120,9 @@ export async function getWebhookHealth(): Promise<AdminSystemComponentHealth> {
   const severity = statusToSeverity(status);
   const summary = buildHealthSummary(status, {
     total: received,
-    totalLabel: "수신",
+    totalLabel: "Received",
     failures: failed,
-    failLabel: "처리 실패",
+    failLabel: "Failed",
     window: WINDOW,
   });
 
@@ -269,9 +269,9 @@ export async function getCatalogSyncHealth(): Promise<AdminSystemComponentHealth
   const severity = statusToSeverity(status);
   const summary = buildHealthSummary(status, {
     total,
-    totalLabel: "동기화",
+    totalLabel: "Sync",
     failures: failed,
-    failLabel: "실패",
+    failLabel: "Failures",
     window: WINDOW,
   });
 
@@ -303,8 +303,8 @@ export async function getBillingHealth(): Promise<AdminSystemComponentHealth> {
 
   const summary =
     status === "HEALTHY"
-      ? `정상 — 활성 ${active}개, 트라이얼 ${trial}개 (연체 ${pastDue}개)`
-      : `연체 ${pastDue}개 감지 (활성 ${active}개, 트라이얼 ${trial}개)`;
+      ? `Healthy — Active ${active} more, Trial ${trial} more (Past Due ${pastDue} more)`
+      : `Past Due: ${pastDue}, Active: ${active}, Trial: ${trial}`;
 
   return {
     key: "billing",

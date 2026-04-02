@@ -27,7 +27,7 @@ export default function AdminExtendTrialDialog({ open, onClose, tenantId, subscr
 
   async function handleConfirm() {
     if (!days || days < 1) {
-      setError("연장일은 1일 이상이어야 합니다.");
+      setError("Extension must be at least 1 day.");
       return;
     }
     setError(null);
@@ -40,22 +40,22 @@ export default function AdminExtendTrialDialog({ open, onClose, tenantId, subscr
         });
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error ?? "트라이얼 연장에 실패했습니다.");
+          setError(data.error ?? "Failed to extend trial.");
           return;
         }
         router.refresh();
         handleClose();
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred.");
       }
     });
   }
 
   return (
-    <AdminDialog open={open} onClose={handleClose} title="트라이얼 연장">
+    <AdminDialog open={open} onClose={handleClose} title="Extend Trial">
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">연장 일수</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Days to Extend</label>
           <input
             type="number"
             min={1}
@@ -64,16 +64,16 @@ export default function AdminExtendTrialDialog({ open, onClose, tenantId, subscr
             onChange={(e) => setDays(Number(e.target.value))}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <p className="text-xs text-gray-400 mt-0.5">현재 트라이얼 종료일 이후로 연장됩니다.</p>
+          <p className="text-xs text-gray-400 mt-0.5">Will be extended beyond the current trial end date.</p>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">메모 (선택)</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Note (optional)</label>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={2}
-            placeholder="연장 사유 등 내부 메모..."
+            placeholder="Internal note, e.g. extension reason..."
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -90,7 +90,7 @@ export default function AdminExtendTrialDialog({ open, onClose, tenantId, subscr
             onClick={handleClose}
             className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
-            취소
+            Cancel
           </button>
           <button
             type="button"
@@ -98,7 +98,7 @@ export default function AdminExtendTrialDialog({ open, onClose, tenantId, subscr
             disabled={isPending}
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            {isPending ? "연장 중..." : `${days}일 연장`}
+            {isPending ? "Extending..." : `Extend ${days} day(s)`}
           </button>
         </div>
       </div>

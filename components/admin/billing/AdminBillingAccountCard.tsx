@@ -59,13 +59,13 @@ export default function AdminBillingAccountCard({ billingAccount, tenantId }: Pr
         });
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error ?? "저장에 실패했습니다.");
+          setError(data.error ?? "Failed to save.");
           return;
         }
         setEditing(false);
         router.refresh();
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred.");
       }
     });
   }
@@ -76,16 +76,16 @@ export default function AdminBillingAccountCard({ billingAccount, tenantId }: Pr
         {billingAccount ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8 text-sm">
             {[
-              { label: "결제 이메일", value: billingAccount.billingEmail },
-              { label: "회사명", value: billingAccount.companyName },
-              { label: "법인명", value: billingAccount.legalName },
-              { label: "사업자번호", value: billingAccount.taxNumber },
-              { label: "주소", value: billingAccount.addressLine1 },
-              { label: "도시", value: billingAccount.city },
-              { label: "지역", value: billingAccount.region },
-              { label: "우편번호", value: billingAccount.postalCode },
-              { label: "국가 코드", value: billingAccount.countryCode },
-              { label: "외부 고객 ID", value: billingAccount.externalCustomerRef },
+              { label: "Billing Email", value: billingAccount.billingEmail },
+              { label: "Company Name", value: billingAccount.companyName },
+              { label: "Legal Name", value: billingAccount.legalName },
+              { label: "Business Registration No.", value: billingAccount.taxNumber },
+              { label: "Address", value: billingAccount.addressLine1 },
+              { label: "City", value: billingAccount.city },
+              { label: "Region", value: billingAccount.region },
+              { label: "Postal Code", value: billingAccount.postalCode },
+              { label: "Country Code", value: billingAccount.countryCode },
+              { label: "External Customer ID", value: billingAccount.externalCustomerRef },
             ]
               .filter((item) => item.value)
               .map((item) => (
@@ -96,19 +96,19 @@ export default function AdminBillingAccountCard({ billingAccount, tenantId }: Pr
               ))}
             {billingAccount.notes && (
               <div className="col-span-2">
-                <span className="text-xs text-gray-500">내부 메모</span>
+                <span className="text-xs text-gray-500">Internal Note</span>
                 <div className="text-sm text-gray-600">{billingAccount.notes}</div>
               </div>
             )}
           </div>
         ) : (
-          <p className="text-sm text-gray-400">결제 계정 정보가 없습니다.</p>
+          <p className="text-sm text-gray-400">No billing account info.</p>
         )}
         <button
           onClick={() => setEditing(true)}
           className="mt-4 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
         >
-          {billingAccount ? "결제 계정 수정" : "결제 계정 등록"}
+          {billingAccount ? "Edit Billing Account" : "Register Billing Account"}
         </button>
       </div>
     );
@@ -118,16 +118,16 @@ export default function AdminBillingAccountCard({ billingAccount, tenantId }: Pr
     <form onSubmit={handleSave} className="space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {[
-          { name: "billingEmail", label: "결제 이메일 *", type: "email" },
-          { name: "companyName", label: "회사명", type: "text" },
-          { name: "legalName", label: "법인명", type: "text" },
-          { name: "taxNumber", label: "사업자번호", type: "text" },
-          { name: "addressLine1", label: "주소", type: "text" },
-          { name: "city", label: "도시", type: "text" },
-          { name: "region", label: "지역", type: "text" },
-          { name: "postalCode", label: "우편번호", type: "text" },
-          { name: "countryCode", label: "국가 코드 (예: NZ)", type: "text" },
-          { name: "externalCustomerRef", label: "외부 고객 ID (예: Stripe cus_...)", type: "text" },
+          { name: "billingEmail", label: "Billing Email *", type: "email" },
+          { name: "companyName", label: "Company Name", type: "text" },
+          { name: "legalName", label: "Legal Name", type: "text" },
+          { name: "taxNumber", label: "Business Registration No.", type: "text" },
+          { name: "addressLine1", label: "Address", type: "text" },
+          { name: "city", label: "City", type: "text" },
+          { name: "region", label: "Region", type: "text" },
+          { name: "postalCode", label: "Postal Code", type: "text" },
+          { name: "countryCode", label: "Country Code (e.g. NZ)", type: "text" },
+          { name: "externalCustomerRef", label: "External Customer ID (e.g. Stripe cus_...)", type: "text" },
         ].map((field) => (
           <div key={field.name}>
             <label className="block text-xs font-medium text-gray-700 mb-1">{field.label}</label>
@@ -143,7 +143,7 @@ export default function AdminBillingAccountCard({ billingAccount, tenantId }: Pr
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-700 mb-1">내부 메모</label>
+        <label className="block text-xs font-medium text-gray-700 mb-1">Internal Note</label>
         <textarea
           name="notes"
           value={form.notes}
@@ -165,14 +165,14 @@ export default function AdminBillingAccountCard({ billingAccount, tenantId }: Pr
           onClick={() => { setEditing(false); setError(null); }}
           className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
         >
-          취소
+          Cancel
         </button>
         <button
           type="submit"
           disabled={isPending}
           className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
-          {isPending ? "저장 중..." : "저장"}
+          {isPending ? "Saving..." : "Save"}
         </button>
       </div>
     </form>

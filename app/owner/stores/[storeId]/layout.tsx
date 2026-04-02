@@ -8,14 +8,14 @@ interface Props {
 }
 
 const storeNavItems = [
-  { href: "", label: "대시보드", icon: "📊" },
-  { href: "/settings", label: "매장 설정", icon: "⚙️" },
-  { href: "/staff", label: "직원 관리", icon: "👥" },
-  { href: "/products", label: "상품", icon: "📦" },
-  { href: "/categories", label: "카테고리", icon: "🗂️" },
-  { href: "/modifiers", label: "옵션", icon: "🔧" },
-  { href: "/integrations", label: "채널 연동", icon: "🔌" },
-  { href: "/subscriptions", label: "구독", icon: "🔄" },
+  { href: "", label: "Dashboard", icon: "📊" },
+  { href: "/settings", label: "Store Settings", icon: "⚙️" },
+  { href: "/staff", label: "Staff Management", icon: "👥" },
+  { href: "/products", label: "Products", icon: "📦" },
+  { href: "/categories", label: "Categories", icon: "🗂️" },
+  { href: "/modifiers", label: "Modifiers", icon: "🔧" },
+  { href: "/integrations", label: "Integrations", icon: "🔌" },
+  { href: "/subscriptions", label: "Subscriptions", icon: "🔄" },
 ];
 
 export default async function StoreLayout({ children, params }: Props) {
@@ -32,7 +32,7 @@ export default async function StoreLayout({ children, params }: Props) {
       {/* Store context header */}
       <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-3">
         <Link href="/owner/stores" className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">
-          ← 매장 목록
+          ← Store 목록
         </Link>
         <span className="text-gray-300">/</span>
         <span className="text-sm font-semibold text-gray-800">{store?.name ?? storeId}</span>

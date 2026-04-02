@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/owner/stores", label: "내 매장", icon: "🏬", exact: false },
-  { href: "/owner/dashboard", label: "테넌트 대시보드", icon: "🏠", exact: true },
+  { href: "/owner/stores", label: "My Stores", icon: "🏬", exact: false },
+  { href: "/owner/dashboard", label: "Tenant Dashboard", icon: "🏠", exact: true },
   { href: "/owner/billing", label: "Billing", icon: "💳" },
   { href: "/owner/reports", label: "Reports", icon: "📈" },
   { href: "/owner/logs", label: "Logs", icon: "📋" },

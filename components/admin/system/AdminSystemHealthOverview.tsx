@@ -24,17 +24,17 @@ export function AdminSystemHealthOverview({
               {healthStatusLabel(overview.overallStatus)}
             </p>
             <p className="text-xs text-gray-500">
-              플랫폼 전체 상태 —{" "}
-              {new Date(overview.checkedAt).toLocaleString("ko-KR")}
+              Overall Platform Status —{" "}
+              {new Date(overview.checkedAt).toLocaleString("en-US")}
             </p>
           </div>
         </div>
 
         {/* KPI counters */}
         <div className="flex gap-6">
-          <Stat label="심각 컴포넌트" value={overview.criticalCount} warn={overview.criticalCount > 0} />
-          <Stat label="이상 컴포넌트" value={overview.degradedCount} warn={overview.degradedCount > 0} />
-          <Stat label="인시던트" value={overview.incidentCount} warn={overview.incidentCount > 0} />
+          <Stat label="Critical Components" value={overview.criticalCount} warn={overview.criticalCount > 0} />
+          <Stat label="Degraded Components" value={overview.degradedCount} warn={overview.degradedCount > 0} />
+          <Stat label="Incidents" value={overview.incidentCount} warn={overview.incidentCount > 0} />
         </div>
       </div>
     </div>

@@ -20,21 +20,21 @@ const PROVIDERS = [
     provider: "LOYVERSE" as const,
     connectionType: "POS" as const,
     label: "Loyverse POS",
-    description: "Loyverse POS와 메뉴, 재고, 주문을 동기화합니다.",
+    description: "Loyverse POS와 메뉴, 재고, 주문을 Sync합니다.",
     logo: "🟢",
   },
   {
     provider: "UBER_EATS" as const,
     connectionType: "DELIVERY" as const,
     label: "Uber Eats",
-    description: "Uber Eats 주문을 실시간으로 수신하고 메뉴를 동기화합니다.",
+    description: "Uber Eats 주문을 실Time으로 수신하고 메뉴를 Sync합니다.",
     logo: "🟤",
   },
   {
     provider: "DOORDASH" as const,
     connectionType: "DELIVERY" as const,
     label: "DoorDash",
-    description: "DoorDash 주문을 실시간으로 수신하고 메뉴를 동기화합니다.",
+    description: "DoorDash 주문을 실Time으로 수신하고 메뉴를 Sync합니다.",
     logo: "🔴",
   },
 ];
@@ -43,12 +43,12 @@ const PROVIDERS = [
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; className: string }> = {
-    CONNECTED: { label: "연결됨", className: "bg-green-100 text-green-800" },
-    CONNECTING: { label: "연결 중", className: "bg-yellow-100 text-yellow-800" },
-    NOT_CONNECTED: { label: "미연결", className: "bg-gray-100 text-gray-600" },
-    DISCONNECTED: { label: "해제됨", className: "bg-gray-100 text-gray-600" },
-    ERROR: { label: "오류", className: "bg-red-100 text-red-800" },
-    REAUTH_REQUIRED: { label: "재인증 필요", className: "bg-orange-100 text-orange-800" },
+    CONNECTED: { label: "Connected", className: "bg-green-100 text-green-800" },
+    CONNECTING: { label: "Connecting", className: "bg-yellow-100 text-yellow-800" },
+    NOT_CONNECTED: { label: "Not Connected", className: "bg-gray-100 text-gray-600" },
+    DISCONNECTED: { label: "Disconnected", className: "bg-gray-100 text-gray-600" },
+    ERROR: { label: "Error", className: "bg-red-100 text-red-800" },
+    REAUTH_REQUIRED: { label: "Reauth Required", className: "bg-orange-100 text-orange-800" },
   };
   const badge = map[status] ?? { label: status, className: "bg-gray-100 text-gray-600" };
   return (
@@ -92,7 +92,7 @@ function ConnectionCard({
         <div className="text-xs text-gray-500 space-y-1 border-t pt-3">
           {connection.externalStoreName && (
             <p>
-              <span className="font-medium">외부 매장명:</span>{" "}
+              <span className="font-medium">External store name:</span>{" "}
               {connection.externalStoreName}
             </p>
           )}
@@ -104,23 +104,23 @@ function ConnectionCard({
           )}
           {connection.lastConnectedAt && (
             <p>
-              <span className="font-medium">연결일:</span>{" "}
-              {new Date(connection.lastConnectedAt).toLocaleString("ko-KR")}
+              <span className="font-medium">Connected:</span>{" "}
+              {new Date(connection.lastConnectedAt).toLocaleString("en-US")}
             </p>
           )}
           {connection.lastAuthValidatedAt && (
             <p>
-              <span className="font-medium">마지막 인증:</span>{" "}
-              {new Date(connection.lastAuthValidatedAt).toLocaleString("ko-KR")}
+              <span className="font-medium">Last auth:</span>{" "}
+              {new Date(connection.lastAuthValidatedAt).toLocaleString("en-US")}
             </p>
           )}
           {connection.lastErrorMessage && (
             <p className="text-red-600">
-              <span className="font-medium">오류:</span> {connection.lastErrorMessage}
+              <span className="font-medium">Error:</span> {connection.lastErrorMessage}
             </p>
           )}
           {connection.reauthRequired && (
-            <p className="text-orange-600 font-medium">재인증이 필요합니다.</p>
+            <p className="text-orange-600 font-medium">Re-authentication required.</p>
           )}
         </div>
       )}
@@ -140,7 +140,7 @@ function ConnectionCard({
                 storeId={storeId}
                 provider={providerDef.provider}
                 connectionType={providerDef.connectionType}
-                label="재인증"
+                label="Re-authenticate"
               />
             )}
             <DisconnectButton
@@ -176,16 +176,16 @@ export default async function StoreIntegrationsPage({ params, searchParams }: Pa
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-gray-900">매장 채널 연동</h1>
+        <h1 className="text-xl font-bold text-gray-900">Store Integrations</h1>
         <p className="mt-1 text-sm text-gray-500">
-          이 매장과 외부 POS 또는 배달 플랫폼을 연결합니다.
+          이 Store과 외부 POS 또는 Delivery Platform을 연결합니다.
         </p>
       </div>
 
       {/* Success / error banner */}
       {searchParams.connected === "1" && (
         <div className="rounded-md bg-green-50 border border-green-200 p-4 text-sm text-green-800">
-          ✅ {searchParams.provider ? `${searchParams.provider} ` : ""}연동이 완료되었습니다.
+          ✅ {searchParams.provider ? `${searchParams.provider} ` : ""}연동이 Completed되었습니다.
         </div>
       )}
       {searchParams.error && (
@@ -213,7 +213,7 @@ export default async function StoreIntegrationsPage({ params, searchParams }: Pa
       {/* Recent action log */}
       {actionLogs.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">최근 연동 이력</h2>
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">Recent Integration History</h2>
           <div className="border border-gray-200 rounded-md divide-y divide-gray-100 text-xs">
             {actionLogs.map((log) => (
               <div key={log.id} className="flex items-start gap-3 px-4 py-3">
@@ -233,7 +233,7 @@ export default async function StoreIntegrationsPage({ params, searchParams }: Pa
                     {log.message ? ` — ${log.message}` : ""}
                   </p>
                   {log.errorCode && (
-                    <p className="text-red-600">오류: {log.errorCode}</p>
+                    <p className="text-red-600">Error: {log.errorCode}</p>
                   )}
                 </div>
                 <span className="text-gray-400 flex-shrink-0">

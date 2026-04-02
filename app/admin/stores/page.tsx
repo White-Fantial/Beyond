@@ -44,7 +44,7 @@ export default async function AdminStoresPage({ searchParams }: PageProps) {
           <AdminSearchInput placeholder="Search by store name, code, or tenant..." />
         </Suspense>
         <Suspense>
-          <AdminStatusFilter options={STORE_STATUS_OPTIONS} allLabel="모든 상태" />
+          <AdminStatusFilter options={STORE_STATUS_OPTIONS} allLabel="All Statuses" />
         </Suspense>
       </div>
 

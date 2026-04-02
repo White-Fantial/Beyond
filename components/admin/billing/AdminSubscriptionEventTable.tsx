@@ -7,7 +7,7 @@ interface Props {
 
 export default function AdminSubscriptionEventTable({ events }: Props) {
   if (events.length === 0) {
-    return <p className="text-sm text-gray-400 py-4 text-center">이벤트 기록이 없습니다.</p>;
+    return <p className="text-sm text-gray-400 py-4 text-center">No event records found.</p>;
   }
 
   return (
@@ -15,12 +15,12 @@ export default function AdminSubscriptionEventTable({ events }: Props) {
       <table className="w-full text-sm">
         <thead>
           <tr className="text-xs text-gray-500 border-b border-gray-200">
-            <th className="text-left pb-2 pr-3">이벤트</th>
-            <th className="text-left pb-2 pr-3">상태 변경</th>
-            <th className="text-left pb-2 pr-3">플랜 변경</th>
-            <th className="text-left pb-2 pr-3">담당자</th>
-            <th className="text-left pb-2 pr-3">메모</th>
-            <th className="text-right pb-2">일시</th>
+            <th className="text-left pb-2 pr-3">Event</th>
+            <th className="text-left pb-2 pr-3">Change Status</th>
+            <th className="text-left pb-2 pr-3">Change Plan</th>
+            <th className="text-left pb-2 pr-3">Actor</th>
+            <th className="text-left pb-2 pr-3">Note</th>
+            <th className="text-right pb-2">Time</th>
           </tr>
         </thead>
         <tbody>
@@ -50,7 +50,7 @@ export default function AdminSubscriptionEventTable({ events }: Props) {
                 {e.note ?? "—"}
               </td>
               <td className="py-2 text-right text-xs text-gray-400">
-                {new Date(e.createdAt).toLocaleString("ko-KR")}
+                {new Date(e.createdAt).toLocaleString("en-US")}
               </td>
             </tr>
           ))}

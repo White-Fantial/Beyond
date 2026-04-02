@@ -24,7 +24,7 @@ export default function InventoryClient({ initialGroups }: Props) {
   );
 
   if (totalProducts === 0) {
-    return <p className="text-gray-500">등록된 상품이 없습니다.</p>;
+    return <p className="text-gray-500">등록된 No products found.</p>;
   }
 
   async function toggleSoldOut(productId: string, categoryId: string, current: boolean) {
@@ -56,14 +56,14 @@ export default function InventoryClient({ initialGroups }: Props) {
   return (
     <div className="space-y-1">
       <div className="mb-4 flex items-center gap-4 text-sm text-gray-500">
-        <span>전체 {totalProducts}개 상품</span>
+        <span>All {totalProducts} more 상품</span>
         {soldOutCount > 0 ? (
           <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-700 font-medium">
-            품절 {soldOutCount}개
+            Sold Out {soldOutCount} more
           </span>
         ) : (
           <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700 font-medium">
-            전체 판매 중
+            All Available
           </span>
         )}
       </div>
@@ -75,10 +75,10 @@ export default function InventoryClient({ initialGroups }: Props) {
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-gray-800">{group.categoryName}</span>
-                <span className="text-xs text-gray-400">{group.products.length}개 상품</span>
+                <span className="text-xs text-gray-400">{group.products.length} more 상품</span>
               </div>
               {groupSoldOut > 0 && (
-                <span className="text-xs text-red-600 font-medium">품절 {groupSoldOut}개</span>
+                <span className="text-xs text-red-600 font-medium">Sold Out {groupSoldOut} more</span>
               )}
             </div>
 
@@ -112,10 +112,10 @@ export default function InventoryClient({ initialGroups }: Props) {
                     }`}
                   >
                     {saving === product.id
-                      ? "저장 중..."
+                      ? "Saving..."
                       : product.isSoldOut
-                      ? "품절"
-                      : "판매 중"}
+                      ? "Sold Out"
+                      : "Available"}
                   </button>
                 </li>
               ))}

@@ -32,7 +32,7 @@ export default function AdminFeatureFlagAssignmentTable({ assignments, flagKey }
   }
 
   async function handleDelete(assignmentId: string) {
-    if (!confirm("이 Assignment를 삭제하시겠습니까?")) return;
+    if (!confirm("이 Assignment를 Delete하시겠습니까?")) return;
     setLoading(assignmentId);
     try {
       const res = await fetch(
@@ -48,7 +48,7 @@ export default function AdminFeatureFlagAssignmentTable({ assignments, flagKey }
   if (assignments.length === 0) {
     return (
       <div className="text-sm text-gray-400 text-center py-6">
-        등록된 Assignment가 없습니다.
+        No assignments registered.
       </div>
     );
   }
@@ -58,12 +58,12 @@ export default function AdminFeatureFlagAssignmentTable({ assignments, flagKey }
       <table className="w-full text-sm">
         <thead>
           <tr className="text-xs text-gray-500 border-b border-gray-100">
-            <th className="text-left pb-2 pr-3">범위</th>
+            <th className="text-left pb-2 pr-3">Scope</th>
             <th className="text-left pb-2 pr-3">Scope Key</th>
-            <th className="text-left pb-2 pr-3">값</th>
+            <th className="text-left pb-2 pr-3">Value</th>
             <th className="text-right pb-2 pr-3">우선순위</th>
-            <th className="text-left pb-2 pr-3">상태</th>
-            <th className="text-left pb-2">노트</th>
+            <th className="text-left pb-2 pr-3">Status</th>
+            <th className="text-left pb-2">Note</th>
             <th className="pb-2" />
           </tr>
         </thead>
@@ -92,7 +92,7 @@ export default function AdminFeatureFlagAssignmentTable({ assignments, flagKey }
                       : "bg-gray-100 text-gray-500"
                   }`}
                 >
-                  {a.isActive ? "활성" : "비활성"}
+                  {a.isActive ? "Active" : "Inactive"}
                 </span>
               </td>
               <td className="py-2 text-gray-400 text-xs max-w-[120px] truncate">
@@ -104,14 +104,14 @@ export default function AdminFeatureFlagAssignmentTable({ assignments, flagKey }
                   disabled={loading === a.id}
                   className="text-xs text-blue-600 hover:underline mr-3 disabled:opacity-50"
                 >
-                  {a.isActive ? "비활성화" : "활성화"}
+                  {a.isActive ? "비Active화" : "Active화"}
                 </button>
                 <button
                   onClick={() => handleDelete(a.id)}
                   disabled={loading === a.id}
                   className="text-xs text-red-500 hover:underline disabled:opacity-50"
                 >
-                  삭제
+                  Delete
                 </button>
               </td>
             </tr>

@@ -13,25 +13,25 @@ export default async function StoreCategoriesPage({ params }: Props) {
   return (
     <div className="max-w-4xl mx-auto px-4 pb-10 space-y-4">
       <div>
-        <h2 className="text-base font-semibold text-gray-800">카테고리 목록</h2>
+        <h2 className="text-base font-semibold text-gray-800">Categories</h2>
         <p className="text-xs text-gray-500 mt-0.5">
-          * 표시 순서, 노출 설정, 이미지, 색상만 수정 가능합니다. 카테고리명은 POS 기준 읽기 전용입니다.
+          * Only display order, visibility settings, image, and color can be edited. Category name is POS read-only.
         </p>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {categories.length === 0 ? (
-          <div className="p-8 text-center text-sm text-gray-400">카테고리가 없습니다.</div>
+          <div className="p-8 text-center text-sm text-gray-400">No categories found.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">카테고리명 (🔒읽기전용)</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">소스</th>
-                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">순서</th>
-                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">온라인 노출</th>
-                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">구독 노출</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Category Name (🔒 Read-only)</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Source</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Order</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Online Visible</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Subscription Visible</th>
                   <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500">상품 수</th>
                 </tr>
               </thead>
@@ -74,7 +74,7 @@ export default async function StoreCategoriesPage({ params }: Props) {
         )}
       </div>
       <p className="text-xs text-gray-400">
-        카테고리 수정 API: PATCH /api/owner/stores/{storeId}/categories/[categoryId]
+        Category Edit API: PATCH /api/owner/stores/{storeId}/categories/[categoryId]
       </p>
     </div>
   );

@@ -16,7 +16,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const { status } = body as { status?: string };
 
     if (!status || !ALLOWED_STATUSES.includes(status)) {
-      return NextResponse.json({ error: "유효하지 않은 상태 값입니다." }, { status: 400 });
+      return NextResponse.json({ error: "Invalid Status 값입니다." }, { status: 400 });
     }
 
     await updateAdminConnectionStatus(connectionId, status, ctx.userId);

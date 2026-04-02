@@ -47,7 +47,7 @@ export default function ConnectButton({
         disabled={loading}
         className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
       >
-        {loading ? "연결 중…" : label}
+        {loading ? "Connecting…" : label}
       </button>
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>

@@ -195,12 +195,12 @@ export async function createAdminTenant(
     throw new Error("slug은 소문자, 숫자, 하이픈만 허용됩니다.");
   }
   if (!legalName?.trim()) throw new Error("법인명은 필수입니다.");
-  if (!displayName?.trim()) throw new Error("표시명은 필수입니다.");
-  if (!timezone?.trim()) throw new Error("시간대는 필수입니다.");
-  if (!currency?.trim()) throw new Error("통화는 필수입니다.");
+  if (!displayName?.trim()) throw new Error("Display Name은 필수입니다.");
+  if (!timezone?.trim()) throw new Error("Time대는 필수입니다.");
+  if (!currency?.trim()) throw new Error("Currency는 필수입니다.");
   if (!countryCode?.trim()) throw new Error("국가 코드는 필수입니다.");
   if (!ALLOWED_TENANT_STATUSES.includes(status as AllowedTenantStatus)) {
-    throw new Error(`올바르지 않은 상태값입니다: ${status}`);
+    throw new Error(`올바르지 않은 Status값입니다: ${status}`);
   }
 
   const existing = await prisma.tenant.findUnique({ where: { slug }, select: { id: true } });
@@ -249,7 +249,7 @@ export async function updateAdminTenant(
     data.legalName = input.legalName.trim();
   }
   if (input.displayName !== undefined) {
-    if (!input.displayName.trim()) throw new Error("표시명은 필수입니다.");
+    if (!input.displayName.trim()) throw new Error("Display Name은 필수입니다.");
     data.displayName = input.displayName.trim();
   }
   if (input.timezone !== undefined) data.timezone = input.timezone.trim();
@@ -257,7 +257,7 @@ export async function updateAdminTenant(
   if (input.countryCode !== undefined) data.countryCode = input.countryCode.trim().toUpperCase();
   if (input.status !== undefined) {
     if (!ALLOWED_TENANT_STATUSES.includes(input.status as AllowedTenantStatus)) {
-      throw new Error(`올바르지 않은 상태값입니다: ${input.status}`);
+      throw new Error(`올바르지 않은 Status값입니다: ${input.status}`);
     }
     data.status = input.status;
   }

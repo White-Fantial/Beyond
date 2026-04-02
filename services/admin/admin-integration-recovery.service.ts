@@ -157,10 +157,10 @@ export async function runConnectionValidation(params: {
 
     if (!hasCredentials) {
       success = false;
-      message = "연결에 활성 자격 증명이 없습니다.";
+      message = "연결에 Active 자격 증명이 없습니다.";
     } else if (requiresReauth) {
       success = false;
-      message = "재인증이 필요한 상태입니다. 먼저 재연결을 수행해주세요.";
+      message = "Re-authenticate이 필요한 Status입니다. 먼저 재연결을 수행해주세요.";
     } else if (isExpired) {
       success = false;
       message = "자격 증명이 만료되었습니다. 토큰 갱신 또는 재연결이 필요합니다.";
@@ -171,14 +171,14 @@ export async function runConnectionValidation(params: {
       newStatus = "REAUTH_REQUIRED";
     } else if (conn.status === "CONNECTED") {
       success = true;
-      message = "연결이 정상 상태입니다.";
+      message = "연결이 Healthy Status입니다.";
       await prisma.connection.update({
         where: { id: connectionId },
         data: { lastAuthValidatedAt: new Date() },
       });
     } else {
       success = false;
-      message = `현재 연결 상태: ${conn.status}. 연결 상태를 확인하세요.`;
+      message = `현재 연결 Status: ${conn.status}. 연결 Status를 확인하세요.`;
     }
 
     const lastAuthValidatedAt = (
@@ -221,7 +221,7 @@ export async function runConnectionValidation(params: {
 
     return { success, message, connectionStatus: newStatus ?? conn.status as string, lastAuthValidatedAt };
   } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : "알 수 없는 오류";
+    const errorMsg = err instanceof Error ? err.message : "알 수 없는 Error";
     await auditAdminConnectionValidationFailed(
       connectionId,
       conn.tenantId,
@@ -229,7 +229,7 @@ export async function runConnectionValidation(params: {
       actorUserId,
       { error: errorMsg }
     );
-    return { success: false, message: `검증 중 오류 발생: ${sanitizeErrorMessage(errorMsg)}` };
+    return { success: false, message: `검증 중 Error 발생: ${sanitizeErrorMessage(errorMsg)}` };
   }
 }
 
@@ -300,7 +300,7 @@ export async function triggerCatalogSyncForConnection(params: {
     jobRunId: jobRun.id,
     jobType: "CATALOG_SYNC",
     status: "QUEUED",
-    message: `카탈로그 동기화 작업이 대기열에 추가되었습니다. (Job ID: ${jobRun.id})`,
+    message: `Catalog Sync 작업이 대기열에 Add되었습니다. (Job ID: ${jobRun.id})`,
   };
 }
 
@@ -320,7 +320,7 @@ export async function triggerRefreshCheckForConnection(params: {
 
   if (conn.credentials.length === 0) {
     throw new Error(
-      "이 연결에는 갱신 가능한 활성 자격 증명이 없습니다."
+      "This connection has no refreshable active credentials."
     );
   }
 
@@ -358,7 +358,7 @@ export async function triggerRefreshCheckForConnection(params: {
     jobRunId: jobRun.id,
     jobType: "CONNECTION_REFRESH_CHECK",
     status: "QUEUED",
-    message: `토큰 갱신 확인 작업이 대기열에 추가되었습니다. (Job ID: ${jobRun.id})`,
+    message: `토큰 갱신 확인 작업이 대기열에 Add되었습니다. (Job ID: ${jobRun.id})`,
   };
 }
 

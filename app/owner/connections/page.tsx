@@ -26,12 +26,12 @@ export default async function OwnerConnectionsPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900">Connections</h1>
-        <p className="mt-1 text-sm text-gray-500">POS, 배달, 결제 플랫폼 연동 현황입니다.</p>
+        <p className="mt-1 text-sm text-gray-500">POS, delivery, and payment platform integration status.</p>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {connections.length === 0 ? (
-          <div className="p-8 text-center text-gray-400 text-sm">연동된 플랫폼이 없습니다.</div>
+          <div className="p-8 text-center text-gray-400 text-sm">No platforms connected.</div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
@@ -71,7 +71,7 @@ export default async function OwnerConnectionsPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-500">
                     {conn.lastSync
-                      ? new Date(conn.lastSync).toLocaleString("ko-KR")
+                      ? new Date(conn.lastSync).toLocaleString("en-US")
                       : "—"}
                   </td>
                   <td className="px-4 py-3 text-gray-500">{conn.storeName}</td>

@@ -15,9 +15,9 @@ export default async function BackofficeInventoryPage({
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-1">재고 / 품절 관리</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-1">Inventory / Sold Out Management</h1>
       <p className="text-sm text-gray-500 mb-6">
-        상품을 품절로 표시하면 온라인 주문에서 주문이 불가능해집니다.
+        상품을 Sold Out로 표시하면 온라인 주문에서 주문이 불가능해집니다.
       </p>
       <InventoryClient initialGroups={groups} />
     </div>

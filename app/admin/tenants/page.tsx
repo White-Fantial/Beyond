@@ -9,9 +9,9 @@ import TenantListTable from "@/components/admin/TenantListTable";
 import TenantListActions from "@/components/admin/TenantListActions";
 
 const TENANT_STATUS_OPTIONS = [
-  { value: "ACTIVE", label: "활성" },
+  { value: "ACTIVE", label: "Active" },
   { value: "TRIAL", label: "체험" },
-  { value: "SUSPENDED", label: "정지" },
+  { value: "SUSPENDED", label: "Suspended" },
   { value: "ARCHIVED", label: "보관" },
 ];
 
@@ -34,7 +34,7 @@ export default async function AdminTenantsPage({ searchParams }: PageProps) {
   return (
     <div>
       <div className="flex items-start justify-between gap-4 mb-4">
-        <AdminPageHeader title="테넌트" description="플랫폼에 등록된 전체 테넌트 목록입니다." />
+        <AdminPageHeader title="Tenant" description="All tenants registered on the platform." />
         <div className="shrink-0 pt-1">
           <TenantListActions />
         </div>
@@ -42,16 +42,16 @@ export default async function AdminTenantsPage({ searchParams }: PageProps) {
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <Suspense>
-          <AdminSearchInput placeholder="이름 또는 슬러그 검색..." />
+          <AdminSearchInput placeholder="Search by name or slug..." />
         </Suspense>
         <Suspense>
-          <AdminStatusFilter options={TENANT_STATUS_OPTIONS} allLabel="모든 상태" />
+          <AdminStatusFilter options={TENANT_STATUS_OPTIONS} allLabel="All Statuses" />
         </Suspense>
       </div>
 
       <TenantListTable
         items={items}
-        emptyMessage={hasFilter ? "검색 조건에 맞는 테넌트가 없습니다." : "테넌트가 없습니다."}
+        emptyMessage={hasFilter ? "Search 조에 맞는 Tenant가 없습니다." : "Tenant가 없습니다."}
       />
 
       <div className="mt-4">

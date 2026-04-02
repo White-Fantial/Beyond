@@ -7,7 +7,7 @@ const defaultFlags = [
     key: "catalog_sync_v2",
     name: "Catalog Sync V2",
     description:
-      "차세대 카탈로그 동기화 엔진. 기존 sync 경로 대신 새 처리 파이프라인 사용.",
+      "Next-gen Catalog Sync engine. Uses new processing pipeline instead of legacy sync path.",
     flagType: "BOOLEAN" as const,
     defaultBoolValue: false,
   },
@@ -21,14 +21,14 @@ const defaultFlags = [
   {
     key: "advanced_analytics",
     name: "Advanced Analytics",
-    description: "고급 분석 대시보드. 매장/테넌트 단위로 켤 수 있는 고급 통계 뷰.",
+    description: "고급 분석 Dashboard. Store/Tenant 단위로 켤 수 있는 고급 통계 뷰.",
     flagType: "BOOLEAN" as const,
     defaultBoolValue: false,
   },
   {
     key: "billing_portal_enabled",
     name: "Billing Portal",
-    description: "테넌트별 셀프서브 빌링 포털 접근 활성화.",
+    description: "Tenant별 셀프서브 빌링 포털 접근 Active화.",
     flagType: "BOOLEAN" as const,
     defaultBoolValue: true,
   },
@@ -42,7 +42,7 @@ const defaultFlags = [
   {
     key: "subscription_portal_enabled",
     name: "Subscription Portal",
-    description: "구독 관리 포털 UI 활성화.",
+    description: "Subscription Management 포털 UI Active화.",
     flagType: "BOOLEAN" as const,
     defaultBoolValue: false,
   },

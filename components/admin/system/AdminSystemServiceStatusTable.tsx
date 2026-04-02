@@ -15,11 +15,11 @@ export function AdminSystemServiceStatusTable({
       <table className="w-full text-sm">
         <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
           <tr>
-            <th className="px-4 py-2 text-left">서비스</th>
-            <th className="px-4 py-2 text-left">상태</th>
-            <th className="px-4 py-2 text-left">요약</th>
-            <th className="px-4 py-2 text-left">마지막 체크</th>
-            <th className="px-4 py-2 text-left">상세</th>
+            <th className="px-4 py-2 text-left">Service</th>
+            <th className="px-4 py-2 text-left">Status</th>
+            <th className="px-4 py-2 text-left">Summary</th>
+            <th className="px-4 py-2 text-left">Last Check</th>
+            <th className="px-4 py-2 text-left">Details</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -52,7 +52,7 @@ export function AdminSystemServiceStatusTable({
                       href={c.drilldownHref}
                       className="text-xs text-blue-600 hover:underline"
                     >
-                      보기
+                      View
                     </Link>
                   ) : (
                     <span className="text-xs text-gray-300">—</span>

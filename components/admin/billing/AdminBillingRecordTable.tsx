@@ -7,7 +7,7 @@ interface Props {
 
 export default function AdminBillingRecordTable({ records }: Props) {
   if (records.length === 0) {
-    return <p className="text-sm text-gray-400 py-4 text-center">결제 기록이 없습니다.</p>;
+    return <p className="text-sm text-gray-400 py-4 text-center">No billing records found.</p>;
   }
 
   return (
@@ -15,12 +15,12 @@ export default function AdminBillingRecordTable({ records }: Props) {
       <table className="w-full text-sm">
         <thead>
           <tr className="text-xs text-gray-500 border-b border-gray-200">
-            <th className="text-left pb-2 pr-3">유형</th>
-            <th className="text-left pb-2 pr-3">상태</th>
-            <th className="text-right pb-2 pr-3">금액</th>
+            <th className="text-left pb-2 pr-3">Type</th>
+            <th className="text-left pb-2 pr-3">Status</th>
+            <th className="text-right pb-2 pr-3">Amount</th>
             <th className="text-right pb-2 pr-3">만기일</th>
             <th className="text-right pb-2 pr-3">결제일</th>
-            <th className="text-left pb-2">내용</th>
+            <th className="text-left pb-2">Description</th>
           </tr>
         </thead>
         <tbody>

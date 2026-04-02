@@ -11,7 +11,7 @@ export default function AdminFeatureFlagTable({ flags }: Props) {
   if (flags.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500 text-sm">
-        등록된 Feature Flag가 없습니다.
+        No feature flags registered.
       </div>
     );
   }
@@ -22,11 +22,11 @@ export default function AdminFeatureFlagTable({ flags }: Props) {
         <thead>
           <tr className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500">
             <th className="text-left px-4 py-3 font-medium">Key</th>
-            <th className="text-left px-4 py-3 font-medium">이름</th>
-            <th className="text-left px-4 py-3 font-medium">타입</th>
-            <th className="text-left px-4 py-3 font-medium">상태</th>
+            <th className="text-left px-4 py-3 font-medium">Name</th>
+            <th className="text-left px-4 py-3 font-medium">Type</th>
+            <th className="text-left px-4 py-3 font-medium">Status</th>
             <th className="text-right px-4 py-3 font-medium">Assignment</th>
-            <th className="text-right px-4 py-3 font-medium">수정일</th>
+            <th className="text-right px-4 py-3 font-medium">Updated</th>
             <th className="px-4 py-3" />
           </tr>
         </thead>

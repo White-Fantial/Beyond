@@ -6,13 +6,13 @@ import type { Order, OrderItem } from "@prisma/client";
 type OrderWithItems = Order & { items: OrderItem[] };
 
 const STATUS_LABELS: Record<string, string> = {
-  RECEIVED: "접수됨",
+  RECEIVED: "Accepted",
   ACCEPTED: "수락됨",
-  IN_PROGRESS: "준비 중",
-  READY: "준비 완료",
-  COMPLETED: "완료",
-  CANCELLED: "취소됨",
-  FAILED: "실패",
+  IN_PROGRESS: "Preparing",
+  READY: "준비 Completed",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancel됨",
+  FAILED: "Failures",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -30,9 +30,9 @@ const CHANNEL_LABELS: Record<string, string> = {
   DOORDASH: "DoorDash",
   POS: "POS",
   ONLINE: "온라인",
-  SUBSCRIPTION: "구독",
+  SUBSCRIPTION: "Subscriptions",
   MANUAL: "수동",
-  UNKNOWN: "알 수 없음",
+  UNKNOWN: "Unknown",
 };
 
 const NEXT_STATUSES: Record<string, string[]> = {
@@ -102,12 +102,12 @@ export default function BackofficeOrdersClient({
   }
 
   if (orders.length === 0 && total === 0) {
-    return <p className="text-gray-500">현재 진행 중인 주문이 없습니다.</p>;
+    return <p className="text-gray-500">현재 진행 중인 No orders found.</p>;
   }
 
   return (
     <div>
-      <p className="text-sm text-gray-500 mb-3">전체 {total}건</p>
+      <p className="text-sm text-gray-500 mb-3">All {total}</p>
 
       <div className="space-y-3">
         {orders.map((order) => {
@@ -127,7 +127,7 @@ export default function BackofficeOrdersClient({
                     {order.id.slice(0, 8)}
                   </span>
                   <span className="font-medium text-gray-900 truncate">
-                    {order.customerName ?? "이름 없음"}
+                    {order.customerName ?? "Name 없음"}
                   </span>
                   <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600 shrink-0">
                     {CHANNEL_LABELS[order.sourceChannel] ?? order.sourceChannel}
@@ -163,7 +163,7 @@ export default function BackofficeOrdersClient({
                   {/* Line items */}
                   {order.items.length > 0 && (
                     <div>
-                      <p className="text-xs font-medium text-gray-500 mb-1">주문 항목</p>
+                      <p className="text-xs font-medium text-gray-500 mb-1">Order Items</p>
                       <ul className="divide-y divide-gray-50 text-sm">
                         {order.items.map((item) => (
                           <li
@@ -187,7 +187,7 @@ export default function BackofficeOrdersClient({
 
                   {/* Notes */}
                   {order.notes && (
-                    <p className="text-xs text-gray-500 italic">메모: {order.notes}</p>
+                    <p className="text-xs text-gray-500 italic">Note: {order.notes}</p>
                   )}
 
                   {/* Status actions */}

@@ -14,7 +14,7 @@ const SOURCE_BADGE: Record<string, { label: string; className: string }> = {
 };
 
 function formatPrice(amount: number, currency: string) {
-  return new Intl.NumberFormat("ko-KR", { style: "currency", currency }).format(amount / 100);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount / 100);
 }
 
 export default async function StoreProductsPage({ params, searchParams }: Props) {
@@ -32,36 +32,36 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
     <div className="max-w-5xl mx-auto px-4 pb-10 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h2 className="text-base font-semibold text-gray-800">상품 목록</h2>
+          <h2 className="text-base font-semibold text-gray-800">Products</h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            * 온라인/구독 표시, 노출 설정만 수정 가능합니다. POS 기준 데이터(이름, 가격)는 읽기 전용입니다.
+            * Only online/subscription visibility settings can be edited. POS-based data (name, price) is read-only.
           </p>
         </div>
         <div className="flex gap-2 text-xs">
-          <a href={`/owner/stores/${storeId}/products`} className="px-2 py-1 rounded border border-gray-200 text-gray-600 hover:bg-gray-50">전체</a>
-          <a href={`/owner/stores/${storeId}/products?filter=sold_out`} className="px-2 py-1 rounded border border-gray-200 text-gray-600 hover:bg-gray-50">품절만</a>
-          <a href={`/owner/stores/${storeId}/products?filter=featured`} className="px-2 py-1 rounded border border-gray-200 text-gray-600 hover:bg-gray-50">추천만</a>
+          <a href={`/owner/stores/${storeId}/products`} className="px-2 py-1 rounded border border-gray-200 text-gray-600 hover:bg-gray-50">All</a>
+          <a href={`/owner/stores/${storeId}/products?filter=sold_out`} className="px-2 py-1 rounded border border-gray-200 text-gray-600 hover:bg-gray-50">Sold Out only</a>
+          <a href={`/owner/stores/${storeId}/products?filter=featured`} className="px-2 py-1 rounded border border-gray-200 text-gray-600 hover:bg-gray-50">Featured only</a>
         </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {products.length === 0 ? (
           <div className="p-8 text-center text-sm text-gray-400">
-            상품이 없습니다. POS 또는 카탈로그 동기화 후 확인하세요.
+            No products found. POS 또는 Catalog Sync 후 확인하세요.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">상품명</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">온라인명</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">소스</th>
-                  <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500">가격(읽기전용)</th>
-                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">노출</th>
-                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">구독</th>
-                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">추천</th>
-                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">품절</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Product Name</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Online Name</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Source</th>
+                  <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500">Price(읽기전용)</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Visible</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Subscription</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Featured</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Sold Out</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -82,7 +82,7 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
                           {srcBadge.label}
                         </span>
                         {isPosLocked && (
-                          <div className="text-xs text-gray-400 mt-0.5">🔒 읽기전용</div>
+                          <div className="text-xs text-gray-400 mt-0.5">🔒 Read-only</div>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right text-gray-500">
@@ -106,7 +106,7 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className={`text-xs px-1.5 py-0.5 rounded ${p.isSoldOut ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-400"}`}>
-                          {p.isSoldOut ? "품절" : "-"}
+                          {p.isSoldOut ? "Sold Out" : "-"}
                         </span>
                       </td>
                     </tr>
@@ -118,7 +118,7 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
         )}
       </div>
       <p className="text-xs text-gray-400">
-        상품 수정 API: PATCH /api/owner/stores/{storeId}/products/[productId]
+        상품 Edit API: PATCH /api/owner/stores/{storeId}/products/[productId]
       </p>
     </div>
   );

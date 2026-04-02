@@ -15,7 +15,7 @@ export async function loginAction(
   const password = formData.get("password") as string;
 
   if (!email || !password) {
-    return { error: "이메일과 비밀번호를 입력해주세요." };
+    return { error: "Please enter your email and password." };
   }
 
   let redirectTo: string;
@@ -24,7 +24,7 @@ export async function loginAction(
     const result = await loginUser({ email, password });
 
     if (!result.success) {
-      return { error: result.error ?? "로그인에 실패했습니다." };
+      return { error: result.error ?? "Login failed." };
     }
 
     const cookieStore = await cookies();
@@ -35,7 +35,7 @@ export async function loginAction(
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorName = error instanceof Error ? error.constructor.name : typeof error;
     console.error(`[loginAction] Unexpected error during login [${errorName}]: ${errorMessage}`, error);
-    return { error: "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요." };
+    return { error: "A server error occurred. Please try again later." };
   }
 
   redirect(redirectTo);

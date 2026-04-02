@@ -3,9 +3,9 @@ export default function DashboardPage() {
     <div className="p-6 space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">대시보드</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-500 text-sm mt-1">
-          오늘의 매장 운영 현황을 확인하세요
+          Check today's store operations overview
         </p>
       </div>
 
@@ -28,7 +28,7 @@ export default function DashboardPage() {
                   : "text-red-500"
               }`}
             >
-              {stat.change} 전일 대비
+              {stat.change} vs. yesterday
             </div>
           </div>
         ))}
@@ -39,7 +39,7 @@ export default function DashboardPage() {
         {/* Recent Orders */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">최근 주문</h2>
+            <h2 className="font-semibold text-gray-900">Recent Orders</h2>
           </div>
           <div className="divide-y divide-gray-50">
             {recentOrders.map((order) => (
@@ -52,9 +52,9 @@ export default function DashboardPage() {
                   <span className="text-sm font-medium text-gray-900">{order.amount}</span>
                   <span
                     className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      order.status === "완료"
+                      order.status === "Completed"
                         ? "bg-green-100 text-green-700"
-                        : order.status === "처리중"
+                        : order.status === "Processing"
                         ? "bg-blue-100 text-blue-700"
                         : "bg-yellow-100 text-yellow-700"
                     }`}
@@ -70,7 +70,7 @@ export default function DashboardPage() {
         {/* Channel Status */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">채널 연동 상태</h2>
+            <h2 className="font-semibold text-gray-900">Channel Integration Status</h2>
           </div>
           <div className="divide-y divide-gray-50">
             {channels.map((channel) => (
@@ -89,7 +89,7 @@ export default function DashboardPage() {
                       : "bg-gray-100 text-gray-500"
                   }`}
                 >
-                  {channel.connected ? "연동됨" : "미연동"}
+                  {channel.connected ? "Connected" : "Not Connected"}
                 </span>
               </div>
             ))}
@@ -101,22 +101,22 @@ export default function DashboardPage() {
 }
 
 const stats = [
-  { label: "오늘 매출", value: "₩2,450,000", change: "+12.5%", icon: "💰" },
-  { label: "오늘 주문", value: "87건", change: "+8.2%", icon: "📦" },
-  { label: "처리 대기", value: "3건", change: "-2건", icon: "⏳" },
-  { label: "활성 매장", value: "2개", change: "+0", icon: "🏪" },
+  { label: "Today's Revenue", value: "₩2,450,000", change: "+12.5%", icon: "💰" },
+  { label: "Today's Orders", value: "87", change: "+8.2%", icon: "📦" },
+  { label: "Pending", value: "3", change: "-2", icon: "⏳" },
+  { label: "Active Stores", value: "2 more", change: "+0", icon: "🏪" },
 ];
 
 const recentOrders = [
-  { id: "#ORD-2024-001", channel: "배달의민족", time: "10분 전", amount: "₩28,000", status: "처리중" },
-  { id: "#ORD-2024-002", channel: "쿠팡이츠", time: "23분 전", amount: "₩45,000", status: "완료" },
-  { id: "#ORD-2024-003", channel: "POS (직접)", time: "35분 전", amount: "₩18,500", status: "완료" },
-  { id: "#ORD-2024-004", channel: "온라인 주문", time: "1시간 전", amount: "₩67,000", status: "완료" },
+  { id: "#ORD-2024-001", channel: "Uber Eats", time: "10분 전", amount: "₩28,000", status: "Processing" },
+  { id: "#ORD-2024-002", channel: "DoorDash", time: "23분 전", amount: "₩45,000", status: "Completed" },
+  { id: "#ORD-2024-003", channel: "POS (In-store)", time: "35분 전", amount: "₩18,500", status: "Completed" },
+  { id: "#ORD-2024-004", channel: "Online Order", time: "1Time 전", amount: "₩67,000", status: "Completed" },
 ];
 
 const channels = [
-  { icon: "🍔", name: "배달의민족", type: "배달 플랫폼", connected: true },
-  { icon: "🛵", name: "쿠팡이츠", type: "배달 플랫폼", connected: true },
-  { icon: "🖥️", name: "포스뱅크 POS", type: "POS 시스템", connected: false },
-  { icon: "💳", name: "토스페이먼츠", type: "결제 모듈", connected: false },
+  { icon: "🍔", name: "Uber Eats", type: "Delivery Platform", connected: true },
+  { icon: "🛵", name: "DoorDash", type: "Delivery Platform", connected: true },
+  { icon: "🖥️", name: "POS System", type: "POS System", connected: false },
+  { icon: "💳", name: "Stripe", type: "Payment Module", connected: false },
 ];

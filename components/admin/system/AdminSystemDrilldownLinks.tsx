@@ -8,54 +8,54 @@ interface DrilldownLink {
 
 const DRILLDOWN_LINKS: DrilldownLink[] = [
   {
-    label: "Logs — 웹훅 오류",
+    label: "Logs — Webhook Errors",
     href: "/admin/logs?logType=WEBHOOK&errorOnly=1",
-    description: "웹훅 처리 실패 로그",
+    description: "Webhook processing failure logs",
   },
   {
-    label: "Logs — 연결 오류",
+    label: "Logs — Connection Errors",
     href: "/admin/logs?logType=CONNECTION_ACTION&errorOnly=1",
-    description: "연동 인증/갱신 오류 로그",
+    description: "Integration auth/refresh error logs",
   },
   {
-    label: "Logs — 주문 이벤트 오류",
+    label: "Logs — Order Event Errors",
     href: "/admin/logs?logType=ORDER_EVENT&errorOnly=1",
-    description: "주문 파이프라인 이벤트 오류",
+    description: "Order pipeline event errors",
   },
   {
-    label: "Jobs — 실패",
+    label: "Jobs — Failures",
     href: "/admin/jobs?status=FAILED",
-    description: "최근 실패한 Job 목록",
+    description: "Recently failed jobs",
   },
   {
-    label: "Jobs — 카탈로그 동기화 실패",
+    label: "Jobs — Catalog Sync Failures",
     href: "/admin/jobs?jobType=CATALOG_SYNC&status=FAILED",
-    description: "CATALOG_SYNC 실패 Job",
+    description: "Failed CATALOG_SYNC jobs",
   },
   {
-    label: "Jobs — 주문 복구 재시도",
+    label: "Jobs — Order Recovery Retries",
     href: "/admin/jobs?jobType=ORDER_RECOVERY_RETRY",
-    description: "주문 복구 재시도 Job 현황",
+    description: "Order recovery retry job status",
   },
   {
     label: "Integrations",
     href: "/admin/integrations",
-    description: "연동 연결 상태 전체 목록",
+    description: "All integration connection statuses",
   },
   {
-    label: "Billing — 연체 테넌트",
+    label: "Billing — Past Due Tenants",
     href: "/admin/billing/tenants",
-    description: "구독 상태 및 연체 테넌트 목록",
+    description: "Subscription status and past due tenants",
   },
   {
     label: "Billing Overview",
     href: "/admin/billing",
-    description: "빌링 전체 개요",
+    description: "Full billing overview",
   },
   {
     label: "Tenants",
     href: "/admin/tenants",
-    description: "테넌트 전체 목록",
+    description: "All tenants",
   },
 ];
 

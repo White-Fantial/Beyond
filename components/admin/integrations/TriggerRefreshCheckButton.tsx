@@ -31,13 +31,13 @@ export default function TriggerRefreshCheckButton({
         );
         const data = await res.json();
         if (!res.ok) {
-          setResult({ error: data.error ?? "갱신 요청 실패" });
+          setResult({ error: data.error ?? "Refresh request failed" });
         } else {
           setResult(data);
         }
         setConfirm(false);
       } catch {
-        setResult({ error: "네트워크 오류가 발생했습니다." });
+        setResult({ error: "A network error occurred." });
         setConfirm(false);
       }
     });
@@ -50,14 +50,14 @@ export default function TriggerRefreshCheckButton({
           onClick={() => setConfirm(true)}
           className="inline-flex items-center px-3 py-2 border border-teal-300 rounded text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors"
         >
-          🔑 토큰 갱신 확인
+          🔑 Trigger Token Refresh
         </button>
       ) : (
         <div className="border border-teal-200 rounded-lg p-4 bg-teal-50">
-          <p className="text-sm font-semibold text-teal-800 mb-1">토큰 갱신 확인 실행</p>
+          <p className="text-sm font-semibold text-teal-800 mb-1">Run Token Refresh Check</p>
           <p className="text-xs text-teal-700 mb-3">
-            만료 예정이거나 만료된 자격 증명의 갱신을 시도합니다. 기존 refresh 로직과 동일한 안전 장치가 적용됩니다.
-            계속하시겠습니까?
+            Attempts to refresh expiring or expired credentials. The same safety checks as the regular refresh logic apply.
+            Do you want to continue?
           </p>
           <div className="flex gap-2">
             <button
@@ -65,13 +65,13 @@ export default function TriggerRefreshCheckButton({
               disabled={isPending}
               className="px-3 py-1.5 bg-teal-600 text-white text-sm rounded hover:bg-teal-700 disabled:opacity-50"
             >
-              {isPending ? "요청 중..." : "실행"}
+              {isPending ? "Requesting..." : "Runs"}
             </button>
             <button
               onClick={() => setConfirm(false)}
               className="px-3 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50"
             >
-              취소
+              Cancel
             </button>
           </div>
         </div>
@@ -88,14 +88,14 @@ export default function TriggerRefreshCheckButton({
             <p>{result.error}</p>
           ) : (
             <>
-              <p className="font-semibold mb-1">✓ 토큰 갱신 확인 작업 대기열 추가</p>
+              <p className="font-semibold mb-1">✓ Token refresh check job queued</p>
               <p>{result.message}</p>
               {result.jobRunId && (
                 <Link
                   href={`/admin/jobs/${result.jobRunId}`}
                   className="mt-1 block underline font-medium"
                 >
-                  작업 상세 보기 →
+                  View job details →
                 </Link>
               )}
             </>

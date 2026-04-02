@@ -13,24 +13,24 @@ export function labelFlagType(t: FlagType): string {
 
 export function labelFlagStatus(s: FlagStatus): string {
   const map: Record<FlagStatus, string> = {
-    ACTIVE: "활성",
-    INACTIVE: "비활성",
-    ARCHIVED: "보관됨",
+    ACTIVE: "Active",
+    INACTIVE: "Inactive",
+    ARCHIVED: "Archived",
   };
   return map[s] ?? s;
 }
 
 export function labelFlagScopeType(s: FlagScopeType): string {
   const map: Record<FlagScopeType, string> = {
-    GLOBAL: "전체(Global)",
-    TENANT: "테넌트",
-    STORE: "매장",
-    USER: "사용자",
-    ROLE: "역할",
+    GLOBAL: "All(Global)",
+    TENANT: "Tenant",
+    STORE: "Stores",
+    USER: "Users",
+    ROLE: "Role",
     PORTAL: "포탈",
     PROVIDER: "Provider",
     ENVIRONMENT: "환경",
-    PERCENTAGE: "비율(%)",
+    PERCENTAGE: "Percentage(%)",
   };
   return map[s] ?? s;
 }

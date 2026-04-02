@@ -21,27 +21,27 @@ export function buildHealthSummary(
   const { totalLabel, total, failLabel, failures, window = "24h" } = options;
 
   if (status === "UNKNOWN") {
-    return `데이터 없음 (최근 ${window})`;
+    return `No data (최근 ${window})`;
   }
   if (status === "HEALTHY") {
     if (total !== undefined && failures !== undefined) {
-      return `정상 — ${totalLabel ?? "전체"} ${total.toLocaleString()}건, 오류 ${failures}건 (최근 ${window})`;
+      return `Healthy — ${totalLabel ?? "All"} ${total.toLocaleString()}, Error ${failures} (최근 ${window})`;
     }
-    return `정상 동작 중 (최근 ${window})`;
+    return `Healthy 동작 중 (최근 ${window})`;
   }
   if (status === "DEGRADED") {
     if (failures !== undefined) {
-      return `부분 이상 — ${failLabel ?? "오류"} ${failures}건 감지 (최근 ${window})`;
+      return `부분 이상 — ${failLabel ?? "Error"} ${failures} 감지 (최근 ${window})`;
     }
     return `부분 이상 감지 (최근 ${window})`;
   }
   if (status === "DOWN") {
     if (failures !== undefined) {
-      return `중단 — ${failLabel ?? "오류"} ${failures}건 (최근 ${window})`;
+      return `중단 — ${failLabel ?? "Error"} ${failures} (최근 ${window})`;
     }
     return `기능 중단 의심 (최근 ${window})`;
   }
-  return `상태 알 수 없음`;
+  return `Status Unknown`;
 }
 
 /** Convert a SystemHealthStatus to a Tailwind color class set. */

@@ -15,7 +15,7 @@ export default async function BackofficeProductsPage({
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-4">상품 관리</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-4">Product Management</h1>
       <CatalogProductsClient initialProducts={products} />
     </div>
   );

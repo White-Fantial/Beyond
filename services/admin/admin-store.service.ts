@@ -174,25 +174,25 @@ export async function createAdminStore(
 ): Promise<{ id: string }> {
   const { tenantId, code, name, displayName, timezone, currency, countryCode, status = "ACTIVE" } = input;
 
-  if (!tenantId?.trim()) throw new Error("테넌트 ID는 필수입니다.");
+  if (!tenantId?.trim()) throw new Error("Tenant ID는 필수입니다.");
   if (!code?.trim()) throw new Error("코드는 필수입니다.");
-  if (!name?.trim()) throw new Error("매장명은 필수입니다.");
-  if (!displayName?.trim()) throw new Error("표시명은 필수입니다.");
-  if (!timezone?.trim()) throw new Error("시간대는 필수입니다.");
-  if (!currency?.trim()) throw new Error("통화는 필수입니다.");
+  if (!name?.trim()) throw new Error("Store Name은 필수입니다.");
+  if (!displayName?.trim()) throw new Error("Display Name은 필수입니다.");
+  if (!timezone?.trim()) throw new Error("Time대는 필수입니다.");
+  if (!currency?.trim()) throw new Error("Currency는 필수입니다.");
   if (!countryCode?.trim()) throw new Error("국가 코드는 필수입니다.");
   if (!ALLOWED_STORE_STATUSES.includes(status as AllowedStoreStatus)) {
-    throw new Error(`올바르지 않은 상태값입니다: ${status}`);
+    throw new Error(`올바르지 않은 Status값입니다: ${status}`);
   }
 
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } });
-  if (!tenant) throw new Error("테넌트를 찾을 수 없습니다.");
+  if (!tenant) throw new Error("Tenant를 not found.");
 
   const existing = await prisma.store.findUnique({
     where: { tenantId_code: { tenantId, code: code.trim() } },
     select: { id: true },
   });
-  if (existing) throw new Error("같은 테넌트 내에 이미 사용 중인 코드입니다.");
+  if (existing) throw new Error("같은 Tenant 내에 이미 사용 중인 코드입니다.");
 
   const store = await prisma.store.create({
     data: {
@@ -234,11 +234,11 @@ export async function updateAdminStore(
 
   const data: Record<string, unknown> = {};
   if (input.name !== undefined) {
-    if (!input.name.trim()) throw new Error("매장명은 필수입니다.");
+    if (!input.name.trim()) throw new Error("Store Name은 필수입니다.");
     data.name = input.name.trim();
   }
   if (input.displayName !== undefined) {
-    if (!input.displayName.trim()) throw new Error("표시명은 필수입니다.");
+    if (!input.displayName.trim()) throw new Error("Display Name은 필수입니다.");
     data.displayName = input.displayName.trim();
   }
   if (input.timezone !== undefined) data.timezone = input.timezone.trim();
@@ -246,7 +246,7 @@ export async function updateAdminStore(
   if (input.countryCode !== undefined) data.countryCode = input.countryCode.trim().toUpperCase();
   if (input.status !== undefined) {
     if (!ALLOWED_STORE_STATUSES.includes(input.status as AllowedStoreStatus)) {
-      throw new Error(`올바르지 않은 상태값입니다: ${input.status}`);
+      throw new Error(`올바르지 않은 Status값입니다: ${input.status}`);
     }
     data.status = input.status;
   }

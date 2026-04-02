@@ -479,14 +479,14 @@ export async function assignTenantPlan(
     select: { id: true, status: true },
   });
   if (existing) {
-    throw new Error("테넌트에 이미 활성 또는 트라이얼 구독이 있습니다.");
+    throw new Error("Tenant에 이미 Active 또는 Trial 구독이 있습니다.");
   }
 
   const plan = await prisma.plan.findUnique({
     where: { id: planId },
     select: { name: true, billingInterval: true, trialDays: true },
   });
-  if (!plan) throw new Error("플랜을 찾을 수 없습니다.");
+  if (!plan) throw new Error("플랜을 not found.");
 
   const now = new Date();
   const effectiveBillingInterval = (billingInterval ?? plan.billingInterval) as string;
@@ -559,8 +559,8 @@ export async function changeTenantPlan(input: ChangeTenantPlanInput): Promise<vo
     where: { id: subscriptionId },
     select: { id: true, tenantId: true, planId: true },
   });
-  if (!subscription) throw new Error("구독을 찾을 수 없습니다.");
-  if (subscription.tenantId !== tenantId) throw new Error("구독이 해당 테넌트에 속하지 않습니다.");
+  if (!subscription) throw new Error("구독을 not found.");
+  if (subscription.tenantId !== tenantId) throw new Error("구독이 해당 Tenant에 속하지 않습니다.");
 
   const fromPlanId = subscription.planId;
 
@@ -594,9 +594,9 @@ export async function extendTenantTrial(input: ExtendTenantTrialInput): Promise<
     where: { id: subscriptionId },
     select: { id: true, tenantId: true, status: true, trialEnd: true },
   });
-  if (!subscription) throw new Error("구독을 찾을 수 없습니다.");
-  if (subscription.tenantId !== tenantId) throw new Error("구독이 해당 테넌트에 속하지 않습니다.");
-  if (subscription.status !== "TRIAL") throw new Error("트라이얼 상태의 구독만 연장할 수 있습니다.");
+  if (!subscription) throw new Error("구독을 not found.");
+  if (subscription.tenantId !== tenantId) throw new Error("구독이 해당 Tenant에 속하지 않습니다.");
+  if (subscription.status !== "TRIAL") throw new Error("Trial Status의 구독만 연장할 수 있습니다.");
 
   const base = subscription.trialEnd ?? new Date();
   const newTrialEnd = new Date(base);
@@ -632,8 +632,8 @@ export async function updateTenantSubscriptionStatus(
     where: { id: subscriptionId },
     select: { id: true, tenantId: true, status: true },
   });
-  if (!subscription) throw new Error("구독을 찾을 수 없습니다.");
-  if (subscription.tenantId !== tenantId) throw new Error("구독이 해당 테넌트에 속하지 않습니다.");
+  if (!subscription) throw new Error("구독을 not found.");
+  if (subscription.tenantId !== tenantId) throw new Error("구독이 해당 Tenant에 속하지 않습니다.");
 
   const fromStatus = subscription.status as string;
   const now = new Date();

@@ -15,7 +15,7 @@ export default async function BackofficeCategoriesPage({
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-4">카테고리 관리</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-4">Category Management</h1>
       <CatalogCategoriesClient initialCategories={categories} />
     </div>
   );
