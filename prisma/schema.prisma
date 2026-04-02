@@ -250,6 +250,8 @@ model Tenant {
   billingRecords       BillingRecord[]
   usageSnapshots       UsageSnapshot[]
 
+  customers Customer[]
+
   @@map("tenants")
 }
 
@@ -1003,6 +1005,33 @@ model DeliveryIntegration {
   @@map("delivery_integrations")
 }
 
+// ─── Customers ───────────────────────────────────────────────────────────────
+
+/// Canonical customer profile for owner portal.
+/// Created on demand when a note is saved or via customer management.
+/// The id is used as the stable customer identifier in URLs.
+model Customer {
+  id       String  @id @default(cuid())
+  tenantId String
+  name     String?
+  email    String?
+  phone    String?
+
+  // Owner-only internal note (never exposed to customer-facing surfaces)
+  internalNote        String?
+  noteUpdatedAt       DateTime?
+  noteUpdatedByUserId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, email])
+  @@map("customers")
+}
+
 // ─── Subscriptions ────────────────────────────────────────────────────────────
 
 model SubscriptionPlan {
@@ -1025,16 +1054,30 @@ model SubscriptionPlan {
 model Subscription {
   id              String    @id @default(cuid())
   planId          String
+  /// Links to Customer.id when a Customer profile exists, otherwise free-form string.
   customerId      String
   status          String    @default("ACTIVE")
   startDate       DateTime
   nextBillingDate DateTime
   cancelledAt     DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+
+  // Denormalized for fast tenant-scoped queries
+  tenantId String?
+  storeId  String?
+
+  // Owner management fields
+  nextOrderAt   DateTime?
+  internalNote  String?
+  pausedAt      DateTime?
+  cancelReason  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   plan SubscriptionPlan @relation(fields: [planId], references: [id])
 
+  @@index([tenantId, customerId])
+  @@index([tenantId, status])
   @@map("subscriptions")
 }
 
