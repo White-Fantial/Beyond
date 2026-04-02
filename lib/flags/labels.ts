@@ -27,9 +27,9 @@ export function labelFlagScopeType(s: FlagScopeType): string {
     STORE: "Stores",
     USER: "Users",
     ROLE: "Role",
-    PORTAL: "포탈",
+    PORTAL: "Portal",
     PROVIDER: "Provider",
-    ENVIRONMENT: "환경",
+    ENVIRONMENT: "Environment",
     PERCENTAGE: "Percentage(%)",
   };
   return map[s] ?? s;

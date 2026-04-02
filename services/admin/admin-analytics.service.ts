@@ -87,16 +87,16 @@ export async function getAdminAnalyticsOverview(
       : 0;
 
   return {
-    totalOrders: kpi("All 주문", current.totalCount, previous.totalCount),
+    totalOrders: kpi("Total Orders", current.totalCount, previous.totalCount),
     completedOrders: kpi("Completed Orders", current.completedCount, previous.completedCount),
     grossSales: kpi("Total Revenue", current.grossSales, previous.grossSales, current.currencyCode),
-    avgOrderValue: kpi("평균 Order Amount", avgOrderValue, prevAvgOrderValue, current.currencyCode),
+    avgOrderValue: kpi("Avg. Order Value", avgOrderValue, prevAvgOrderValue, current.currencyCode),
     activeConnections: kpi("Active Connections", currentConnections.connected, previousConnections.connected),
     reauthRequiredConnections: kpi("Reauth Required", currentConnections.reauthRequired, previousConnections.reauthRequired),
-    webhookFailureRate: kpi("Webhook 실패율", +webhookFailureRate.toFixed(2), +prevWebhookFailureRate.toFixed(2), "%"),
-    posForwardFailureRate: kpi("Forward to POS 실패율", +posFailureRate.toFixed(2), +prevPosFailureRate.toFixed(2), "%"),
-    catalogSyncSuccessRate: kpi("Sync 성공률", +syncSuccessRate.toFixed(2), +prevSyncSuccessRate.toFixed(2), "%"),
-    failedJobs: kpi("실패 작업", currentFailedJobs, previousFailedJobs),
+    webhookFailureRate: kpi("Webhook Failure Rate", +webhookFailureRate.toFixed(2), +prevWebhookFailureRate.toFixed(2), "%"),
+    posForwardFailureRate: kpi("POS Forward Failure Rate", +posFailureRate.toFixed(2), +prevPosFailureRate.toFixed(2), "%"),
+    catalogSyncSuccessRate: kpi("Catalog Sync Success Rate", +syncSuccessRate.toFixed(2), +prevSyncSuccessRate.toFixed(2), "%"),
+    failedJobs: kpi("Failed Jobs", currentFailedJobs, previousFailedJobs),
     currencyCode: current.currencyCode,
   };
 }

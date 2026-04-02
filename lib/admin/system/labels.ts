@@ -9,9 +9,9 @@ export function healthStatusLabel(status: SystemHealthStatus): string {
     case "HEALTHY":
       return "Healthy";
     case "DEGRADED":
-      return "부분 이상";
+      return "Degraded";
     case "DOWN":
-      return "중단";
+      return "Down";
     case "UNKNOWN":
       return "Unknown";
   }
@@ -24,6 +24,6 @@ export function severityLabel(severity: SystemSeverity): string {
     case "WARN":
       return "Degraded";
     case "INFO":
-      return "정보";
+      return "Info";
   }
 }

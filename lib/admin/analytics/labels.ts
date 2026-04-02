@@ -22,38 +22,38 @@ export const CONNECTION_STATUS_LABELS: Record<string, string> = {
 
 export const CONNECTION_TYPE_LABELS: Record<string, string> = {
   POS: "POS",
-  DELIVERY: "배달",
-  PAYMENT: "결제",
+  DELIVERY: "Delivery",
+  PAYMENT: "Payment",
 };
 
 export const ATTENTION_TYPE_LABELS: Record<AdminAttentionItemType, string> = {
-  REAUTH_REQUIRED_CONNECTION: "Reauth Required 연결",
-  REPEATED_SYNC_FAILURE: "반복 Sync 실패",
-  WEBHOOK_ERROR_SPIKE: "Webhook Error 급증",
-  POS_FORWARD_FAILURE_SPIKE: "Forward to POS 실패 급증",
-  FAILED_JOBS_BACKLOG: "실패 작업 백로그",
-  STORE_NO_RECENT_ORDERS: "Recent Orders 없는 Store",
-  BILLING_FAILURE_RECENT: "최근 결제 실패",
+  REAUTH_REQUIRED_CONNECTION: "Reauth Required Connection",
+  REPEATED_SYNC_FAILURE: "Repeated Sync Failure",
+  WEBHOOK_ERROR_SPIKE: "Webhook Error Spike",
+  POS_FORWARD_FAILURE_SPIKE: "POS Forward Failure Spike",
+  FAILED_JOBS_BACKLOG: "Failed Jobs Backlog",
+  STORE_NO_RECENT_ORDERS: "Store No Recent Orders",
+  BILLING_FAILURE_RECENT: "Recent Billing Failure",
 };
 
 export const KPI_LABELS: Record<string, string> = {
-  totalOrders: "All 주문",
+  totalOrders: "Total Orders",
   completedOrders: "Completed Orders",
   grossSales: "Total Revenue",
-  avgOrderValue: "평균 Order Amount",
+  avgOrderValue: "Avg. Order Value",
   activeConnections: "Active Connections",
-  reauthRequiredConnections: "Reauth Required 연결",
-  webhookFailureRate: "Webhook 실패율",
-  posForwardFailureRate: "Forward to POS 실패율",
-  catalogSyncSuccessRate: "Catalog Sync 성공률",
-  failedJobs: "실패 작업",
+  reauthRequiredConnections: "Reauth Required Connections",
+  webhookFailureRate: "Webhook Failure Rate",
+  posForwardFailureRate: "POS Forward Failure Rate",
+  catalogSyncSuccessRate: "Catalog Sync Success Rate",
+  failedJobs: "Failed Jobs",
 };
 
 export const FAILURE_CATEGORY_LABELS: Record<string, string> = {
   webhook: "Webhook Failures",
-  sync: "Sync 실패",
+  sync: "Sync Failed",
   refresh: "Token Refresh Failures",
-  pos_forwarding: "Forward to POS 실패",
+  pos_forwarding: "POS Forward Failed",
 };
 
 export function formatDelta(delta: number): string {

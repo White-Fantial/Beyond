@@ -37,7 +37,7 @@ export async function getDatabaseHealth(): Promise<AdminSystemComponentHealth> {
       label: "Database",
       status: "HEALTHY",
       severity: "INFO",
-      summary: `DB 연결 Healthy (Tenant ${tenantCount.toLocaleString()} more)`,
+      summary: `DB connection healthy (${tenantCount.toLocaleString()} tenants)`,
       lastCheckedAt: checkedAt,
       metrics: { tenantCount },
       drilldownHref: undefined,
@@ -48,7 +48,7 @@ export async function getDatabaseHealth(): Promise<AdminSystemComponentHealth> {
       label: "Database",
       status: "DOWN",
       severity: "CRITICAL",
-      summary: "DB 연결 실패 — 즉각 확인 필요",
+      summary: "DB connection failed — immediate attention required",
       lastCheckedAt: checkedAt,
     };
   }
@@ -169,9 +169,9 @@ export async function getIntegrationsHealth(): Promise<AdminSystemComponentHealt
   const severity = statusToSeverity(status);
   const summary = buildHealthSummary(status, {
     total: refreshSuccesses + refreshFailures,
-    totalLabel: "갱신 시도",
+    totalLabel: "Refresh Attempts",
     failures: refreshFailures,
-    failLabel: "갱신 실패",
+    failLabel: "Refresh Failures",
     window: WINDOW,
   });
 
@@ -228,9 +228,9 @@ export async function getOrderPipelineHealth(): Promise<AdminSystemComponentHeal
   const severity = statusToSeverity(status);
   const summary = buildHealthSummary(status, {
     total: posForwardAttempts,
-    totalLabel: "전달 시도",
+    totalLabel: "Forward Attempts",
     failures: posForwardFailures,
-    failLabel: "전달 실패",
+    failLabel: "Forward Failures",
     window: WINDOW,
   });
 

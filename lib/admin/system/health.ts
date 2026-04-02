@@ -21,25 +21,25 @@ export function buildHealthSummary(
   const { totalLabel, total, failLabel, failures, window = "24h" } = options;
 
   if (status === "UNKNOWN") {
-    return `No data (최근 ${window})`;
+    return `No data (last ${window})`;
   }
   if (status === "HEALTHY") {
     if (total !== undefined && failures !== undefined) {
-      return `Healthy — ${totalLabel ?? "All"} ${total.toLocaleString()}, Error ${failures} (최근 ${window})`;
+      return `Healthy — ${totalLabel ?? "All"} ${total.toLocaleString()}, errors ${failures} (last ${window})`;
     }
-    return `Healthy 동작 중 (최근 ${window})`;
+    return `Healthy — operating normally (last ${window})`;
   }
   if (status === "DEGRADED") {
     if (failures !== undefined) {
-      return `부분 이상 — ${failLabel ?? "Error"} ${failures} 감지 (최근 ${window})`;
+      return `Degraded — ${failLabel ?? "Error"} ${failures} detected (last ${window})`;
     }
-    return `부분 이상 감지 (최근 ${window})`;
+    return `Degraded — issues detected (last ${window})`;
   }
   if (status === "DOWN") {
     if (failures !== undefined) {
-      return `중단 — ${failLabel ?? "Error"} ${failures} (최근 ${window})`;
+      return `Down — ${failLabel ?? "Error"} ${failures} (last ${window})`;
     }
-    return `기능 중단 의심 (최근 ${window})`;
+    return `Suspected outage (last ${window})`;
   }
   return `Status Unknown`;
 }

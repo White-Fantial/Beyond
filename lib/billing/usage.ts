@@ -40,7 +40,7 @@ export function compareUsageAgainstPlan(
     { key: "max_stores", label: "Stores", current: usage.storesCount },
     { key: "max_users", label: "Users", current: usage.usersCount },
     { key: "max_active_integrations", label: "Integrations", current: usage.activeIntegrationsCount },
-    { key: "monthly_order_limit", label: "Monthly 주문", current: usage.ordersCount },
+    { key: "monthly_order_limit", label: "Monthly Orders", current: usage.ordersCount },
   ];
 
   return comparisons.map(({ key, label, current }) => {

@@ -32,9 +32,9 @@ export function labelSubscriptionStatus(status: SubscriptionStatus): string {
     case "ACTIVE": return "Active";
     case "PAST_DUE": return "Past Due";
     case "SUSPENDED": return "Suspended";
-    case "CANCELLED": return "Cancel됨";
-    case "EXPIRED": return "만료됨";
-    case "INCOMPLETE": return "미Completed";
+    case "CANCELLED": return "Cancelled";
+    case "EXPIRED": return "Expired";
+    case "INCOMPLETE": return "Incomplete";
   }
 }
 
@@ -53,8 +53,8 @@ export function subscriptionStatusColor(status: SubscriptionStatus): string {
 
 export function labelBillingRecordType(type: BillingRecordType): string {
   switch (type) {
-    case "INVOICE": return "인보이스";
-    case "PAYMENT": return "결제";
+    case "INVOICE": return "Invoice";
+    case "PAYMENT": return "Payment";
     case "ADJUSTMENT": return "Adjustment";
     case "CREDIT": return "Credit";
     case "NOTE": return "Note";
@@ -63,45 +63,45 @@ export function labelBillingRecordType(type: BillingRecordType): string {
 
 export function labelBillingRecordStatus(status: BillingRecordStatus): string {
   switch (status) {
-    case "DRAFT": return "초안";
-    case "OPEN": return "오픈";
-    case "PAID": return "결제Completed";
-    case "VOID": return "무효";
-    case "UNCOLLECTIBLE": return "수금불가";
+    case "DRAFT": return "Draft";
+    case "OPEN": return "Open";
+    case "PAID": return "Paid";
+    case "VOID": return "Void";
+    case "UNCOLLECTIBLE": return "Uncollectible";
   }
 }
 
 export function labelSubscriptionEventType(type: SubscriptionEventType): string {
   switch (type) {
-    case "PLAN_ASSIGNED": return "플랜 할당";
+    case "PLAN_ASSIGNED": return "Plan assigned";
     case "PLAN_CHANGED": return "Change Plan";
     case "TRIAL_EXTENDED": return "Extend Trial";
     case "STATUS_CHANGED": return "Change Status";
-    case "CANCEL_AT_PERIOD_END_SET": return "Period 종료 시 Cancel Settings";
-    case "SUBSCRIPTION_REACTIVATED": return "구독 재Active화";
-    case "BILLING_OVERRIDE_APPLIED": return "Billing 오버라이드 Apply";
-    case "BILLING_NOTE_ADDED": return "메모 Add";
+    case "CANCEL_AT_PERIOD_END_SET": return "Cancel at period end set";
+    case "SUBSCRIPTION_REACTIVATED": return "Subscription reactivated";
+    case "BILLING_OVERRIDE_APPLIED": return "Billing override applied";
+    case "BILLING_NOTE_ADDED": return "Billing note added";
   }
 }
 
 export function labelLimitKey(key: string): string {
   const map: Record<string, string> = {
-    max_stores: "최대 Store 수",
-    max_users: "최대 User 수",
-    max_active_integrations: "최대 연동 수",
-    monthly_order_limit: "Monthly 주문 한도",
+    max_stores: "Max Stores",
+    max_users: "Max Users",
+    max_active_integrations: "Max Integrations",
+    monthly_order_limit: "Monthly Order Limit",
   };
   return map[key] ?? key;
 }
 
 export function labelFeatureKey(key: string): string {
   const map: Record<string, string> = {
-    advanced_analytics: "고급 분석",
+    advanced_analytics: "Advanced Analytics",
     subscriptions_enabled: "Subscription Service",
-    multi_store: "멀티 Store",
+    multi_store: "Multi-Store",
     delivery_integrations: "Delivery Integration",
-    priority_support: "우선 지원",
-    custom_branding: "커스텀 브랜딩",
+    priority_support: "Priority Support",
+    custom_branding: "Custom Branding",
   };
   return map[key] ?? key;
 }

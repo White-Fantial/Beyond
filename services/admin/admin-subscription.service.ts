@@ -479,14 +479,14 @@ export async function assignTenantPlan(
     select: { id: true, status: true },
   });
   if (existing) {
-    throw new Error("Tenant에 이미 Active 또는 Trial 구독이 있습니다.");
+    throw new Error("This tenant already has an active or trial subscription.");
   }
 
   const plan = await prisma.plan.findUnique({
     where: { id: planId },
     select: { name: true, billingInterval: true, trialDays: true },
   });
-  if (!plan) throw new Error("플랜을 not found.");
+  if (!plan) throw new Error("Plan not found.");
 
   const now = new Date();
   const effectiveBillingInterval = (billingInterval ?? plan.billingInterval) as string;
@@ -559,8 +559,8 @@ export async function changeTenantPlan(input: ChangeTenantPlanInput): Promise<vo
     where: { id: subscriptionId },
     select: { id: true, tenantId: true, planId: true },
   });
-  if (!subscription) throw new Error("구독을 not found.");
-  if (subscription.tenantId !== tenantId) throw new Error("구독이 해당 Tenant에 속하지 않습니다.");
+  if (!subscription) throw new Error("Subscription not found.");
+  if (subscription.tenantId !== tenantId) throw new Error("This subscription does not belong to the specified tenant.");
 
   const fromPlanId = subscription.planId;
 
@@ -596,7 +596,7 @@ export async function extendTenantTrial(input: ExtendTenantTrialInput): Promise<
   });
   if (!subscription) throw new Error("구독을 not found.");
   if (subscription.tenantId !== tenantId) throw new Error("구독이 해당 Tenant에 속하지 않습니다.");
-  if (subscription.status !== "TRIAL") throw new Error("Trial Status의 구독만 연장할 수 있습니다.");
+  if (subscription.status !== "TRIAL") throw new Error("Only subscriptions in Trial status can be extended.");
 
   const base = subscription.trialEnd ?? new Date();
   const newTrialEnd = new Date(base);
