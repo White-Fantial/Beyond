@@ -64,9 +64,9 @@ beyond/
 │   │       ├── categories/
 │   │       ├── modifiers/
 │   │       └── reports/
-│   ├── owner/                  # /owner — multi-store owner portal (Phase 2)
+│   ├── owner/                  # /owner — multi-store owner portal (Phase 2 + 3)
 │   │   ├── layout.tsx          # Auth guard + OwnerSidebar + WorkspaceSwitcher
-│   │   ├── page.tsx            # Redirects to /owner/stores
+│   │   ├── page.tsx            # Owner Dashboard — Business Overview / Store Summary / Alerts
 │   │   ├── stores/
 │   │   │   ├── page.tsx        # Store picker (single-store: auto-redirects)
 │   │   │   └── [storeId]/
@@ -922,18 +922,103 @@ The `/admin/feature-flags` section provides runtime feature control, percentage 
 
 ---
 
-## Owner Console (Phase 2)
+## Owner Console (Phase 2 + Phase 3)
 
-The **Owner Console** (`/owner`) is the daily operations portal for store owners. Every meaningful action is scoped to a specific store (`/owner/stores/[storeId]/*`), enforcing multi-tenant isolation. Owners manage store settings, staff, catalog merchandising, channel connections, and subscriptions without ever touching platform-level admin tools.
+The **Owner Console** (`/owner`) is the business management portal for store owners and admins. It combines a tenant-wide **Owner Dashboard** at `/owner` with store-context operations at `/owner/stores/[storeId]/*`, enforcing multi-tenant isolation throughout.
 
 > **Key separation**: Admin (`/admin`) manages the platform. Owner (`/owner`) manages the store business. These roles never overlap.
+
+### Owner Dashboard (`/owner`) — Phase 3
+
+`/owner` is the **multi-store business overview** — a tenant-scoped summary dashboard. It gives owners a single page that surfaces the health and performance of their entire business without navigating store by store.
+
+The dashboard has three sections:
+
+#### A. Business Overview
+
+Seven at-a-glance metric cards:
+
+| Metric | Source |
+|--------|--------|
+| Total Stores | `Store` count (ACTIVE + INACTIVE, ARCHIVED excluded) |
+| Total Staff | Distinct `userId` from active `StoreMembership` rows (roles: OWNER/ADMIN/MANAGER/STAFF; suspended/invited excluded) |
+| POS Connected | `Connection` count where `type=POS`, `status=CONNECTED` |
+| Delivery Connected | `Connection` count where `type=DELIVERY`, `status=CONNECTED` |
+| Today's Orders | `Order` count in today's date range, excluding CANCELLED/FAILED |
+| Today's Revenue | `Order.totalAmount` sum for today (minor units, tenant currency) |
+| Monthly Revenue | `Order.totalAmount` sum for current calendar month (minor units, tenant currency) |
+
+> **Currency assumption**: All stores in a tenant are assumed to share the same currency. Cross-currency orders are excluded from revenue aggregates. This assumption holds for the current NZ-focused deployments.
+
+Revenue and date ranges are computed in the **tenant's IANA timezone** (fallback: `Pacific/Auckland`).
+
+#### B. Store Summary
+
+A per-store table/card layout showing daily performance for each non-ARCHIVED store:
+
+| Column | Description |
+|--------|-------------|
+| Store | Name + code, links to `/owner/stores/[storeId]` |
+| Status | ACTIVE / INACTIVE badge |
+| POS | Summarised connection status (see below) |
+| Delivery | Summarised connection status |
+| Orders Today | Count of non-cancelled orders today |
+| Revenue Today | Sum of `totalAmount` in minor units, formatted |
+
+**Connection status summary** rolls up all connections of a type into one of five states:
+
+| State | Meaning |
+|-------|---------|
+| `CONNECTED` | All connections healthy |
+| `PARTIAL` | Mix of connected and disconnected |
+| `NOT_CONNECTED` | No connections configured |
+| `ERROR` | At least one connection in ERROR state |
+| `REAUTH_REQUIRED` | At least one connection needs re-authentication |
+
+Priority order: `ERROR > REAUTH_REQUIRED > PARTIAL > CONNECTED > NOT_CONNECTED`
+
+#### C. Alerts
+
+Surfaced issues the owner should act on now. Alerts are scoped to active stores only.
+
+| Alert type | Trigger | Severity |
+|------------|---------|---------|
+| `POS_CONNECTION_ISSUE` | Active store has POS connection with ERROR / REAUTH_REQUIRED / DISCONNECTED status | CRITICAL / WARNING |
+| `DELIVERY_CONNECTION_ISSUE` | Active store has delivery connection with ERROR / REAUTH_REQUIRED / DISCONNECTED status | CRITICAL / WARNING |
+| `SYNC_FAILED` | `connection.lastSyncStatus = FAILED` on an active store | WARNING |
+| `PENDING_INVITATION` | `Membership.status = INVITED` count > 0 | INFO |
+| `BILLING_ISSUE` | `TenantSubscription.status` in PAST_DUE / SUSPENDED | CRITICAL |
+
+Alert IDs are deterministic (`pos-issue-{connId}`, `sync-failed-{connId}`, `pending-invitations`, `billing-issue`) for stable rendering.
+
+When there are no alerts, an empty state is shown: _"Your business is running smoothly right now."_
+
+#### Technical Files — Owner Dashboard (Phase 3)
+
+| File | Role |
+|------|------|
+| `types/owner-dashboard.ts` | View-model types: `OwnerDashboardData`, `OwnerDashboardStoreSummary`, `OwnerDashboardAlert`, `ConnectionSummaryStatus` |
+| `services/owner/owner-dashboard.service.ts` | `getOwnerDashboard()`, `getBusinessOverviewMetrics()`, `getOwnerStoreSummaries()`, `getOwnerDashboardAlerts()`, `summariseConnectionStatus()` |
+| `app/api/owner/dashboard/route.ts` | `GET /api/owner/dashboard` — JSON endpoint for client refresh / mobile reuse |
+| `app/owner/page.tsx` | Server component — renders the full dashboard via direct service call |
+| `components/owner/OwnerOverviewGrid.tsx` | 7-card metric grid |
+| `components/owner/OwnerOverviewCard.tsx` | Individual metric card |
+| `components/owner/OwnerStoreSummaryTable.tsx` | Responsive table (desktop) + stacked cards (mobile) |
+| `components/owner/OwnerAlertsPanel.tsx` | Alert list with severity badges; empty-state support |
+| `components/owner/OwnerStatusBadge.tsx` | `StoreStatusBadge`, `ConnectionStatusBadge`, `SeverityBadge` |
+| `lib/owner/labels.ts` | Status → display label maps and Tailwind badge class maps |
+| `lib/format/money.ts` | `formatMoneyFromMinor(minorUnits, currencyCode)` — Intl-based formatter |
+| `lib/datetime/ranges.ts` | `getTodayRange(tz)`, `getMonthRange(tz)` — timezone-aware UTC date range helpers |
+| `__tests__/owner-dashboard.service.test.ts` | Unit tests for overview metrics, store summaries, alert generation, `summariseConnectionStatus` |
+
+> **TODO**: `BillingRecord`-level overdue alerts are not yet implemented. Once the billing engine is wired end-to-end, add a check for `BillingRecord` with `status=OPEN` and `dueAt < now`. See `getOwnerDashboardAlerts` for the placeholder comment.
 
 ### Owner Portal Structure
 
 ```
 app/owner/
 ├── layout.tsx                    # Auth guard (OWNER/ADMIN/MANAGER) + OwnerSidebar
-├── page.tsx                      # Redirects to /owner/stores
+├── page.tsx                      # Owner Dashboard (Business Overview / Store Summary / Alerts)
 ├── stores/
 │   ├── page.tsx                  # Store picker; single-store owners auto-redirect
 │   └── [storeId]/
@@ -1139,7 +1224,9 @@ SUPERVISOR / STAFF store roles
 - [x] **Admin Console Phase 7 — Integrations Admin Panel** — connection detail page, status change, credential rotation, action log viewer
 - [x] **Admin Console Phase 9 — Feature Flags / Runtime Config** — flag lifecycle management, scoped assignments, percentage rollout, evaluation engine, audit trail
 - [x] **Owner Console Phase 1** — dashboard (KPI + connection status + logs), store settings, users & roles, connections, catalog source settings, operations settings, billing, reports, logs pages; OWNER/ADMIN/MANAGER role guards; Prisma models for `store_settings`, `catalog_settings`, `store_operation_settings`
-- [x] **Owner Console Phase 2** — store-context portal (`/owner/stores/[storeId]/*`); store dashboard (KPIs, channel breakdown, sold-out list, upcoming subscriptions); store settings (basic info + operation policy + store hours); staff management (invite / role change / deactivate / remove with last-owner guard); owner-local catalog fields (products, categories, modifier options — POS fields immutable); channel connection cards; subscription summary + customer + upcoming order pages; 8 write API routes; 12 AuditLog event types; cross-tenant access enforcement; new `StoreHours` model + `SoldOutResetMode` / `DefaultAvailabilityMode` enums
+- [x] **Owner Console Phase 2** — store-context portal (`/owner/stores/[storeId]/*`); store dashboard (KPIs, channel breakdown, sold-out list, upcoming subscriptions); store settings; staff management; owner-local catalog fields; channel connection cards; subscription summary pages; 8 write API routes; 12 AuditLog event types; cross-tenant access enforcement
+- [x] **Owner Console Phase 3 — Owner Dashboard** — tenant-scoped multi-store business overview at `/owner`; Business Overview (7 metric cards), Store Summary table (per-store connection health + daily revenue), Alerts panel (POS/delivery/sync/invitation/billing issues); `getOwnerDashboard()` service with optimised batch queries; `GET /api/owner/dashboard` API route; 5 UI components; `lib/owner/labels.ts`, `lib/format/money.ts`, `lib/datetime/ranges.ts` helpers; 25 unit tests
+- [ ] Owner Console Phase 4 — Reports & Billing deep-dive (tenant-level revenue charts, subscription revenue, billing history)
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)
