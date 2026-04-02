@@ -1013,6 +1013,99 @@ When there are no alerts, an empty state is shown: _"Your business is running sm
 
 > **TODO**: `BillingRecord`-level overdue alerts are not yet implemented. Once the billing engine is wired end-to-end, add a check for `BillingRecord` with `status=OPEN` and `dueAt < now`. See `getOwnerDashboardAlerts` for the placeholder comment.
 
+---
+
+### Owner Console Phase 4 — Reports & Analytics
+
+`/owner/reports` (tenant-level) and `/owner/stores/[storeId]/reports` (store-level) give owners time-ranged, filter-aware operational reports built from canonical order and subscription data.
+
+#### Report Filter Model
+
+Filters are persisted in the URL query string and parsed server-side with safe fallbacks:
+
+| Param | Default | Description |
+|-------|---------|-------------|
+| `preset` | `last7` | Preset date range: `today`, `yesterday`, `last7`, `last30`, `thisMonth`, `lastMonth`, `custom` |
+| `from` / `to` | — | `YYYY-MM-DD`; only used when `preset=custom` |
+| `channels` | all | Comma-separated `OrderSourceChannel` values |
+| `storeIds` | all | Comma-separated store IDs (tenant-level only) |
+| `comparePrevious` | `true` | Show previous-period KPI deltas |
+
+Date boundaries are computed in the **tenant/store timezone** (fallback `Pacific/Auckland`).
+
+#### Tenant-Level Report Sections (`/owner/reports`)
+
+| Section | Description |
+|---------|-------------|
+| KPI Grid | Gross revenue, order count, AOV, completed rate, cancelled rate, subscription revenue — with optional previous-period delta arrows |
+| Revenue Trend | SVG bar chart showing daily revenue over the selected range |
+| Channel Breakdown | Horizontal bars per channel: revenue share, order count, cancellation rate |
+| Store Comparison | Table: revenue, orders, AOV, cancel%, connected channels, active subscriptions — per non-archived store |
+| Top Products | Revenue-ranked product table with sold-out flag and subscription eligibility |
+| Subscription Summary | Active/paused counts, period subscription revenue, estimated upcoming 7 / 30-day revenue |
+| Insights Panel | Deterministic rule-based insight cards (see insight rules below) |
+
+#### Store-Level Report Sections (`/owner/stores/[storeId]/reports`)
+
+All tenant sections except Store Comparison, plus:
+
+| Section | Description |
+|---------|-------------|
+| Category Performance | Revenue-ranked horizontal bars per product category |
+| Product Performance | Same as top products but store-scoped |
+| Order Health | Stacked bar: completed / cancelled / failed counts and rates |
+| Sold-Out Impact | Count of currently sold-out products and modifier options; top sold-out products with recent sales |
+
+#### Insight Rules
+
+Rule-based insights generated deterministically on every request:
+
+| Insight key | Trigger | Severity |
+|-------------|---------|---------|
+| `no_orders` | Zero orders in selected period | warning |
+| `no_completed` | Orders exist but none completed | warning |
+| `high_cancel_rate` | Cancellation rate ≥ 15% with ≥ 5 orders | critical |
+| `top_channel` | Highest-revenue channel identified | positive |
+| `cancel_channel_*` | A channel has ≥ 15% cancel rate with ≥ 3 orders | warning |
+| `best_store` | Highest-revenue store (tenant-level, multi-store) | info |
+| `best_product` | Top-selling product by revenue | positive |
+| `soldout_*` | A top-selling product is currently sold out | warning |
+| `soldout_impact` | Any products currently sold out (store-level) | warning |
+| `strong_sub_share` | Subscription revenue ≥ 20% of gross revenue | positive |
+| `active_subs` | Active subscriptions exist | info |
+
+#### Technical Files — Owner Console Phase 4
+
+| File | Role |
+|------|------|
+| `types/owner-reports.ts` | All Phase 4 types: `OwnerReportFilters`, `OwnerSummaryKpi`, `OwnerRevenueTrendPoint`, `OwnerChannelBreakdownItem`, `OwnerStoreComparisonItem`, `OwnerProductPerformanceItem`, `OwnerCategoryPerformanceItem`, `OwnerSubscriptionSummary`, `OwnerOrderHealthSummary`, `OwnerSoldOutImpactSummary`, `OwnerInsightItem`, `TenantOwnerReportsData`, `StoreOwnerReportsData` |
+| `lib/owner/reports/filters.ts` | `parseReportFilters`, `filtersToParams`, `resolvePresetRange`, `resolveComparePeriod`, `generateDateKeys`, `formatDateKey` |
+| `lib/owner/reports/labels.ts` | `channelLabel`, `channelBadgeLabel`, `presetLabel`, `insightSeverityClasses`, `insightSeverityIcon`, `formatMinorCompact`, `formatMinorFull`, `formatRate` |
+| `lib/owner/reports/insights.ts` | `generateTenantInsights`, `generateStoreInsights` — deterministic rule engine |
+| `services/owner/reports/owner-report-query.service.ts` | Low-level Prisma aggregations: `querySummaryKpi`, `queryRevenueTrend`, `queryChannelBreakdown`, `queryStoreComparison`, `queryTopProducts`, `queryCategoryPerformance`, `querySubscriptionSummary`, `queryOrderHealth`, `querySoldOutImpact` |
+| `services/owner/reports/owner-report-insight.service.ts` | `deriveTenantInsights`, `deriveStoreInsights` — orchestrates insight generation |
+| `services/owner/reports/owner-reports.service.ts` | `getTenantOwnerReports`, `getStoreOwnerReports`, `getTenantReportSummary`, `getStoreReportSummary` |
+| `app/api/owner/reports/route.ts` | `GET /api/owner/reports` — tenant-scoped, guarded by `OWNER_PORTAL_MEMBERSHIP_ROLES` |
+| `app/api/owner/stores/[storeId]/reports/route.ts` | `GET /api/owner/stores/[storeId]/reports` — store-scoped, guarded by `requireOwnerStoreAccess` |
+| `app/owner/reports/page.tsx` | Tenant-level reports page (server component) |
+| `app/owner/stores/[storeId]/reports/page.tsx` | Store-level reports page (server component) |
+| `components/owner/reports/OwnerReportsFilterBar.tsx` | Client component — preset buttons, custom date pickers, compare toggle; updates URL params |
+| `components/owner/reports/OwnerKpiCard.tsx` | Individual KPI card with value, sub-label, and trend arrow |
+| `components/owner/reports/OwnerKpiGrid.tsx` | 6-card responsive grid |
+| `components/owner/reports/OwnerRevenueTrendChart.tsx` | SVG bar chart (no external charting library) |
+| `components/owner/reports/OwnerChannelBreakdownChart.tsx` | Horizontal bar chart per channel |
+| `components/owner/reports/OwnerStoreComparisonTable.tsx` | Multi-store comparison table |
+| `components/owner/reports/OwnerProductPerformanceTable.tsx` | Revenue-ranked product table |
+| `components/owner/reports/OwnerCategoryPerformanceTable.tsx` | Revenue-ranked category bars |
+| `components/owner/reports/OwnerSubscriptionSummaryCards.tsx` | Active/paused counts + upcoming revenue estimates |
+| `components/owner/reports/OwnerOrderHealthCard.tsx` | Stacked-bar order health breakdown |
+| `components/owner/reports/OwnerSoldOutImpactCard.tsx` | Sold-out product/option counts + top impact list |
+| `components/owner/reports/OwnerInsightsPanel.tsx` | Rule-based insight cards with severity styling |
+| `components/owner/reports/OwnerEmptyReportState.tsx` | Reusable empty state |
+| `__tests__/owner-reports-filters.test.ts` | Filter parsing, preset resolution, timezone safety, compare-period derivation |
+| `__tests__/owner-report-insight.service.test.ts` | Insight rule coverage, severity routing, determinism |
+| `__tests__/owner-reports.service.test.ts` | Service orchestration, tenant/store isolation, KPI zero-state, trend point count |
+
 ### Owner Portal Structure
 
 ```
@@ -1035,9 +1128,11 @@ app/owner/
 │           ├── customers/        # Per-customer subscription view
 │           └── upcoming/         # Upcoming subscription orders (next 30 days)
 ├── billing/                      # Tenant-level billing
-├── reports/                      # Tenant-level reports
+├── reports/page.tsx              # /owner/reports — Reports & Analytics (Phase 4)
 └── logs/                         # Recent connection action logs
 ```
+
+Store-level reports are at `/owner/stores/[storeId]/reports` (added in Phase 4 alongside the store sub-nav).
 
 ### Store Dashboard (`/owner/stores/[storeId]`)
 
@@ -1226,13 +1321,49 @@ SUPERVISOR / STAFF store roles
 - [x] **Owner Console Phase 1** — dashboard (KPI + connection status + logs), store settings, users & roles, connections, catalog source settings, operations settings, billing, reports, logs pages; OWNER/ADMIN/MANAGER role guards; Prisma models for `store_settings`, `catalog_settings`, `store_operation_settings`
 - [x] **Owner Console Phase 2** — store-context portal (`/owner/stores/[storeId]/*`); store dashboard (KPIs, channel breakdown, sold-out list, upcoming subscriptions); store settings; staff management; owner-local catalog fields; channel connection cards; subscription summary pages; 8 write API routes; 12 AuditLog event types; cross-tenant access enforcement
 - [x] **Owner Console Phase 3 — Owner Dashboard** — tenant-scoped multi-store business overview at `/owner`; Business Overview (7 metric cards), Store Summary table (per-store connection health + daily revenue), Alerts panel (POS/delivery/sync/invitation/billing issues); `getOwnerDashboard()` service with optimised batch queries; `GET /api/owner/dashboard` API route; 5 UI components; `lib/owner/labels.ts`, `lib/format/money.ts`, `lib/datetime/ranges.ts` helpers; 25 unit tests
-- [ ] Owner Console Phase 4 — Reports & Billing deep-dive (tenant-level revenue charts, subscription revenue, billing history)
+- [x] **Owner Console Phase 4 — Reports & Analytics** — tenant-level reports at `/owner/reports` (KPI cards, revenue trend, channel breakdown, store comparison, top products, subscription summary, rule-based insights); store-level reports at `/owner/stores/[storeId]/reports` (all tenant sections plus category performance, product performance, order health, sold-out impact); URL-persisted filters with preset ranges and compare-to-previous; typed filter model, timezone-safe date-range helpers, deterministic insight engine; 13 UI components; 3 service files; 2 API routes; 3 test files
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)
 - [ ] Real-time order notifications (WebSocket / SSE)
 - [ ] Sales analytics charts (canonical order aggregation)
 - [ ] Subscription billing engine
+
+---
+
+## Future Owner Console Development Plan
+
+The following phases extend the Owner Console beyond Phase 4. This section is the authoritative roadmap for owner-console development.
+
+### Phase 5 — Customer & Subscription Management
+- Customer list with search and filter (name, email, subscription status)
+- Customer detail view: full order history, active subscriptions, lifetime value
+- Subscription lifecycle management: view, pause, cancel, add notes
+- Retention and churn signals: paused-rate trend, cancellation reasons, reactivation opportunities
+
+### Phase 6 — Billing Deep Dive
+- Current plan details and usage vs plan limits
+- Billing history and invoice list with status indicators
+- Payment status tracking and past-due alerts
+- Upgrade / downgrade plan flows directly from the owner console
+
+### Phase 7 — Team Activity & Audit
+- Staff activity feed: who did what and when across all stores
+- Role-change history and permission-grant audit trail
+- Settings, catalog, and integration change audit log
+- Read-only view; no destructive actions from owner console
+
+### Phase 8 — Automation & Notifications
+- Alert rule builder: define thresholds for cancellation rate, revenue drop, sold-out products
+- Delivery and POS issue notifications (real-time, in-app)
+- Daily summary digest emails / in-app notifications for owners
+- Sold-out auto-alert to assigned staff members
+
+### Phase 9 — Advanced Analytics & Forecasting
+- Richer trend analysis: weekday and time-slot performance heatmaps
+- Revenue forecasting using historical order patterns
+- Production-planning support: next-week order volume estimates per store
+- Prediction hooks for subscription churn and upsell opportunities
 
 ---
 

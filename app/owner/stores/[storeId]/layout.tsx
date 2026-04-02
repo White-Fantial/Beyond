@@ -16,6 +16,7 @@ const storeNavItems = [
   { href: "/modifiers", label: "Modifiers", icon: "🔧" },
   { href: "/integrations", label: "Integrations", icon: "🔌" },
   { href: "/subscriptions", label: "Subscriptions", icon: "🔄" },
+  { href: "/reports", label: "Reports", icon: "📈" },
 ];
 
 export default async function StoreLayout({ children, params }: Props) {
