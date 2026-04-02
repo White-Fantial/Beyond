@@ -26,12 +26,12 @@ export default async function OwnerCatalogPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900">Catalog Source Settings</h1>
-        <p className="mt-1 text-sm text-gray-500">매장별 카탈로그 소스 및 동기화 설정입니다.</p>
+        <p className="mt-1 text-sm text-gray-500">Catalog source and sync settings per store.</p>
       </div>
 
       <div className="space-y-4">
         {stores.length === 0 ? (
-          <p className="text-gray-400 text-sm">매장이 없습니다.</p>
+          <p className="text-gray-400 text-sm">No stores found.</p>
         ) : (
           stores.map((store) => {
             const settings = store.catalogSettings;
@@ -53,7 +53,7 @@ export default async function OwnerCatalogPage() {
                   />
                   <SettingField
                     label="Source Connection"
-                    value={settings?.sourceConnectionId ? "설정됨" : "—"}
+                    value={settings?.sourceConnectionId ? "Settings됨" : "—"}
                   />
                 </dl>
               </div>
@@ -63,7 +63,7 @@ export default async function OwnerCatalogPage() {
       </div>
 
       <p className="mt-4 text-xs text-gray-400">
-        * 카탈로그 설정 수정 기능은 다음 업데이트에서 제공됩니다.
+        * Catalog settings editing will be available in a future update.
       </p>
     </div>
   );

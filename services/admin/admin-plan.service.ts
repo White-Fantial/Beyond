@@ -195,7 +195,7 @@ export async function createAdminPlan(
   if (codeError) throw new Error(codeError);
 
   const existing = await prisma.plan.findUnique({ where: { code: input.code }, select: { id: true } });
-  if (existing) throw new Error(`이미 사용 중인 플랜 코드입니다: ${input.code}`);
+  if (existing) throw new Error(`Plan code already in use: ${input.code}`);
 
   if (input.isDefault) {
     await prisma.plan.updateMany({ where: { isDefault: true }, data: { isDefault: false } });

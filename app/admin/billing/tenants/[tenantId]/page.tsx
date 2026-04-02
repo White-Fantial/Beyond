@@ -37,25 +37,25 @@ export default async function AdminTenantBillingDetailPage({ params }: PageProps
     <div>
       <div className="mb-2 flex items-center gap-3">
         <Link href="/admin/billing/tenants" className="text-xs text-gray-400 hover:underline">
-          ← Billing 테넌트 목록
+          ← Back to Billing Tenants
         </Link>
         <span className="text-gray-300">·</span>
         <Link
           href={`/admin/tenants/${tenantId}`}
           className="text-xs text-gray-400 hover:underline"
         >
-          테넌트 상세 보기 →
+          View Tenant Details →
         </Link>
       </div>
 
       <AdminPageHeader
         title={detail.tenantDisplayName}
-        description={`슬러그: ${detail.tenantSlug} · 상태: ${detail.tenantStatus}`}
+        description={`Slug: ${detail.tenantSlug} · Status: ${detail.tenantStatus}`}
       />
 
       {/* Subscription */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">구독 정보</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">Subscription</h2>
         <AdminTenantSubscriptionCard
           subscription={detail.subscription}
           tenantId={tenantId}
@@ -65,7 +65,7 @@ export default async function AdminTenantBillingDetailPage({ params }: PageProps
 
       {/* Usage vs Limits */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">사용량 vs 한도</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">Usage vs Limits</h2>
         <AdminUsageSummaryCard
           usage={detail.usage}
           comparisons={detail.usageComparisons}
@@ -74,7 +74,7 @@ export default async function AdminTenantBillingDetailPage({ params }: PageProps
 
       {/* Billing Account */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">결제 계정</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">Billing Account</h2>
         <AdminBillingAccountCard
           billingAccount={detail.billingAccount}
           tenantId={tenantId}
@@ -83,7 +83,7 @@ export default async function AdminTenantBillingDetailPage({ params }: PageProps
 
       {/* Add billing note */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">내부 메모 / 기록 추가</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">Internal Notes / Add Record</h2>
         <AdminBillingNoteForm
           tenantId={tenantId}
           subscriptionId={detail.subscription?.id}
@@ -93,7 +93,7 @@ export default async function AdminTenantBillingDetailPage({ params }: PageProps
       {/* Billing Records */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">
-          결제 기록 ({detail.billingRecords.length})
+          Billing Records ({detail.billingRecords.length})
         </h2>
         <AdminBillingRecordTable records={detail.billingRecords} />
       </div>
@@ -101,7 +101,7 @@ export default async function AdminTenantBillingDetailPage({ params }: PageProps
       {/* Subscription Events */}
       <div className="bg-white rounded-lg border border-gray-200 p-5">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">
-          구독 이벤트 이력 ({detail.subscriptionEvents.length})
+          Subscription Event History ({detail.subscriptionEvents.length})
         </h2>
         <AdminSubscriptionEventTable events={detail.subscriptionEvents} />
       </div>

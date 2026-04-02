@@ -192,19 +192,19 @@ export async function createAdminTenant(
   const { slug, legalName, displayName, timezone, currency, countryCode, status = "ACTIVE" } = input;
 
   if (!slug || !SLUG_RE.test(slug)) {
-    throw new Error("slug은 소문자, 숫자, 하이픈만 허용됩니다.");
+    throw new Error("Slug may only contain lowercase letters, numbers, and hyphens.");
   }
-  if (!legalName?.trim()) throw new Error("법인명은 필수입니다.");
-  if (!displayName?.trim()) throw new Error("표시명은 필수입니다.");
-  if (!timezone?.trim()) throw new Error("시간대는 필수입니다.");
-  if (!currency?.trim()) throw new Error("통화는 필수입니다.");
-  if (!countryCode?.trim()) throw new Error("국가 코드는 필수입니다.");
+  if (!legalName?.trim()) throw new Error("Legal name is required.");
+  if (!displayName?.trim()) throw new Error("Display name is required.");
+  if (!timezone?.trim()) throw new Error("Timezone is required.");
+  if (!currency?.trim()) throw new Error("Currency is required.");
+  if (!countryCode?.trim()) throw new Error("Country code is required.");
   if (!ALLOWED_TENANT_STATUSES.includes(status as AllowedTenantStatus)) {
-    throw new Error(`올바르지 않은 상태값입니다: ${status}`);
+    throw new Error(`Invalid status value: ${status}`);
   }
 
   const existing = await prisma.tenant.findUnique({ where: { slug }, select: { id: true } });
-  if (existing) throw new Error("이미 사용 중인 슬러그입니다.");
+  if (existing) throw new Error("This slug is already in use.");
 
   const tenant = await prisma.tenant.create({
     data: {
@@ -245,11 +245,11 @@ export async function updateAdminTenant(
 
   const data: Record<string, unknown> = {};
   if (input.legalName !== undefined) {
-    if (!input.legalName.trim()) throw new Error("법인명은 필수입니다.");
+    if (!input.legalName.trim()) throw new Error("Legal name is required.");
     data.legalName = input.legalName.trim();
   }
   if (input.displayName !== undefined) {
-    if (!input.displayName.trim()) throw new Error("표시명은 필수입니다.");
+    if (!input.displayName.trim()) throw new Error("Display name is required.");
     data.displayName = input.displayName.trim();
   }
   if (input.timezone !== undefined) data.timezone = input.timezone.trim();
@@ -257,7 +257,7 @@ export async function updateAdminTenant(
   if (input.countryCode !== undefined) data.countryCode = input.countryCode.trim().toUpperCase();
   if (input.status !== undefined) {
     if (!ALLOWED_TENANT_STATUSES.includes(input.status as AllowedTenantStatus)) {
-      throw new Error(`올바르지 않은 상태값입니다: ${input.status}`);
+      throw new Error(`Invalid status value: ${input.status}`);
     }
     data.status = input.status;
   }

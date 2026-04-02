@@ -12,8 +12,8 @@ import StoreDetailActions from "@/components/admin/StoreDetailActions";
 import StoreMembershipEditButton from "@/components/admin/StoreMembershipEditButton";
 
 const STORE_STATUS_OPTIONS = [
-  { value: "ACTIVE", label: "활성" },
-  { value: "INACTIVE", label: "비활성" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "INACTIVE", label: "Inactive" },
   { value: "ARCHIVED", label: "보관" },
 ];
 
@@ -31,12 +31,12 @@ export default async function AdminStoreDetailPage({ params }: PageProps) {
     <div>
       <div className="mb-2">
         <Link href="/admin/stores" className="text-xs text-gray-400 hover:underline">
-          ← 매장 목록
+          ← Store 목록
         </Link>
       </div>
 
       <div className="flex items-start justify-between gap-4 mb-6">
-        <AdminPageHeader title={store.name} description={`코드: ${store.code}`} />
+        <AdminPageHeader title={store.name} description={`Code: ${store.code}`} />
         <div className="shrink-0 pt-1">
           <StoreDetailActions
             store={{
@@ -55,41 +55,41 @@ export default async function AdminStoreDetailPage({ params }: PageProps) {
 
       {/* Summary KPI */}
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <AdminStatCard label="멤버십 수" value={store.membershipCount} />
-        <AdminStatCard label="연결 수" value={store.connectionCount} />
-        <AdminStatCard label="활성 연결" value={store.activeConnectionCount} />
+        <AdminStatCard label="Memberships" value={store.membershipCount} />
+        <AdminStatCard label="Connections" value={store.connectionCount} />
+        <AdminStatCard label="Active Connections" value={store.activeConnectionCount} />
       </div>
 
       {/* Basic Info */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">기본 정보</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Basic Info</h2>
         <AdminKeyValueList
           items={[
             { label: "ID", value: <span className="font-mono text-xs">{store.id}</span> },
             {
-              label: "테넌트",
+              label: "Tenant",
               value: (
                 <Link href={`/admin/tenants/${store.tenantId}`} className="text-blue-600 hover:underline">
                   {store.tenantDisplayName}
                 </Link>
               ),
             },
-            { label: "매장명", value: store.name },
-            { label: "표시명", value: store.displayName },
-            { label: "코드", value: <span className="font-mono text-xs">{store.code}</span> },
-            { label: "상태", value: <StatusBadge value={store.status} /> },
-            { label: "시간대", value: store.timezone },
-            { label: "통화", value: store.currency },
-            { label: "국가 코드", value: store.countryCode },
-            { label: "생성일", value: store.createdAt.toLocaleString("ko-KR") },
-            { label: "수정일", value: store.updatedAt.toLocaleString("ko-KR") },
+            { label: "Store Name", value: store.name },
+            { label: "Display Name", value: store.displayName },
+            { label: "Code", value: <span className="font-mono text-xs">{store.code}</span> },
+            { label: "Status", value: <StatusBadge value={store.status} /> },
+            { label: "Time대", value: store.timezone },
+            { label: "Currency", value: store.currency },
+            { label: "Country Code", value: store.countryCode },
+            { label: "Created", value: store.createdAt.toLocaleString("en-US") },
+            { label: "Edit일", value: store.updatedAt.toLocaleString("en-US") },
           ]}
         />
       </div>
 
       {/* Status Change */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">상태 변경</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Change Status</h2>
         <AdminStatusChangeForm
           entityType="stores"
           entityId={store.id}
@@ -101,19 +101,19 @@ export default async function AdminStoreDetailPage({ params }: PageProps) {
       {/* Store Memberships */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">
-          매장 멤버십 ({store.membershipCount})
+          Store 멤버십 ({store.membershipCount})
         </h2>
         {store.memberships.length === 0 ? (
-          <p className="text-sm text-gray-400">멤버십이 없습니다.</p>
+          <p className="text-sm text-gray-400">No memberships.</p>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">사용자</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">역할</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">생성일</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">User</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Role</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Created</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
@@ -156,13 +156,13 @@ export default async function AdminStoreDetailPage({ params }: PageProps) {
 
       {/* Log Links */}
       <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">로그</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Logs</h2>
         <div className="flex flex-wrap gap-3 text-sm">
           <Link
             href={`/admin/logs?storeId=${storeId}`}
             className="text-blue-600 hover:underline"
           >
-            📋 이 매장의 전체 로그 →
+            📋 이 Store의 All 로그 →
           </Link>
           <Link
             href={`/admin/logs?storeId=${storeId}&logType=CONNECTION_ACTION`}

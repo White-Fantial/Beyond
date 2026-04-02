@@ -15,7 +15,7 @@ interface Props {
 
 export default function AdminPlanTable({ plans }: Props) {
   if (plans.length === 0) {
-    return <p className="text-sm text-gray-400 py-4 text-center">플랜이 없습니다.</p>;
+    return <p className="text-sm text-gray-400 py-4 text-center">No plans available.</p>;
   }
 
   return (
@@ -23,14 +23,14 @@ export default function AdminPlanTable({ plans }: Props) {
       <table className="w-full text-sm">
         <thead>
           <tr className="text-xs text-gray-500 border-b border-gray-200">
-            <th className="text-left pb-2 pr-4">코드</th>
-            <th className="text-left pb-2 pr-4">이름</th>
-            <th className="text-left pb-2 pr-4">상태</th>
-            <th className="text-left pb-2 pr-4">주기</th>
-            <th className="text-right pb-2 pr-4">가격</th>
-            <th className="text-right pb-2 pr-4">테넌트 수</th>
-            <th className="text-center pb-2 pr-4">기본값</th>
-            <th className="text-right pb-2">수정일</th>
+            <th className="text-left pb-2 pr-4">Code</th>
+            <th className="text-left pb-2 pr-4">Name</th>
+            <th className="text-left pb-2 pr-4">Status</th>
+            <th className="text-left pb-2 pr-4">Billing Cycle</th>
+            <th className="text-right pb-2 pr-4">Price</th>
+            <th className="text-right pb-2 pr-4">Tenants</th>
+            <th className="text-center pb-2 pr-4">Default Value</th>
+            <th className="text-right pb-2">Updated</th>
           </tr>
         </thead>
         <tbody>

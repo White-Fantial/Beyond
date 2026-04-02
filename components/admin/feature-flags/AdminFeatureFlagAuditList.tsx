@@ -23,7 +23,7 @@ export default async function AdminFeatureFlagAuditList({ flagId }: Props) {
   });
 
   if (logs.length === 0) {
-    return <p className="text-sm text-gray-400">변경 이력이 없습니다.</p>;
+    return <p className="text-sm text-gray-400">No change history.</p>;
   }
 
   return (
@@ -31,7 +31,7 @@ export default async function AdminFeatureFlagAuditList({ flagId }: Props) {
       {logs.map((log) => (
         <li key={log.id} className="flex items-start gap-3 text-sm">
           <span className="text-gray-400 text-xs whitespace-nowrap mt-0.5">
-            {log.createdAt.toLocaleString("ko-KR")}
+            {log.createdAt.toLocaleString("en-US")}
           </span>
           <span className="font-mono text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded shrink-0">
             {log.action}

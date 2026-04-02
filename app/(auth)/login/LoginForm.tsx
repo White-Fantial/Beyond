@@ -11,7 +11,7 @@ function SubmitButton() {
       disabled={pending}
       className="w-full bg-brand-600 text-white py-3 rounded-lg font-medium hover:bg-brand-700 transition-colors disabled:opacity-60"
     >
-      {pending ? "로그인 중..." : "로그인"}
+      {pending ? "Signing in..." : "Sign In"}
     </button>
   );
 }
@@ -31,7 +31,7 @@ export default function LoginForm() {
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
-          이메일
+          Email
         </label>
         <input
           id="email"
@@ -46,7 +46,7 @@ export default function LoginForm() {
 
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
-          비밀번호
+          Password
         </label>
         <input
           id="password"

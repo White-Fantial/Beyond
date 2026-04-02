@@ -56,14 +56,14 @@ export default function AdminPlanFeatureEditor({ planId, features, onSuccess }: 
         });
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error ?? "저장에 실패했습니다.");
+          setError(data.error ?? "Failed to save.");
           return;
         }
         setSuccess(true);
         router.refresh();
         onSuccess?.();
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred.");
       }
     });
   }
@@ -91,7 +91,7 @@ export default function AdminPlanFeatureEditor({ planId, features, onSuccess }: 
       )}
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-md px-3 py-2">
-          기능이 저장되었습니다.
+          기능이 Saved.
         </div>
       )}
 
@@ -101,7 +101,7 @@ export default function AdminPlanFeatureEditor({ planId, features, onSuccess }: 
           disabled={isPending}
           className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
-          {isPending ? "저장 중..." : "기능 저장"}
+          {isPending ? "Saving..." : "Save Features"}
         </button>
       </div>
     </form>

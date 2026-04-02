@@ -53,7 +53,7 @@ export default async function AdminFeatureFlagDetailPage({ params }: Props) {
           <AdminFeatureFlagContextSummary flag={flag} />
 
           <div className="bg-white rounded-lg border border-gray-200 p-5">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">변경 이력</h2>
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Change History</h2>
             <AdminFeatureFlagAuditList flagId={flag.id} />
           </div>
         </div>
@@ -65,7 +65,7 @@ export default async function AdminFeatureFlagDetailPage({ params }: Props) {
               <h2 className="text-sm font-semibold text-gray-700">
                 Assignments
                 <span className="ml-2 text-xs text-gray-400">
-                  ({flag.activeAssignmentCount} 활성 / {flag.assignmentCount} 전체)
+                  ({flag.activeAssignmentCount} active / {flag.assignmentCount} total)
                 </span>
               </h2>
               <AdminFeatureFlagAssignmentDialog

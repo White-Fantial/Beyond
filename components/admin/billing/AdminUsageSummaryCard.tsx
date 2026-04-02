@@ -13,10 +13,10 @@ const statusColors: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  ok: "정상",
-  warning: "주의",
-  exceeded: "초과",
-  unlimited: "무제한",
+  ok: "OK",
+  warning: "warning",
+  exceeded: "Exceeded",
+  unlimited: "Unlimited",
 };
 
 export default function AdminUsageSummaryCard({ usage, comparisons }: Props) {
@@ -62,7 +62,7 @@ export default function AdminUsageSummaryCard({ usage, comparisons }: Props) {
 
       {usage.capturedAt && (
         <p className="text-xs text-gray-400 mt-4">
-          마지막 집계: {new Date(usage.capturedAt).toLocaleString("ko-KR")}
+          Last aggregated: {new Date(usage.capturedAt).toLocaleString("en-US")}
         </p>
       )}
     </div>

@@ -15,7 +15,7 @@ export default async function BackofficeModifiersPage({
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-4">옵션/수식어 관리</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-4">Modifiers Management</h1>
       <CatalogModifiersClient initialGroups={modifierGroups} />
     </div>
   );

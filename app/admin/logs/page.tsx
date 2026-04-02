@@ -35,8 +35,8 @@ export default async function AdminLogsPage({ searchParams }: PageProps) {
   return (
     <div>
       <AdminPageHeader
-        title="로그"
-        description="플랫폼 전체의 audit, integration, webhook, order 로그를 통합 조회합니다."
+        title="Logs"
+        description="View unified audit, integration, webhook, and order logs across the platform."
       />
 
       <Suspense>

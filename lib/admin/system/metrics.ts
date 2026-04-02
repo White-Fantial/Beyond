@@ -19,8 +19,8 @@ export function windowStart(window: MetricsWindow): Date {
 export function windowLabel(window: MetricsWindow): string {
   switch (window) {
     case "24h":
-      return "최근 24시간";
+      return "Last 24 hours";
     case "7d":
-      return "최근 7일";
+      return "Last 7 days";
   }
 }

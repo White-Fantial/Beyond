@@ -32,27 +32,27 @@ export async function createTenantMembership(
 ): Promise<{ id: string }> {
   const { tenantId, userId, role, status = "ACTIVE" } = input;
 
-  if (!tenantId?.trim()) throw new Error("테넌트 ID는 필수입니다.");
-  if (!userId?.trim()) throw new Error("사용자 ID는 필수입니다.");
+  if (!tenantId?.trim()) throw new Error("Tenant ID is required.");
+  if (!userId?.trim()) throw new Error("User ID is required.");
   if (!ALLOWED_MEMBERSHIP_ROLES.includes(role as AllowedMembershipRole)) {
-    throw new Error(`올바르지 않은 멤버십 역할입니다: ${role}`);
+    throw new Error(`Invalid membership role: ${role}`);
   }
   if (!ALLOWED_MEMBERSHIP_STATUSES.includes(status as AllowedMembershipStatus)) {
-    throw new Error(`올바르지 않은 상태값입니다: ${status}`);
+    throw new Error(`Invalid status value: ${status}`);
   }
 
   const [tenant, user] = await Promise.all([
     prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true } }),
     prisma.user.findUnique({ where: { id: userId }, select: { id: true } }),
   ]);
-  if (!tenant) throw new Error("테넌트를 찾을 수 없습니다.");
-  if (!user) throw new Error("사용자를 찾을 수 없습니다.");
+  if (!tenant) throw new Error("Tenant not found.");
+  if (!user) throw new Error("User not found.");
 
   const existing = await prisma.membership.findUnique({
     where: { tenantId_userId: { tenantId, userId } },
     select: { id: true },
   });
-  if (existing) throw new Error("해당 사용자는 이미 이 테넌트에 멤버십이 있습니다.");
+  if (existing) throw new Error("This user already has a membership in this tenant.");
 
   const membership = await prisma.membership.create({
     data: {
@@ -89,13 +89,13 @@ export async function updateTenantMembership(
 
   if (input.role !== undefined) {
     if (!ALLOWED_MEMBERSHIP_ROLES.includes(input.role as AllowedMembershipRole)) {
-      throw new Error(`올바르지 않은 멤버십 역할입니다: ${input.role}`);
+      throw new Error(`Invalid membership role: ${input.role}`);
     }
     data.role = input.role;
   }
   if (input.status !== undefined) {
     if (!ALLOWED_MEMBERSHIP_STATUSES.includes(input.status as AllowedMembershipStatus)) {
-      throw new Error(`올바르지 않은 상태값입니다: ${input.status}`);
+      throw new Error(`Invalid status value: ${input.status}`);
     }
     data.status = input.status;
     if (input.status === "ACTIVE" && membership.status !== "ACTIVE") {
@@ -127,32 +127,32 @@ export async function createStoreMembership(
 ): Promise<{ id: string }> {
   const { membershipId, storeId, role, status = "ACTIVE" } = input;
 
-  if (!membershipId?.trim()) throw new Error("멤버십 ID는 필수입니다.");
-  if (!storeId?.trim()) throw new Error("매장 ID는 필수입니다.");
+  if (!membershipId?.trim()) throw new Error("Membership ID is required.");
+  if (!storeId?.trim()) throw new Error("Store ID is required.");
   if (!ALLOWED_STORE_ROLES.includes(role as AllowedStoreRole)) {
-    throw new Error(`올바르지 않은 매장 역할입니다: ${role}`);
+    throw new Error(`Invalid store role: ${role}`);
   }
   if (!ALLOWED_STORE_MEMBERSHIP_STATUSES.includes(status as AllowedStoreMembershipStatus)) {
-    throw new Error(`올바르지 않은 상태값입니다: ${status}`);
+    throw new Error(`Invalid status value: ${status}`);
   }
 
   const [membership, store] = await Promise.all([
     prisma.membership.findUnique({ where: { id: membershipId }, select: { id: true, tenantId: true } }),
     prisma.store.findUnique({ where: { id: storeId }, select: { id: true, tenantId: true } }),
   ]);
-  if (!membership) throw new Error("테넌트 멤버십을 찾을 수 없습니다.");
-  if (!store) throw new Error("매장을 찾을 수 없습니다.");
+  if (!membership) throw new Error("Tenant membership not found.");
+  if (!store) throw new Error("Store not found.");
 
   // Validate cross-tenant integrity
   if (membership.tenantId !== store.tenantId) {
-    throw new Error("매장 멤버십 생성 실패: 멤버십과 매장이 같은 테넌트에 속해야 합니다.");
+    throw new Error("Failed to create store membership: the membership and store must belong to the same tenant.");
   }
 
   const existing = await prisma.storeMembership.findUnique({
     where: { membershipId_storeId: { membershipId, storeId } },
     select: { id: true },
   });
-  if (existing) throw new Error("해당 멤버십은 이미 이 매장에 연결되어 있습니다.");
+  if (existing) throw new Error("This membership is already linked to this store.");
 
   const storeMembership = await prisma.storeMembership.create({
     data: {
@@ -189,13 +189,13 @@ export async function updateStoreMembership(
 
   if (input.role !== undefined) {
     if (!ALLOWED_STORE_ROLES.includes(input.role as AllowedStoreRole)) {
-      throw new Error(`올바르지 않은 매장 역할입니다: ${input.role}`);
+      throw new Error(`Invalid store role: ${input.role}`);
     }
     data.role = input.role;
   }
   if (input.status !== undefined) {
     if (!ALLOWED_STORE_MEMBERSHIP_STATUSES.includes(input.status as AllowedStoreMembershipStatus)) {
-      throw new Error(`올바르지 않은 상태값입니다: ${input.status}`);
+      throw new Error(`Invalid status value: ${input.status}`);
     }
     data.status = input.status;
   }

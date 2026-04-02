@@ -37,7 +37,7 @@ export async function getDatabaseHealth(): Promise<AdminSystemComponentHealth> {
       label: "Database",
       status: "HEALTHY",
       severity: "INFO",
-      summary: `DB 연결 정상 (테넌트 ${tenantCount.toLocaleString()}개)`,
+      summary: `DB connection healthy (${tenantCount.toLocaleString()} tenants)`,
       lastCheckedAt: checkedAt,
       metrics: { tenantCount },
       drilldownHref: undefined,
@@ -48,7 +48,7 @@ export async function getDatabaseHealth(): Promise<AdminSystemComponentHealth> {
       label: "Database",
       status: "DOWN",
       severity: "CRITICAL",
-      summary: "DB 연결 실패 — 즉각 확인 필요",
+      summary: "DB connection failed — immediate attention required",
       lastCheckedAt: checkedAt,
     };
   }
@@ -82,9 +82,9 @@ export async function getJobsHealth(): Promise<AdminSystemComponentHealth> {
   const severity = statusToSeverity(status);
   const summary = buildHealthSummary(status, {
     total,
-    totalLabel: "실행",
+    totalLabel: "Runs",
     failures: failed,
-    failLabel: "실패",
+    failLabel: "Failures",
     window: WINDOW,
   });
 
@@ -120,9 +120,9 @@ export async function getWebhookHealth(): Promise<AdminSystemComponentHealth> {
   const severity = statusToSeverity(status);
   const summary = buildHealthSummary(status, {
     total: received,
-    totalLabel: "수신",
+    totalLabel: "Received",
     failures: failed,
-    failLabel: "처리 실패",
+    failLabel: "Failed",
     window: WINDOW,
   });
 
@@ -169,9 +169,9 @@ export async function getIntegrationsHealth(): Promise<AdminSystemComponentHealt
   const severity = statusToSeverity(status);
   const summary = buildHealthSummary(status, {
     total: refreshSuccesses + refreshFailures,
-    totalLabel: "갱신 시도",
+    totalLabel: "Refresh Attempts",
     failures: refreshFailures,
-    failLabel: "갱신 실패",
+    failLabel: "Refresh Failures",
     window: WINDOW,
   });
 
@@ -228,9 +228,9 @@ export async function getOrderPipelineHealth(): Promise<AdminSystemComponentHeal
   const severity = statusToSeverity(status);
   const summary = buildHealthSummary(status, {
     total: posForwardAttempts,
-    totalLabel: "전달 시도",
+    totalLabel: "Forward Attempts",
     failures: posForwardFailures,
-    failLabel: "전달 실패",
+    failLabel: "Forward Failures",
     window: WINDOW,
   });
 
@@ -269,9 +269,9 @@ export async function getCatalogSyncHealth(): Promise<AdminSystemComponentHealth
   const severity = statusToSeverity(status);
   const summary = buildHealthSummary(status, {
     total,
-    totalLabel: "동기화",
+    totalLabel: "Sync",
     failures: failed,
-    failLabel: "실패",
+    failLabel: "Failures",
     window: WINDOW,
   });
 
@@ -303,8 +303,8 @@ export async function getBillingHealth(): Promise<AdminSystemComponentHealth> {
 
   const summary =
     status === "HEALTHY"
-      ? `정상 — 활성 ${active}개, 트라이얼 ${trial}개 (연체 ${pastDue}개)`
-      : `연체 ${pastDue}개 감지 (활성 ${active}개, 트라이얼 ${trial}개)`;
+      ? `Healthy — Active ${active} more, Trial ${trial} more (Past Due ${pastDue} more)`
+      : `Past Due: ${pastDue}, Active: ${active}, Trial: ${trial}`;
 
   return {
     key: "billing",

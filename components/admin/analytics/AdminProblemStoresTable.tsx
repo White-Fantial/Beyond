@@ -6,11 +6,11 @@ interface Props {
 }
 
 const LABEL_MAP: Record<string, string> = {
-  REAUTH_REQUIRED: "재인증",
-  SYNC_FAILED: "동기화 실패",
-  WEBHOOK_ERRORS: "Webhook 오류",
-  POS_FAILED: "POS 실패",
-  FAILED_JOBS: "작업 실패",
+  REAUTH_REQUIRED: "Re-authenticate",
+  SYNC_FAILED: "Sync 실패",
+  WEBHOOK_ERRORS: "Webhook Error",
+  POS_FAILED: "POS Failed",
+  FAILED_JOBS: "Failed Jobs",
 };
 
 function getLabelColor(label: string): string {
@@ -27,24 +27,24 @@ export default function AdminProblemStoresTable({ rows }: Props) {
   if (rows.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">문제 매장 Top N</h2>
-        <p className="text-xs text-gray-400 py-4 text-center">현재 주목할 문제 매장이 없습니다.</p>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Top Problem Stores</h2>
+        <p className="text-xs text-gray-400 py-4 text-center">No problem stores at this time.</p>
       </div>
     );
   }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-      <h2 className="text-sm font-semibold text-gray-700 mb-3">문제 매장 Top {rows.length}</h2>
+      <h2 className="text-sm font-semibold text-gray-700 mb-3">Top {rows.length}</h2>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-gray-400 border-b border-gray-100">
-              <th className="text-left pb-2 font-medium">매장</th>
-              <th className="text-left pb-2 font-medium">테넌트</th>
-              <th className="text-right pb-2 font-medium">점수</th>
-              <th className="text-left pb-2 font-medium">주요 문제</th>
-              <th className="text-right pb-2 font-medium">바로가기</th>
+              <th className="text-left pb-2 font-medium">Store</th>
+              <th className="text-left pb-2 font-medium">Tenant</th>
+              <th className="text-right pb-2 font-medium">Score</th>
+              <th className="text-left pb-2 font-medium">Main Issue</th>
+              <th className="text-right pb-2 font-medium">Link</th>
             </tr>
           </thead>
           <tbody>
@@ -90,7 +90,7 @@ export default function AdminProblemStoresTable({ rows }: Props) {
                       href={`/admin/stores/${r.storeId}`}
                       className="text-blue-600 hover:underline"
                     >
-                      매장
+                      Store
                     </Link>
                     <Link
                       href={`/admin/integrations?storeId=${r.storeId}`}
@@ -113,7 +113,7 @@ export default function AdminProblemStoresTable({ rows }: Props) {
       </div>
       {rows.length >= 2 && (
         <p className="text-xs text-gray-400 mt-3 italic">
-          상위 {Math.min(2, rows.length)}개 매장이 플랫폼 전체 문제의 상당 부분을 차지하고 있습니다.
+          상위 {Math.min(2, rows.length)} more Store이 플랫폼 All 문제의 상당 부분을 차지하고 있습니다.
         </p>
       )}
     </div>

@@ -10,8 +10,8 @@ export default function AdminTrendChart({ data, currencyCode = "NZD", summary }:
   if (data.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">주문 / 매출 추세</h2>
-        <p className="text-xs text-gray-400 py-8 text-center">기간 내 데이터가 없습니다.</p>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Order / Revenue Trend</h2>
+        <p className="text-xs text-gray-400 py-8 text-center">No data for the selected period.</p>
       </div>
     );
   }
@@ -21,16 +21,16 @@ export default function AdminTrendChart({ data, currencyCode = "NZD", summary }:
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-      <h2 className="text-sm font-semibold text-gray-700 mb-4">주문 / 매출 추세</h2>
+      <h2 className="text-sm font-semibold text-gray-700 mb-4">Order / Revenue Trend</h2>
       {/* Orders chart */}
       <div className="mb-6">
-        <div className="text-xs text-gray-500 mb-2">일별 주문 수</div>
+        <div className="text-xs text-gray-500 mb-2">Daily Orders</div>
         <div className="flex items-end gap-1 h-24 overflow-x-auto">
           {data.map((d) => (
             <div
               key={d.date}
               className="flex flex-col items-center gap-0.5 min-w-[20px] flex-1"
-              title={`${d.date}: 전체 ${d.totalOrders}건, 완료 ${d.completedOrders}건`}
+              title={`${d.date}: All ${d.totalOrders}, Completed ${d.completedOrders}`}
             >
               <div className="flex flex-col justify-end h-20 w-full gap-0.5">
                 <div
@@ -50,23 +50,23 @@ export default function AdminTrendChart({ data, currencyCode = "NZD", summary }:
         </div>
         <div className="flex gap-3 mt-2 text-xs">
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-2 bg-blue-200 rounded" />전체
+            <span className="inline-block w-3 h-2 bg-blue-200 rounded" />All
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-3 h-2 bg-blue-500 rounded" />완료
+            <span className="inline-block w-3 h-2 bg-blue-500 rounded" />Completed
           </span>
         </div>
       </div>
 
       {/* Revenue chart */}
       <div>
-        <div className="text-xs text-gray-500 mb-2">일별 매출 ({currencyCode})</div>
+        <div className="text-xs text-gray-500 mb-2">Daily Revenue ({currencyCode})</div>
         <div className="flex items-end gap-1 h-24 overflow-x-auto">
           {data.map((d) => (
             <div
               key={d.date}
               className="flex flex-col items-center gap-0.5 min-w-[20px] flex-1"
-              title={`${d.date}: ${(d.grossSales / 100).toLocaleString("ko-KR")} ${currencyCode}`}
+              title={`${d.date}: ${(d.grossSales / 100).toLocaleString("en-US")} ${currencyCode}`}
             >
               <div className="flex flex-col justify-end h-20 w-full">
                 <div

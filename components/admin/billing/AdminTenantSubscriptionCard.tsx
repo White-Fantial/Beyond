@@ -29,9 +29,9 @@ export default function AdminTenantSubscriptionCard({ subscription, tenantId, av
   if (!subscription) {
     return (
       <div className="text-sm text-gray-400">
-        구독 정보가 없습니다.{" "}
+        No subscription info.{" "}
         <Link href={`/admin/billing/plans`} className="text-blue-600 hover:underline">
-          플랜을 할당하세요.
+          Assign a plan.
         </Link>
       </div>
     );
@@ -41,7 +41,7 @@ export default function AdminTenantSubscriptionCard({ subscription, tenantId, av
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8 text-sm">
         <div>
-          <span className="text-xs text-gray-500">플랜</span>
+          <span className="text-xs text-gray-500">Plan</span>
           <div className="font-medium">
             <Link
               href={`/admin/billing/plans/${subscription.planId}`}
@@ -54,7 +54,7 @@ export default function AdminTenantSubscriptionCard({ subscription, tenantId, av
         </div>
 
         <div>
-          <span className="text-xs text-gray-500">상태</span>
+          <span className="text-xs text-gray-500">Status</span>
           <div>
             <StatusBadge
               value={subscription.status}
@@ -64,12 +64,12 @@ export default function AdminTenantSubscriptionCard({ subscription, tenantId, av
         </div>
 
         <div>
-          <span className="text-xs text-gray-500">결제 주기</span>
+          <span className="text-xs text-gray-500">Billing Cycle</span>
           <div className="font-medium">{labelBillingInterval(subscription.billingInterval)}</div>
         </div>
 
         <div>
-          <span className="text-xs text-gray-500">구독 시작일</span>
+          <span className="text-xs text-gray-500">Subscription Start</span>
           <div className="font-medium">
             {new Date(subscription.startedAt).toLocaleDateString("ko-KR")}
           </div>
@@ -77,7 +77,7 @@ export default function AdminTenantSubscriptionCard({ subscription, tenantId, av
 
         {subscription.trialStart && (
           <div>
-            <span className="text-xs text-gray-500">트라이얼 시작</span>
+            <span className="text-xs text-gray-500">Trial Start</span>
             <div className="font-medium">
               {new Date(subscription.trialStart).toLocaleDateString("ko-KR")}
             </div>
@@ -86,7 +86,7 @@ export default function AdminTenantSubscriptionCard({ subscription, tenantId, av
 
         {subscription.trialEnd && (
           <div>
-            <span className="text-xs text-gray-500">트라이얼 종료</span>
+            <span className="text-xs text-gray-500">Trial End</span>
             <div className="font-medium">
               {new Date(subscription.trialEnd).toLocaleDateString("ko-KR")}
             </div>
@@ -95,7 +95,7 @@ export default function AdminTenantSubscriptionCard({ subscription, tenantId, av
 
         {subscription.currentPeriodStart && (
           <div>
-            <span className="text-xs text-gray-500">현재 기간 시작</span>
+            <span className="text-xs text-gray-500">Current Period Start</span>
             <div className="font-medium">
               {new Date(subscription.currentPeriodStart).toLocaleDateString("ko-KR")}
             </div>
@@ -104,7 +104,7 @@ export default function AdminTenantSubscriptionCard({ subscription, tenantId, av
 
         {subscription.currentPeriodEnd && (
           <div>
-            <span className="text-xs text-gray-500">현재 기간 종료</span>
+            <span className="text-xs text-gray-500">Current Period End</span>
             <div className="font-medium">
               {new Date(subscription.currentPeriodEnd).toLocaleDateString("ko-KR")}
             </div>
@@ -114,14 +114,14 @@ export default function AdminTenantSubscriptionCard({ subscription, tenantId, av
         {subscription.cancelAtPeriodEnd && (
           <div className="col-span-2">
             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
-              기간 종료 시 취소 예정
+              Period 종료 시 Cancel 예정
             </span>
           </div>
         )}
 
         {subscription.externalSubscriptionRef && (
           <div className="col-span-2">
-            <span className="text-xs text-gray-500">외부 구독 ID</span>
+            <span className="text-xs text-gray-500">External Subscription ID</span>
             <div className="font-mono text-xs text-gray-600">{subscription.externalSubscriptionRef}</div>
           </div>
         )}
@@ -132,21 +132,21 @@ export default function AdminTenantSubscriptionCard({ subscription, tenantId, av
           onClick={() => setChangePlanOpen(true)}
           className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
         >
-          플랜 변경
+          Change Plan
         </button>
         {subscription.status === "TRIAL" && (
           <button
             onClick={() => setExtendTrialOpen(true)}
             className="px-3 py-1.5 text-sm border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50"
           >
-            트라이얼 연장
+            Extend Trial
           </button>
         )}
         <button
           onClick={() => setChangeStatusOpen(true)}
           className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
         >
-          상태 변경
+          Change Status
         </button>
       </div>
 

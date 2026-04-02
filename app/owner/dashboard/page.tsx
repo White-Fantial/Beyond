@@ -8,9 +8,9 @@ function ConnectionStatusBadge({ status }: { status: "CONNECTED" | "ERROR" | "NO
     NOT_CONNECTED: "bg-gray-100 text-gray-500",
   };
   const labels = {
-    CONNECTED: "연결됨",
-    ERROR: "오류",
-    NOT_CONNECTED: "미연결",
+    CONNECTED: "Connected",
+    ERROR: "Error",
+    NOT_CONNECTED: "Not Connected",
   };
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${styles[status]}`}>
@@ -41,31 +41,31 @@ export default async function OwnerDashboardPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900">Owner Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-500">매장 운영 현황을 한눈에 확인하세요.</p>
+        <p className="mt-1 text-sm text-gray-500">Get a quick overview of your store operations.</p>
       </div>
 
       {/* Sales KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <KpiCard label="오늘 매출" value={`₩${(summary?.todaySales ?? 0).toLocaleString()}`} sub="Today Sales" />
-        <KpiCard label="이번 주 매출" value={`₩${(summary?.thisWeekSales ?? 0).toLocaleString()}`} sub="This Week Sales" />
-        <KpiCard label="오늘 주문 수" value={summary?.ordersToday ?? 0} sub="Orders Today" />
-        <KpiCard label="품절 항목" value={summary?.soldOutItemsCount ?? 0} sub="Sold Out Items" />
+        <KpiCard label="Today's Revenue" value={`₩${(summary?.todaySales ?? 0).toLocaleString()}`} sub="Today Sales" />
+        <KpiCard label="This Week's Revenue" value={`₩${(summary?.thisWeekSales ?? 0).toLocaleString()}`} sub="This Week Sales" />
+        <KpiCard label="Today's Orders" value={summary?.ordersToday ?? 0} sub="Orders Today" />
+        <KpiCard label="Sold Out Items" value={summary?.soldOutItemsCount ?? 0} sub="Sold Out Items" />
       </div>
 
       {/* Connection Status */}
       <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">연동 상태</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Integration Status</h2>
         <div className="grid grid-cols-3 gap-4">
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-gray-500">POS 연동</span>
+            <span className="text-xs text-gray-500">POS Integration</span>
             <ConnectionStatusBadge status={summary?.posConnectionStatus ?? "NOT_CONNECTED"} />
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-gray-500">배달 연동</span>
+            <span className="text-xs text-gray-500">Delivery Integration</span>
             <ConnectionStatusBadge status={summary?.deliveryConnectionStatus ?? "NOT_CONNECTED"} />
           </div>
           <div className="flex flex-col gap-1">
-            <span className="text-xs text-gray-500">결제 연동</span>
+            <span className="text-xs text-gray-500">Payment Integration</span>
             <ConnectionStatusBadge status={summary?.paymentConnectionStatus ?? "NOT_CONNECTED"} />
           </div>
         </div>
@@ -73,7 +73,7 @@ export default async function OwnerDashboardPage() {
 
       {/* Recent Logs */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">최근 로그</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Recent Logs</h2>
         {summary?.recentLogs.length ? (
           <ul className="divide-y divide-gray-100">
             {summary.recentLogs.map((log) => (
@@ -89,13 +89,13 @@ export default async function OwnerDashboardPage() {
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-700 truncate">{log.message}</p>
-                  <p className="text-xs text-gray-400">{new Date(log.occurredAt).toLocaleString("ko-KR")}</p>
+                  <p className="text-xs text-gray-400">{new Date(log.occurredAt).toLocaleString("en-US")}</p>
                 </div>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-400">최근 로그가 없습니다.</p>
+          <p className="text-sm text-gray-400">No recent logs.</p>
         )}
       </div>
     </div>

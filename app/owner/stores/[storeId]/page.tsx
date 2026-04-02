@@ -32,11 +32,11 @@ function ChannelStatusBadge({ status }: { status: string }) {
     DISCONNECTED: "bg-gray-100 text-gray-400",
   };
   const labels: Record<string, string> = {
-    CONNECTED: "연결됨",
-    REAUTH_REQUIRED: "재인증 필요",
-    ERROR: "오류",
-    NOT_CONNECTED: "미연결",
-    DISCONNECTED: "해제됨",
+    CONNECTED: "Connected",
+    REAUTH_REQUIRED: "Reauth Required",
+    ERROR: "Error",
+    NOT_CONNECTED: "Not Connected",
+    DISCONNECTED: "Disconnected",
   };
   return (
     <span className={`text-xs font-medium px-2 py-0.5 rounded ${map[status] ?? "bg-gray-100 text-gray-500"}`}>
@@ -46,7 +46,7 @@ function ChannelStatusBadge({ status }: { status: string }) {
 }
 
 function formatCurrency(minorUnit: number, currency: string) {
-  return new Intl.NumberFormat("ko-KR", { style: "currency", currency }).format(minorUnit / 100);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(minorUnit / 100);
 }
 
 export default async function StoreDashboardPage({ params }: Props) {
@@ -60,38 +60,38 @@ export default async function StoreDashboardPage({ params }: Props) {
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <SummaryCard
-          label="오늘 매출"
+          label="Today's Revenue"
           value={formatCurrency(dashboard.todaySalesMinorUnit, "NZD")}
           sub="Today Sales"
         />
-        <SummaryCard label="오늘 주문" value={dashboard.todayOrderCount} sub="Today Orders" />
+        <SummaryCard label="Today's Orders" value={dashboard.todayOrderCount} sub="Today Orders" />
         <SummaryCard
-          label="완료 주문"
+          label="Completed Orders"
           value={dashboard.completedOrderCount}
           sub="Completed"
         />
         <SummaryCard
-          label="취소 주문"
+          label="Cancelled Orders"
           value={dashboard.cancelledOrderCount}
           sub="Cancelled"
         />
         <SummaryCard
-          label="품절 상품"
+          label="Sold Out Products"
           value={dashboard.soldOutProductCount}
           sub="Sold Out"
         />
         <SummaryCard
-          label="활성 구독"
+          label="Active Subscriptions"
           value={dashboard.activeSubscriptionCount}
           sub="Active Subscriptions"
         />
         <SummaryCard
-          label="연결된 채널"
+          label="Connected Channels"
           value={`${dashboard.connectedChannelCount} / ${dashboard.totalChannelCount}`}
           sub="Connected Channels"
         />
         <SummaryCard
-          label="다가오는 구독 주문"
+          label="Upcoming Subscription Orders"
           value={dashboard.upcomingSubscriptionOrderCount}
           sub="Next 7 Days"
         />
@@ -99,14 +99,14 @@ export default async function StoreDashboardPage({ params }: Props) {
 
       {/* Channel breakdown */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">채널별 매출</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Revenue by Channel</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-gray-500 border-b border-gray-100">
-                <th className="text-left pb-2 font-medium">채널</th>
-                <th className="text-right pb-2 font-medium">오늘 매출</th>
-                <th className="text-right pb-2 font-medium">주문 수</th>
+                <th className="text-left pb-2 font-medium">Channel</th>
+                <th className="text-right pb-2 font-medium">Today's Revenue</th>
+                <th className="text-right pb-2 font-medium">Orders</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -123,7 +123,7 @@ export default async function StoreDashboardPage({ params }: Props) {
           </table>
         </div>
         <p className="mt-2 text-xs text-gray-400">
-          * 채널별 실시간 매출 집계는 analytics 연동 후 표시됩니다.
+          * Real-time channel revenue will be available after analytics integration.
         </p>
       </div>
 
@@ -131,16 +131,16 @@ export default async function StoreDashboardPage({ params }: Props) {
         {/* Sold out products */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-700">현재 품절 상품</h2>
+            <h2 className="text-sm font-semibold text-gray-700">Currently Sold Out</h2>
             <a
               href={`/owner/stores/${storeId}/products?filter=sold_out`}
               className="text-xs text-brand-600 hover:underline"
             >
-              전체 보기
+              View All
             </a>
           </div>
           {dashboard.soldOutProducts.length === 0 ? (
-            <p className="text-sm text-gray-400">품절 상품이 없습니다.</p>
+            <p className="text-sm text-gray-400">No sold-out products.</p>
           ) : (
             <ul className="space-y-1">
               {dashboard.soldOutProducts.slice(0, 5).map((p) => (
@@ -151,7 +151,7 @@ export default async function StoreDashboardPage({ params }: Props) {
               ))}
               {dashboard.soldOutProducts.length > 5 && (
                 <li className="text-xs text-gray-400">
-                  외 {dashboard.soldOutProducts.length - 5}개
+                  and {dashboard.soldOutProducts.length - 5} more
                 </li>
               )}
             </ul>
@@ -161,18 +161,18 @@ export default async function StoreDashboardPage({ params }: Props) {
         {/* Upcoming subscription orders */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-700">다가오는 구독 주문</h2>
+            <h2 className="text-sm font-semibold text-gray-700">Upcoming Subscription Orders</h2>
             <a
               href={`/owner/stores/${storeId}/subscriptions/upcoming`}
               className="text-xs text-brand-600 hover:underline"
             >
-              전체 보기
+              View All
             </a>
           </div>
           <p className="text-sm text-gray-500">
-            향후 7일 내 예정:{" "}
+            Scheduled in next 7 days:{" "}
             <span className="font-semibold text-gray-900">
-              {dashboard.upcomingSubscriptionOrderCount}건
+              {dashboard.upcomingSubscriptionOrderCount}
             </span>
           </p>
         </div>
@@ -180,20 +180,20 @@ export default async function StoreDashboardPage({ params }: Props) {
 
       {/* Recent orders (stub) */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">최근 주문</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Recent Orders</h2>
         {dashboard.recentOrders.length === 0 ? (
           <p className="text-sm text-gray-400">
-            최근 주문이 없습니다. Order analytics 연동 후 여기에 표시됩니다.
+            Recent Orders이 없습니다. Order analytics 연동 후 여기에 표시됩니다.
           </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs text-gray-500 border-b border-gray-100">
-                  <th className="text-left pb-2 font-medium">채널</th>
-                  <th className="text-left pb-2 font-medium">상태</th>
-                  <th className="text-right pb-2 font-medium">금액</th>
-                  <th className="text-right pb-2 font-medium">시간</th>
+                  <th className="text-left pb-2 font-medium">Channel</th>
+                  <th className="text-left pb-2 font-medium">Status</th>
+                  <th className="text-right pb-2 font-medium">Amount</th>
+                  <th className="text-right pb-2 font-medium">Time</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -205,7 +205,7 @@ export default async function StoreDashboardPage({ params }: Props) {
                     </td>
                     <td className="py-2 text-right">{formatCurrency(o.totalAmountMinorUnit, o.currency)}</td>
                     <td className="py-2 text-right text-gray-400 text-xs">
-                      {new Date(o.createdAt).toLocaleString("ko-KR")}
+                      {new Date(o.createdAt).toLocaleString("en-US")}
                     </td>
                   </tr>
                 ))}

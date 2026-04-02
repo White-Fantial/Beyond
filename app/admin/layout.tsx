@@ -29,10 +29,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         {/* Mobile nav bar */}
         <nav className="md:hidden bg-gray-900 text-white flex overflow-x-auto shrink-0 px-2 py-2 gap-1">
           {[
-            { href: "/admin", label: "대시보드" },
-            { href: "/admin/tenants", label: "테넌트" },
-            { href: "/admin/users", label: "사용자" },
-            { href: "/admin/stores", label: "매장" },
+            { href: "/admin", label: "Dashboard" },
+            { href: "/admin/tenants", label: "Tenants" },
+            { href: "/admin/users", label: "Users" },
+            { href: "/admin/stores", label: "Stores" },
           ].map((item) => (
             <a
               key={item.href}

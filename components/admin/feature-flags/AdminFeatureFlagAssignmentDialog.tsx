@@ -57,7 +57,7 @@ export default function AdminFeatureFlagAssignmentDialog({ flagKey, flagType }: 
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? "오류가 발생했습니다.");
+        setError(data.error ?? "Error가 발생했습니다.");
         return;
       }
       setOpen(false);
@@ -76,17 +76,17 @@ export default function AdminFeatureFlagAssignmentDialog({ flagKey, flagType }: 
         onClick={() => setOpen(true)}
         className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
       >
-        + Assignment 추가
+        + Assignment Add
       </button>
 
       {open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-4">Assignment 추가</h3>
+            <h3 className="text-base font-semibold text-gray-900 mb-4">Assignment Add</h3>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  범위 타입
+                  범위 Type
                 </label>
                 <select
                   value={scopeType}
@@ -104,27 +104,27 @@ export default function AdminFeatureFlagAssignmentDialog({ flagKey, flagType }: 
               {scopeType !== "GLOBAL" && (
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">
-                    Scope Key{scopeType === "PERCENTAGE" ? " (0–100)" : " (ID 또는 이름)"}
+                    Scope Key{scopeType === "PERCENTAGE" ? " (0–100)" : " (ID 또는 Name)"}
                   </label>
                   <input
                     value={scopeKey}
                     onChange={(e) => setScopeKey(e.target.value)}
-                    placeholder={scopeType === "PERCENTAGE" ? "예: 10" : "예: tenant-uuid"}
+                    placeholder={scopeType === "PERCENTAGE" ? "e.g. 10" : "e.g. tenant-uuid"}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">값</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Value</label>
                 {flagType === "BOOLEAN" && (
                   <select
                     value={String(boolValue)}
                     onChange={(e) => setBoolValue(e.target.value === "true")}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                   >
-                    <option value="true">true (활성)</option>
-                    <option value="false">false (비활성)</option>
+                    <option value="true">true (Active)</option>
+                    <option value="false">false (비Active)</option>
                   </select>
                 )}
                 {(flagType === "STRING" || flagType === "VARIANT") && (
@@ -132,7 +132,7 @@ export default function AdminFeatureFlagAssignmentDialog({ flagKey, flagType }: 
                     value={stringValue}
                     onChange={(e) => setStringValue(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                    placeholder="string 값"
+                    placeholder="string value"
                   />
                 )}
                 {flagType === "INTEGER" && (
@@ -145,7 +145,7 @@ export default function AdminFeatureFlagAssignmentDialog({ flagKey, flagType }: 
                 )}
                 {flagType === "JSON" && (
                   <p className="text-xs text-gray-400">
-                    JSON 타입은 API를 통해 직접 설정하세요.
+                    JSON Type은 API를 통해 직접 Settings하세요.
                   </p>
                 )}
               </div>
@@ -164,7 +164,7 @@ export default function AdminFeatureFlagAssignmentDialog({ flagKey, flagType }: 
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  노트 (선택)
+                  Note (선택)
                 </label>
                 <input
                   value={note}
@@ -182,14 +182,14 @@ export default function AdminFeatureFlagAssignmentDialog({ flagKey, flagType }: 
                   onClick={() => setOpen(false)}
                   className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  취소
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
                   className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {loading ? "저장 중..." : "추가"}
+                  {loading ? "Saving..." : "Add"}
                 </button>
               </div>
             </form>

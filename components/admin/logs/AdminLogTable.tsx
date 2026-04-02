@@ -33,15 +33,15 @@ export default function AdminLogTable({ items, hasFilters }: AdminLogTableProps)
         <table className="w-full text-sm text-left">
           <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
             <tr>
-              <th className="px-4 py-3 whitespace-nowrap">발생 시각</th>
-              <th className="px-4 py-3 whitespace-nowrap">유형</th>
-              <th className="px-4 py-3">제목</th>
+              <th className="px-4 py-3 whitespace-nowrap">Time</th>
+              <th className="px-4 py-3 whitespace-nowrap">Type</th>
+              <th className="px-4 py-3">Title</th>
               <th className="px-4 py-3 whitespace-nowrap">Tenant / Store</th>
               <th className="px-4 py-3 whitespace-nowrap">Provider</th>
               <th className="px-4 py-3 whitespace-nowrap">Action</th>
               <th className="px-4 py-3 whitespace-nowrap">Status</th>
               <th className="px-4 py-3 whitespace-nowrap">Severity</th>
-              <th className="px-4 py-3 whitespace-nowrap">상세</th>
+              <th className="px-4 py-3 whitespace-nowrap">Details</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
@@ -150,7 +150,7 @@ export default function AdminLogTable({ items, hasFilters }: AdminLogTableProps)
                 <AdminLogBadge variant="severity" value={item.severity} />
               </div>
               <span className="text-xs text-gray-400 whitespace-nowrap font-mono shrink-0">
-                {new Date(item.occurredAt).toLocaleString("ko-KR")}
+                {new Date(item.occurredAt).toLocaleString("en-US")}
               </span>
             </div>
             <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>

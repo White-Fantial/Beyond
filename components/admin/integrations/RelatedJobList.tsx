@@ -19,12 +19,12 @@ interface Props {
   title?: string;
 }
 
-export default function RelatedJobList({ jobs, title = "관련 작업 이력" }: Props) {
+export default function RelatedJobList({ jobs, title = "Related Job History" }: Props) {
   if (jobs.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">{title}</h2>
-        <p className="text-xs text-gray-400 py-4 text-center">관련 작업 기록이 없습니다.</p>
+        <p className="text-xs text-gray-400 py-4 text-center">No related job records found.</p>
       </div>
     );
   }
@@ -36,12 +36,12 @@ export default function RelatedJobList({ jobs, title = "관련 작업 이력" }:
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-gray-400 border-b border-gray-100">
-              <th className="text-left pb-2 font-medium">유형</th>
-              <th className="text-left pb-2 font-medium">상태</th>
-              <th className="text-left pb-2 font-medium">트리거</th>
-              <th className="text-left pb-2 font-medium">시작</th>
-              <th className="text-left pb-2 font-medium">완료</th>
-              <th className="text-right pb-2 font-medium">상세</th>
+              <th className="text-left pb-2 font-medium">Type</th>
+              <th className="text-left pb-2 font-medium">Status</th>
+              <th className="text-left pb-2 font-medium">Trigger</th>
+              <th className="text-left pb-2 font-medium">Started</th>
+              <th className="text-left pb-2 font-medium">Completed</th>
+              <th className="text-right pb-2 font-medium">Details</th>
             </tr>
           </thead>
           <tbody>
@@ -55,17 +55,17 @@ export default function RelatedJobList({ jobs, title = "관련 작업 이력" }:
                 </td>
                 <td className="py-2 text-xs text-gray-500">{job.triggerSource}</td>
                 <td className="py-2 text-xs text-gray-500">
-                  {job.startedAt ? job.startedAt.toLocaleString("ko-KR") : "—"}
+                  {job.startedAt ? job.startedAt.toLocaleString("en-US") : "—"}
                 </td>
                 <td className="py-2 text-xs text-gray-500">
-                  {job.finishedAt ? job.finishedAt.toLocaleString("ko-KR") : "—"}
+                  {job.finishedAt ? job.finishedAt.toLocaleString("en-US") : "—"}
                 </td>
                 <td className="py-2 text-right">
                   <Link
                     href={`/admin/jobs/${job.id}`}
                     className="text-xs text-blue-600 hover:underline"
                   >
-                    보기
+                    View
                   </Link>
                 </td>
               </tr>

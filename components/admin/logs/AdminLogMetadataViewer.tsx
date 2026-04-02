@@ -66,7 +66,7 @@ export default function AdminLogMetadataViewer({ title, data }: AdminLogMetadata
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-700 mb-2">{title}</h2>
-        <p className="text-sm text-gray-400 italic">데이터 없음</p>
+        <p className="text-sm text-gray-400 italic">No data</p>
       </div>
     );
   }
@@ -79,7 +79,7 @@ export default function AdminLogMetadataViewer({ title, data }: AdminLogMetadata
         className="w-full flex items-center justify-between px-5 py-3 text-left hover:bg-gray-50 transition-colors"
       >
         <h2 className="text-sm font-semibold text-gray-700">{title}</h2>
-        <span className="text-gray-400 text-xs">{isOpen ? "▲ 접기" : "▼ 펼치기"}</span>
+        <span className="text-gray-400 text-xs">{isOpen ? "▲ Collapse" : "▼ Expand"}</span>
       </button>
 
       {isOpen && (

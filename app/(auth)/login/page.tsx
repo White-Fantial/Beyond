@@ -10,17 +10,17 @@ export default function LoginPage() {
             Beyond
           </Link>
           <p className="text-gray-500 mt-2 text-sm">
-            매장 운영 대시보드에 로그인하세요
+            Sign in to your store operations dashboard
           </p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-          <h1 className="text-xl font-semibold text-gray-900 mb-6">로그인</h1>
+          <h1 className="text-xl font-semibold text-gray-900 mb-6">Sign In</h1>
           <LoginForm />
           <p className="text-center text-sm text-gray-500 mt-6">
-            계정이 없으신가요?{" "}
+            Don't have an account?{" "}
             <Link href="#" className="text-brand-600 hover:text-brand-700 font-medium">
-              영업팀 문의
+              Contact Sales
             </Link>
           </p>
         </div>

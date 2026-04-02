@@ -10,8 +10,8 @@ export default async function SelectStorePage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <div className="text-4xl mb-4">🏪</div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">배정된 매장 없음</h1>
-          <p className="text-gray-500">관리자에게 매장 배정을 요청하세요.</p>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">No Stores Assigned</h1>
+          <p className="text-gray-500">Please contact your administrator to get store access.</p>
         </div>
       </div>
     );
@@ -21,8 +21,8 @@ export default async function SelectStorePage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">매장 선택</h1>
-          <p className="text-gray-500 mt-2">작업할 매장을 선택하세요.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Select a Store</h1>
+          <p className="text-gray-500 mt-2">Choose a store to work in.</p>
         </div>
         <div className="space-y-3">
           {memberships.map((m) => (

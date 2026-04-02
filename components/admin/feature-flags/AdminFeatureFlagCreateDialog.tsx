@@ -42,7 +42,7 @@ export default function AdminFeatureFlagCreateDialog() {
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? "오류가 발생했습니다.");
+        setError(data.error ?? "Error가 발생했습니다.");
         return;
       }
       const data = await res.json();
@@ -59,14 +59,14 @@ export default function AdminFeatureFlagCreateDialog() {
         onClick={() => setOpen(true)}
         className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
       >
-        + 새 Flag 생성
+        + New Flag
       </button>
 
       {open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
             <h3 className="text-base font-semibold text-gray-900 mb-4">
-              새 Feature Flag 생성
+              Create New Feature Flag
             </h3>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
@@ -79,30 +79,30 @@ export default function AdminFeatureFlagCreateDialog() {
                   onChange={(e) =>
                     setKey(e.target.value.toLowerCase().replace(/\s+/g, "_"))
                   }
-                  placeholder="예: catalog_sync_v2"
+                  placeholder="e.g. catalog_sync_v2"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono"
                 />
                 <p className="text-xs text-gray-400 mt-0.5">
-                  영문 소문자, 숫자, 언더스코어만 사용
+                  Use lowercase letters, numbers, and underscores only
                 </p>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  이름 *
+                  Name *
                 </label>
                 <input
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="예: Catalog Sync V2"
+                  placeholder="e.g. Catalog Sync V2"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  설명 (선택)
+                  Description (optional)
                 </label>
                 <textarea
                   value={description}
@@ -113,7 +113,7 @@ export default function AdminFeatureFlagCreateDialog() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">타입</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
                 <select
                   value={flagType}
                   onChange={(e) => setFlagType(e.target.value as FlagType)}
@@ -130,15 +130,15 @@ export default function AdminFeatureFlagCreateDialog() {
               {flagType === "BOOLEAN" && (
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">
-                    기본값
+                    Default Value
                   </label>
                   <select
                     value={String(defaultBoolValue)}
                     onChange={(e) => setDefaultBoolValue(e.target.value === "true")}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                   >
-                    <option value="false">false (기본 비활성)</option>
-                    <option value="true">true (기본 활성)</option>
+                    <option value="false">false (기본 비Active)</option>
+                    <option value="true">true (기본 Active)</option>
                   </select>
                 </div>
               )}
@@ -152,18 +152,18 @@ export default function AdminFeatureFlagCreateDialog() {
                   className="rounded"
                 />
                 <label htmlFor="isExperiment" className="text-xs text-gray-700">
-                  실험(Experiment) 플래그
+                  Experiment Flag
                 </label>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Owner 노트 (선택)
+                  Owner Note (optional)
                 </label>
                 <input
                   value={ownerNote}
                   onChange={(e) => setOwnerNote(e.target.value)}
-                  placeholder="담당자 메모"
+                  placeholder="Owner notes..."
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
                 />
               </div>
@@ -176,14 +176,14 @@ export default function AdminFeatureFlagCreateDialog() {
                   onClick={() => setOpen(false)}
                   className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  취소
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
                   className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  {loading ? "생성 중..." : "생성"}
+                  {loading ? "Creating..." : "Create"}
                 </button>
               </div>
             </form>

@@ -21,27 +21,27 @@ export function buildHealthSummary(
   const { totalLabel, total, failLabel, failures, window = "24h" } = options;
 
   if (status === "UNKNOWN") {
-    return `데이터 없음 (최근 ${window})`;
+    return `No data (last ${window})`;
   }
   if (status === "HEALTHY") {
     if (total !== undefined && failures !== undefined) {
-      return `정상 — ${totalLabel ?? "전체"} ${total.toLocaleString()}건, 오류 ${failures}건 (최근 ${window})`;
+      return `Healthy — ${totalLabel ?? "All"} ${total.toLocaleString()}, errors ${failures} (last ${window})`;
     }
-    return `정상 동작 중 (최근 ${window})`;
+    return `Healthy — operating normally (last ${window})`;
   }
   if (status === "DEGRADED") {
     if (failures !== undefined) {
-      return `부분 이상 — ${failLabel ?? "오류"} ${failures}건 감지 (최근 ${window})`;
+      return `Degraded — ${failLabel ?? "Error"} ${failures} detected (last ${window})`;
     }
-    return `부분 이상 감지 (최근 ${window})`;
+    return `Degraded — issues detected (last ${window})`;
   }
   if (status === "DOWN") {
     if (failures !== undefined) {
-      return `중단 — ${failLabel ?? "오류"} ${failures}건 (최근 ${window})`;
+      return `Down — ${failLabel ?? "Error"} ${failures} (last ${window})`;
     }
-    return `기능 중단 의심 (최근 ${window})`;
+    return `Suspected outage (last ${window})`;
   }
-  return `상태 알 수 없음`;
+  return `Status Unknown`;
 }
 
 /** Convert a SystemHealthStatus to a Tailwind color class set. */

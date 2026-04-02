@@ -37,10 +37,10 @@ export function compareUsageAgainstPlan(
   const limitMap = new Map(limits.map((l) => [l.key, l]));
 
   const comparisons: Array<{ key: string; label: string; current: number }> = [
-    { key: "max_stores", label: "매장", current: usage.storesCount },
-    { key: "max_users", label: "사용자", current: usage.usersCount },
-    { key: "max_active_integrations", label: "연동", current: usage.activeIntegrationsCount },
-    { key: "monthly_order_limit", label: "월간 주문", current: usage.ordersCount },
+    { key: "max_stores", label: "Stores", current: usage.storesCount },
+    { key: "max_users", label: "Users", current: usage.usersCount },
+    { key: "max_active_integrations", label: "Integrations", current: usage.activeIntegrationsCount },
+    { key: "monthly_order_limit", label: "Monthly Orders", current: usage.ordersCount },
   ];
 
   return comparisons.map(({ key, label, current }) => {

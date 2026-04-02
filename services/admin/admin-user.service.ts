@@ -187,19 +187,19 @@ export async function createAdminUser(
 ): Promise<{ id: string }> {
   const { name, email, password, platformRole = "USER", status = "ACTIVE" } = input;
 
-  if (!name?.trim()) throw new Error("이름은 필수입니다.");
-  if (!email?.trim()) throw new Error("이메일은 필수입니다.");
-  if (!password || password.length < 8) throw new Error("비밀번호는 최소 8자 이상이어야 합니다.");
+  if (!name?.trim()) throw new Error("Name is required.");
+  if (!email?.trim()) throw new Error("Email is required.");
+  if (!password || password.length < 8) throw new Error("Password must be at least 8 characters.");
   if (!ALLOWED_PLATFORM_ROLES.includes(platformRole as AllowedPlatformRole)) {
-    throw new Error(`올바르지 않은 플랫폼 역할입니다: ${platformRole}`);
+    throw new Error(`Invalid platform role: ${platformRole}`);
   }
   if (!ALLOWED_USER_STATUSES.includes(status as AllowedUserStatus)) {
-    throw new Error(`올바르지 않은 상태값입니다: ${status}`);
+    throw new Error(`Invalid status value: ${status}`);
   }
 
   const normalizedEmail = email.trim().toLowerCase();
   const existing = await prisma.user.findUnique({ where: { email: normalizedEmail }, select: { id: true } });
-  if (existing) throw new Error("이미 사용 중인 이메일입니다.");
+  if (existing) throw new Error("This email is already in use.");
 
   const passwordHash = await bcrypt.hash(password, 12);
 
@@ -238,14 +238,14 @@ export async function updateAdminUser(
   const data: Record<string, unknown> = {};
 
   if (input.name !== undefined) {
-    if (!input.name.trim()) throw new Error("이름은 필수입니다.");
+    if (!input.name.trim()) throw new Error("Name is required.");
     data.name = input.name.trim();
   }
   if (input.email !== undefined) {
     const normalizedEmail = input.email.trim().toLowerCase();
     if (normalizedEmail !== user.email) {
       const existing = await prisma.user.findUnique({ where: { email: normalizedEmail }, select: { id: true } });
-      if (existing) throw new Error("이미 사용 중인 이메일입니다.");
+      if (existing) throw new Error("이미 사용 중인 Email입니다.");
     }
     data.email = normalizedEmail;
   }
@@ -268,11 +268,11 @@ export async function updateAdminUserPlatformRole(
   actorUserId: string
 ): Promise<void> {
   if (!ALLOWED_PLATFORM_ROLES.includes(platformRole as AllowedPlatformRole)) {
-    throw new Error(`올바르지 않은 플랫폼 역할입니다: ${platformRole}`);
+    throw new Error(`올바르지 않은 플랫폼 Role입니다: ${platformRole}`);
   }
   // Cannot demote self
   if (userId === actorUserId && platformRole !== "PLATFORM_ADMIN") {
-    throw new Error("자신의 PLATFORM_ADMIN 권한은 제거할 수 없습니다.");
+    throw new Error("You cannot remove your own PLATFORM_ADMIN role.");
   }
 
   const user = await prisma.user.findUnique({
@@ -283,7 +283,7 @@ export async function updateAdminUserPlatformRole(
 
   // Cannot modify another PLATFORM_ADMIN's role (unless it's yourself — blocked above)
   if (user.platformRole === "PLATFORM_ADMIN" && userId !== actorUserId) {
-    throw new Error("다른 PLATFORM_ADMIN의 역할은 변경할 수 없습니다.");
+    throw new Error("Cannot change the role of another PLATFORM_ADMIN.");
   }
 
   await prisma.user.update({
@@ -307,7 +307,7 @@ export async function setAdminUserStatus(
   }
   // Cannot suspend/archive self
   if (selfGuardUserId && selfGuardUserId === userId && (status === "SUSPENDED" || status === "ARCHIVED")) {
-    throw new Error("자신의 계정을 정지하거나 보관할 수 없습니다.");
+    throw new Error("You cannot suspend or archive your own account.");
   }
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, status: true } });
   if (!user) notFound();

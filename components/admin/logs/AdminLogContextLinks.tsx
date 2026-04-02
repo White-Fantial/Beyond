@@ -23,7 +23,7 @@ function buildLinks(log: AdminLogDetail): ContextLink[] {
     links.push({
       label: "Tenant Logs",
       href: `/admin/logs?tenantId=${log.tenantId}`,
-      value: "→ 관련 로그 보기",
+      value: "→ Related Logs 보기",
     });
   }
 
@@ -36,7 +36,7 @@ function buildLinks(log: AdminLogDetail): ContextLink[] {
     links.push({
       label: "Store Logs",
       href: `/admin/logs?storeId=${log.storeId}`,
-      value: "→ 관련 로그 보기",
+      value: "→ Related Logs 보기",
     });
   }
 
@@ -53,7 +53,7 @@ function buildLinks(log: AdminLogDetail): ContextLink[] {
     links.push({
       label: "User Logs",
       href: `/admin/logs?userId=${log.actorUserId}`,
-      value: "→ 관련 로그 보기",
+      value: "→ Related Logs 보기",
     });
   }
 
@@ -69,13 +69,13 @@ function buildLinks(log: AdminLogDetail): ContextLink[] {
     links.push({
       label: "Order Logs",
       href: `/admin/logs?logType=ORDER_EVENT`,
-      value: `→ Order Event 로그`,
+      value: `→ Order Event Logs`,
     });
     if (log.channelType) {
       links.push({
         label: "Provider Logs",
         href: `/admin/logs?provider=${log.channelType}`,
-        value: `→ ${log.channelType} 로그`,
+        value: `→ ${log.channelType} Logs`,
       });
     }
   }
@@ -85,7 +85,7 @@ function buildLinks(log: AdminLogDetail): ContextLink[] {
       links.push({
         label: "Provider Logs",
         href: `/admin/logs?logType=CONNECTION_ACTION&provider=${log.provider}`,
-        value: `→ ${log.provider} Connection 로그`,
+        value: `→ ${log.provider} Connection Logs`,
       });
     }
     if (log.actorUserId) {
@@ -101,7 +101,7 @@ function buildLinks(log: AdminLogDetail): ContextLink[] {
     links.push({
       label: "Provider Logs",
       href: `/admin/logs?logType=WEBHOOK&provider=${log.channelType}`,
-      value: `→ ${log.channelType} Webhook 로그`,
+      value: `→ ${log.channelType} Webhook Logs`,
     });
   }
 
@@ -115,7 +115,7 @@ export default function AdminLogContextLinks({ log }: AdminLogContextLinksProps)
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-      <h2 className="text-sm font-semibold text-gray-700 mb-3">관련 링크</h2>
+      <h2 className="text-sm font-semibold text-gray-700 mb-3">Related Links</h2>
       <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
         {links.map((link, i) => (
           <div key={i} className="flex items-start gap-2">

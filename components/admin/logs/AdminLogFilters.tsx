@@ -4,7 +4,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
 
 const LOG_TYPE_OPTIONS = [
-  { value: "", label: "모든 로그 유형" },
+  { value: "", label: "모든 로그 Type" },
   { value: "AUDIT", label: "Audit" },
   { value: "CONNECTION_ACTION", label: "Connection" },
   { value: "WEBHOOK", label: "Webhook" },
@@ -12,7 +12,7 @@ const LOG_TYPE_OPTIONS = [
 ];
 
 const PROVIDER_OPTIONS = [
-  { value: "", label: "모든 Provider" },
+  { value: "", label: "All Providers" },
   { value: "LOYVERSE", label: "Loyverse" },
   { value: "UBER_EATS", label: "Uber Eats" },
   { value: "DOORDASH", label: "DoorDash" },
@@ -85,7 +85,7 @@ export default function AdminLogFilters({ current }: AdminLogFiltersProps) {
       <div className="flex flex-col sm:flex-row gap-2">
         <input
           type="text"
-          placeholder="검색 (action, event, message...)"
+          placeholder="Search (action, event, message...)"
           defaultValue={current.q ?? ""}
           className="flex-1 min-w-0 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-300"
           onBlur={(e) => updateParam("q", e.target.value)}
@@ -165,7 +165,7 @@ export default function AdminLogFilters({ current }: AdminLogFiltersProps) {
             onChange={(e) => updateParam("errorOnly", e.target.checked ? "1" : "")}
             className="rounded border-gray-300 text-red-600 focus:ring-red-300"
           />
-          <span className="text-sm text-gray-600">오류만 보기</span>
+          <span className="text-sm text-gray-600">Error만 보기</span>
         </label>
 
         {hasAnyFilter && (
@@ -174,7 +174,7 @@ export default function AdminLogFilters({ current }: AdminLogFiltersProps) {
             onClick={clearAll}
             className="px-3 py-1.5 text-xs font-medium text-gray-500 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
           >
-            필터 초기화
+            Filter Reset
           </button>
         )}
       </div>

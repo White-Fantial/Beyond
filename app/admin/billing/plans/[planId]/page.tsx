@@ -33,14 +33,14 @@ export default async function AdminPlanDetailPage({ params }: PageProps) {
     <div>
       <div className="mb-2">
         <Link href="/admin/billing/plans" className="text-xs text-gray-400 hover:underline">
-          ← 요금제 목록
+          ← Back to Plans
         </Link>
       </div>
 
       <div className="flex items-start justify-between gap-4 mb-6">
         <AdminPageHeader
           title={plan.name}
-          description={`코드: ${plan.code}`}
+          description={`Code: ${plan.code}`}
         />
         <div className="shrink-0 pt-1">
           <StatusBadge value={plan.status} label={labelPlanStatus(plan.status)} />
@@ -49,23 +49,23 @@ export default async function AdminPlanDetailPage({ params }: PageProps) {
 
       {/* Basic info + edit form */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">기본 정보</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">Basic Information</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm mb-6">
           <div>
-            <span className="text-xs text-gray-500">가격</span>
+            <span className="text-xs text-gray-500">Price</span>
             <div className="font-semibold">{formatPriceMinor(plan.priceAmountMinor, plan.currencyCode)}</div>
           </div>
           <div>
-            <span className="text-xs text-gray-500">결제 주기</span>
+            <span className="text-xs text-gray-500">Billing Interval</span>
             <div className="font-semibold">{labelBillingInterval(plan.billingInterval)}</div>
           </div>
           <div>
-            <span className="text-xs text-gray-500">트라이얼 기간</span>
-            <div className="font-semibold">{plan.trialDays ? `${plan.trialDays}일` : "없음"}</div>
+            <span className="text-xs text-gray-500">Trial Period</span>
+            <div className="font-semibold">{plan.trialDays ? `${plan.trialDays} days` : "None"}</div>
           </div>
           <div>
-            <span className="text-xs text-gray-500">구독 테넌트</span>
-            <div className="font-semibold">{plan.tenantCount}개</div>
+            <span className="text-xs text-gray-500">Subscribed Tenants</span>
+            <div className="font-semibold">{plan.tenantCount}</div>
           </div>
         </div>
         <AdminPlanForm plan={plan} />
@@ -73,13 +73,13 @@ export default async function AdminPlanDetailPage({ params }: PageProps) {
 
       {/* Limits */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">사용량 한도</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">Usage Limits</h2>
         <AdminPlanLimitEditor planId={plan.id} limits={plan.limits} />
       </div>
 
       {/* Features */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">기능 설정</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">Feature Settings</h2>
         <AdminPlanFeatureEditor planId={plan.id} features={plan.features} />
       </div>
 
@@ -87,17 +87,17 @@ export default async function AdminPlanDetailPage({ params }: PageProps) {
       {plan.tenants.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-5">
           <h2 className="text-sm font-semibold text-gray-700 mb-3">
-            이 플랜 사용 중인 테넌트 ({plan.tenantCount})
+            Tenants on This Plan ({plan.tenantCount})
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs text-gray-500 border-b border-gray-200">
-                  <th className="text-left pb-2 pr-4">테넌트</th>
-                  <th className="text-left pb-2 pr-4">상태</th>
-                  <th className="text-right pb-2 pr-4">매장</th>
-                  <th className="text-right pb-2 pr-4">사용자</th>
-                  <th className="text-right pb-2 pr-4">기간 종료</th>
+                  <th className="text-left pb-2 pr-4">Tenant</th>
+                  <th className="text-left pb-2 pr-4">Status</th>
+                  <th className="text-right pb-2 pr-4">Stores</th>
+                  <th className="text-right pb-2 pr-4">Users</th>
+                  <th className="text-right pb-2 pr-4">Period End</th>
                   <th className="text-right pb-2"></th>
                 </tr>
               </thead>
@@ -118,7 +118,7 @@ export default async function AdminPlanDetailPage({ params }: PageProps) {
                     <td className="py-2 pr-4 text-right">{t.usersCount}</td>
                     <td className="py-2 pr-4 text-right text-xs text-gray-500">
                       {t.currentPeriodEnd
-                        ? new Date(t.currentPeriodEnd).toLocaleDateString("ko-KR")
+                        ? new Date(t.currentPeriodEnd).toLocaleDateString("en-US")
                         : "—"}
                     </td>
                     <td className="py-2 text-right">
@@ -126,7 +126,7 @@ export default async function AdminPlanDetailPage({ params }: PageProps) {
                         href={`/admin/billing/tenants/${t.tenantId}`}
                         className="text-blue-600 hover:underline text-xs"
                       >
-                        보기
+                        View
                       </Link>
                     </td>
                   </tr>

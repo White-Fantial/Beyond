@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import type { AdminPlanDetail, BillingInterval } from "@/types/admin-billing";
 
 const INTERVAL_OPTIONS: { value: BillingInterval; label: string }[] = [
-  { value: "MONTHLY", label: "월간" },
-  { value: "YEARLY", label: "연간" },
-  { value: "CUSTOM", label: "사용자 정의" },
+  { value: "MONTHLY", label: "Monthly" },
+  { value: "YEARLY", label: "Yearly" },
+  { value: "CUSTOM", label: "Custom" },
 ];
 
 interface Props {
@@ -75,7 +75,7 @@ export default function AdminPlanForm({ plan, onSuccess }: Props) {
 
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error ?? "저장에 실패했습니다.");
+          setError(data.error ?? "Failed to save.");
           return;
         }
 
@@ -88,7 +88,7 @@ export default function AdminPlanForm({ plan, onSuccess }: Props) {
           router.push(`/admin/billing/plans/${data.id}`);
         }
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred.");
       }
     });
   }
@@ -104,22 +104,22 @@ export default function AdminPlanForm({ plan, onSuccess }: Props) {
             onChange={handleChange}
             disabled={isEdit}
             required
-            placeholder="예: starter, pro, enterprise"
+            placeholder="e.g. starter, pro, enterprise"
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500 font-mono"
           />
           {!isEdit && (
-            <p className="text-xs text-gray-400 mt-0.5">소문자, 숫자, 언더스코어, 하이픈만 허용</p>
+            <p className="text-xs text-gray-400 mt-0.5">Lowercase letters, numbers, underscores, and hyphens only</p>
           )}
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">이름 *</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
           <input
             name="name"
             value={form.name}
             onChange={handleChange}
             required
-            placeholder="예: Starter Plan"
+            placeholder="e.g. Starter Plan"
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -138,7 +138,7 @@ export default function AdminPlanForm({ plan, onSuccess }: Props) {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">결제 주기 *</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Billing Cycle *</label>
           <select
             name="billingInterval"
             value={form.billingInterval}
@@ -155,7 +155,7 @@ export default function AdminPlanForm({ plan, onSuccess }: Props) {
 
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">
-            가격 (센트 단위) *
+            Price (in cents) *
           </label>
           <input
             name="priceAmountMinor"
@@ -164,20 +164,20 @@ export default function AdminPlanForm({ plan, onSuccess }: Props) {
             value={form.priceAmountMinor}
             onChange={handleChange}
             required
-            placeholder="예: 4900 = $49.00"
+            placeholder="e.g. 4900 = $49.00"
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">트라이얼 일수</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Trial 일수</label>
           <input
             name="trialDays"
             type="number"
             min={0}
             value={form.trialDays}
             onChange={handleChange}
-            placeholder="없으면 비워두기"
+            placeholder="Leave blank for no trial"
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -204,7 +204,7 @@ export default function AdminPlanForm({ plan, onSuccess }: Props) {
             className="mr-2"
           />
           <label htmlFor="isDefault" className="text-sm text-gray-700">
-            기본 플랜으로 설정
+            Set as default plan
           </label>
         </div>
       </div>
@@ -216,7 +216,7 @@ export default function AdminPlanForm({ plan, onSuccess }: Props) {
       )}
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-md px-3 py-2">
-          저장되었습니다.
+          Saved.
         </div>
       )}
 
@@ -226,7 +226,7 @@ export default function AdminPlanForm({ plan, onSuccess }: Props) {
           disabled={isPending}
           className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
-          {isPending ? "저장 중..." : isEdit ? "플랜 수정" : "플랜 생성"}
+          {isPending ? "Saving..." : isEdit ? "Edit Plan" : "Create Plan"}
         </button>
       </div>
     </form>

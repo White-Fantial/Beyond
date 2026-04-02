@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  ACTIVE: { label: "운영 중", className: "bg-green-100 text-green-700" },
-  INACTIVE: { label: "비활성", className: "bg-gray-100 text-gray-500" },
-  ARCHIVED: { label: "보관됨", className: "bg-gray-100 text-gray-400" },
+  ACTIVE: { label: "Active", className: "bg-green-100 text-green-700" },
+  INACTIVE: { label: "Inactive", className: "bg-gray-100 text-gray-500" },
+  ARCHIVED: { label: "Archived", className: "bg-gray-100 text-gray-400" },
 };
 
 export default async function OwnerStoresPage() {
@@ -20,9 +20,9 @@ export default async function OwnerStoresPage() {
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
-      <h1 className="text-xl font-bold text-gray-900 mb-6">내 매장</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-6">My Stores</h1>
       {stores.length === 0 ? (
-        <p className="text-gray-500 text-sm">등록된 매장이 없습니다.</p>
+        <p className="text-gray-500 text-sm">No stores registered.</p>
       ) : (
         <div className="space-y-3">
           {stores.map((store) => {

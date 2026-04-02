@@ -74,8 +74,8 @@ export async function listAdminAttentionItems(
     items.push({
       type: "REAUTH_REQUIRED_CONNECTION",
       severity: "critical",
-      title: `재인증 필요 연결 ${reauthCount}개`,
-      description: "인증이 만료된 연결이 있습니다. 즉시 재연결이 필요합니다.",
+      title: `${reauthCount} connections require re-authentication`,
+      description: "There are connections with expired authentication. Immediate reconnection is required.",
       count: reauthCount,
       href: "/admin/integrations?status=REAUTH_REQUIRED",
     });
@@ -85,8 +85,8 @@ export async function listAdminAttentionItems(
     items.push({
       type: "REPEATED_SYNC_FAILURE",
       severity: "warning",
-      title: `동기화 실패 ${syncFailures}건 (최근 7일)`,
-      description: "카탈로그 동기화가 반복적으로 실패하고 있습니다.",
+      title: `${syncFailures} sync failures (last 7 days)`,
+      description: "Catalog sync is failing repeatedly.",
       count: syncFailures,
       href: "/admin/jobs?jobType=CATALOG_SYNC&status=FAILED",
     });
@@ -96,8 +96,8 @@ export async function listAdminAttentionItems(
     items.push({
       type: "WEBHOOK_ERROR_SPIKE",
       severity: "warning",
-      title: `Webhook 오류 ${webhookSpike}건 (최근 7일)`,
-      description: "Webhook 처리 오류가 급증하고 있습니다.",
+      title: `${webhookSpike} webhook errors (last 7 days)`,
+      description: "Webhook processing errors are spiking.",
       count: webhookSpike,
       href: "/admin/logs?type=webhook&status=FAILED",
     });
@@ -107,8 +107,8 @@ export async function listAdminAttentionItems(
     items.push({
       type: "POS_FORWARD_FAILURE_SPIKE",
       severity: "warning",
-      title: `POS 전달 실패 ${posFailures}건 (최근 7일)`,
-      description: "POS로의 주문 전달에 반복 실패가 발생하고 있습니다.",
+      title: `${posFailures} POS forward failures (last 7 days)`,
+      description: "Repeated failures forwarding orders to POS.",
       count: posFailures,
       href: "/admin/jobs?jobType=ORDER_RECOVERY_RETRY&status=FAILED",
     });
@@ -118,8 +118,8 @@ export async function listAdminAttentionItems(
     items.push({
       type: "FAILED_JOBS_BACKLOG",
       severity: "warning",
-      title: `실패 작업 ${failedJobsCount}개 백로그`,
-      description: "처리되지 않은 실패 작업이 쌓여 있습니다.",
+      title: `${failedJobsCount} failed jobs in the backlog`,
+      description: "Unprocessed failed jobs are accumulating.",
       count: failedJobsCount,
       href: "/admin/jobs?status=FAILED",
     });
@@ -129,8 +129,8 @@ export async function listAdminAttentionItems(
     items.push({
       type: "BILLING_FAILURE_RECENT",
       severity: "warning",
-      title: `최근 결제 실패 ${billingFailures}건`,
-      description: "최근 30일 내 결제 처리 실패가 있습니다.",
+      title: `${billingFailures} recent billing failures`,
+      description: "There are billing processing failures in the last 30 days.",
       count: billingFailures,
       href: "/admin/billing",
     });

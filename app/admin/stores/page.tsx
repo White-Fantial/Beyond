@@ -9,9 +9,9 @@ import StoreListTable from "@/components/admin/StoreListTable";
 import StoreListActions from "@/components/admin/StoreListActions";
 
 const STORE_STATUS_OPTIONS = [
-  { value: "ACTIVE", label: "활성" },
-  { value: "INACTIVE", label: "비활성" },
-  { value: "ARCHIVED", label: "보관" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "INACTIVE", label: "Inactive" },
+  { value: "ARCHIVED", label: "Archived" },
 ];
 
 interface PageProps {
@@ -33,7 +33,7 @@ export default async function AdminStoresPage({ searchParams }: PageProps) {
   return (
     <div>
       <div className="flex items-start justify-between gap-4 mb-4">
-        <AdminPageHeader title="매장" description="플랫폼에 등록된 전체 매장 목록입니다." />
+        <AdminPageHeader title="Stores" description="All stores registered on the platform." />
         <div className="shrink-0 pt-1">
           <StoreListActions />
         </div>
@@ -41,16 +41,16 @@ export default async function AdminStoresPage({ searchParams }: PageProps) {
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <Suspense>
-          <AdminSearchInput placeholder="매장명, 코드, 테넌트명 검색..." />
+          <AdminSearchInput placeholder="Search by store name, code, or tenant..." />
         </Suspense>
         <Suspense>
-          <AdminStatusFilter options={STORE_STATUS_OPTIONS} allLabel="모든 상태" />
+          <AdminStatusFilter options={STORE_STATUS_OPTIONS} allLabel="All Statuses" />
         </Suspense>
       </div>
 
       <StoreListTable
         items={items}
-        emptyMessage={hasFilter ? "검색 조건에 맞는 매장이 없습니다." : "매장이 없습니다."}
+        emptyMessage={hasFilter ? "No stores match the selected filters." : "No stores found."}
       />
 
       <div className="mt-4">

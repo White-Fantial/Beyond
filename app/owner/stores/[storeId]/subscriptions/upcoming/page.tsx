@@ -13,7 +13,7 @@ export default async function UpcomingSubscriptionsPage({ params }: Props) {
   return (
     <div className="max-w-4xl mx-auto px-4 pb-10 space-y-4">
       <div>
-        <h2 className="text-base font-semibold text-gray-800">예정 구독 주문 (30일)</h2>
+        <h2 className="text-base font-semibold text-gray-800">Upcoming Subscription Orders (30 days)</h2>
         <p className="text-xs text-gray-500 mt-0.5">
           향후 30일 내 예정된 구독 주문입니다.
         </p>
@@ -21,7 +21,7 @@ export default async function UpcomingSubscriptionsPage({ params }: Props) {
 
       {upcoming.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-          <p className="text-sm text-gray-400">예정된 구독 주문이 없습니다.</p>
+          <p className="text-sm text-gray-400">No upcoming subscription orders.</p>
         </div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -29,11 +29,11 @@ export default async function UpcomingSubscriptionsPage({ params }: Props) {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">예정일</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">플랜명</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">고객</th>
-                  <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500">예상 금액</th>
-                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">상태</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Scheduled</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Plan Name</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Customer</th>
+                  <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500">예상 Amount</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">

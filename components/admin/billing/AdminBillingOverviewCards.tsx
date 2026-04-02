@@ -17,35 +17,35 @@ export default function AdminBillingOverviewCards({ overview }: Props) {
     <div>
       {/* KPI cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <AdminStatCard label="구독 테넌트" value={overview.totalTenantsWithSubscription} />
-        <AdminStatCard label="활성 구독" value={overview.activeSubscriptions} />
-        <AdminStatCard label="트라이얼" value={overview.trialSubscriptions} />
+        <AdminStatCard label="Tenants with Subscription" value={overview.totalTenantsWithSubscription} />
+        <AdminStatCard label="Active Subscriptions" value={overview.activeSubscriptions} />
+        <AdminStatCard label="Trials" value={overview.trialSubscriptions} />
         <AdminStatCard
-          label="연체"
+          label="Past Due"
           value={overview.pastDueSubscriptions}
-          sub={`정지 ${overview.suspendedSubscriptions} / 취소 ${overview.cancelledSubscriptions}`}
+          sub={`Suspended ${overview.suspendedSubscriptions} / Cancel ${overview.cancelledSubscriptions}`}
         />
       </div>
 
       {/* MRR estimate */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-1">예상 MRR</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-1">Estimated MRR</h2>
         <p className="text-2xl font-bold text-gray-900">
           {formatPriceMinor(overview.mrrEstimateMinor, "NZD")}
         </p>
-        <p className="text-xs text-gray-400 mt-0.5">월간 유료 구독 기준 추정치</p>
+        <p className="text-xs text-gray-400 mt-0.5">Estimated from monthly paid subscriptions</p>
       </div>
 
       {/* Plan distribution */}
       {overview.planDistribution.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">플랜별 분포</h2>
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">Plan Distribution</h2>
           <table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-gray-500 border-b border-gray-100">
-                <th className="text-left pb-2">플랜</th>
-                <th className="text-right pb-2">테넌트 수</th>
-                <th className="text-right pb-2">가격</th>
+                <th className="text-left pb-2">Plan</th>
+                <th className="text-right pb-2">Tenants</th>
+                <th className="text-right pb-2">Price</th>
               </tr>
             </thead>
             <tbody>
@@ -74,9 +74,9 @@ export default function AdminBillingOverviewCards({ overview }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent subscription events */}
         <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">최근 구독 이벤트</h2>
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">Recent Subscription Events</h2>
           {overview.recentSubscriptionEvents.length === 0 ? (
-            <p className="text-sm text-gray-400">이벤트가 없습니다.</p>
+            <p className="text-sm text-gray-400">No events found.</p>
           ) : (
             <ul className="divide-y divide-gray-50">
               {overview.recentSubscriptionEvents.map((e) => (
@@ -104,9 +104,9 @@ export default function AdminBillingOverviewCards({ overview }: Props) {
 
         {/* Recent billing records */}
         <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">최근 결제 기록</h2>
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">Recent Billing Records</h2>
           {overview.recentBillingRecords.length === 0 ? (
-            <p className="text-sm text-gray-400">기록이 없습니다.</p>
+            <p className="text-sm text-gray-400">No records found.</p>
           ) : (
             <ul className="divide-y divide-gray-50">
               {overview.recentBillingRecords.map((r) => (

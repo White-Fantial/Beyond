@@ -9,9 +9,9 @@ import UserListTable from "@/components/admin/UserListTable";
 import UserListActions from "@/components/admin/UserListActions";
 
 const USER_STATUS_OPTIONS = [
-  { value: "ACTIVE", label: "활성" },
-  { value: "INVITED", label: "초대됨" },
-  { value: "SUSPENDED", label: "정지" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "INVITED", label: "Invited" },
+  { value: "SUSPENDED", label: "Suspended" },
   { value: "ARCHIVED", label: "보관" },
 ];
 
@@ -34,7 +34,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   return (
     <div>
       <div className="flex items-start justify-between gap-4 mb-4">
-        <AdminPageHeader title="사용자" description="플랫폼에 등록된 전체 사용자 목록입니다." />
+        <AdminPageHeader title="Users" description="All users registered on the platform." />
         <div className="shrink-0 pt-1">
           <UserListActions />
         </div>
@@ -42,16 +42,16 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <Suspense>
-          <AdminSearchInput placeholder="이름 또는 이메일 검색..." />
+          <AdminSearchInput placeholder="Search by name or email..." />
         </Suspense>
         <Suspense>
-          <AdminStatusFilter options={USER_STATUS_OPTIONS} allLabel="모든 상태" />
+          <AdminStatusFilter options={USER_STATUS_OPTIONS} allLabel="All Statuses" />
         </Suspense>
       </div>
 
       <UserListTable
         items={items}
-        emptyMessage={hasFilter ? "검색 조건에 맞는 사용자가 없습니다." : "사용자가 없습니다."}
+        emptyMessage={hasFilter ? "Search 조에 맞는 User가 없습니다." : "User가 없습니다."}
       />
 
       <div className="mt-4">

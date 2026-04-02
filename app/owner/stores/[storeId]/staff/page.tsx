@@ -14,9 +14,9 @@ const ROLE_BADGE: Record<string, { label: string; className: string }> = {
 };
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  ACTIVE: { label: "활성", className: "bg-green-100 text-green-700" },
-  INACTIVE: { label: "비활성", className: "bg-gray-100 text-gray-500" },
-  REMOVED: { label: "삭제됨", className: "bg-red-100 text-red-500" },
+  ACTIVE: { label: "Active", className: "bg-green-100 text-green-700" },
+  INACTIVE: { label: "Inactive", className: "bg-gray-100 text-gray-500" },
+  REMOVED: { label: "Delete됨", className: "bg-red-100 text-red-500" },
 };
 
 export default async function StoreStaffPage({ params }: Props) {
@@ -28,15 +28,15 @@ export default async function StoreStaffPage({ params }: Props) {
   return (
     <div className="max-w-4xl mx-auto px-4 pb-10 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-gray-800">직원 목록</h2>
+        <h2 className="text-base font-semibold text-gray-800">Staff</h2>
         <div className="text-xs text-gray-400">
-          직원 초대/수정: POST /api/owner/stores/{storeId}/staff
+          Invite Staff/Edit: POST /api/owner/stores/{storeId}/staff
         </div>
       </div>
 
       {staff.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-          <p className="text-gray-400 text-sm">등록된 직원이 없습니다.</p>
+          <p className="text-gray-400 text-sm">No staff members registered.</p>
           <p className="text-xs text-gray-400 mt-2">
             API를 통해 직원을 초대할 수 있습니다.
           </p>
@@ -47,11 +47,11 @@ export default async function StoreStaffPage({ params }: Props) {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">이름</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">이메일</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">테넌트 역할</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">매장 역할</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">상태</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Name</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Email</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Tenant Role</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Store Role</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -63,7 +63,7 @@ export default async function StoreStaffPage({ params }: Props) {
                       <td className="px-4 py-3">
                         <div className="font-medium text-gray-900">{s.name}</div>
                         {s.isPrimaryStoreOwner && (
-                          <div className="text-xs text-purple-600 mt-0.5">주 오너</div>
+                          <div className="text-xs text-purple-600 mt-0.5">Primary Owner</div>
                         )}
                       </td>
                       <td className="px-4 py-3 text-gray-600">{s.email}</td>
@@ -92,11 +92,11 @@ export default async function StoreStaffPage({ params }: Props) {
       )}
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-xs text-blue-700">
-        <p className="font-semibold mb-1">직원 관리 API</p>
+        <p className="font-semibold mb-1">Staff Management API</p>
         <ul className="space-y-1 list-disc list-inside">
-          <li>POST /api/owner/stores/{storeId}/staff — 직원 초대</li>
-          <li>PATCH /api/owner/stores/{storeId}/staff/[membershipId] — 역할 변경 / 상태 변경</li>
-          <li>DELETE /api/owner/stores/{storeId}/staff/[membershipId] — 직원 제거</li>
+          <li>POST /api/owner/stores/{storeId}/staff — Invite Staff</li>
+          <li>PATCH /api/owner/stores/{storeId}/staff/[membershipId] — Change Role / Status</li>
+          <li>DELETE /api/owner/stores/{storeId}/staff/[membershipId] — Remove Staff</li>
         </ul>
       </div>
     </div>

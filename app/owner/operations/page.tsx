@@ -18,12 +18,12 @@ export default async function OwnerOperationsPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900">Operations Settings</h1>
-        <p className="mt-1 text-sm text-gray-500">매장별 운영 설정을 관리합니다.</p>
+        <p className="mt-1 text-sm text-gray-500">Manage operations per store.</p>
       </div>
 
       <div className="space-y-4">
         {stores.length === 0 ? (
-          <p className="text-gray-400 text-sm">매장이 없습니다.</p>
+          <p className="text-gray-400 text-sm">No stores found.</p>
         ) : (
           stores.map((store) => {
             const s = store.storeOperationSettings;
@@ -37,9 +37,9 @@ export default async function OwnerOperationsPage() {
                   <ToggleField label="Auto Print POS" value={s?.autoPrintPos ?? false} />
                   <ToggleField label="Subscription Enabled" value={s?.subscriptionEnabled ?? false} />
                   <ToggleField label="Online Order Enabled" value={s?.onlineOrderEnabled ?? true} />
-                  <NumberField label="Pickup Interval" value={s?.pickupIntervalMinutes ?? 15} unit="분" />
-                  <NumberField label="Min Prep Time" value={s?.minPrepTimeMinutes ?? 10} unit="분" />
-                  <NumberField label="Max Orders / Slot" value={s?.maxOrdersPerSlot ?? 10} unit="건" />
+                  <NumberField label="Pickup Interval" value={s?.pickupIntervalMinutes ?? 15} unit=" min" />
+                  <NumberField label="Min Prep Time" value={s?.minPrepTimeMinutes ?? 10} unit=" min" />
+                  <NumberField label="Max Orders / Slot" value={s?.maxOrdersPerSlot ?? 10} unit="" />
                 </dl>
               </div>
             );
@@ -48,7 +48,7 @@ export default async function OwnerOperationsPage() {
       </div>
 
       <p className="mt-4 text-xs text-gray-400">
-        * 운영 설정 수정 기능은 다음 업데이트에서 제공됩니다.
+        * Operations editing will be available in a future update.
       </p>
     </div>
   );

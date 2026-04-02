@@ -87,16 +87,16 @@ export async function getAdminAnalyticsOverview(
       : 0;
 
   return {
-    totalOrders: kpi("전체 주문", current.totalCount, previous.totalCount),
-    completedOrders: kpi("완료 주문", current.completedCount, previous.completedCount),
-    grossSales: kpi("총 매출", current.grossSales, previous.grossSales, current.currencyCode),
-    avgOrderValue: kpi("평균 주문 금액", avgOrderValue, prevAvgOrderValue, current.currencyCode),
-    activeConnections: kpi("활성 연결", currentConnections.connected, previousConnections.connected),
-    reauthRequiredConnections: kpi("재인증 필요", currentConnections.reauthRequired, previousConnections.reauthRequired),
-    webhookFailureRate: kpi("Webhook 실패율", +webhookFailureRate.toFixed(2), +prevWebhookFailureRate.toFixed(2), "%"),
-    posForwardFailureRate: kpi("POS 전달 실패율", +posFailureRate.toFixed(2), +prevPosFailureRate.toFixed(2), "%"),
-    catalogSyncSuccessRate: kpi("동기화 성공률", +syncSuccessRate.toFixed(2), +prevSyncSuccessRate.toFixed(2), "%"),
-    failedJobs: kpi("실패 작업", currentFailedJobs, previousFailedJobs),
+    totalOrders: kpi("Total Orders", current.totalCount, previous.totalCount),
+    completedOrders: kpi("Completed Orders", current.completedCount, previous.completedCount),
+    grossSales: kpi("Total Revenue", current.grossSales, previous.grossSales, current.currencyCode),
+    avgOrderValue: kpi("Avg. Order Value", avgOrderValue, prevAvgOrderValue, current.currencyCode),
+    activeConnections: kpi("Active Connections", currentConnections.connected, previousConnections.connected),
+    reauthRequiredConnections: kpi("Reauth Required", currentConnections.reauthRequired, previousConnections.reauthRequired),
+    webhookFailureRate: kpi("Webhook Failure Rate", +webhookFailureRate.toFixed(2), +prevWebhookFailureRate.toFixed(2), "%"),
+    posForwardFailureRate: kpi("POS Forward Failure Rate", +posFailureRate.toFixed(2), +prevPosFailureRate.toFixed(2), "%"),
+    catalogSyncSuccessRate: kpi("Catalog Sync Success Rate", +syncSuccessRate.toFixed(2), +prevSyncSuccessRate.toFixed(2), "%"),
+    failedJobs: kpi("Failed Jobs", currentFailedJobs, previousFailedJobs),
     currencyCode: current.currencyCode,
   };
 }

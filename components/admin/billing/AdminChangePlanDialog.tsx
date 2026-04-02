@@ -42,7 +42,7 @@ export default function AdminChangePlanDialog({
 
   async function handleConfirm() {
     if (newPlanId === currentPlanId) {
-      setError("현재와 동일한 플랜입니다.");
+      setError("This is already the current plan.");
       return;
     }
     setError(null);
@@ -55,22 +55,22 @@ export default function AdminChangePlanDialog({
         });
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error ?? "플랜 변경에 실패했습니다.");
+          setError(data.error ?? "Failed to change the plan.");
           return;
         }
         router.refresh();
         handleClose();
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred.");
       }
     });
   }
 
   return (
-    <AdminDialog open={open} onClose={handleClose} title="플랜 변경">
+    <AdminDialog open={open} onClose={handleClose} title="Change Plan">
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">새 플랜 선택</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Select New Plan</label>
           <select
             value={newPlanId}
             onChange={(e) => setNewPlanId(e.target.value)}
@@ -85,12 +85,12 @@ export default function AdminChangePlanDialog({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">메모 (선택)</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Note (optional)</label>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={3}
-            placeholder="변경 사유 등 내부 메모..."
+            placeholder="Internal note, e.g. reason for change..."
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -107,7 +107,7 @@ export default function AdminChangePlanDialog({
             onClick={handleClose}
             className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
-            취소
+            Cancel
           </button>
           <button
             type="button"
@@ -115,7 +115,7 @@ export default function AdminChangePlanDialog({
             disabled={isPending || newPlanId === currentPlanId}
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            {isPending ? "변경 중..." : "플랜 변경"}
+            {isPending ? "Changing..." : "Change Plan"}
           </button>
         </div>
       </div>

@@ -15,7 +15,7 @@ export default async function BackofficeOrdersPage({
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-4">주문 관리</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-4">Order Management</h1>
       <BackofficeOrdersClient
         storeId={storeId}
         initialOrders={orders}

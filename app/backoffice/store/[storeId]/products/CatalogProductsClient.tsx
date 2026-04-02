@@ -12,7 +12,7 @@ export default function CatalogProductsClient({ initialProducts }: Props) {
   const [saving, setSaving] = useState<string | null>(null);
 
   if (products.length === 0) {
-    return <p className="text-gray-500">등록된 상품이 없습니다.</p>;
+    return <p className="text-gray-500">등록된 No products found.</p>;
   }
 
   async function toggleVisibility(productId: string, current: boolean) {
@@ -54,10 +54,10 @@ export default function CatalogProductsClient({ initialProducts }: Props) {
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-2 text-left font-medium text-gray-500">상품명</th>
-            <th className="px-4 py-2 text-right font-medium text-gray-500">가격</th>
-            <th className="px-4 py-2 text-left font-medium text-gray-500">온라인 노출</th>
-            <th className="px-4 py-2 text-left font-medium text-gray-500">추천</th>
+            <th className="px-4 py-2 text-left font-medium text-gray-500">Product Name</th>
+            <th className="px-4 py-2 text-right font-medium text-gray-500">Price</th>
+            <th className="px-4 py-2 text-left font-medium text-gray-500">Online Visible</th>
+            <th className="px-4 py-2 text-left font-medium text-gray-500">Featured</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 bg-white">
@@ -79,7 +79,7 @@ export default function CatalogProductsClient({ initialProducts }: Props) {
                       : "bg-gray-100 text-gray-500"
                   }`}
                 >
-                  {saving === product.id ? "저장 중..." : product.isVisibleOnOnlineOrder ? "노출" : "숨김"}
+                  {saving === product.id ? "Saving..." : product.isVisibleOnOnlineOrder ? "노출" : "Hidden"}
                 </button>
               </td>
               <td className="px-4 py-2">

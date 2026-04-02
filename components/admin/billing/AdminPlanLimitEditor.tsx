@@ -6,10 +6,10 @@ import { labelLimitKey } from "@/lib/billing/labels";
 import type { PlanLimitItem } from "@/types/admin-billing";
 
 const STANDARD_LIMIT_KEYS = [
-  { key: "max_stores", unit: "개" },
-  { key: "max_users", unit: "명" },
-  { key: "max_active_integrations", unit: "개" },
-  { key: "monthly_order_limit", unit: "건" },
+  { key: "max_stores", unit: " more" },
+  { key: "max_users", unit: "" },
+  { key: "max_active_integrations", unit: " more" },
+  { key: "monthly_order_limit", unit: "" },
 ];
 
 interface Props {
@@ -55,14 +55,14 @@ export default function AdminPlanLimitEditor({ planId, limits, onSuccess }: Prop
         });
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error ?? "저장에 실패했습니다.");
+          setError(data.error ?? "Failed to save.");
           return;
         }
         setSuccess(true);
         router.refresh();
         onSuccess?.();
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred.");
       }
     });
   }
@@ -81,7 +81,7 @@ export default function AdminPlanLimitEditor({ planId, limits, onSuccess }: Prop
                 min={0}
                 value={values[key]}
                 onChange={(e) => setValues((prev) => ({ ...prev, [key]: e.target.value }))}
-                placeholder="무제한 (비워두기)"
+                placeholder="Unlimited (leave blank)"
                 className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <span className="text-xs text-gray-500 shrink-0">{unit}</span>
@@ -97,7 +97,7 @@ export default function AdminPlanLimitEditor({ planId, limits, onSuccess }: Prop
       )}
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-md px-3 py-2">
-          한도가 저장되었습니다.
+          Limits saved.
         </div>
       )}
 
@@ -107,7 +107,7 @@ export default function AdminPlanLimitEditor({ planId, limits, onSuccess }: Prop
           disabled={isPending}
           className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
-          {isPending ? "저장 중..." : "한도 저장"}
+          {isPending ? "Saving..." : "Save Limits"}
         </button>
       </div>
     </form>

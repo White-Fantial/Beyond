@@ -10,10 +10,10 @@ export default async function NewPlanPage() {
     <div>
       <div className="mb-2">
         <Link href="/admin/billing/plans" className="text-xs text-gray-400 hover:underline">
-          ← 요금제 목록
+          ← Back to Plans
         </Link>
       </div>
-      <AdminPageHeader title="새 플랜 생성" description="새로운 SaaS 요금제를 생성합니다." />
+      <AdminPageHeader title="Create New Plan" description="Create a new SaaS pricing plan." />
       <div className="bg-white rounded-lg border border-gray-200 p-5 max-w-2xl">
         <AdminPlanForm />
       </div>

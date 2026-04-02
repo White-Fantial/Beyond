@@ -55,23 +55,23 @@ export default function AdminChangeSubscriptionStatusDialog({
         });
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error ?? "상태 변경에 실패했습니다.");
+          setError(data.error ?? "Failed to change status.");
           return;
         }
         router.refresh();
         handleClose();
       } catch {
-        setError("네트워크 오류가 발생했습니다.");
+        setError("A network error occurred.");
       }
     });
   }
 
   if (allowedStatuses.length === 0) {
     return (
-      <AdminDialog open={open} onClose={handleClose} title="구독 상태 변경">
+      <AdminDialog open={open} onClose={handleClose} title="Change Subscription Status">
         <p className="text-sm text-gray-600">
-          현재 상태 <strong>{labelSubscriptionStatus(currentStatus)}</strong>에서는 더 이상 상태를
-          변경할 수 없습니다.
+          Current status <strong>{labelSubscriptionStatus(currentStatus)}</strong>cannot be changed further.
+          
         </p>
         <div className="flex justify-end mt-4">
           <button
@@ -86,14 +86,14 @@ export default function AdminChangeSubscriptionStatusDialog({
   }
 
   return (
-    <AdminDialog open={open} onClose={handleClose} title="구독 상태 변경">
+    <AdminDialog open={open} onClose={handleClose} title="Change Subscription Status">
       <div className="space-y-4">
         <p className="text-sm text-gray-600">
-          현재 상태: <strong>{labelSubscriptionStatus(currentStatus)}</strong>
+          Current status: <strong>{labelSubscriptionStatus(currentStatus)}</strong>
         </p>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">변경할 상태</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">변경할 Status</label>
           <select
             value={newStatus}
             onChange={(e) => setNewStatus(e.target.value as SubscriptionStatus)}
@@ -109,17 +109,17 @@ export default function AdminChangeSubscriptionStatusDialog({
 
         {(newStatus === "SUSPENDED" || newStatus === "CANCELLED") && (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs rounded-md px-3 py-2">
-            주의: 이 작업은 테넌트의 서비스 접근에 영향을 줄 수 있습니다.
+            Warning: This action may affect tenant service access.
           </div>
         )}
 
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">메모 (선택)</label>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Note (optional)</label>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={2}
-            placeholder="변경 사유 등 내부 메모..."
+            placeholder="Internal note, e.g. reason for change..."
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -136,7 +136,7 @@ export default function AdminChangeSubscriptionStatusDialog({
             onClick={handleClose}
             className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
-            취소
+            Cancel
           </button>
           <button
             type="button"
@@ -144,7 +144,7 @@ export default function AdminChangeSubscriptionStatusDialog({
             disabled={isPending}
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            {isPending ? "변경 중..." : "상태 변경"}
+            {isPending ? "Changing..." : "Change Status"}
           </button>
         </div>
       </div>

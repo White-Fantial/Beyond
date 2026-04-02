@@ -74,33 +74,33 @@ export default function AdminAnalyticsFilterBar({
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-gray-500">테넌트 ID</label>
+        <label className="text-xs text-gray-500">Tenant ID</label>
         <input
           type="text"
           name="tenantId"
           defaultValue={currentTenantId}
-          placeholder="테넌트 ID"
+          placeholder="Tenant ID"
           className="border border-gray-300 rounded px-2 py-1.5 text-sm w-40 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-gray-500">매장 ID</label>
+        <label className="text-xs text-gray-500">Store ID</label>
         <input
           type="text"
           name="storeId"
           defaultValue={currentStoreId}
-          placeholder="매장 ID"
+          placeholder="Store ID"
           className="border border-gray-300 rounded px-2 py-1.5 text-sm w-40 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-gray-500">공급자</label>
+        <label className="text-xs text-gray-500">Provider</label>
         <select
           name="provider"
           defaultValue={currentProvider ?? ""}
           className="border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
         >
-          <option value="">전체</option>
+          <option value="">All</option>
           <option value="LOYVERSE">Loyverse</option>
           <option value="UBER_EATS">Uber Eats</option>
           <option value="DOORDASH">DoorDash</option>
@@ -114,7 +114,7 @@ export default function AdminAnalyticsFilterBar({
           disabled={isPending}
           className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
         >
-          {isPending ? "적용 중..." : "필터 적용"}
+          {isPending ? "Apply 중..." : "Filter Apply"}
         </button>
         <button
           type="button"
@@ -122,7 +122,7 @@ export default function AdminAnalyticsFilterBar({
           disabled={isPending}
           className="px-3 py-1.5 border border-gray-300 text-gray-600 text-sm rounded hover:bg-gray-50 disabled:opacity-50"
         >
-          초기화
+          Reset
         </button>
       </div>
     </form>

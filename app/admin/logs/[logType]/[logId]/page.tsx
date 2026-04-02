@@ -26,7 +26,7 @@ export default async function AdminLogDetailPage({ params }: PageProps) {
     <div className="max-w-4xl">
       <div className="mb-4">
         <Link href="/admin/logs" className="text-xs text-gray-400 hover:underline">
-          ← 로그 목록
+          ← Back to Logs
         </Link>
       </div>
 
@@ -37,7 +37,7 @@ export default async function AdminLogDetailPage({ params }: PageProps) {
         {/* Context section */}
         {contextRows.length > 0 && (
           <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">컨텍스트</h2>
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Context</h2>
             <AdminKeyValueList items={contextRows} />
           </div>
         )}
@@ -122,7 +122,7 @@ function buildContextRows(log: Awaited<ReturnType<typeof getAdminLogDetail>>): K
       add(
         "Processed At",
         log.processedAt
-          ? new Intl.DateTimeFormat("ko-KR", {
+          ? new Intl.DateTimeFormat("en-US", {
               dateStyle: "medium",
               timeStyle: "medium",
               hour12: false,

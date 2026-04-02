@@ -66,7 +66,7 @@ export default function CatalogModifiersClient({ initialGroups }: Props) {
             <div>
               <span className="font-medium text-gray-900">{group.name}</span>
               <span className="ml-2 text-xs text-gray-400">
-                {group.modifierOptions.length}개 옵션
+                {group.modifierOptions.length} more 옵션
               </span>
             </div>
             <span className="text-gray-400">{expanded.has(group.id) ? "▲" : "▼"}</span>
@@ -75,7 +75,7 @@ export default function CatalogModifiersClient({ initialGroups }: Props) {
           {expanded.has(group.id) && (
             <div className="border-t border-gray-100 px-4 pb-3 pt-2">
               {group.modifierOptions.length === 0 ? (
-                <p className="text-sm text-gray-400">옵션이 없습니다.</p>
+                <p className="text-sm text-gray-400">No modifiers found.</p>
               ) : (
                 <ul className="space-y-1">
                   {group.modifierOptions.map((opt) => (
@@ -97,7 +97,7 @@ export default function CatalogModifiersClient({ initialGroups }: Props) {
                             : "bg-gray-100 text-gray-600"
                         }`}
                       >
-                        {saving === opt.id ? "저장 중..." : opt.isSoldOut ? "품절" : "판매 중"}
+                        {saving === opt.id ? "Saving..." : opt.isSoldOut ? "Sold Out" : "Available"}
                       </button>
                     </li>
                   ))}

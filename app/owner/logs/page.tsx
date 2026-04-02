@@ -48,12 +48,12 @@ export default async function OwnerLogsPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900">Logs</h1>
-        <p className="mt-1 text-sm text-gray-500">최근 50건의 연동 및 시스템 로그입니다.</p>
+        <p className="mt-1 text-sm text-gray-500">Last 50 integration and system logs.</p>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {logs.length === 0 ? (
-          <div className="p-8 text-center text-gray-400 text-sm">로그가 없습니다.</div>
+          <div className="p-8 text-center text-gray-400 text-sm">No logs found.</div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
@@ -100,7 +100,7 @@ export default async function OwnerLogsPage() {
                       {log.message ?? log.errorCode ?? "—"}
                     </td>
                     <td className="px-4 py-3 text-gray-400 whitespace-nowrap">
-                      {log.createdAt.toLocaleString("ko-KR")}
+                      {log.createdAt.toLocaleString("en-US")}
                     </td>
                   </tr>
                 );

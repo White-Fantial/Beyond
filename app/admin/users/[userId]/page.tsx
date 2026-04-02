@@ -12,9 +12,9 @@ import UserDetailActions from "@/components/admin/UserDetailActions";
 import MembershipEditButton from "@/components/admin/MembershipEditButton";
 
 const USER_STATUS_OPTIONS = [
-  { value: "ACTIVE", label: "활성" },
-  { value: "INVITED", label: "초대됨" },
-  { value: "SUSPENDED", label: "정지" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "INVITED", label: "Invited" },
+  { value: "SUSPENDED", label: "Suspended" },
   { value: "ARCHIVED", label: "보관" },
 ];
 
@@ -36,7 +36,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
     <div>
       <div className="mb-2">
         <Link href="/admin/users" className="text-xs text-gray-400 hover:underline">
-          ← 사용자 목록
+          ← User 목록
         </Link>
       </div>
 
@@ -75,31 +75,31 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
 
       {/* Summary KPI */}
       <div className="grid grid-cols-2 gap-4 mb-8">
-        <AdminStatCard label="소속 테넌트 수" value={user.tenantCount} />
-        <AdminStatCard label="소속 매장 수" value={user.storeCount} />
+        <AdminStatCard label="Tenants" value={user.tenantCount} />
+        <AdminStatCard label="Stores" value={user.storeCount} />
       </div>
 
       {/* Basic Info */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">기본 정보</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Basic Info</h2>
         <AdminKeyValueList
           items={[
             { label: "ID", value: <span className="font-mono text-xs">{user.id}</span> },
-            { label: "이름", value: user.name },
-            { label: "이메일", value: user.email },
-            { label: "전화번호", value: user.phone ?? "—" },
-            { label: "플랫폼 역할", value: <StatusBadge value={user.platformRole} /> },
-            { label: "상태", value: <StatusBadge value={user.status} /> },
-            { label: "마지막 로그인", value: user.lastLoginAt ? user.lastLoginAt.toLocaleString("ko-KR") : "—" },
-            { label: "생성일", value: user.createdAt.toLocaleString("ko-KR") },
-            { label: "수정일", value: user.updatedAt.toLocaleString("ko-KR") },
+            { label: "Name", value: user.name },
+            { label: "Email", value: user.email },
+            { label: "Phone번호", value: user.phone ?? "—" },
+            { label: "플랫폼 Role", value: <StatusBadge value={user.platformRole} /> },
+            { label: "Status", value: <StatusBadge value={user.status} /> },
+            { label: "마지막 로그인", value: user.lastLoginAt ? user.lastLoginAt.toLocaleString("en-US") : "—" },
+            { label: "Created", value: user.createdAt.toLocaleString("en-US") },
+            { label: "Edit일", value: user.updatedAt.toLocaleString("en-US") },
           ]}
         />
       </div>
 
       {/* Status Change */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">상태 변경</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Change Status</h2>
         <AdminStatusChangeForm
           entityType="users"
           entityId={user.id}
@@ -111,19 +111,19 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
       {/* Tenant Memberships */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">
-          테넌트 멤버십 ({user.tenantCount})
+          Tenant 멤버십 ({user.tenantCount})
         </h2>
         {user.tenantMemberships.length === 0 ? (
-          <AdminEmptyState message="소속 테넌트가 없습니다." />
+          <AdminEmptyState message="No tenants found." />
         ) : (
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">테넌트</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">역할</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">가입일</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Tenant</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Role</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Joined</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
@@ -158,20 +158,20 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
       {/* Store Memberships */}
       <div className="bg-white rounded-lg border border-gray-200 p-5">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">
-          매장 멤버십 ({user.storeCount})
+          Store 멤버십 ({user.storeCount})
         </h2>
         {user.storeMemberships.length === 0 ? (
-          <AdminEmptyState message="소속 매장이 없습니다." />
+          <AdminEmptyState message="No stores found." />
         ) : (
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">매장명</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">테넌트</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">역할</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">생성일</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Store Name</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">Tenant</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Role</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Created</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white">
@@ -202,13 +202,13 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
 
       {/* Log Links */}
       <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">로그</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Logs</h2>
         <div className="flex flex-wrap gap-3 text-sm">
           <Link
             href={`/admin/logs?userId=${userId}`}
             className="text-blue-600 hover:underline"
           >
-            📋 이 사용자 관련 로그 →
+            📋 이 User Related Logs →
           </Link>
           <Link
             href={`/admin/logs?userId=${userId}&logType=AUDIT`}

@@ -11,9 +11,9 @@ import TenantDetailActions from "@/components/admin/TenantDetailActions";
 import MembershipEditButton from "@/components/admin/MembershipEditButton";
 
 const TENANT_STATUS_OPTIONS = [
-  { value: "ACTIVE", label: "활성" },
+  { value: "ACTIVE", label: "Active" },
   { value: "TRIAL", label: "체험" },
-  { value: "SUSPENDED", label: "정지" },
+  { value: "SUSPENDED", label: "Suspended" },
   { value: "ARCHIVED", label: "보관" },
 ];
 
@@ -30,12 +30,12 @@ export default async function AdminTenantDetailPage({ params }: PageProps) {
     <div>
       <div className="mb-2">
         <Link href="/admin/tenants" className="text-xs text-gray-400 hover:underline">
-          ← 테넌트 목록
+          ← Tenant 목록
         </Link>
       </div>
 
       <div className="flex items-start justify-between gap-4 mb-6">
-        <AdminPageHeader title={tenant.displayName} description={`슬러그: ${tenant.slug}`} />
+        <AdminPageHeader title={tenant.displayName} description={`Slug: ${tenant.slug}`} />
         <div className="shrink-0 pt-1">
           <TenantDetailActions
             tenant={{
@@ -53,34 +53,34 @@ export default async function AdminTenantDetailPage({ params }: PageProps) {
 
       {/* Summary KPI */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <AdminStatCard label="매장 수" value={tenant.storeCount} />
-        <AdminStatCard label="멤버십 수" value={tenant.membershipCount} />
-        <AdminStatCard label="사용자 수" value={tenant.userCount} />
-        <AdminStatCard label="연결 수" value={tenant.connectionCount} />
+        <AdminStatCard label="Stores" value={tenant.storeCount} />
+        <AdminStatCard label="Memberships" value={tenant.membershipCount} />
+        <AdminStatCard label="Users" value={tenant.userCount} />
+        <AdminStatCard label="Connections" value={tenant.connectionCount} />
       </div>
 
       {/* Basic Info */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">기본 정보</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Basic Info</h2>
         <AdminKeyValueList
           items={[
             { label: "ID", value: <span className="font-mono text-xs">{tenant.id}</span> },
-            { label: "법인명", value: tenant.legalName },
-            { label: "표시명", value: tenant.displayName },
+            { label: "Legal Name", value: tenant.legalName },
+            { label: "Display Name", value: tenant.displayName },
             { label: "슬러그", value: <span className="font-mono text-xs">{tenant.slug}</span> },
-            { label: "상태", value: <StatusBadge value={tenant.status} /> },
-            { label: "시간대", value: tenant.timezone },
-            { label: "통화", value: tenant.currency },
-            { label: "국가 코드", value: tenant.countryCode },
-            { label: "생성일", value: tenant.createdAt.toLocaleString("ko-KR") },
-            { label: "수정일", value: tenant.updatedAt.toLocaleString("ko-KR") },
+            { label: "Status", value: <StatusBadge value={tenant.status} /> },
+            { label: "Time대", value: tenant.timezone },
+            { label: "Currency", value: tenant.currency },
+            { label: "Country Code", value: tenant.countryCode },
+            { label: "Created", value: tenant.createdAt.toLocaleString("en-US") },
+            { label: "Edit일", value: tenant.updatedAt.toLocaleString("en-US") },
           ]}
         />
       </div>
 
       {/* Status Change */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">상태 변경</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Change Status</h2>
         <AdminStatusChangeForm
           entityType="tenants"
           entityId={tenant.id}
@@ -91,19 +91,19 @@ export default async function AdminTenantDetailPage({ params }: PageProps) {
 
       {/* Stores */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">소속 매장 ({tenant.storeCount})</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Stores ({tenant.storeCount})</h2>
         {tenant.stores.length === 0 ? (
-          <p className="text-sm text-gray-400">매장이 없습니다.</p>
+          <p className="text-sm text-gray-400">No stores found.</p>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">매장명</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">코드</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">시간대</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">생성일</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Store Name</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Code</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Timezone</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Created</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
@@ -132,18 +132,18 @@ export default async function AdminTenantDetailPage({ params }: PageProps) {
 
       {/* Memberships */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">멤버십 ({tenant.membershipCount})</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Memberships ({tenant.membershipCount})</h2>
         {tenant.memberships.length === 0 ? (
-          <p className="text-sm text-gray-400">멤버십이 없습니다.</p>
+          <p className="text-sm text-gray-400">No memberships.</p>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">사용자</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">역할</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">가입일</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">User</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Role</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Joined</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
@@ -178,19 +178,19 @@ export default async function AdminTenantDetailPage({ params }: PageProps) {
 
       {/* Connection Summary */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">연결 요약</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Connection Summary</h2>
         <ConnectionSummaryTable rows={tenant.connectionSummary} />
       </div>
 
       {/* Log Links */}
       <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">로그</h2>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Logs</h2>
         <div className="flex flex-wrap gap-3 text-sm">
           <Link
             href={`/admin/logs?tenantId=${tenantId}`}
             className="text-blue-600 hover:underline"
           >
-            📋 이 테넌트의 전체 로그 →
+            📋 이 Tenant의 All 로그 →
           </Link>
           <Link
             href={`/admin/logs?tenantId=${tenantId}&logType=AUDIT`}

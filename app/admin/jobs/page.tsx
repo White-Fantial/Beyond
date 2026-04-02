@@ -34,7 +34,7 @@ export default async function AdminJobsPage({ searchParams }: PageProps) {
     <div>
       <AdminPageHeader
         title="Jobs Console"
-        description="플랫폼 작업 실행 기록을 조회하고 안전한 작업을 수동으로 실행합니다."
+        description="View platform job execution history and manually trigger safe operations."
       />
 
       {/* Manual Run actions */}
@@ -43,7 +43,7 @@ export default async function AdminJobsPage({ searchParams }: PageProps) {
           <div>
             <h2 className="text-sm font-semibold text-gray-700">Safe Manual Actions</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              PLATFORM_ADMIN 전용. impersonation 중에는 실행 불가. 모든 실행은 audit log 에 기록됩니다.
+              PLATFORM_ADMIN only. Cannot be triggered while impersonating. All runs are recorded in the audit log.
             </p>
           </div>
           <Suspense>

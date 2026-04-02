@@ -10,32 +10,32 @@ const PROVIDER_LABELS: Record<string, string> = {
   UBER_EATS: "Uber Eats",
   DOORDASH: "DoorDash",
   STRIPE: "Stripe",
-  OTHER: "기타",
+  OTHER: "Other",
 };
 
 export default function AdminProviderHealthTable({ rows }: Props) {
   if (rows.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">공급자별 연결 건강도</h2>
-        <p className="text-xs text-gray-400 py-4 text-center">데이터가 없습니다.</p>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">Connection Health by Provider</h2>
+        <p className="text-xs text-gray-400 py-4 text-center">No data available.</p>
       </div>
     );
   }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
-      <h2 className="text-sm font-semibold text-gray-700 mb-3">공급자별 연결 건강도</h2>
+      <h2 className="text-sm font-semibold text-gray-700 mb-3">Connection Health by Provider</h2>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-gray-400 border-b border-gray-100">
-              <th className="text-left pb-2 font-medium">공급자</th>
-              <th className="text-right pb-2 font-medium">연결됨</th>
-              <th className="text-right pb-2 font-medium">오류</th>
-              <th className="text-right pb-2 font-medium">재인증</th>
-              <th className="text-right pb-2 font-medium">해제</th>
-              <th className="text-right pb-2 font-medium">전체</th>
+              <th className="text-left pb-2 font-medium">Provider</th>
+              <th className="text-right pb-2 font-medium">Connected</th>
+              <th className="text-right pb-2 font-medium">Error</th>
+              <th className="text-right pb-2 font-medium">Re-authenticate</th>
+              <th className="text-right pb-2 font-medium">Disconnected</th>
+              <th className="text-right pb-2 font-medium">All</th>
             </tr>
           </thead>
           <tbody>
@@ -63,8 +63,8 @@ export default function AdminProviderHealthTable({ rows }: Props) {
       </div>
       <p className="text-xs text-gray-400 mt-3 italic">
         {rows.reduce((acc, r) => acc + r.reauthRequired, 0) > 0
-          ? `${rows.reduce((acc, r) => acc + r.reauthRequired, 0)}개 연결이 재인증을 필요로 합니다.`
-          : "모든 공급자 연결이 정상 상태입니다."}
+          ? `${rows.reduce((acc, r) => acc + r.reauthRequired, 0)} more 연결이 Re-authenticate을 필요로 합니다.`
+          : "All provider connections are healthy."}
       </p>
       <div className="hidden">
         <StatusBadge value="" />

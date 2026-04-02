@@ -15,58 +15,58 @@ interface MetricDef {
 
 const METRIC_GROUPS: { title: string; metrics: MetricDef[] }[] = [
   {
-    title: "연동 / 인증",
+    title: "Integrations / Auth",
     metrics: [
-      { key: "oauthConnectStarts", label: "OAuth 연결 시작" },
-      { key: "oauthCallbackSuccesses", label: "OAuth 콜백 성공" },
-      { key: "oauthCallbackFailures", label: "OAuth 콜백 실패", sub: "오류" },
-      { key: "tokenRefreshSuccesses", label: "토큰 갱신 성공" },
-      { key: "tokenRefreshFailures", label: "토큰 갱신 실패", sub: "오류" },
-      { key: "reauthRequiredTriggered", label: "재인증 요구", sub: "주의" },
+      { key: "oauthConnectStarts", label: "OAuth Connect Starts" },
+      { key: "oauthCallbackSuccesses", label: "OAuth Callback Successes" },
+      { key: "oauthCallbackFailures", label: "OAuth Callback Failures", sub: "Error" },
+      { key: "tokenRefreshSuccesses", label: "Token Refresh Successes" },
+      { key: "tokenRefreshFailures", label: "Token Refresh Failures", sub: "Error" },
+      { key: "reauthRequiredTriggered", label: "Reauth Required", sub: "warning" },
     ],
   },
   {
-    title: "웹훅",
+    title: "Webhooks",
     metrics: [
-      { key: "webhooksReceived", label: "수신" },
-      { key: "webhooksProcessed", label: "처리 완료" },
-      { key: "webhooksFailed", label: "처리 실패", sub: "오류" },
-      { key: "webhooksSignatureInvalid", label: "서명 불일치", sub: "오류" },
+      { key: "webhooksReceived", label: "Received" },
+      { key: "webhooksProcessed", label: "Completed" },
+      { key: "webhooksFailed", label: "Failed", sub: "Error" },
+      { key: "webhooksSignatureInvalid", label: "Invalid Signature", sub: "Error" },
     ],
   },
   {
-    title: "주문 파이프라인",
+    title: "Order Pipeline",
     metrics: [
-      { key: "ordersReceived", label: "수신 주문" },
-      { key: "posForwardAttempts", label: "POS 전달 시도" },
-      { key: "posForwardFailures", label: "POS 전달 실패", sub: "오류" },
-      { key: "reconciliationRetries", label: "재조정 재시도" },
+      { key: "ordersReceived", label: "Orders Received" },
+      { key: "posForwardAttempts", label: "POS Forward Attempts" },
+      { key: "posForwardFailures", label: "POS Forward Failures", sub: "Error" },
+      { key: "reconciliationRetries", label: "Reconciliation Retries" },
     ],
   },
   {
     title: "Jobs",
     metrics: [
-      { key: "jobRuns", label: "실행" },
-      { key: "jobFailures", label: "실패", sub: "오류" },
-      { key: "jobRetries", label: "재시도" },
+      { key: "jobRuns", label: "Runs" },
+      { key: "jobFailures", label: "Failures", sub: "Error" },
+      { key: "jobRetries", label: "Retries" },
     ],
   },
   {
-    title: "빌링",
+    title: "Billing",
     metrics: [
-      { key: "activeSubscriptions", label: "활성 구독" },
-      { key: "trialSubscriptions", label: "트라이얼" },
-      { key: "pastDueSubscriptions", label: "연체", sub: "주의" },
-      { key: "cancelledSubscriptions", label: "해지 (기간 내)" },
-      { key: "recentBillingRecords", label: "청구 기록" },
+      { key: "activeSubscriptions", label: "Active Subscriptions" },
+      { key: "trialSubscriptions", label: "Trials" },
+      { key: "pastDueSubscriptions", label: "Past Due", sub: "warning" },
+      { key: "cancelledSubscriptions", label: "Cancelled" },
+      { key: "recentBillingRecords", label: "Billing Records" },
     ],
   },
   {
-    title: "사용량 / 성장",
+    title: "Usage / Growth",
     metrics: [
-      { key: "newTenants", label: "신규 테넌트" },
-      { key: "newStores", label: "신규 매장" },
-      { key: "newUsers", label: "신규 사용자" },
+      { key: "newTenants", label: "New Tenants" },
+      { key: "newStores", label: "New Stores" },
+      { key: "newUsers", label: "New Users" },
     ],
   },
 ];
@@ -81,7 +81,7 @@ export function AdminSystemMetricsSection({
 
   return (
     <div className="space-y-6">
-      <p className="text-xs text-gray-500">{label} 기준 운영 메트릭</p>
+      <p className="text-xs text-gray-500">{label} operational metrics</p>
       {METRIC_GROUPS.map((group) => (
         <div key={group.title}>
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -96,8 +96,8 @@ export function AdminSystemMetricsSection({
                   : typeof rawValue === "string"
                   ? rawValue
                   : "—";
-              const isAlert = m.sub === "오류" && typeof value === "number" && value > 0;
-              const isWarn = m.sub === "주의" && typeof value === "number" && value > 0;
+              const isAlert = m.sub === "Error" && typeof value === "number" && value > 0;
+              const isWarn = m.sub === "warning" && typeof value === "number" && value > 0;
 
               return (
                 <div
