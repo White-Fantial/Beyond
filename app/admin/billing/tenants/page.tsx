@@ -18,12 +18,12 @@ interface PageProps {
 }
 
 const STATUS_OPTIONS = [
-  { value: "", label: "모든 상태" },
-  { value: "ACTIVE", label: "활성" },
-  { value: "TRIAL", label: "트라이얼" },
-  { value: "PAST_DUE", label: "연체" },
-  { value: "SUSPENDED", label: "정지" },
-  { value: "CANCELLED", label: "취소" },
+  { value: "", label: "All Statuses" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "TRIAL", label: "Trial" },
+  { value: "PAST_DUE", label: "Past Due" },
+  { value: "SUSPENDED", label: "Suspended" },
+  { value: "CANCELLED", label: "Cancelled" },
 ];
 
 export default async function AdminBillingTenantsPage({ searchParams }: PageProps) {
@@ -42,13 +42,13 @@ export default async function AdminBillingTenantsPage({ searchParams }: PageProp
   return (
     <div>
       <AdminPageHeader
-        title="테넌트 Billing"
-        description="테넌트별 구독 및 결제 현황"
+        title="Tenant Billing"
+        description="Subscription and payment status per tenant"
       />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <Suspense>
-          <AdminSearchInput placeholder="테넌트명 또는 슬러그 검색..." />
+          <AdminSearchInput placeholder="Search by tenant name or slug..." />
         </Suspense>
         <div className="flex gap-1 flex-wrap">
           {STATUS_OPTIONS.map((opt) => (

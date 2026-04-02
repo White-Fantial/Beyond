@@ -7,12 +7,12 @@ import AdminPagination from "@/components/admin/AdminPagination";
 import AllConnectionsTable from "@/components/admin/AllConnectionsTable";
 
 const CONNECTION_STATUS_OPTIONS = [
-  { value: "CONNECTED", label: "연결됨" },
-  { value: "NOT_CONNECTED", label: "미연결" },
-  { value: "CONNECTING", label: "연결 중" },
-  { value: "ERROR", label: "오류" },
-  { value: "REAUTH_REQUIRED", label: "재인증 필요" },
-  { value: "DISCONNECTED", label: "연결 해제" },
+  { value: "CONNECTED", label: "Connected" },
+  { value: "NOT_CONNECTED", label: "Not Connected" },
+  { value: "CONNECTING", label: "Connecting" },
+  { value: "ERROR", label: "Error" },
+  { value: "REAUTH_REQUIRED", label: "Reauth Required" },
+  { value: "DISCONNECTED", label: "Disconnected" },
 ];
 
 const PROVIDER_OPTIONS = [
@@ -20,7 +20,7 @@ const PROVIDER_OPTIONS = [
   { value: "UBER_EATS", label: "Uber Eats" },
   { value: "DOORDASH", label: "DoorDash" },
   { value: "STRIPE", label: "Stripe" },
-  { value: "OTHER", label: "기타" },
+  { value: "OTHER", label: "Other" },
 ];
 
 interface PageProps {
@@ -42,22 +42,22 @@ export default async function AdminIntegrationsPage({ searchParams }: PageProps)
   return (
     <div>
       <AdminPageHeader
-        title="연동 관리"
-        description="플랫폼 전체 연결 현황을 확인합니다."
+        title="Integration Management"
+        description="View platform-wide connection status."
       />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4 flex-wrap">
         <Suspense>
           <AdminStatusFilter
             options={CONNECTION_STATUS_OPTIONS}
-            allLabel="모든 상태"
+            allLabel="All Statuses"
             paramName="status"
           />
         </Suspense>
         <Suspense>
           <AdminStatusFilter
             options={PROVIDER_OPTIONS}
-            allLabel="모든 공급자"
+            allLabel="All Providers"
             paramName="provider"
           />
         </Suspense>
@@ -67,8 +67,8 @@ export default async function AdminIntegrationsPage({ searchParams }: PageProps)
         items={items}
         emptyMessage={
           hasFilter
-            ? "검색 조건에 맞는 연결이 없습니다."
-            : "연결 데이터가 없습니다."
+            ? "No connections match the selected filters."
+            : "No connection data available."
         }
       />
 

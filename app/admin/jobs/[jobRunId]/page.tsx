@@ -24,12 +24,12 @@ export default async function AdminJobRunDetailPage({ params }: PageProps) {
     { label: "Job Run ID", value: <span className="font-mono text-xs">{run.id}</span> },
     { label: "Job Type", value: run.jobType },
     { label: "Trigger Source", value: run.triggerSource },
-    ...(run.triggeredByUserLabel ? [{ label: "실행자", value: run.triggeredByUserLabel }] : []),
+    ...(run.triggeredByUserLabel ? [{ label: "Triggered By", value: run.triggeredByUserLabel }] : []),
     ...(run.tenantName ? [{ label: "Tenant", value: run.tenantName }] : []),
     ...(run.storeName ? [{ label: "Store", value: run.storeName }] : []),
     ...(run.provider ? [{ label: "Provider", value: run.provider }] : []),
-    ...(run.relatedEntityType ? [{ label: "관련 엔티티 타입", value: run.relatedEntityType }] : []),
-    ...(run.relatedEntityId ? [{ label: "관련 엔티티 ID", value: <span className="font-mono text-xs">{run.relatedEntityId}</span> }] : []),
+    ...(run.relatedEntityType ? [{ label: "Related Entity Type", value: run.relatedEntityType }] : []),
+    ...(run.relatedEntityId ? [{ label: "Related Entity ID", value: <span className="font-mono text-xs">{run.relatedEntityId}</span> }] : []),
     ...(run.parentRunId ? [{ label: "Parent Run", value: <Link href={`/admin/jobs/${run.parentRunId}`} className="text-blue-600 hover:underline font-mono text-xs">{run.parentRunId}</Link> }] : []),
   ];
 
@@ -37,7 +37,7 @@ export default async function AdminJobRunDetailPage({ params }: PageProps) {
     <div className="max-w-4xl">
       <div className="mb-4">
         <Link href="/admin/jobs" className="text-xs text-gray-400 hover:underline">
-          ← Jobs 목록
+          ← Back to Jobs
         </Link>
       </div>
 
@@ -46,14 +46,14 @@ export default async function AdminJobRunDetailPage({ params }: PageProps) {
       <div className="space-y-4">
         {/* Context */}
         <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">컨텍스트</h2>
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">Context</h2>
           <AdminKeyValueList items={contextRows} />
         </div>
 
         {/* Error section */}
         {run.status === "FAILED" && (run.errorCode || run.errorMessage) && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-5">
-            <h2 className="text-sm font-semibold text-red-700 mb-3">오류 정보</h2>
+            <h2 className="text-sm font-semibold text-red-700 mb-3">Error Details</h2>
             {run.errorCode && (
               <div className="text-xs font-mono text-red-600 mb-1">Code: {run.errorCode}</div>
             )}
@@ -74,7 +74,7 @@ export default async function AdminJobRunDetailPage({ params }: PageProps) {
                     {child.id.slice(0, 8)}…
                   </Link>
                   <AdminJobStatusBadge status={child.status} />
-                  <span className="text-gray-400">{new Date(child.createdAt).toLocaleString("ko-KR")}</span>
+                  <span className="text-gray-400">{new Date(child.createdAt).toLocaleString("en-US")}</span>
                 </div>
               ))}
             </div>
@@ -93,7 +93,7 @@ export default async function AdminJobRunDetailPage({ params }: PageProps) {
         {/* Actions */}
         {run.canRetry && (
           <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">액션</h2>
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Actions</h2>
             <AdminRetryJobButton jobRunId={run.id} />
           </div>
         )}

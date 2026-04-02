@@ -54,15 +54,15 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
     if (!last || !prev || prev.totalOrders === 0) return undefined;
     const delta = ((last.totalOrders - prev.totalOrders) / prev.totalOrders) * 100;
     return delta > 0
-      ? `최근 주문이 전일 대비 ${delta.toFixed(1)}% 증가했습니다.`
-      : `최근 주문이 전일 대비 ${Math.abs(delta).toFixed(1)}% 감소했습니다.`;
+      ? `Orders are up ${delta.toFixed(1)}% compared to the previous day.`
+      : `Orders are down ${Math.abs(delta).toFixed(1)}% compared to the previous day.`;
   })();
 
   return (
     <div>
       <AdminPageHeader
-        title="플랫폼 Analytics"
-        description="플랫폼 전체 운영 건강도 및 KPI를 확인합니다."
+        title="Platform Analytics"
+        description="Monitor platform-wide operational health and KPIs."
       />
 
       <Suspense fallback={null}>
