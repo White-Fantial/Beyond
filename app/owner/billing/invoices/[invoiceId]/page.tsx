@@ -1,11 +1,7 @@
 import Link from "next/link";
 import { requireOwnerAdminAccess } from "@/lib/owner/auth-guard";
 import { getBillingInvoiceDetail } from "@/services/owner/owner-billing.service";
-import {
-  formatPriceMinor,
-  labelOwnerSubscriptionStatus,
-  type OwnerBillingInvoiceStatusType,
-} from "@/lib/billing/labels";
+import { formatPriceMinor } from "@/lib/billing/labels";
 import InvoiceStatusBadge from "@/components/owner/billing/InvoiceStatusBadge";
 import StatusBadge from "@/components/owner/billing/StatusBadge";
 import type { OwnerPaymentAttemptStatus } from "@/types/owner-billing";

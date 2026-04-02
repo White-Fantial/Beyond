@@ -6,7 +6,6 @@ import type {
   OwnerPlanCatalogItem,
   OwnerPlanChangePreview,
 } from "@/types/owner-billing";
-import { formatPriceMinor } from "@/lib/billing/labels";
 import StatusBadge from "./StatusBadge";
 
 interface Props {

@@ -39,6 +39,7 @@
 - [x] **Owner Console Phase 3 — Owner Dashboard** — tenant-scoped multi-store business overview at `/owner`; Business Overview (7 metric cards), Store Summary table (per-store connection health + daily revenue), Alerts panel (POS/delivery/sync/invitation/billing issues)
 - [x] **Owner Console Phase 4 — Reports & Analytics** — tenant-level and store-level reports with KPI cards, revenue trend, channel breakdown, store comparison, top products, subscription summary, rule-based insights; URL-persisted filters with preset ranges and compare-to-previous; 13 UI components; 3 service files; 2 API routes; 3 test files
 - [x] **Owner Console Phase 5 — Customer & Subscription Management** — tenant-scoped customer list (`/owner/customers`) with search/filter/sort/pagination and 4-card KPI strip; customer detail (`/owner/customers/[customerId]`) with Overview, Orders, Subscriptions, Notes tabs; subscription lifecycle actions (pause/resume/cancel/next-date/note) with state-machine validation; owner-only `internalNote` on Customer profile; 5 audit log event types (`OWNER_CUSTOMER_NOTE_UPDATED`, `OWNER_SUBSCRIPTION_PAUSED`, `OWNER_SUBSCRIPTION_RESUMED`, `OWNER_SUBSCRIPTION_CANCELLED`, `OWNER_SUBSCRIPTION_NEXT_DATE_UPDATED`, `OWNER_SUBSCRIPTION_NOTE_UPDATED`); cross-tenant access guard on all routes; `Customer` model + `Subscription` extended with `tenantId`, `storeId`, `nextOrderAt`, `internalNote`, `pausedAt`, `cancelReason`; 10 API routes; 2 service files; 44 unit tests
+- [x] **Owner Console Phase 6 — Billing Deep Dive** — billing overview at `/owner/billing` (plan card, subscription status badge, alerts, usage vs limits, recent invoices, quick actions); invoice list at `/owner/billing/invoices` with status-filter tabs and pagination; invoice detail at `/owner/billing/invoices/[invoiceId]` with line items and payment attempt timeline; plan catalog and preview-first plan change flow at `/owner/billing/plans` with downgrade blocking; 8 service functions in `owner-billing.service.ts`; `BillingProviderAdapter` interface + `MockBillingProviderAdapter`; 6 new schema models (`BillingInvoice`, `BillingInvoiceLine`, `PaymentAttempt`, `UsageMetricSnapshot`, `SubscriptionChangeRequest`, `BillingEventLog`) + 7 new enums + 4 new fields on `TenantSubscription`; 7 API routes; 5 UI components; idempotent billing seed with 3 plans + sample invoices + usage snapshots; 15 unit tests
 
 ## In Progress
 
@@ -63,12 +64,22 @@ The following phases extend the Owner Console beyond Phase 5.
 
 See Completed section above.
 
-### Phase 6 — Billing Deep Dive
+### ~~Phase 6 — Billing Deep Dive~~ ✅ Complete
 
-- Current plan details and usage vs plan limits
-- Billing history and invoice list with status indicators
-- Payment status tracking and past-due alerts
-- Upgrade / downgrade plan flows directly from the owner console
+See Completed section above. Key details in [doc/owner-console.md](./owner-console.md#phase-6--billing-deep-dive).
+
+**What is currently mock / not yet real:**
+- Proration preview amounts (adapter returns null until Stripe is connected)
+- Provider webhook sync (Stripe events → internal BillingInvoice / TenantSubscription)
+- Payment method management UI
+- Billing portal redirect / customer portal session
+
+**Remaining future work:**
+- Real Stripe adapter implementation
+- Webhook reconciliation
+- Payment method management UI
+- Tax/GST line item refinements
+- Finance-role billing permissions
 
 ### Phase 7 — Team Activity & Audit
 
