@@ -1,21 +1,9 @@
-import { requireAuth } from "@/lib/auth/permissions";
-import { redirect } from "next/navigation";
-import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
+import { requireOwnerPortalAccess } from "@/lib/owner/auth-guard";
 import OwnerSidebar from "@/components/layout/OwnerSidebar";
 import WorkspaceSwitcher from "@/components/layout/WorkspaceSwitcher";
 
 export default async function OwnerLayout({ children }: { children: React.ReactNode }) {
-  const ctx = await requireAuth();
-
-  const canAccessOwner =
-    ctx.isPlatformAdmin ||
-    ctx.tenantMemberships.some((tm) =>
-      OWNER_PORTAL_MEMBERSHIP_ROLES.includes(tm.membershipRole)
-    );
-
-  if (!canAccessOwner) {
-    redirect("/unauthorized");
-  }
+  const ctx = await requireOwnerPortalAccess();
 
   return (
     <div className="flex h-screen bg-gray-50">

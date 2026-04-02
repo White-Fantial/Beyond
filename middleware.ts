@@ -122,7 +122,7 @@ export async function middleware(request: NextRequest) {
       if (session.primaryStoreId) {
         return NextResponse.redirect(new URL(`/backoffice/store/${session.primaryStoreId}/orders`, request.url));
       }
-      return NextResponse.redirect(new URL("/owner", request.url));
+      return NextResponse.redirect(new URL("/owner/dashboard", request.url));
     }
     if (session.primaryStoreId) {
       return NextResponse.redirect(new URL(`/backoffice/store/${session.primaryStoreId}/orders`, request.url));

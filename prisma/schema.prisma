@@ -323,6 +323,10 @@ model Store {
   deliveryIntegrations DeliveryIntegration[]
   subscriptionPlans    SubscriptionPlan[]
 
+  storeSettings          StoreSettings?
+  catalogSettings        CatalogSettings?
+  storeOperationSettings StoreOperationSettings?
+
   @@unique([tenantId, code])
   @@index([tenantId])
   @@index([status])
@@ -405,6 +409,7 @@ model Connection {
   appCredential ProviderAppCredential? @relation(fields: [appCredentialId], references: [id], onDelete: SetNull)
   credentials   ConnectionCredential[]
   actionLogs    ConnectionActionLog[]
+  catalogSettings CatalogSettings[]
 
   @@unique([storeId, provider, type])
   @@index([tenantId, storeId, provider])
@@ -1639,3 +1644,60 @@ model FeatureFlagAssignment {
   @@index([scopeType, scopeKey])
   @@map("feature_flag_assignments")
 }
+
+// ─── Owner Portal Models ───────────────────────────────────────────────────────
+
+model StoreSettings {
+  id                      String   @id @default(uuid())
+  storeId                 String   @unique
+  taxRate                 Decimal  @default(0) @db.Decimal(5, 4)
+  serviceFeeRate          Decimal  @default(0) @db.Decimal(5, 4)
+  currency                String   @default("USD")
+  timezone                String   @default("UTC")
+  pickupIntervalMinutes   Int      @default(15)
+  defaultPrepTimeMinutes  Int      @default(20)
+  logoUrl                 String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("store_settings")
+}
+
+model CatalogSettings {
+  id                   String            @id @default(uuid())
+  storeId              String            @unique
+  sourceConnectionId   String?
+  sourceType           CatalogSourceType @default(LOCAL)
+  autoSync             Boolean           @default(false)
+  syncIntervalMinutes  Int               @default(60)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  store            Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  sourceConnection Connection? @relation(fields: [sourceConnectionId], references: [id], onDelete: SetNull)
+
+  @@map("catalog_settings")
+}
+
+model StoreOperationSettings {
+  id                   String   @id @default(uuid())
+  storeId              String   @unique
+  storeOpen            Boolean  @default(true)
+  holidayMode          Boolean  @default(false)
+  pickupIntervalMinutes  Int    @default(15)
+  minPrepTimeMinutes   Int      @default(10)
+  maxOrdersPerSlot     Int      @default(10)
+  autoAcceptOrders     Boolean  @default(false)
+  autoPrintPos         Boolean  @default(false)
+  subscriptionEnabled  Boolean  @default(false)
+  onlineOrderEnabled   Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("store_operation_settings")
+}
+
