@@ -392,3 +392,125 @@ model Customer {
 ### Customer Data Model
 
 "Customers" are identified by the `Order.customerId` string field. The customer list is derived by grouping tenant orders by `customerId`. The `Customer` table stores owner-only metadata (internalNote) keyed by email within the tenant. This approach preserves backward compatibility with existing order data.
+
+---
+
+## Phase 6 — Billing Deep Dive
+
+### Overview
+
+The owner console Billing area gives store operators a self-serve view of their plan, usage, invoices, and plan-change flow. It is built on a clean billing domain that separates internal IDs from any future billing provider IDs.
+
+### Routes
+
+| Route | Purpose |
+|-------|---------|
+| `/owner/billing` | Billing overview — plan, status, alerts, usage summary, recent invoices |
+| `/owner/billing/invoices` | Invoice history with status filter tabs and pagination |
+| `/owner/billing/invoices/[invoiceId]` | Invoice detail — line items, payment attempts timeline |
+| `/owner/billing/plans` | Plan catalog — compare and change plan with preview |
+
+All routes require `requireOwnerAdminAccess()` (OWNER or ADMIN membership).
+
+### API Routes
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/owner/billing/overview` | Full billing overview |
+| GET | `/api/owner/billing/usage` | Usage vs plan limits |
+| GET | `/api/owner/billing/invoices` | Invoice list (status filter, pagination) |
+| GET | `/api/owner/billing/invoices/[invoiceId]` | Invoice detail |
+| GET | `/api/owner/billing/plans` | Plan catalog |
+| POST | `/api/owner/billing/plans/preview` | Preview a plan change |
+| POST | `/api/owner/billing/plans/change` | Submit a plan change request |
+
+### Services
+
+| Service | Location |
+|---------|---------|
+| `getBillingOverview` | `services/owner/owner-billing.service.ts` |
+| `getUsageVsLimits` | `services/owner/owner-billing.service.ts` |
+| `listBillingInvoices` | `services/owner/owner-billing.service.ts` |
+| `getBillingInvoiceDetail` | `services/owner/owner-billing.service.ts` |
+| `getPlanCatalog` | `services/owner/owner-billing.service.ts` |
+| `previewPlanChange` | `services/owner/owner-billing.service.ts` |
+| `requestPlanChange` | `services/owner/owner-billing.service.ts` |
+| `getBillingAlerts` | `services/owner/owner-billing.service.ts` |
+
+### Billing Architecture
+
+```
+Owner Console UI
+      ↓
+  API Routes  (tenant-scoped, OWNER/ADMIN only)
+      ↓
+  Owner Billing Service  (domain logic, downgrade validation)
+      ↓
+  Prisma (internal billing entities)  +  BillingProviderAdapter (provider boundary)
+```
+
+**Internal billing domain** — all entities use internal UUIDs. External provider references are stored in separate fields (`providerCustomerId`, `providerSubscriptionId`, `providerInvoiceId`) and are never used as primary keys.
+
+**Provider adapter boundary** — `adapters/billing/billing-provider.adapter.ts` defines the `BillingProviderAdapter` interface. The `MockBillingProviderAdapter` is used in development. A `StripeBillingAdapter` can be added without changing the service layer.
+
+**Usage calculation** — computed live from the database (`calculateTenantCurrentUsage` in `lib/billing/usage.ts`) using counts of stores, memberships, connections, orders, and subscriptions for the current billing period. Plan limit keys `stores.max`, `staff.max`, `channels.max`, `orders.monthly`, `subscriptions.monthly` are used (legacy keys `max_stores`, `max_users`, `max_active_integrations`, `monthly_order_limit` are also supported for backward compatibility).
+
+**Downgrade validation** — `previewPlanChange` compares current live usage against each enforced count limit on the target plan. If any metric exceeds the target plan limit, the change is blocked and explicit reasons are returned.
+
+### New Schema Entities (Phase 6)
+
+**New enums**: `BillingInvoiceStatus`, `BillingInvoiceLineType`, `PaymentAttemptStatus`, `UsageMetricStatus`, `SubscriptionChangeType`, `SubscriptionChangeStatus`, `SubscriptionChangeEffectiveMode`
+
+**Extended model: `TenantSubscription`** — added `providerName`, `providerCustomerId`, `providerSubscriptionId`, `nextBillingAt`
+
+**New models**:
+
+| Model | Table | Purpose |
+|-------|-------|---------|
+| `BillingInvoice` | `billing_invoices` | Full invoice record with status, amounts, period |
+| `BillingInvoiceLine` | `billing_invoice_lines` | Line items within an invoice |
+| `PaymentAttempt` | `payment_attempts` | Individual payment attempt records |
+| `UsageMetricSnapshot` | `usage_metric_snapshots` | Per-metric usage snapshots for a period |
+| `SubscriptionChangeRequest` | `subscription_change_requests` | Plan change audit trail with blocking reasons |
+| `BillingEventLog` | `billing_event_logs` | Append-only billing event log |
+
+### UI Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `StatusBadge` | `components/owner/billing/` | Color-mapped status pill |
+| `UsageBar` | `components/owner/billing/` | Utilization progress bar |
+| `AlertBanner` | `components/owner/billing/` | Priority-ordered billing alert banners |
+| `InvoiceStatusBadge` | `components/owner/billing/` | Invoice status badge |
+| `PlanChangeFlow` | `components/owner/billing/` | Client-side plan select → preview → confirm flow |
+
+### What Is Real vs Mock
+
+| Feature | Status |
+|---------|--------|
+| Usage computation from DB | ✅ Real (live counts) |
+| Plan catalog & limits | ✅ Real (seeded plans) |
+| Invoice list & detail | ✅ Real (internal `BillingInvoice` records) |
+| Subscription status & alerts | ✅ Real |
+| Plan change request persistence | ✅ Real (creates `SubscriptionChangeRequest`) |
+| Upgrade immediate apply | ✅ Real (updates `TenantSubscription`) |
+| Proration preview amount | �� Mock (adapter returns null) |
+| Provider sync (Stripe webhooks) | 🔲 Not yet |
+| Payment method management | 🔲 Not yet |
+| Billing portal redirect | 🔲 Not yet |
+
+### Remaining Work
+
+- Real Stripe adapter (`StripeBillingAdapter`) implementation
+- Webhook reconciliation: sync Stripe events to `BillingInvoice` and `TenantSubscription`
+- Payment method management UI
+- Billing portal integration (customer portal session)
+- Tax/GST refinements (line items, tax IDs)
+- Finance-role billing permissions if needed
+- Email notifications for payment failure / trial ending
+
+### Audit Events (Phase 6)
+
+`OWNER_BILLING_PLAN_CHANGE_REQUESTED` · `OWNER_BILLING_PLAN_CHANGE_APPLIED` · `OWNER_BILLING_PLAN_DOWNGRADE_BLOCKED`
+
+All events include: `actorUserId`, `tenantId`, `fromPlanCode`, `toPlanCode`, `changeRequestId`.

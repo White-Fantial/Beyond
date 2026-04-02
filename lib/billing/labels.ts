@@ -105,3 +105,119 @@ export function labelFeatureKey(key: string): string {
   };
   return map[key] ?? key;
 }
+
+// ─── Owner-facing status labels ────────────────────────────────────────────────
+
+export type OwnerSubscriptionStatusType =
+  | "TRIAL"
+  | "ACTIVE"
+  | "PAST_DUE"
+  | "SUSPENDED"
+  | "CANCELLED"
+  | "EXPIRED"
+  | "INCOMPLETE";
+
+export function labelOwnerSubscriptionStatus(status: OwnerSubscriptionStatusType): string {
+  switch (status) {
+    case "TRIAL": return "Free trial";
+    case "ACTIVE": return "Active";
+    case "PAST_DUE": return "Payment overdue";
+    case "SUSPENDED": return "Billing paused";
+    case "CANCELLED": return "Cancelled";
+    case "EXPIRED": return "Expired";
+    case "INCOMPLETE": return "Payment incomplete";
+    default: return status;
+  }
+}
+
+export type OwnerBillingInvoiceStatusType =
+  | "PAID"
+  | "OPEN"
+  | "PAST_DUE"
+  | "FAILED"
+  | "VOID"
+  | "REFUNDED"
+  | "DRAFT";
+
+export function labelOwnerInvoiceStatus(status: OwnerBillingInvoiceStatusType): string {
+  switch (status) {
+    case "PAID": return "Paid";
+    case "OPEN": return "Open";
+    case "PAST_DUE": return "Past due";
+    case "FAILED": return "Failed";
+    case "VOID": return "Void";
+    case "REFUNDED": return "Refunded";
+    case "DRAFT": return "Draft";
+    default: return status;
+  }
+}
+
+export type OwnerUsageMetricStatusType = "NORMAL" | "NEAR_LIMIT" | "REACHED" | "EXCEEDED";
+
+export function labelOwnerUsageStatus(status: OwnerUsageMetricStatusType): string {
+  switch (status) {
+    case "NORMAL": return "Normal";
+    case "NEAR_LIMIT": return "Near limit";
+    case "REACHED": return "Limit reached";
+    case "EXCEEDED": return "Over limit";
+    default: return status;
+  }
+}
+
+export function colorOwnerInvoiceStatus(status: OwnerBillingInvoiceStatusType): string {
+  switch (status) {
+    case "PAID": return "green";
+    case "OPEN": return "blue";
+    case "PAST_DUE": return "orange";
+    case "FAILED": return "red";
+    case "VOID": return "gray";
+    case "REFUNDED": return "purple";
+    case "DRAFT": return "gray";
+    default: return "gray";
+  }
+}
+
+export function colorOwnerSubscriptionStatus(status: OwnerSubscriptionStatusType): string {
+  switch (status) {
+    case "ACTIVE": return "green";
+    case "TRIAL": return "blue";
+    case "PAST_DUE": return "orange";
+    case "SUSPENDED": return "yellow";
+    case "CANCELLED": return "gray";
+    case "EXPIRED": return "gray";
+    case "INCOMPLETE": return "red";
+    default: return "gray";
+  }
+}
+
+export function colorOwnerUsageStatus(status: OwnerUsageMetricStatusType): string {
+  switch (status) {
+    case "NORMAL": return "green";
+    case "NEAR_LIMIT": return "yellow";
+    case "REACHED": return "orange";
+    case "EXCEEDED": return "red";
+    default: return "gray";
+  }
+}
+
+export const OWNER_METRIC_LABELS: Record<string, string> = {
+  "stores.max": "Stores",
+  "staff.max": "Staff users",
+  "channels.max": "Connected channels",
+  "orders.monthly": "Monthly orders",
+  "subscriptions.monthly": "Monthly subscriptions",
+  "analytics.advanced": "Advanced analytics",
+  "automation.basic": "Basic automation",
+};
+
+export const OWNER_METRIC_UNITS: Record<string, string> = {
+  "stores.max": "stores",
+  "staff.max": "users",
+  "channels.max": "channels",
+  "orders.monthly": "orders",
+  "subscriptions.monthly": "subscriptions",
+};
+
+export function labelOwnerMetricKey(key: string): string {
+  return OWNER_METRIC_LABELS[key] ?? key;
+}

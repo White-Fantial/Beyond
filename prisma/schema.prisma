@@ -213,6 +213,57 @@ enum BillingRecordStatus {
   UNCOLLECTIBLE
 }
 
+enum BillingInvoiceStatus {
+  PAID
+  OPEN
+  PAST_DUE
+  FAILED
+  VOID
+  REFUNDED
+  DRAFT
+}
+
+enum BillingInvoiceLineType {
+  PLAN
+  USAGE
+  ADJUSTMENT
+  CREDIT
+  TAX
+}
+
+enum PaymentAttemptStatus {
+  SUCCEEDED
+  FAILED
+  REQUIRES_ACTION
+  PROCESSING
+  CANCELED
+}
+
+enum UsageMetricStatus {
+  NORMAL
+  NEAR_LIMIT
+  REACHED
+  EXCEEDED
+}
+
+enum SubscriptionChangeType {
+  UPGRADE
+  DOWNGRADE
+}
+
+enum SubscriptionChangeStatus {
+  PENDING
+  BLOCKED
+  CONFIRMED
+  APPLIED
+  CANCELED
+}
+
+enum SubscriptionChangeEffectiveMode {
+  IMMEDIATE
+  NEXT_CYCLE
+}
+
 enum SoldOutResetMode {
   NONE
   DAILY_AUTO_RESET
@@ -249,6 +300,10 @@ model Tenant {
   subscriptionEvents   TenantSubscriptionEvent[]
   billingRecords       BillingRecord[]
   usageSnapshots       UsageSnapshot[]
+  billingInvoices      BillingInvoice[]
+  paymentAttempts      PaymentAttempt[]
+  usageMetricSnapshots UsageMetricSnapshot[]
+  billingChangeRequests SubscriptionChangeRequest[]
 
   customers Customer[]
 
@@ -1466,6 +1521,8 @@ model Plan {
   limits        PlanLimit[]
   features      PlanFeature[]
   subscriptions TenantSubscription[]
+  changeRequestsFrom SubscriptionChangeRequest[] @relation("ChangeFromPlan")
+  changeRequestsTo   SubscriptionChangeRequest[] @relation("ChangeToPlan")
 
   @@index([status, sortOrder])
   @@map("plans")
@@ -1544,6 +1601,10 @@ model TenantSubscription {
   reactivatedAt         DateTime?
   externalSubscriptionRef String?
   externalPriceRef      String?
+  providerName          String?
+  providerCustomerId    String?
+  providerSubscriptionId String?
+  nextBillingAt         DateTime?
   overrideJson          Json?
   startedAt             DateTime           @default(now())
   createdAt             DateTime           @default(now())
@@ -1553,6 +1614,9 @@ model TenantSubscription {
   plan    Plan                @relation(fields: [planId], references: [id])
   events  TenantSubscriptionEvent[]
   billingRecords BillingRecord[]
+  billingInvoices BillingInvoice[]
+  usageMetricSnapshots UsageMetricSnapshot[]
+  changeRequests SubscriptionChangeRequest[]
 
   @@index([tenantId, status])
   @@index([status, currentPeriodEnd])
@@ -1604,6 +1668,144 @@ model BillingRecord {
   @@index([tenantId, createdAt])
   @@index([tenantId, recordType, status])
   @@map("billing_records")
+}
+
+model BillingInvoice {
+  id                  String               @id @default(uuid())
+  tenantId            String
+  subscriptionId      String?
+  providerInvoiceId   String?
+  invoiceNumber       String?
+  status              BillingInvoiceStatus @default(DRAFT)
+  currency            String               @default("NZD")
+  subtotalMinor       Int                  @default(0)
+  taxMinor            Int                  @default(0)
+  totalMinor          Int                  @default(0)
+  amountPaidMinor     Int                  @default(0)
+  amountDueMinor      Int                  @default(0)
+  billedAt            DateTime?
+  dueAt               DateTime?
+  paidAt              DateTime?
+  hostedInvoiceUrl    String?
+  pdfUrl              String?
+  billingPeriodStart  DateTime?
+  billingPeriodEnd    DateTime?
+  rawStatus           String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subscription TenantSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  lines        BillingInvoiceLine[]
+  paymentAttempts PaymentAttempt[]
+
+  @@index([tenantId, billedAt])
+  @@index([tenantId, status])
+  @@map("billing_invoices")
+}
+
+model BillingInvoiceLine {
+  id              String                 @id @default(uuid())
+  invoiceId       String
+  type            BillingInvoiceLineType @default(PLAN)
+  description     String
+  quantity        Int?
+  unitAmountMinor Int?
+  amountMinor     Int                    @default(0)
+  metadataJson    Json?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  invoice BillingInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("billing_invoice_lines")
+}
+
+model PaymentAttempt {
+  id                      String               @id @default(uuid())
+  tenantId                String
+  invoiceId               String?
+  providerPaymentIntentId String?
+  status                  PaymentAttemptStatus @default(PROCESSING)
+  attemptedAt             DateTime             @default(now())
+  failureCode             String?
+  failureMessage          String?
+  retryable               Boolean              @default(false)
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+
+  tenant  Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoice BillingInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, attemptedAt])
+  @@index([invoiceId])
+  @@map("payment_attempts")
+}
+
+model UsageMetricSnapshot {
+  id                 String            @id @default(uuid())
+  tenantId           String
+  subscriptionId     String?
+  metricKey          String
+  currentValue       Float             @default(0)
+  limitValue         Float?
+  utilizationPercent Float?
+  status             UsageMetricStatus @default(NORMAL)
+  periodStart        DateTime?
+  periodEnd          DateTime?
+  measuredAt         DateTime          @default(now())
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subscription TenantSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, metricKey, measuredAt])
+  @@map("usage_metric_snapshots")
+}
+
+model SubscriptionChangeRequest {
+  id                    String                          @id @default(uuid())
+  tenantId              String
+  subscriptionId        String?
+  currentPlanId         String
+  targetPlanId          String
+  changeType            SubscriptionChangeType
+  status                SubscriptionChangeStatus        @default(PENDING)
+  effectiveMode         SubscriptionChangeEffectiveMode @default(NEXT_CYCLE)
+  prorationPreviewMinor Int?
+  blockingReasonsJson   Json?
+  previewJson           Json?
+  requestedByUserId     String?
+  requestedAt           DateTime                        @default(now())
+  appliedAt             DateTime?
+  createdAt             DateTime                        @default(now())
+  updatedAt             DateTime                        @updatedAt
+
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subscription TenantSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  currentPlan  Plan                @relation("ChangeFromPlan", fields: [currentPlanId], references: [id])
+  targetPlan   Plan                @relation("ChangeToPlan", fields: [targetPlanId], references: [id])
+
+  @@index([tenantId, requestedAt])
+  @@map("subscription_change_requests")
+}
+
+model BillingEventLog {
+  id              String   @id @default(uuid())
+  tenantId        String?
+  subscriptionId  String?
+  invoiceId       String?
+  eventType       String
+  providerName    String?
+  providerEventId String?
+  payloadJson     Json?
+  createdAt       DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([eventType, createdAt])
+  @@map("billing_event_logs")
 }
 
 model UsageSnapshot {
