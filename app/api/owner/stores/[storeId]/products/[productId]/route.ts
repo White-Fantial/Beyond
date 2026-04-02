@@ -13,7 +13,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const body = await req.json();
 
     // Only local fields are accepted — strip any source-locked fields
-    const { name, basePriceAmount, sourceType, sourceProductRef, sku, barcode, ...safeData } = body;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { name: _name, basePriceAmount: _basePriceAmount, sourceType: _sourceType, sourceProductRef: _sourceProductRef, sku: _sku, barcode: _barcode, ...safeData } = body;
 
     await updateOwnerProduct({
       productId: params.productId,
@@ -24,7 +25,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 400 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

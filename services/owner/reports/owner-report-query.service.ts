@@ -7,6 +7,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import type { OrderStatus } from "@prisma/client";
 import type {
   OwnerSummaryKpi,
   OwnerRevenueTrendPoint,
@@ -37,7 +38,7 @@ export interface QueryInput {
   timezone: string;
 }
 
-const REVENUE_EXCLUDED_STATUSES = ["CANCELLED", "FAILED"] as const;
+const REVENUE_EXCLUDED_STATUSES: OrderStatus[] = ["CANCELLED", "FAILED"];
 
 // ─── Summary KPI ──────────────────────────────────────────────────────────────
 

@@ -105,7 +105,7 @@ export default async function StoreDashboardPage({ params }: Props) {
             <thead>
               <tr className="text-xs text-gray-500 border-b border-gray-100">
                 <th className="text-left pb-2 font-medium">Channel</th>
-                <th className="text-right pb-2 font-medium">Today's Revenue</th>
+                <th className="text-right pb-2 font-medium">Today&apos;s Revenue</th>
                 <th className="text-right pb-2 font-medium">Orders</th>
               </tr>
             </thead>
