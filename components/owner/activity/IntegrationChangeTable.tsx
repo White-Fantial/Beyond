@@ -1,53 +1,6 @@
-import Link from "next/link";
 import type { IntegrationChangeEvent } from "@/types/owner-activity";
 import ActivityEventBadge from "./ActivityEventBadge";
-
-function relativeDate(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const days = Math.floor(diff / 86400000);
-  if (days === 0) return "Today";
-  if (days === 1) return "Yesterday";
-  if (days < 30) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString("en-NZ");
-}
-
-interface PaginationProps {
-  page: number;
-  total: number;
-  pageSize: number;
-  buildUrl: (page: number) => string;
-}
-
-function Pagination({ page, total, pageSize, buildUrl }: PaginationProps) {
-  const totalPages = Math.ceil(total / pageSize);
-  if (totalPages <= 1) return null;
-  return (
-    <div className="border-t border-gray-200 px-4 py-3 flex items-center justify-between bg-gray-50">
-      <span className="text-xs text-gray-500">
-        Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
-      </span>
-      <div className="flex items-center gap-2">
-        {page > 1 && (
-          <Link
-            href={buildUrl(page - 1)}
-            className="px-3 py-1.5 text-xs border border-gray-200 rounded hover:bg-white text-gray-700"
-          >
-            ← Prev
-          </Link>
-        )}
-        <span className="text-xs text-gray-500">Page {page} of {totalPages}</span>
-        {page < totalPages && (
-          <Link
-            href={buildUrl(page + 1)}
-            className="px-3 py-1.5 text-xs border border-gray-200 rounded hover:bg-white text-gray-700"
-          >
-            Next →
-          </Link>
-        )}
-      </div>
-    </div>
-  );
-}
+import { relativeDate, TablePagination } from "./tableUtils";
 
 interface Props {
   items: IntegrationChangeEvent[];
@@ -116,7 +69,7 @@ export default function IntegrationChangeTable({ items, total, page, pageSize, b
           </tbody>
         </table>
       </div>
-      <Pagination page={page} total={total} pageSize={pageSize} buildUrl={buildUrl} />
+      <TablePagination page={page} total={total} pageSize={pageSize} buildUrl={buildUrl} />
     </div>
   );
 }
