@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 interface ProfileFormProps {
-  userId: string;
   initialName: string;
   email: string;
   phone: string | null;

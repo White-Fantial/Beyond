@@ -210,7 +210,6 @@ function NextDatePicker({
   }
 
   const minDate = new Date();
-  minDate.setDate(minDate.getDate() + 1);
   const minStr = minDate.toISOString().split("T")[0];
 
   return (

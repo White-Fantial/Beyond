@@ -22,7 +22,6 @@ export default async function CustomerAccountPage() {
       <h1 className="text-xl font-bold text-gray-900 mb-6">My Account</h1>
       <div className="space-y-4">
         <ProfileForm
-          userId={account.id}
           initialName={account.name}
           email={account.email}
           phone={account.phone}

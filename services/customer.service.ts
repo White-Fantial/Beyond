@@ -358,7 +358,7 @@ export async function updateNextOrderDate(
     );
   }
 
-  if (nextOrderAt <= new Date()) {
+  if (nextOrderAt.getTime() < Date.now()) {
     throw new CustomerSubscriptionTransitionError(
       "Next order date must be in the future."
     );
