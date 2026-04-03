@@ -388,7 +388,8 @@ export default function BackofficeOrdersClient({ storeId }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [newOrderCount, setNewOrderCount] = useState(0);
-  const prevCountRef = useRef(0);
+  // Initialized to -1 so the first load sets the baseline without triggering a toast.
+  const prevCountRef = useRef(-1);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -400,7 +401,8 @@ export default function BackofficeOrdersClient({ storeId }: Props) {
 
       const prev = prevCountRef.current;
       const next = incoming.filter((o) => o.status === "RECEIVED").length;
-      if (next > prev && prev > 0) {
+      // Show toast when new RECEIVED orders arrive after the initial baseline is set.
+      if (next > prev && prev >= 0) {
         setNewOrderCount(next - prev);
       }
       prevCountRef.current = next;

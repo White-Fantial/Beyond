@@ -102,6 +102,7 @@ export async function getBackofficeOrderDetail(
     modifiers: item.modifiers.map(
       (m): BackofficeOrderModifier => ({
         modifierOptionName: m.modifierOptionName,
+        // DB field is nullable; coerce to 0 so the type stays `number`.
         unitPriceAmount: m.unitPriceAmount ?? 0,
       })
     ),
