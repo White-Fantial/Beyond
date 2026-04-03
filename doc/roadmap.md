@@ -43,6 +43,8 @@
 - [x] **Admin Console Phase 3** — integration force-reconnect/sync (`/api/admin/integrations/[connectionId]/force-reconnect`, `trigger-sync`, `trigger-refresh-check`, `validate`); analytics charts page at `/admin/analytics` with 7 UI components (`AdminKpiGrid`, `AdminTrendChart`, `AdminProviderHealthTable`, `AdminFailureBreakdownTable`, `AdminProblemStoresTable`, `AdminAttentionSummaryCards`, `AdminAnalyticsFilterBar`); 8 analytics service functions
 - [x] **Owner Console Phase 7 — Team Activity & Audit** — read-only tenant-scoped activity hub at `/owner/activity`; tabbed view: Activity Feed, Role Changes, Settings Changes, Integration Changes; 4 service functions in `services/owner/owner-activity.service.ts`; types in `types/owner-activity.ts`; 4 API routes (`GET /api/owner/activity`, `/roles`, `/settings`, `/integrations`); 6 UI components in `components/owner/activity/`; Activity & Audit link added to `OwnerSidebar`; 25 unit tests
 
+- [x] **Owner Console Phase 8 — Automation & Notifications** — proactive in-app alerting for store owners; alert rule builder with 7 metric types (cancellation rate, revenue drop, sold-out count, order failure rate, low-stock items, POS disconnect, delivery disconnect); percentage-rollout window evaluation; notification centre at `/owner/notifications` with All / Unread tabs; `NotificationBell` component with live unread badge in `OwnerSidebar`; alert rules management at `/owner/alert-rules` with create/edit/toggle/delete; `AlertRule` + `Notification` Prisma models + `AlertMetricType` + `NotificationType` enums; migration `20260403000000`; idempotent seed; 4 services (`owner-alert-rule`, `owner-notification`, `owner-alert-evaluator`); 7 API routes; 7 UI components in `components/owner/notifications/` and `components/owner/alert-rules/`; 45 unit tests
+
 ## In Progress
 
 
@@ -87,12 +89,9 @@ See Completed section above. Key details in [doc/owner-console.md](./owner-conso
 
 See Completed section above.
 
-### Phase 8 — Automation & Notifications
+### ~~Phase 8 — Automation & Notifications~~ ✅ Complete
 
-- Alert rule builder: define thresholds for cancellation rate, revenue drop, sold-out products
-- Delivery and POS issue notifications (real-time, in-app)
-- Daily summary digest emails / in-app notifications for owners
-- Sold-out auto-alert to assigned staff members
+See Completed section above.
 
 ### Phase 9 — Advanced Analytics & Forecasting
 
