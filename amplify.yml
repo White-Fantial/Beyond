@@ -1,0 +1,29 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+    build:
+      commands:
+        - rm -f .env.production
+        - touch .env.production
+        - printenv | grep '^DATABASE_URL=' >> .env.production
+        - printenv | grep '^SESSION_SECRET=' >> .env.production
+        - printenv | grep '^INTEGRATIONS_ENCRYPTION_KEY=' >> .env.production
+        - printenv | grep '^NEXT_PUBLIC_APP_URL=' >> .env.production
+        - printenv | grep '^NEXTAUTH_URL=' >> .env.production
+        - echo "===== env file check ====="
+        - cat .env.production | sed 's/=.*/=***hidden***/'
+        - node -e "console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)"
+        - npx prisma generate
+        - npm run prisma:deploy
+        - npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*
