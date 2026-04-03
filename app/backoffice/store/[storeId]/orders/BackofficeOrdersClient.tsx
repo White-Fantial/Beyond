@@ -411,12 +411,65 @@ export default function BackofficeOrdersClient({ storeId }: Props) {
     }
   }, [storeId]);
 
-  // Initial load + polling
+  // SSE with polling fallback
   useEffect(() => {
-    fetchOrders();
-    const id = setInterval(fetchOrders, POLL_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [fetchOrders]);
+    let eventSource: EventSource | null = null;
+    let pollId: ReturnType<typeof setInterval> | null = null;
+
+    function startPolling() {
+      fetchOrders();
+      pollId = setInterval(fetchOrders, POLL_INTERVAL_MS);
+    }
+
+    if (typeof window !== "undefined" && typeof EventSource !== "undefined") {
+      try {
+        eventSource = new EventSource(`/api/sse/store/${storeId}/orders`);
+
+        eventSource.addEventListener("orders_snapshot", (e) => {
+          try {
+            const body = JSON.parse(e.data) as BackofficeLiveOrdersData;
+            const incoming = body.orders ?? [];
+            setOrders(incoming);
+            const prev = prevCountRef.current;
+            const next = incoming.filter((o) => o.status === "RECEIVED").length;
+            if (next > prev && prev > 0) setNewOrderCount(next - prev);
+            prevCountRef.current = next;
+          } catch {
+            // ignore parse errors
+          }
+        });
+
+        eventSource.addEventListener("orders_update", (e) => {
+          try {
+            const body = JSON.parse(e.data) as BackofficeLiveOrdersData;
+            const incoming = body.orders ?? [];
+            setOrders(incoming);
+            const prev = prevCountRef.current;
+            const next = incoming.filter((o) => o.status === "RECEIVED").length;
+            if (next > prev && prev > 0) setNewOrderCount(next - prev);
+            prevCountRef.current = next;
+          } catch {
+            // ignore parse errors
+          }
+        });
+
+        eventSource.onerror = () => {
+          eventSource?.close();
+          eventSource = null;
+          startPolling();
+        };
+      } catch {
+        startPolling();
+      }
+    } else {
+      startPolling();
+    }
+
+    return () => {
+      eventSource?.close();
+      if (pollId !== null) clearInterval(pollId);
+    };
+  }, [storeId, fetchOrders]);
 
   const handleAction = useCallback(
     async (orderId: string, nextStatus: string) => {

@@ -66,18 +66,57 @@ export default function ConfirmationClient({
   useEffect(() => {
     if (TERMINAL_STATUSES.includes(status.status)) return;
 
-    const poll = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/store/${storeSlug}/orders/${orderId}`);
-        if (!res.ok) return;
-        const body = (await res.json()) as { data: GuestOrderStatus };
-        if (body.data) setStatus(body.data);
-      } catch {
-        // swallow
-      }
-    }, 20_000);
+    let es: EventSource | null = null;
+    let pollId: ReturnType<typeof setInterval> | null = null;
 
-    return () => clearInterval(poll);
+    function startPolling() {
+      pollId = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/store/${storeSlug}/orders/${orderId}`);
+          if (!res.ok) return;
+          const body = (await res.json()) as { data: GuestOrderStatus };
+          if (body.data) {
+            setStatus(body.data);
+            if (TERMINAL_STATUSES.includes(body.data.status) && pollId !== null) {
+              clearInterval(pollId);
+            }
+          }
+        } catch {
+          // swallow
+        }
+      }, 20_000);
+    }
+
+    if (typeof EventSource !== "undefined") {
+      try {
+        es = new EventSource(`/api/sse/store/${storeSlug}/orders/${orderId}`);
+        es.addEventListener("order_status", (e) => {
+          try {
+            const data = JSON.parse(e.data) as GuestOrderStatus;
+            setStatus(data);
+            if (TERMINAL_STATUSES.includes(data.status)) {
+              es?.close();
+            }
+          } catch {
+            // ignore
+          }
+        });
+        es.onerror = () => {
+          es?.close();
+          es = null;
+          startPolling();
+        };
+      } catch {
+        startPolling();
+      }
+    } else {
+      startPolling();
+    }
+
+    return () => {
+      es?.close();
+      if (pollId !== null) clearInterval(pollId);
+    };
   }, [storeSlug, orderId, status.status]);
 
   const config = STATUS_CONFIG[status.status] ?? {

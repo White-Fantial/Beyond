@@ -27,6 +27,34 @@ export default function NotificationBell({ initialUnreadCount = 0 }: BellProps) 
       .finally(() => setLoading(false));
   }, [open]);
 
+  // Subscribe to SSE for live unread count updates
+  useEffect(() => {
+    if (typeof EventSource === "undefined") return;
+
+    let es: EventSource | null = null;
+
+    function connect() {
+      es = new EventSource("/api/sse/owner/notifications");
+      es.addEventListener("unread_count", (e) => {
+        try {
+          const data = JSON.parse(e.data) as { unreadCount: number };
+          setUnreadCount(data.unreadCount);
+        } catch {
+          // ignore
+        }
+      });
+      es.onerror = () => {
+        es?.close();
+        es = null;
+        // Retry after 30s
+        setTimeout(connect, 30_000);
+      };
+    }
+
+    connect();
+    return () => { es?.close(); };
+  }, []);
+
   async function markAllRead() {
     await fetch("/api/owner/notifications/read-all", { method: "POST" });
     setUnreadCount(0);
