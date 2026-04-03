@@ -307,6 +307,9 @@ model Tenant {
 
   customers Customer[]
 
+  alertRules    AlertRule[]
+  notifications Notification[]
+
   @@map("tenants")
 }
 
@@ -329,6 +332,8 @@ model User {
   invitedMemberships Membership[] @relation("MembershipInvitedBy")
   auditLogs          AuditLog[]   @relation("AuditLogActor")
   jobRuns            JobRun[]
+  notifications      Notification[]
+  alertRulesCreated  AlertRule[]  @relation("AlertRuleCreatedBy")
 
   @@map("users")
 }
@@ -394,6 +399,7 @@ model Store {
   catalogSettings        CatalogSettings?
   storeOperationSettings StoreOperationSettings?
   storeHours             StoreHours[]
+  alertRules             AlertRule[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -1992,4 +1998,68 @@ model StoreHours {
   @@unique([storeId, dayOfWeek])
   @@index([tenantId, storeId])
   @@map("store_hours")
+}
+
+// ─── Phase 8: Automation & Notifications ─────────────────────────────────────
+
+enum AlertMetricType {
+  CANCELLATION_RATE
+  REVENUE_DROP
+  SOLD_OUT_COUNT
+  ORDER_FAILURE_RATE
+  LOW_STOCK_ITEMS
+  POS_DISCONNECT
+  DELIVERY_DISCONNECT
+}
+
+enum NotificationType {
+  ALERT_TRIGGERED
+  SYSTEM_INFO
+  BILLING_REMINDER
+  SUBSCRIPTION_EVENT
+  INTEGRATION_ISSUE
+  STAFF_ACTIVITY
+}
+
+model AlertRule {
+  id             String          @id @default(uuid())
+  tenantId       String
+  storeId        String?
+  metricType     AlertMetricType
+  threshold      Decimal         @db.Decimal(10, 4)
+  windowMinutes  Int             @default(60)
+  enabled        Boolean         @default(true)
+  lastFiredAt    DateTime?
+  createdBy      String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  store     Store?  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdByUser User? @relation("AlertRuleCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, enabled])
+  @@index([storeId])
+  @@map("alert_rules")
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  tenantId    String
+  userId      String
+  type        NotificationType @default(ALERT_TRIGGERED)
+  title       String
+  body        String
+  entityType  String?
+  entityId    String?
+  readAt      DateTime?
+  dismissedAt DateTime?
+  createdAt   DateTime         @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, createdAt])
+  @@index([userId, readAt])
+  @@map("notifications")
 }
