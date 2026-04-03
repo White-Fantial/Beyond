@@ -8,6 +8,8 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import { createCanonicalOrderFromInbound } from "@/services/order.service";
+import type { PlaceGuestOrderInput, PlaceGuestOrderResult, GuestOrderStatus } from "@/types/storefront";
 
 // ─── Public Types ─────────────────────────────────────────────────────────────
 
@@ -333,5 +335,117 @@ export async function getProductDetailForOrdering(
     hasModifiers: modifierGroups.length > 0,
     categoryId: "",
     modifierGroups,
+  };
+}
+
+// ─── Guest Order Placement ────────────────────────────────────────────────────
+
+/**
+ * Place an online order on behalf of a guest (no auth required).
+ *
+ * Validates each item exists in the catalog and is not sold out,
+ * then creates a canonical Order via the order service.
+ */
+export async function placeGuestOrder(
+  input: PlaceGuestOrderInput
+): Promise<PlaceGuestOrderResult> {
+  const { storeId, customerName, customerPhone, customerEmail, pickupTime, notes, items, currencyCode } = input;
+
+  const store = await prisma.store.findFirst({
+    where: { id: storeId, status: "ACTIVE" },
+    select: { id: true, tenantId: true, currency: true },
+  });
+  if (!store) throw new Error("Store not found or unavailable");
+
+  const productIds = [...new Set(items.map((i) => i.productId))];
+  const products = await prisma.catalogProduct.findMany({
+    where: { id: { in: productIds }, storeId, deletedAt: null, isActive: true },
+    select: { id: true, name: true, basePriceAmount: true, isSoldOut: true },
+  });
+  const productMap = new Map(products.map((p) => [p.id, p]));
+
+  for (const item of items) {
+    const product = productMap.get(item.productId);
+    if (!product) throw new Error(`Product not found: ${item.productId}`);
+    if (product.isSoldOut) throw new Error(`Product is sold out: ${product.name}`);
+  }
+
+  const normalizedItems = items.map((item) => {
+    const modifierTotal = item.selectedModifiers.reduce(
+      (sum, m) => sum + m.priceDeltaAmount,
+      0
+    );
+    const unitPrice = item.unitPriceAmount;
+    const lineTotal = item.quantity * (unitPrice + modifierTotal);
+
+    return {
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      unitPriceAmount: unitPrice,
+      totalPriceAmount: lineTotal,
+      notes: item.notes,
+      modifiers: item.selectedModifiers.map((m) => ({
+        modifierGroupId: m.modifierGroupId,
+        modifierGroupName: m.modifierGroupName,
+        modifierOptionId: m.optionId,
+        modifierOptionName: m.optionName,
+        unitPriceAmount: m.priceDeltaAmount,
+        totalPriceAmount: m.priceDeltaAmount,
+      })),
+    };
+  });
+
+  const totalAmount = normalizedItems.reduce((sum, i) => sum + i.totalPriceAmount, 0);
+
+  const { order } = await createCanonicalOrderFromInbound({
+    tenantId: store.tenantId,
+    storeId,
+    channelType: "ONLINE",
+    orderedAt: new Date(),
+    totalAmount,
+    currencyCode: currencyCode ?? store.currency ?? "NZD",
+    customerName,
+    customerPhone,
+    customerEmail,
+    notes,
+    items: normalizedItems,
+    rawPayload: { source: "storefront", pickupTime, customerName, items: input.items },
+  });
+
+  return {
+    orderId: order.id,
+    status: order.status,
+    estimatedPickupAt: pickupTime,
+  };
+}
+
+/**
+ * Get public order status for the confirmation page.
+ * No authentication required — scoped by orderId and storeId.
+ */
+export async function getGuestOrderStatus(
+  storeId: string,
+  orderId: string
+): Promise<GuestOrderStatus | null> {
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, storeId },
+    select: {
+      id: true,
+      status: true,
+      customerName: true,
+      originSubmittedAt: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!order) return null;
+
+  return {
+    orderId: order.id,
+    status: order.status,
+    customerName: order.customerName ?? null,
+    estimatedPickupAt: order.originSubmittedAt?.toISOString() ?? null,
+    updatedAt: order.updatedAt.toISOString(),
   };
 }
