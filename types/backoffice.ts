@@ -118,3 +118,64 @@ export interface BackofficeDashboardResponse {
 export interface BackofficeReportsResponse {
   data: BackofficeReportData;
 }
+
+// ─── Live Orders (Phase 2) ────────────────────────────────────────────────────
+
+export interface BackofficeLiveOrder {
+  id: string;
+  status: string;
+  sourceChannel: BackofficeOrderChannel;
+  orderedAt: string;
+  ageMinutes: number;
+  customerName: string | null;
+  customerPhone: string | null;
+  totalAmount: number;
+  currencyCode: string;
+  itemCount: number;
+}
+
+export interface BackofficeOrderModifier {
+  modifierOptionName: string;
+  unitPriceAmount: number;
+}
+
+export interface BackofficeOrderItem {
+  id: string;
+  productName: string;
+  quantity: number;
+  unitPriceAmount: number;
+  totalPriceAmount: number;
+  notes: string | null;
+  modifiers: BackofficeOrderModifier[];
+}
+
+export interface BackofficeOrderEvent {
+  id: string;
+  eventType: string;
+  message: string | null;
+  createdAt: string;
+}
+
+export interface BackofficeOrderDetail extends BackofficeLiveOrder {
+  customerEmail: string | null;
+  subtotalAmount: number;
+  discountAmount: number;
+  taxAmount: number;
+  tipAmount: number;
+  notes: string | null;
+  items: BackofficeOrderItem[];
+  events: BackofficeOrderEvent[];
+}
+
+export interface BackofficeLiveOrdersData {
+  orders: BackofficeLiveOrder[];
+  total: number;
+}
+
+export interface BackofficeLiveOrdersResponse {
+  data: BackofficeLiveOrdersData;
+}
+
+export interface BackofficeOrderDetailResponse {
+  data: BackofficeOrderDetail;
+}
