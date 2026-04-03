@@ -432,7 +432,7 @@ export default function BackofficeOrdersClient({ storeId }: Props) {
             setOrders(incoming);
             const prev = prevCountRef.current;
             const next = incoming.filter((o) => o.status === "RECEIVED").length;
-            if (next > prev && prev > 0) setNewOrderCount(next - prev);
+            if (next > prev && prev >= 0) setNewOrderCount(next - prev);
             prevCountRef.current = next;
           } catch {
             // ignore parse errors
@@ -446,7 +446,7 @@ export default function BackofficeOrdersClient({ storeId }: Props) {
             setOrders(incoming);
             const prev = prevCountRef.current;
             const next = incoming.filter((o) => o.status === "RECEIVED").length;
-            if (next > prev && prev > 0) setNewOrderCount(next - prev);
+            if (next > prev && prev >= 0) setNewOrderCount(next - prev);
             prevCountRef.current = next;
           } catch {
             // ignore parse errors
