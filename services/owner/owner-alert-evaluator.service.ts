@@ -6,6 +6,7 @@
  * All metric queries are tenant-scoped; no cross-tenant data is ever combined.
  */
 import { prisma } from "@/lib/prisma";
+import { OrderStatus } from "@prisma/client";
 import { createNotification } from "./owner-notification.service";
 import type { EvaluatorResult } from "@/types/owner-notifications";
 
@@ -27,7 +28,7 @@ async function measureCancellationRate(
   };
   const [total, cancelled] = await Promise.all([
     prisma.order.count({ where }),
-    prisma.order.count({ where: { ...where, status: "CANCELLED" } }),
+    prisma.order.count({ where: { ...where, status: OrderStatus.CANCELLED } }),
   ]);
   if (total === 0) return 0;
   return (cancelled / total) * 100;
@@ -91,21 +92,21 @@ async function measureRevenueDrop(
   const priorStart = new Date(now.getTime() - 2 * windowMs);
 
   const storeFilter = storeId ? { storeId } : {};
-  const baseWhere = { tenantId, ...storeFilter, status: { not: "CANCELLED" } };
+  const baseWhere = { tenantId, ...storeFilter, status: { not: OrderStatus.CANCELLED } };
 
   const [currentOrders, priorOrders] = await Promise.all([
     prisma.order.findMany({
       where: { ...baseWhere, createdAt: { gte: periodStart, lt: now } },
-      select: { totalAmountMinor: true },
+      select: { totalAmount: true },
     }),
     prisma.order.findMany({
       where: { ...baseWhere, createdAt: { gte: priorStart, lt: periodStart } },
-      select: { totalAmountMinor: true },
+      select: { totalAmount: true },
     }),
   ]);
 
-  const sum = (orders: { totalAmountMinor: number | null }[]) =>
-    orders.reduce((acc, o) => acc + (o.totalAmountMinor ?? 0), 0);
+  const sum = (orders: { totalAmount: number | null }[]) =>
+    orders.reduce((acc, o) => acc + (o.totalAmount ?? 0), 0);
 
   const current = sum(currentOrders);
   const prior = sum(priorOrders);

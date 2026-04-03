@@ -4,6 +4,7 @@ import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
 import {
   listNotifications,
 } from "@/services/owner/owner-notification.service";
+import type { NotificationType } from "@/types/owner-notifications";
 
 /**
  * GET /api/owner/notifications
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
 
     const result = await listNotifications(tenantId, ctx.userId, {
       unreadOnly,
-      type: type as Parameters<typeof listNotifications>[2]["type"],
+      type: type as NotificationType | undefined,
       page,
       pageSize,
     });

@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getCurrentUserAuthContext } from "@/lib/auth/context";
 import { listCustomerSubscriptions } from "@/services/customer.service";
 
 /**
  * GET /api/customer/subscriptions
  */
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

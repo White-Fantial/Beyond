@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getCurrentUserAuthContext } from "@/lib/auth/context";
 import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
 import { markAllNotificationsRead } from "@/services/owner/owner-notification.service";
@@ -7,7 +7,7 @@ import { markAllNotificationsRead } from "@/services/owner/owner-notification.se
  * POST /api/owner/notifications/read-all
  * Marks all unread notifications as read for the current user.
  */
-export async function POST(_req: NextRequest) {
+export async function POST() {
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

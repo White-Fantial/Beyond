@@ -12,6 +12,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
+import { OrderStatus } from "@prisma/client";
 import type {
   CustomerOrderSummary,
   CustomerOrderListResult,
@@ -72,7 +73,11 @@ export async function listCustomerOrders(
   const where = {
     customerEmail: userEmail,
     ...(status
-      ? { status: Array.isArray(status) ? { in: status as string[] } : (status as string) }
+      ? {
+          status: Array.isArray(status)
+            ? { in: status as OrderStatus[] }
+            : (status as OrderStatus),
+        }
       : {}),
   };
 
