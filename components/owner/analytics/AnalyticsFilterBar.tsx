@@ -30,7 +30,7 @@ export default function AnalyticsFilterBar({ stores }: Props) {
     [router, pathname, searchParams]
   );
 
-  const hasFilers =
+  const hasFilters =
     searchParams.get("storeId") ||
     searchParams.get("from") ||
     searchParams.get("to") ||
@@ -83,7 +83,7 @@ export default function AnalyticsFilterBar({ stores }: Props) {
       </select>
 
       {/* Clear filters */}
-      {hasFilers && (
+      {hasFilters && (
         <button
           onClick={() => router.push(pathname)}
           className="text-xs text-gray-500 hover:text-gray-700 underline"

@@ -320,7 +320,6 @@ export async function getProductionEstimates(
 
     const days: ProductionDayEstimate[] = [];
     let weekTotal = 0;
-    let priorWeekTotal = 0;
 
     for (let i = 0; i < 7; i++) {
       const date = addDays(monday, i);
@@ -350,10 +349,7 @@ export async function getProductionEstimates(
       });
 
       weekTotal += estimated;
-      priorWeekTotal += priorWeekEstimate;
     }
-
-    void priorWeekTotal;
 
     return { storeId: store.id, storeName: store.name, days, weekTotal };
   });
