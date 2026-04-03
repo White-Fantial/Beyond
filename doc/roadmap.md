@@ -44,6 +44,7 @@
 - [x] **Owner Console Phase 7 — Team Activity & Audit** — read-only tenant-scoped activity hub at `/owner/activity`; tabbed view: Activity Feed, Role Changes, Settings Changes, Integration Changes; 4 service functions in `services/owner/owner-activity.service.ts`; types in `types/owner-activity.ts`; 4 API routes (`GET /api/owner/activity`, `/roles`, `/settings`, `/integrations`); 6 UI components in `components/owner/activity/`; Activity & Audit link added to `OwnerSidebar`; 25 unit tests
 
 - [x] **Owner Console Phase 8 — Automation & Notifications** — proactive in-app alerting for store owners; alert rule builder with 7 metric types (cancellation rate, revenue drop, sold-out count, order failure rate, low-stock items, POS disconnect, delivery disconnect); percentage-rollout window evaluation; notification centre at `/owner/notifications` with All / Unread tabs; `NotificationBell` component with live unread badge in `OwnerSidebar`; alert rules management at `/owner/alert-rules` with create/edit/toggle/delete; `AlertRule` + `Notification` Prisma models + `AlertMetricType` + `NotificationType` enums; migration `20260403000000`; idempotent seed; 4 services (`owner-alert-rule`, `owner-notification`, `owner-alert-evaluator`); 7 API routes; 7 UI components in `components/owner/notifications/` and `components/owner/alert-rules/`; 45 unit tests
+- [x] **Owner Console Phase 9 — Advanced Analytics & Forecasting** — analytics hub at `/owner/analytics`; weekday × hour-slot order volume heatmap with colour-intensity scale; linear-regression revenue forecast with 80% confidence interval band (7/14/30-day horizon); next-week production estimates per store using trailing 4-week same-weekday average; churn risk signals for customers with declining order frequency (HIGH/MEDIUM/LOW classification); 4 service functions in `services/owner/owner-analytics.service.ts`; types in `types/owner-analytics.ts`; 4 API routes (`GET /api/owner/analytics/heatmap`, `/forecast`, `/production`, `/churn`); 6 UI components in `components/owner/analytics/`; Analytics link added to `OwnerSidebar`; 36 unit tests
 
 ## In Progress
 
@@ -93,9 +94,6 @@ See Completed section above.
 
 See Completed section above.
 
-### Phase 9 — Advanced Analytics & Forecasting
+### ~~Phase 9 — Advanced Analytics & Forecasting~~ ✅ Complete
 
-- Richer trend analysis: weekday and time-slot performance heatmaps
-- Revenue forecasting using historical order patterns
-- Production-planning support: next-week order volume estimates per store
-- Prediction hooks for subscription churn and upsell opportunities
+See Completed section above. Key details in [doc/owner-console.md](./owner-console.md#phase-9--advanced-analytics--forecasting).
