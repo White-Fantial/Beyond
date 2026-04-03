@@ -1,0 +1,81 @@
+import type { BackofficeChannelReportItem } from "@/types/backoffice";
+
+const CHANNEL_LABELS: Record<string, string> = {
+  POS: "Point of Sale",
+  UBER_EATS: "Uber Eats",
+  DOORDASH: "DoorDash",
+  ONLINE: "Online Orders",
+  SUBSCRIPTION: "Subscriptions",
+  MANUAL: "Manual",
+  UNKNOWN: "Unknown",
+};
+
+const CHANNEL_COLORS: Record<string, string> = {
+  POS: "#6366f1",
+  UBER_EATS: "#22c55e",
+  DOORDASH: "#ef4444",
+  ONLINE: "#f59e0b",
+  SUBSCRIPTION: "#8b5cf6",
+  MANUAL: "#6b7280",
+  UNKNOWN: "#d1d5db",
+};
+
+function currencySymbol(code: string): string {
+  const map: Record<string, string> = { NZD: "$", AUD: "$", USD: "$", GBP: "£", EUR: "€" };
+  return map[code] ?? `${code} `;
+}
+
+interface Props {
+  breakdown: BackofficeChannelReportItem[];
+  currencyCode: string;
+}
+
+export default function ReportsChannelBreakdown({ breakdown, currencyCode }: Props) {
+  if (breakdown.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <h2 className="text-base font-semibold text-gray-900 mb-2">Channel Breakdown</h2>
+        <p className="text-sm text-gray-400">No orders in this period.</p>
+      </div>
+    );
+  }
+
+  const totalOrders = breakdown.reduce((s, c) => s + c.orderCount, 0) || 1;
+  const sym = currencySymbol(currencyCode);
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <h2 className="text-base font-semibold text-gray-900 mb-4">Channel Breakdown</h2>
+      <div className="space-y-3">
+        {breakdown.map((item) => {
+          const pct = (item.orderCount / totalOrders) * 100;
+          const color = CHANNEL_COLORS[item.channel] ?? "#9ca3af";
+          return (
+            <div key={item.channel}>
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-sm font-medium text-gray-700">
+                  {CHANNEL_LABELS[item.channel] ?? item.channel}
+                </span>
+                <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <span>{item.orderCount} orders</span>
+                  <span className="font-semibold text-gray-800">
+                    {sym}{(item.revenueMinor / 100).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${pct.toFixed(1)}%`,
+                    backgroundColor: color,
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
