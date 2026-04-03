@@ -97,3 +97,56 @@ export interface CustomerAccountInfo {
   email: string;
   phone: string | null;
 }
+
+// ─── Addresses (Phase 2) ──────────────────────────────────────────────────────
+
+export interface CustomerAddress {
+  id: string;
+  label: string;
+  line1: string;
+  line2: string | null;
+  city: string;
+  region: string | null;
+  postalCode: string | null;
+  country: string;
+  isDefault: boolean;
+  createdAt: string; // ISO 8601
+}
+
+export interface CustomerAddressInput {
+  label?: string;
+  line1: string;
+  line2?: string | null;
+  city: string;
+  region?: string | null;
+  postalCode?: string | null;
+  country?: string;
+}
+
+// ─── Notifications (Phase 2) ──────────────────────────────────────────────────
+
+export type CustomerNotificationType =
+  | "ORDER_STATUS_UPDATE"
+  | "SUBSCRIPTION_REMINDER"
+  | "PAYMENT_ISSUE"
+  | "GENERAL";
+
+export interface CustomerNotification {
+  id: string;
+  userId: string;
+  type: CustomerNotificationType;
+  title: string;
+  body: string;
+  entityType: string | null;
+  entityId: string | null;
+  readAt: string | null; // ISO 8601
+  createdAt: string; // ISO 8601
+}
+
+export interface CustomerNotificationListResult {
+  items: CustomerNotification[];
+  total: number;
+  unreadCount: number;
+  page: number;
+  pageSize: number;
+}

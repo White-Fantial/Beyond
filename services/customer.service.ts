@@ -20,6 +20,11 @@ import type {
   CustomerOrderListOptions,
   CustomerSubscriptionSummary,
   CustomerAccountInfo,
+  CustomerAddress,
+  CustomerAddressInput,
+  CustomerNotification,
+  CustomerNotificationListResult,
+  CustomerNotificationType,
 } from "@/types/customer";
 
 // ─── Errors ───────────────────────────────────────────────────────────────────
@@ -436,4 +441,269 @@ export async function changeCustomerPassword(
     where: { id: userId },
     data: { passwordHash: newHash },
   });
+}
+
+// ─── Addresses ────────────────────────────────────────────────────────────────
+
+export class CustomerAddressNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Address not found: ${id}`);
+    this.name = "CustomerAddressNotFoundError";
+  }
+}
+
+export class CustomerAddressValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CustomerAddressValidationError";
+  }
+}
+
+function toAddress(row: {
+  id: string;
+  label: string;
+  line1: string;
+  line2: string | null;
+  city: string;
+  region: string | null;
+  postalCode: string | null;
+  country: string;
+  isDefault: boolean;
+  createdAt: Date;
+}): CustomerAddress {
+  return {
+    id: row.id,
+    label: row.label,
+    line1: row.line1,
+    line2: row.line2,
+    city: row.city,
+    region: row.region,
+    postalCode: row.postalCode,
+    country: row.country,
+    isDefault: row.isDefault,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+export async function listCustomerAddresses(userId: string): Promise<CustomerAddress[]> {
+  const rows = await prisma.customerAddress.findMany({
+    where: { userId },
+    orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+  });
+  return rows.map(toAddress);
+}
+
+export async function createCustomerAddress(
+  userId: string,
+  input: CustomerAddressInput
+): Promise<CustomerAddress> {
+  if (!input.line1?.trim()) {
+    throw new CustomerAddressValidationError("Address line 1 is required.");
+  }
+  if (!input.city?.trim()) {
+    throw new CustomerAddressValidationError("City is required.");
+  }
+
+  // If this is the first address, make it default
+  const existing = await prisma.customerAddress.count({ where: { userId } });
+  const isDefault = existing === 0;
+
+  const row = await prisma.customerAddress.create({
+    data: {
+      userId,
+      label: input.label?.trim() || "Home",
+      line1: input.line1.trim(),
+      line2: input.line2?.trim() || null,
+      city: input.city.trim(),
+      region: input.region?.trim() || null,
+      postalCode: input.postalCode?.trim() || null,
+      country: input.country?.trim() || "NZ",
+      isDefault,
+    },
+  });
+  return toAddress(row);
+}
+
+export async function updateCustomerAddress(
+  userId: string,
+  addressId: string,
+  input: Partial<CustomerAddressInput>
+): Promise<void> {
+  const addr = await prisma.customerAddress.findUnique({ where: { id: addressId } });
+  if (!addr || addr.userId !== userId) {
+    throw new CustomerAddressNotFoundError(addressId);
+  }
+
+  await prisma.customerAddress.update({
+    where: { id: addressId },
+    data: {
+      ...(input.label !== undefined ? { label: input.label.trim() || "Home" } : {}),
+      ...(input.line1 !== undefined ? { line1: input.line1.trim() } : {}),
+      ...(input.line2 !== undefined ? { line2: input.line2?.trim() || null } : {}),
+      ...(input.city !== undefined ? { city: input.city.trim() } : {}),
+      ...(input.region !== undefined ? { region: input.region?.trim() || null } : {}),
+      ...(input.postalCode !== undefined ? { postalCode: input.postalCode?.trim() || null } : {}),
+      ...(input.country !== undefined ? { country: input.country.trim() || "NZ" } : {}),
+    },
+  });
+}
+
+export async function deleteCustomerAddress(
+  userId: string,
+  addressId: string
+): Promise<void> {
+  const addr = await prisma.customerAddress.findUnique({ where: { id: addressId } });
+  if (!addr || addr.userId !== userId) {
+    throw new CustomerAddressNotFoundError(addressId);
+  }
+
+  await prisma.customerAddress.delete({ where: { id: addressId } });
+
+  // If the deleted address was default and others remain, promote the oldest
+  if (addr.isDefault) {
+    const next = await prisma.customerAddress.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "asc" },
+    });
+    if (next) {
+      await prisma.customerAddress.update({
+        where: { id: next.id },
+        data: { isDefault: true },
+      });
+    }
+  }
+}
+
+export async function setDefaultCustomerAddress(
+  userId: string,
+  addressId: string
+): Promise<void> {
+  const addr = await prisma.customerAddress.findUnique({ where: { id: addressId } });
+  if (!addr || addr.userId !== userId) {
+    throw new CustomerAddressNotFoundError(addressId);
+  }
+
+  await prisma.$transaction([
+    prisma.customerAddress.updateMany({
+      where: { userId, isDefault: true },
+      data: { isDefault: false },
+    }),
+    prisma.customerAddress.update({
+      where: { id: addressId },
+      data: { isDefault: true },
+    }),
+  ]);
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export class CustomerNotificationNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Notification not found: ${id}`);
+    this.name = "CustomerNotificationNotFoundError";
+  }
+}
+
+function toCustomerNotification(row: {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  body: string;
+  entityType: string | null;
+  entityId: string | null;
+  readAt: Date | null;
+  createdAt: Date;
+}): CustomerNotification {
+  return {
+    id: row.id,
+    userId: row.userId,
+    type: row.type as CustomerNotificationType,
+    title: row.title,
+    body: row.body,
+    entityType: row.entityType,
+    entityId: row.entityId,
+    readAt: row.readAt?.toISOString() ?? null,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+export async function listCustomerNotifications(
+  userId: string,
+  opts: { unreadOnly?: boolean; page?: number; pageSize?: number } = {}
+): Promise<CustomerNotificationListResult> {
+  const { unreadOnly = false, page = 1, pageSize = 50 } = opts;
+
+  const where = {
+    userId,
+    ...(unreadOnly ? { readAt: null } : {}),
+  };
+
+  const [rows, total, unreadCount] = await Promise.all([
+    prisma.customerNotification.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.customerNotification.count({ where }),
+    prisma.customerNotification.count({ where: { userId, readAt: null } }),
+  ]);
+
+  return {
+    items: rows.map(toCustomerNotification),
+    total,
+    unreadCount,
+    page,
+    pageSize,
+  };
+}
+
+export async function getCustomerUnreadNotificationCount(userId: string): Promise<number> {
+  return prisma.customerNotification.count({ where: { userId, readAt: null } });
+}
+
+export async function markCustomerNotificationRead(
+  userId: string,
+  notificationId: string
+): Promise<void> {
+  const notif = await prisma.customerNotification.findUnique({ where: { id: notificationId } });
+  if (!notif || notif.userId !== userId) {
+    throw new CustomerNotificationNotFoundError(notificationId);
+  }
+  if (notif.readAt) return;
+  await prisma.customerNotification.update({
+    where: { id: notificationId },
+    data: { readAt: new Date() },
+  });
+}
+
+export async function markAllCustomerNotificationsRead(userId: string): Promise<void> {
+  await prisma.customerNotification.updateMany({
+    where: { userId, readAt: null },
+    data: { readAt: new Date() },
+  });
+}
+
+export async function createCustomerNotification(
+  userId: string,
+  data: {
+    type: CustomerNotificationType;
+    title: string;
+    body: string;
+    entityType?: string | null;
+    entityId?: string | null;
+  }
+): Promise<CustomerNotification> {
+  const row = await prisma.customerNotification.create({
+    data: {
+      userId,
+      type: data.type,
+      title: data.title,
+      body: data.body,
+      entityType: data.entityType ?? null,
+      entityId: data.entityId ?? null,
+    },
+  });
+  return toCustomerNotification(row);
 }

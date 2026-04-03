@@ -328,12 +328,14 @@ model User {
   updatedAt          DateTime     @updatedAt
   archivedAt         DateTime?
 
-  memberships        Membership[] @relation("UserMemberships")
-  invitedMemberships Membership[] @relation("MembershipInvitedBy")
-  auditLogs          AuditLog[]   @relation("AuditLogActor")
-  jobRuns            JobRun[]
-  notifications      Notification[]
-  alertRulesCreated  AlertRule[]  @relation("AlertRuleCreatedBy")
+  memberships              Membership[]           @relation("UserMemberships")
+  invitedMemberships       Membership[]           @relation("MembershipInvitedBy")
+  auditLogs                AuditLog[]             @relation("AuditLogActor")
+  jobRuns                  JobRun[]
+  notifications            Notification[]
+  alertRulesCreated        AlertRule[]            @relation("AlertRuleCreatedBy")
+  customerNotifications    CustomerNotification[]
+  customerAddresses        CustomerAddress[]
 
   @@map("users")
 }
@@ -1998,6 +2000,53 @@ model StoreHours {
   @@unique([storeId, dayOfWeek])
   @@index([tenantId, storeId])
   @@map("store_hours")
+}
+
+// ─── Phase 2 (Customer Portal): Addresses & Notifications ────────────────────
+
+enum CustomerNotificationType {
+  ORDER_STATUS_UPDATE
+  SUBSCRIPTION_REMINDER
+  PAYMENT_ISSUE
+  GENERAL
+}
+
+model CustomerNotification {
+  id         String                   @id @default(uuid())
+  userId     String
+  type       CustomerNotificationType @default(GENERAL)
+  title      String
+  body       String
+  entityType String?
+  entityId   String?
+  readAt     DateTime?
+  createdAt  DateTime                 @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@map("customer_notifications")
+}
+
+model CustomerAddress {
+  id         String   @id @default(uuid())
+  userId     String
+  label      String   @default("Home")
+  line1      String
+  line2      String?
+  city       String
+  region     String?
+  postalCode String?
+  country    String   @default("NZ")
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("customer_addresses")
 }
 
 // ─── Phase 8: Automation & Notifications ─────────────────────────────────────
