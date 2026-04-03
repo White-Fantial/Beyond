@@ -40,10 +40,12 @@
 - [x] **Owner Console Phase 4 — Reports & Analytics** — tenant-level and store-level reports with KPI cards, revenue trend, channel breakdown, store comparison, top products, subscription summary, rule-based insights; URL-persisted filters with preset ranges and compare-to-previous; 13 UI components; 3 service files; 2 API routes; 3 test files
 - [x] **Owner Console Phase 5 — Customer & Subscription Management** — tenant-scoped customer list (`/owner/customers`) with search/filter/sort/pagination and 4-card KPI strip; customer detail (`/owner/customers/[customerId]`) with Overview, Orders, Subscriptions, Notes tabs; subscription lifecycle actions (pause/resume/cancel/next-date/note) with state-machine validation; owner-only `internalNote` on Customer profile; 5 audit log event types (`OWNER_CUSTOMER_NOTE_UPDATED`, `OWNER_SUBSCRIPTION_PAUSED`, `OWNER_SUBSCRIPTION_RESUMED`, `OWNER_SUBSCRIPTION_CANCELLED`, `OWNER_SUBSCRIPTION_NEXT_DATE_UPDATED`, `OWNER_SUBSCRIPTION_NOTE_UPDATED`); cross-tenant access guard on all routes; `Customer` model + `Subscription` extended with `tenantId`, `storeId`, `nextOrderAt`, `internalNote`, `pausedAt`, `cancelReason`; 10 API routes; 2 service files; 44 unit tests
 - [x] **Owner Console Phase 6 — Billing Deep Dive** — billing overview at `/owner/billing` (plan card, subscription status badge, alerts, usage vs limits, recent invoices, quick actions); invoice list at `/owner/billing/invoices` with status-filter tabs and pagination; invoice detail at `/owner/billing/invoices/[invoiceId]` with line items and payment attempt timeline; plan catalog and preview-first plan change flow at `/owner/billing/plans` with downgrade blocking; 8 service functions in `owner-billing.service.ts`; `BillingProviderAdapter` interface + `MockBillingProviderAdapter`; 6 new schema models (`BillingInvoice`, `BillingInvoiceLine`, `PaymentAttempt`, `UsageMetricSnapshot`, `SubscriptionChangeRequest`, `BillingEventLog`) + 7 new enums + 4 new fields on `TenantSubscription`; 7 API routes; 5 UI components; idempotent billing seed with 3 plans + sample invoices + usage snapshots; 15 unit tests
+- [x] **Admin Console Phase 3** — integration force-reconnect/sync (`/api/admin/integrations/[connectionId]/force-reconnect`, `trigger-sync`, `trigger-refresh-check`, `validate`); analytics charts page at `/admin/analytics` with 7 UI components (`AdminKpiGrid`, `AdminTrendChart`, `AdminProviderHealthTable`, `AdminFailureBreakdownTable`, `AdminProblemStoresTable`, `AdminAttentionSummaryCards`, `AdminAnalyticsFilterBar`); 8 analytics service functions
+- [x] **Owner Console Phase 7 — Team Activity & Audit** — read-only tenant-scoped activity hub at `/owner/activity`; tabbed view: Activity Feed, Role Changes, Settings Changes, Integration Changes; 4 service functions in `services/owner/owner-activity.service.ts`; types in `types/owner-activity.ts`; 4 API routes (`GET /api/owner/activity`, `/roles`, `/settings`, `/integrations`); 6 UI components in `components/owner/activity/`; Activity & Audit link added to `OwnerSidebar`; 25 unit tests
 
 ## In Progress
 
-- [ ] Admin Console Phase 3 — integration force-reconnect/sync, analytics charts (create/edit already done)
+
 
 ## Planned
 
@@ -81,12 +83,9 @@ See Completed section above. Key details in [doc/owner-console.md](./owner-conso
 - Tax/GST line item refinements
 - Finance-role billing permissions
 
-### Phase 7 — Team Activity & Audit
+### ~~Phase 7 — Team Activity & Audit~~ ✅ Complete
 
-- Staff activity feed: who did what and when across all stores
-- Role-change history and permission-grant audit trail
-- Settings, catalog, and integration change audit log
-- Read-only view; no destructive actions from owner console
+See Completed section above.
 
 ### Phase 8 — Automation & Notifications
 
