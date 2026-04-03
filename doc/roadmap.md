@@ -59,9 +59,19 @@
 - [ ] POS adapter implementations (Posbank, OKPOS)
 - [ ] Delivery platform adapters (Baemin, Coupang Eats)
 - [ ] Payment gateway integration (Toss Payments)
-- [ ] Real-time order notifications (WebSocket / SSE)
 - [ ] Sales analytics charts (canonical order aggregation)
-- [ ] Subscription billing engine
+
+---
+
+## Completed — Next Phases
+
+- [x] **Backoffice Phase 2 — Live Order Management** — 4-column Kanban board at `/backoffice/store/[storeId]/orders` (New → Accepted → In Preparation → Ready) with per-order accept/reject/advance/cancel actions; Order Detail Drawer with full item breakdown, modifier list, totals, order notes, and immutable event timeline; Kitchen Display mode at `/backoffice/store/[storeId]/orders/kitchen` (full-screen, no sidebar, tablet-optimised, 15s auto-refresh); new-order toast badge when incoming count increases; service `services/backoffice/backoffice-orders.service.ts` (`listLiveOrders`, `getBackofficeOrderDetail`, `updateBackofficeOrderStatus`, `isValidTransition`); 2 API routes (`GET /api/backoffice/[storeId]/orders`, `PATCH /api/backoffice/[storeId]/orders/[orderId]/status`); Kitchen Display nav item added to `BackofficeSidebar`; 17 unit tests
+
+- [x] **Public Storefront Phase 2 — Checkout & Order Placement** — cart state now persisted to `sessionStorage` (key `beyond_cart_<storeId>`, hydrated on mount); full checkout page at `/store/[storeSlug]/checkout` with contact form (name, phone, email), pickup-time grid (12 slots), order notes, and fixed-bottom CTA; `POST /api/store/[storeSlug]/orders` validates items against live catalog and creates a canonical ONLINE order via `createCanonicalOrderFromInbound`; order confirmation page at `/store/[storeSlug]/confirmation/[orderId]` with status badge and polling; `GET /api/store/[storeSlug]/orders/[orderId]` public status endpoint; service functions `placeGuestOrder`, `getGuestOrderStatus` added to `customer-menu.service.ts`; types in `types/storefront.ts`; 13 unit tests
+
+- [x] **Real-Time Notifications — SSE Infrastructure** — in-process channel registry at `lib/sse/stream-manager.ts` (`subscribe`, `broadcast`, `subscriberCount`, `formatSSEMessage`, `formatHeartbeat`); three SSE endpoints: `GET /api/sse/store/[storeId]/orders` (backoffice Kanban, authenticated), `GET /api/sse/owner/notifications` (owner notification bell, authenticated), `GET /api/sse/store/[storeSlug]/orders/[orderId]` (storefront confirmation, public); `BackofficeOrdersClient` upgraded to SSE-first with 15s polling fallback; `NotificationBell` subscribes to SSE for live unread count with 30s reconnect; `ConfirmationClient` upgraded to SSE-first with 20s polling fallback; 11 unit tests
+
+- [x] **Subscription Billing Engine** — Stripe adapter `adapters/billing/stripe.adapter.ts` fully implements `BillingProviderAdapter` plus `listPaymentMethods`, `detachPaymentMethod`, `createSetupIntent`, `verifyWebhookSignature`; billing scheduler `lib/billing/scheduler.ts` identifies subscriptions due within 3-day lookahead window and marks expired ACTIVE subscriptions PAST_DUE; Stripe webhook handler at `POST /api/webhooks/billing/stripe` handles `invoice.paid`, `invoice.payment_failed`, `subscription.updated`, `subscription.deleted` (all idempotent); payment method management UI at `/owner/billing/payment-methods` with list/remove; API routes `GET /api/owner/billing/payment-methods` and `DELETE /api/owner/billing/payment-methods/[paymentMethodId]`; admin billing tenant detail page extended with payment-attempt timeline and manual retry button; `owner-billing.service.ts` wired to pick Stripe adapter when `STRIPE_SECRET_KEY` is set; 15 unit tests
 
 ---
 
