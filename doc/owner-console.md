@@ -514,3 +514,91 @@ Owner Console UI
 `OWNER_BILLING_PLAN_CHANGE_REQUESTED` · `OWNER_BILLING_PLAN_CHANGE_APPLIED` · `OWNER_BILLING_PLAN_DOWNGRADE_BLOCKED`
 
 All events include: `actorUserId`, `tenantId`, `fromPlanCode`, `toPlanCode`, `changeRequestId`.
+
+---
+
+## Phase 9 — Advanced Analytics & Forecasting
+
+The `/owner/analytics` page is a dedicated analytics hub focused on patterns and forward-looking intelligence, distinct from the historical summaries in `/owner/reports`.
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Order Volume Heatmap** | Weekday × hour-slot SVG heatmap with colour-intensity scale. Identifies peak trading hours per store or across all stores. |
+| **Revenue Forecast** | 7/14/30-day ahead linear-regression forecast with 80% confidence interval band. Displays both historical actual bars and predicted line. |
+| **Production Estimates** | Next-week per-store order volume estimates using trailing 4-week same-weekday average. Delta vs prior period shown per day. |
+| **Churn Risk Signals** | Customers with declining order frequency classified as HIGH / MEDIUM / LOW. Links to customer detail pages. |
+
+### Routes
+
+| Route | Description |
+|-------|-------------|
+| `/owner/analytics` | Analytics hub — summary KPI cards + heatmap + forecast + production table + churn risk table |
+
+### API Routes
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/owner/analytics/heatmap` | Weekday × hour-slot order volume matrix |
+| GET | `/api/owner/analytics/forecast` | Revenue forecast series with confidence intervals |
+| GET | `/api/owner/analytics/production` | Next-week per-store order volume estimates |
+| GET | `/api/owner/analytics/churn` | Churn risk signals for at-risk customers |
+
+### Query Parameters
+
+| Parameter | Applies to | Description |
+|-----------|-----------|-------------|
+| `storeId` | heatmap, forecast, production | Restrict to a single store |
+| `storeIds` | production | Comma-separated store IDs |
+| `from` / `to` | heatmap | Date range (YYYY-MM-DD) |
+| `horizon` | forecast | Forecast horizon: `7`, `14`, or `30` |
+| `weekStartDate` | production | ISO Monday date for the target week |
+| `windowDays` | churn | Recency window in days (default 90) |
+
+### Services
+
+| Function | Location | Description |
+|----------|----------|-------------|
+| `getHeatmapData` | `services/owner/owner-analytics.service.ts` | Aggregate orders by weekday × hour |
+| `getRevenueForecast` | `services/owner/owner-analytics.service.ts` | Linear regression forecast with CI |
+| `getProductionEstimates` | `services/owner/owner-analytics.service.ts` | Same-weekday trailing average per store |
+| `getChurnRiskSignals` | `services/owner/owner-analytics.service.ts` | Declining-frequency customer classification |
+
+### UI Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `AnalyticsFilterBar` | `components/owner/analytics/` | Store selector, date range, horizon toggle |
+| `AnalyticsSummaryCards` | `components/owner/analytics/` | 4 KPI cards: peak hour, peak day, projected revenue, at-risk subscribers |
+| `HeatmapChart` | `components/owner/analytics/` | SVG 7×24 order volume heatmap with legend |
+| `ForecastChart` | `components/owner/analytics/` | SVG forecast with confidence band and actual bar overlay |
+| `ProductionEstimateTable` | `components/owner/analytics/` | Per-store, per-day estimate table with delta badges |
+| `ChurnRiskTable` | `components/owner/analytics/` | Sortable at-risk customer table with risk level badges |
+
+### Churn Risk Classification
+
+The recency window (default 90 days) is split into two equal halves. For each customer with orders in the window:
+
+| `recentCount / priorCount` | Risk Level |
+|---------------------------|-----------|
+| < 0.4 | HIGH |
+| 0.4 – 0.7 | MEDIUM |
+| ≥ 0.7 | LOW |
+
+Customers with zero orders are excluded. Customers with prior orders but zero recent orders are classified as HIGH.
+
+### Forecast Algorithm
+
+Linear regression (OLS) is fit to `3 × horizon` days of historical daily revenue. Predicted values for each future day use `y = intercept + slope × dayIndex`. The 80% confidence interval uses ±1.28σ (residual standard deviation). Predicted and interval values are clamped to ≥ 0.
+
+### Technical Files
+
+| File | Role |
+|------|------|
+| `types/owner-analytics.ts` | View-model type definitions |
+| `services/owner/owner-analytics.service.ts` | All four analytics service functions |
+| `app/owner/analytics/page.tsx` | Server component page |
+| `app/api/owner/analytics/*/route.ts` | Four API route handlers |
+| `components/owner/analytics/` | Six UI components |
+| `__tests__/owner-analytics.test.ts` | 36 unit tests |
