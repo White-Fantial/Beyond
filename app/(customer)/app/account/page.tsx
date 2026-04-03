@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requirePermission } from "@/lib/auth/permissions";
 import { PERMISSIONS } from "@/lib/auth/constants";
 import { getCustomerAccount } from "@/services/customer.service";
@@ -27,6 +28,19 @@ export default async function CustomerAccountPage() {
           phone={account.phone}
         />
         <PasswordChangeForm />
+        <Link
+          href="/app/addresses"
+          className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3 hover:shadow-sm transition"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xl">📍</span>
+            <div>
+              <div className="text-sm font-medium text-gray-900">Manage Addresses</div>
+              <div className="text-xs text-gray-500">Add or edit delivery addresses</div>
+            </div>
+          </div>
+          <span className="text-gray-400 text-sm">→</span>
+        </Link>
       </div>
     </div>
   );

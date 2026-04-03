@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import CustomerNotificationBell from "@/components/customer/notifications/CustomerNotificationBell";
 
 const navItems = [
   { href: "/app", label: "Home", icon: "🏠" },
@@ -19,7 +20,7 @@ export default function CustomerNav() {
         <Link href="/app" className="text-lg font-bold text-brand-700">
           Beyond
         </Link>
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -34,6 +35,7 @@ export default function CustomerNav() {
               <span>{item.label}</span>
             </Link>
           ))}
+          <CustomerNotificationBell />
         </div>
       </div>
     </nav>
