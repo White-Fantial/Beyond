@@ -197,12 +197,16 @@ function buildNotificationTitle(metricType: string, value: number): string {
       return `High cancellation rate: ${value.toFixed(1)}%`;
     case "REVENUE_DROP":
       return `Revenue drop detected: ${Math.abs(value).toFixed(1)}% decline`;
-    case "SOLD_OUT_COUNT":
-      return `${Math.round(value)} product${value !== 1 ? "s" : ""} sold out`;
+    case "SOLD_OUT_COUNT": {
+      const count = Math.round(value);
+      return `${count} product${count !== 1 ? "s" : ""} sold out`;
+    }
     case "ORDER_FAILURE_RATE":
       return `Order failure rate: ${value.toFixed(1)}%`;
-    case "LOW_STOCK_ITEMS":
-      return `${Math.round(value)} low-stock item${value !== 1 ? "s" : ""} detected`;
+    case "LOW_STOCK_ITEMS": {
+      const count = Math.round(value);
+      return `${count} low-stock item${count !== 1 ? "s" : ""} detected`;
+    }
     case "POS_DISCONNECT":
       return "POS connection issue detected";
     case "DELIVERY_DISCONNECT":
