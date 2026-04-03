@@ -22,7 +22,7 @@ export default async function CustomerAppPage() {
         <a href="/app/account" className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition">
           <div className="text-2xl mb-2">👤</div>
           <div className="font-medium text-gray-900">My Account</div>
-          <div className="text-sm text-gray-500">계정 Settings</div>
+          <div className="text-sm text-gray-500">Account Settings</div>
         </a>
         <a href="/app/notifications" className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition">
           <div className="text-2xl mb-2">🔔</div>
