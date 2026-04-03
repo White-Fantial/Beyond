@@ -33,14 +33,15 @@ export default function CheckoutClient({ storeSlug, storeName, pickupSlots }: Pr
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
-  const [selectedSlot, setSelectedSlot] = useState<PickupSlot>(pickupSlots[0]);
+  const [selectedSlot, setSelectedSlot] = useState<PickupSlot | null>(
+    pickupSlots[0] ?? null
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const cartItems = state.items;
 
-  if (cartItems.length === 0) {
-    return (
+  if (cartItems.length === 0 || !selectedSlot) {    return (
       <div className="max-w-lg mx-auto px-4 py-8 text-center">
         <div className="text-5xl mb-4">🛒</div>
         <h2 className="text-xl font-bold text-gray-900 mb-2">Your cart is empty</h2>
