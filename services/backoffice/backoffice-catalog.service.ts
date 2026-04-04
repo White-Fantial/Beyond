@@ -649,5 +649,56 @@ export async function deleteBackofficeModifierOption(
   });
 }
 
+// ─── Bulk / Reorder helpers ───────────────────────────────────────────────────
+
+export async function bulkRestoreAvailability(
+  storeId: string,
+  tenantId: string,
+  actorUserId: string
+): Promise<number> {
+  const result = await prisma.catalogProduct.updateMany({
+    where: { storeId, isSoldOut: true, deletedAt: null },
+    data: { isSoldOut: false },
+  });
+
+  await logAuditEvent({
+    tenantId,
+    storeId,
+    actorUserId,
+    action: "BACKOFFICE_BULK_RESTORE_AVAILABILITY",
+    targetType: "CatalogProduct",
+    targetId: storeId,
+    metadata: { restoredCount: result.count },
+  });
+
+  return result.count;
+}
+
+export async function reorderCategories(
+  storeId: string,
+  tenantId: string,
+  actorUserId: string,
+  items: { id: string; displayOrder: number }[]
+): Promise<void> {
+  await prisma.$transaction(
+    items.map((item) =>
+      prisma.catalogCategory.update({
+        where: { id: item.id },
+        data: { displayOrder: item.displayOrder },
+      })
+    )
+  );
+
+  await logAuditEvent({
+    tenantId,
+    storeId,
+    actorUserId,
+    action: "BACKOFFICE_CATEGORIES_REORDERED",
+    targetType: "CatalogCategory",
+    targetId: storeId,
+    metadata: { count: items.length },
+  });
+}
+
 // Re-export helper for routes that need to resolve tenantId from storeId
 export { getStoreTenantId };

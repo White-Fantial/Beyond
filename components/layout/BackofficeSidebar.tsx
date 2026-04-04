@@ -19,6 +19,7 @@ function getNavItems(storeId: string, storeRole: StoreRoleKey) {
     { href: `${base}/orders/kitchen`, label: "Kitchen Display", icon: "🍳", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
     { href: `${base}/operations`, label: "Operations", icon: "🔧", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
     { href: `${base}/inventory`, label: "Inventory", icon: "📋", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/catalog`, label: "Catalog", icon: "📖", roles: ["MANAGER", "OWNER", "ADMIN"] },
     { href: `${base}/products`, label: "Products", icon: "🍽️", roles: ["MANAGER", "OWNER", "ADMIN"] },
     { href: `${base}/categories`, label: "Categories", icon: "🗂️", roles: ["SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
     { href: `${base}/modifiers`, label: "Modifiers", icon: "⚙️", roles: ["MANAGER", "OWNER", "ADMIN"] },
