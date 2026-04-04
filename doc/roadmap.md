@@ -96,7 +96,6 @@
 ### Integrations & Adapters
 
 - [ ] **Lightspeed POS Adapter** — catalog sync, order forwarding; `LIGHTSPEED` added to `ConnectionProvider` enum; `adapters/integrations/lightspeed.adapter.ts`
-- [ ] **Baemin / Coupang Eats Adapters** — Korean delivery platform integrations; inbound order webhooks with signature verification; OAuth flows; `BAEMIN` and `COUPANG_EATS` added to `ConnectionProvider` enum
 
 ### Cross-Cutting
 
