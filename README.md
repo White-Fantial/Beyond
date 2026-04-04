@@ -1,6 +1,6 @@
 # Beyond — 통합 푸드 비즈니스 운영 SaaS
 
-**Beyond** is an integrated food-business operations platform that unifies POS systems, delivery platforms (Baemin, Coupang Eats, etc.), online ordering, subscription services, and analytics into a single dashboard.
+**Beyond** is an integrated food-business operations platform that unifies POS systems, delivery platforms (Uber Eats, Doordash, etc.), online ordering, subscription services, and analytics into a single dashboard.
 
 ---
 
