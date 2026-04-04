@@ -103,6 +103,7 @@ enum ConnectionType {
 
 enum ConnectionProvider {
   LOYVERSE
+  LIGHTSPEED
   UBER_EATS
   DOORDASH
   STRIPE
