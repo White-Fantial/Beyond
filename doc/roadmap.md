@@ -70,10 +70,10 @@
 
 ### Integrations & Adapters
 
-- [ ] **Baemin Adapter** — inbound order webhook with HMAC-SHA256 signature verification; OAuth 2.0 token exchange; `BAEMIN` added to `ConnectionProvider` enum; `adapters/integrations/baemin.adapter.ts` and `adapters/integrations/baemin/types.ts`; webhook route updated for `baemin` provider
-- [ ] **Coupang Eats Adapter** — inbound order webhook with HMAC-SHA256 signature verification; OAuth 2.0 + PKCE token exchange; `COUPANG_EATS` added to `ConnectionProvider` enum; `adapters/integrations/coupang-eats.adapter.ts` and `adapters/integrations/coupang-eats/types.ts`; webhook route updated for `coupang-eats` provider
-- [ ] **Toss Payments Adapter** — `adapters/toss.adapter.ts` implementing `BillingProviderAdapter`; Toss Payments checkout widget integration on storefront checkout; `POST /api/webhooks/billing/toss` handler; `adapters/toss/types.ts`
-- [ ] POS adapter implementations (Posbank, OKPOS)
+- [ ] **Uber Eats Adapter** — inbound order webhook with HMAC-SHA256 signature verification; OAuth 2.0 token exchange; `UBEREATS` added to `ConnectionProvider` enum; `adapters/integrations/ubereats.adapter.ts` and `adapters/integrations/ubereats/types.ts`; webhook route updated for `baemin` provider
+- [ ] **Doordash Adapter** — inbound order webhook with HMAC-SHA256 signature verification; OAuth 2.0 + PKCE token exchange; `DOORDASH` added to `ConnectionProvider` enum; `adapters/integrations/doordash.adapter.ts` and `adapters/integrations/doordash/types.ts`; webhook route updated for `doordash` provider
+- [ ] **Stripe Payments Adapter** — `adapters/stripe.adapter.ts` implementing `BillingProviderAdapter`; Toss Payments checkout widget integration on storefront checkout; `POST /api/webhooks/billing/stripe` handler; `adapters/stripe/types.ts`
+- [ ] POS adapter implementations (Loyverse, Lightspeed)
 
 ### Cross-Cutting
 
