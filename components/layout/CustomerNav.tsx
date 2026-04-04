@@ -8,6 +8,8 @@ const navItems = [
   { href: "/app", label: "Home", icon: "🏠" },
   { href: "/app/orders", label: "My Orders", icon: "📦" },
   { href: "/app/subscriptions", label: "Subscriptions", icon: "🔄" },
+  { href: "/app/loyalty", label: "Rewards", icon: "🏅" },
+  { href: "/app/payment-methods", label: "Payments", icon: "💳" },
   { href: "/app/account", label: "My Account", icon: "👤" },
 ];
 

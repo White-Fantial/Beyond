@@ -13,6 +13,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
 import { OrderStatus } from "@prisma/client";
+import { stripeBillingAdapter } from "@/adapters/billing/stripe.adapter";
 import type {
   CustomerOrderSummary,
   CustomerOrderListResult,
@@ -26,6 +27,20 @@ import type {
   CustomerNotificationListResult,
   CustomerNotificationType,
 } from "@/types/customer";
+import type {
+  LoyaltyAccount,
+  LoyaltyTransaction,
+  LoyaltyTransactionListResult,
+  LoyaltySummary,
+  LoyaltyTier,
+  LoyaltyTransactionType,
+  LoyaltyTransactionListOptions,
+  ReferralCode,
+} from "@/types/customer-loyalty";
+import type {
+  SavedPaymentMethod,
+  AddPaymentMethodInput,
+} from "@/types/customer-payment-methods";
 
 // ─── Errors ───────────────────────────────────────────────────────────────────
 
@@ -706,4 +721,407 @@ export async function createCustomerNotification(
     },
   });
   return toCustomerNotification(row);
+}
+
+// ─── Phase 3: Loyalty & Payment Methods ──────────────────────────────────────
+
+// ─── Errors ───────────────────────────────────────────────────────────────────
+
+export class LoyaltyAccountNotFoundError extends Error {
+  constructor(userId: string) {
+    super(`Loyalty account not found for user: ${userId}`);
+    this.name = "LoyaltyAccountNotFoundError";
+  }
+}
+
+export class LoyaltyInsufficientPointsError extends Error {
+  constructor(available: number, requested: number) {
+    super(`Insufficient loyalty points: have ${available}, requested ${requested}`);
+    this.name = "LoyaltyInsufficientPointsError";
+  }
+}
+
+export class SavedPaymentMethodNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Saved payment method not found: ${id}`);
+    this.name = "SavedPaymentMethodNotFoundError";
+  }
+}
+
+// ─── Tier configuration ───────────────────────────────────────────────────────
+
+const TIER_THRESHOLDS: Array<{ tier: LoyaltyTier; minPoints: number; label: string }> = [
+  { tier: "BRONZE", minPoints: 0, label: "Bronze" },
+  { tier: "SILVER", minPoints: 500, label: "Silver" },
+  { tier: "GOLD", minPoints: 1500, label: "Gold" },
+  { tier: "PLATINUM", minPoints: 5000, label: "Platinum" },
+];
+
+function computeTier(points: number): LoyaltyTier {
+  let tier: LoyaltyTier = "BRONZE";
+  for (const t of TIER_THRESHOLDS) {
+    if (points >= t.minPoints) tier = t.tier;
+  }
+  return tier;
+}
+
+function getNextTierThreshold(
+  currentTier: LoyaltyTier
+): { tier: LoyaltyTier; minPoints: number; label: string } | null {
+  const idx = TIER_THRESHOLDS.findIndex((t) => t.tier === currentTier);
+  return TIER_THRESHOLDS[idx + 1] ?? null;
+}
+
+// ─── Mappers ──────────────────────────────────────────────────────────────────
+
+function toLoyaltyAccount(row: {
+  id: string;
+  userId: string;
+  points: number;
+  tier: string;
+  createdAt: Date;
+  updatedAt: Date;
+}): LoyaltyAccount {
+  return {
+    id: row.id,
+    userId: row.userId,
+    points: row.points,
+    tier: row.tier as LoyaltyTier,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+function toLoyaltyTransaction(row: {
+  id: string;
+  accountId: string;
+  orderId: string | null;
+  type: string;
+  pointsDelta: number;
+  description: string | null;
+  createdAt: Date;
+}): LoyaltyTransaction {
+  return {
+    id: row.id,
+    accountId: row.accountId,
+    orderId: row.orderId,
+    type: row.type as LoyaltyTransactionType,
+    pointsDelta: row.pointsDelta,
+    description: row.description,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+function toReferralCode(row: {
+  id: string;
+  userId: string;
+  code: string;
+  usedCount: number;
+  rewardPoints: number;
+  createdAt: Date;
+}): ReferralCode {
+  return {
+    id: row.id,
+    userId: row.userId,
+    code: row.code,
+    usedCount: row.usedCount,
+    rewardPoints: row.rewardPoints,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+function toSavedPaymentMethod(row: {
+  id: string;
+  userId: string;
+  provider: string;
+  last4: string;
+  brand: string;
+  expiryMonth: number;
+  expiryYear: number;
+  isDefault: boolean;
+  providerMethodId: string;
+  createdAt: Date;
+}): SavedPaymentMethod {
+  return {
+    id: row.id,
+    userId: row.userId,
+    provider: row.provider,
+    last4: row.last4,
+    brand: row.brand,
+    expiryMonth: row.expiryMonth,
+    expiryYear: row.expiryYear,
+    isDefault: row.isDefault,
+    providerMethodId: row.providerMethodId,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+// ─── Loyalty Service Functions ────────────────────────────────────────────────
+
+/**
+ * Returns the loyalty account for the user, creating it if it doesn't exist yet.
+ * Also computes tier and next-tier threshold.
+ */
+export async function getLoyaltyAccount(userId: string): Promise<LoyaltySummary> {
+  let account = await prisma.loyaltyAccount.findUnique({ where: { userId } });
+
+  if (!account) {
+    account = await prisma.loyaltyAccount.create({
+      data: { userId, points: 0, tier: "BRONZE" },
+    });
+  }
+
+  const tier = computeTier(account.points);
+  if (tier !== account.tier) {
+    account = await prisma.loyaltyAccount.update({
+      where: { id: account.id },
+      data: { tier },
+    });
+  }
+
+  const nextTier = getNextTierThreshold(account.tier as LoyaltyTier);
+  const referral = await prisma.referralCode.findFirst({ where: { userId } });
+
+  return {
+    account: toLoyaltyAccount(account),
+    nextTier,
+    pointsToNextTier: nextTier ? nextTier.minPoints - account.points : null,
+    referralCode: referral?.code ?? null,
+  };
+}
+
+/**
+ * Returns a paginated list of loyalty transactions for the user.
+ */
+export async function getLoyaltyTransactions(
+  userId: string,
+  opts: LoyaltyTransactionListOptions = {}
+): Promise<LoyaltyTransactionListResult> {
+  const { type, page = 1, pageSize = 20 } = opts;
+
+  const account = await prisma.loyaltyAccount.findUnique({ where: { userId } });
+  if (!account) {
+    return { items: [], total: 0, page, pageSize };
+  }
+
+  const where = {
+    accountId: account.id,
+    ...(type ? { type } : {}),
+  };
+
+  const [rows, total] = await Promise.all([
+    prisma.loyaltyTransaction.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.loyaltyTransaction.count({ where }),
+  ]);
+
+  return {
+    items: rows.map(toLoyaltyTransaction),
+    total,
+    page,
+    pageSize,
+  };
+}
+
+/**
+ * Redeems loyalty points for a user, creating a REDEEM transaction.
+ * Validates that the user has sufficient points and orderId is provided.
+ */
+export async function redeemLoyaltyPoints(
+  userId: string,
+  orderId: string,
+  points: number
+): Promise<LoyaltyAccount> {
+  if (points <= 0) {
+    throw new LoyaltyInsufficientPointsError(0, points);
+  }
+
+  const account = await prisma.loyaltyAccount.findUnique({ where: { userId } });
+  if (!account) {
+    throw new LoyaltyAccountNotFoundError(userId);
+  }
+  if (account.points < points) {
+    throw new LoyaltyInsufficientPointsError(account.points, points);
+  }
+
+  const newPoints = account.points - points;
+  const newTier = computeTier(newPoints);
+
+  const [updated] = await prisma.$transaction([
+    prisma.loyaltyAccount.update({
+      where: { id: account.id },
+      data: { points: newPoints, tier: newTier },
+    }),
+    prisma.loyaltyTransaction.create({
+      data: {
+        accountId: account.id,
+        orderId,
+        type: "REDEEM",
+        pointsDelta: -points,
+        description: `Redeemed ${points} points for order ${orderId}`,
+      },
+    }),
+  ]);
+
+  await logAuditEvent({
+    action: "LOYALTY_REDEEM",
+    entityType: "LoyaltyAccount",
+    entityId: account.id,
+    actorId: userId,
+    metadata: { orderId, points, newBalance: newPoints },
+  });
+
+  return toLoyaltyAccount(updated);
+}
+
+/**
+ * Returns the referral code for the user, creating a unique one if it doesn't exist.
+ */
+export async function getReferralCode(userId: string): Promise<ReferralCode> {
+  const account = await getLoyaltyAccount(userId);
+
+  const existing = await prisma.referralCode.findFirst({
+    where: { userId },
+  });
+  if (existing) {
+    return toReferralCode(existing);
+  }
+
+  // Generate a unique code: 8-char alphanumeric
+  let code: string;
+  let attempts = 0;
+  do {
+    code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const conflict = await prisma.referralCode.findUnique({ where: { code } });
+    if (!conflict) break;
+    attempts++;
+  } while (attempts < 10);
+
+  const created = await prisma.referralCode.create({
+    data: {
+      userId,
+      accountId: account.account.id,
+      code: code!,
+      rewardPoints: 100,
+    },
+  });
+
+  return toReferralCode(created);
+}
+
+// ─── Payment Method Service Functions ────────────────────────────────────────
+
+/**
+ * Returns all saved payment methods for the user.
+ */
+export async function listSavedPaymentMethods(userId: string): Promise<SavedPaymentMethod[]> {
+  const rows = await prisma.savedPaymentMethod.findMany({
+    where: { userId },
+    orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+  });
+  return rows.map(toSavedPaymentMethod);
+}
+
+/**
+ * Saves a new payment method reference for the user.
+ * The providerMethodId should already exist in Stripe (e.g., from a SetupIntent).
+ */
+export async function addSavedPaymentMethod(
+  userId: string,
+  input: AddPaymentMethodInput
+): Promise<SavedPaymentMethod> {
+  const existingCount = await prisma.savedPaymentMethod.count({ where: { userId } });
+
+  const row = await prisma.savedPaymentMethod.create({
+    data: {
+      userId,
+      provider: "STRIPE",
+      last4: input.last4,
+      brand: input.brand,
+      expiryMonth: input.expiryMonth,
+      expiryYear: input.expiryYear,
+      isDefault: existingCount === 0,
+      providerMethodId: input.providerMethodId,
+    },
+  });
+
+  await logAuditEvent({
+    action: "PAYMENT_METHOD_ADD",
+    entityType: "SavedPaymentMethod",
+    entityId: row.id,
+    actorId: userId,
+    metadata: { last4: input.last4, brand: input.brand },
+  });
+
+  return toSavedPaymentMethod(row);
+}
+
+/**
+ * Removes a saved payment method. Detaches from Stripe then deletes the record.
+ */
+export async function removeSavedPaymentMethod(
+  userId: string,
+  methodId: string
+): Promise<void> {
+  const method = await prisma.savedPaymentMethod.findUnique({ where: { id: methodId } });
+  if (!method || method.userId !== userId) {
+    throw new SavedPaymentMethodNotFoundError(methodId);
+  }
+
+  await stripeBillingAdapter.detachPaymentMethod(method.providerMethodId);
+
+  await prisma.savedPaymentMethod.delete({ where: { id: methodId } });
+
+  // If removed method was default, promote the most recently added method
+  if (method.isDefault) {
+    const next = await prisma.savedPaymentMethod.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+    if (next) {
+      await prisma.savedPaymentMethod.update({
+        where: { id: next.id },
+        data: { isDefault: true },
+      });
+    }
+  }
+
+  await logAuditEvent({
+    action: "PAYMENT_METHOD_REMOVE",
+    entityType: "SavedPaymentMethod",
+    entityId: methodId,
+    actorId: userId,
+    metadata: { last4: method.last4 },
+  });
+}
+
+/**
+ * Sets the specified payment method as the default for the user.
+ */
+export async function setDefaultPaymentMethod(
+  userId: string,
+  methodId: string
+): Promise<SavedPaymentMethod> {
+  const method = await prisma.savedPaymentMethod.findUnique({ where: { id: methodId } });
+  if (!method || method.userId !== userId) {
+    throw new SavedPaymentMethodNotFoundError(methodId);
+  }
+
+  await prisma.$transaction([
+    prisma.savedPaymentMethod.updateMany({
+      where: { userId, isDefault: true },
+      data: { isDefault: false },
+    }),
+    prisma.savedPaymentMethod.update({
+      where: { id: methodId },
+      data: { isDefault: true },
+    }),
+  ]);
+
+  const updated = await prisma.savedPaymentMethod.findUniqueOrThrow({ where: { id: methodId } });
+  return toSavedPaymentMethod(updated);
 }

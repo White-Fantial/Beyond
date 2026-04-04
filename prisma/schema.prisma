@@ -336,6 +336,8 @@ model User {
   alertRulesCreated        AlertRule[]            @relation("AlertRuleCreatedBy")
   customerNotifications    CustomerNotification[]
   customerAddresses        CustomerAddress[]
+  loyaltyAccount           LoyaltyAccount?
+  savedPaymentMethods      SavedPaymentMethod[]
 
   @@map("users")
 }
@@ -2047,6 +2049,87 @@ model CustomerAddress {
 
   @@index([userId])
   @@map("customer_addresses")
+}
+
+// ─── Phase 3 (Customer Portal): Loyalty & Payment Methods ────────────────────
+
+enum LoyaltyTransactionType {
+  EARN
+  REDEEM
+  ADJUSTMENT
+}
+
+enum LoyaltyTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+model LoyaltyAccount {
+  id        String      @id @default(uuid())
+  userId    String      @unique
+  points    Int         @default(0)
+  tier      LoyaltyTier @default(BRONZE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions LoyaltyTransaction[]
+  referralCodes ReferralCode[]
+
+  @@index([userId])
+  @@map("loyalty_accounts")
+}
+
+model LoyaltyTransaction {
+  id          String                 @id @default(uuid())
+  accountId   String
+  orderId     String?
+  type        LoyaltyTransactionType
+  pointsDelta Int
+  description String?
+  createdAt   DateTime               @default(now())
+
+  account LoyaltyAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, createdAt])
+  @@map("loyalty_transactions")
+}
+
+model ReferralCode {
+  id           String   @id @default(uuid())
+  userId       String
+  accountId    String
+  code         String   @unique
+  usedCount    Int      @default(0)
+  rewardPoints Int      @default(100)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  account LoyaltyAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("referral_codes")
+}
+
+model SavedPaymentMethod {
+  id               String   @id @default(uuid())
+  userId           String
+  provider         String   @default("STRIPE")
+  last4            String
+  brand            String
+  expiryMonth      Int
+  expiryYear       Int
+  isDefault        Boolean  @default(false)
+  providerMethodId String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_payment_methods")
 }
 
 // ─── Phase 8: Automation & Notifications ─────────────────────────────────────
