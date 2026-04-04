@@ -756,3 +756,60 @@ export async function addTenantBillingRecord(
   await auditAdminTenantBillingRecordAdded(tenantId, record.id, actorUserId, { recordType });
   return { id: record.id };
 }
+
+// ─── Payment Attempts ──────────────────────────────────────────────────────────
+
+export interface PaymentAttemptRow {
+  id: string;
+  invoiceId: string | null;
+  providerPaymentIntentId: string | null;
+  status: string;
+  attemptedAt: string;
+  failureCode: string | null;
+  failureMessage: string | null;
+  retryable: boolean;
+}
+
+export async function getPaymentAttempts(tenantId: string): Promise<PaymentAttemptRow[]> {
+  const attempts = await prisma.paymentAttempt.findMany({
+    where: { tenantId },
+    orderBy: { attemptedAt: "desc" },
+    take: 50,
+    select: {
+      id: true,
+      invoiceId: true,
+      providerPaymentIntentId: true,
+      status: true,
+      attemptedAt: true,
+      failureCode: true,
+      failureMessage: true,
+      retryable: true,
+    },
+  });
+
+  return attempts.map((a) => ({
+    id: a.id,
+    invoiceId: a.invoiceId ?? null,
+    providerPaymentIntentId: a.providerPaymentIntentId ?? null,
+    status: a.status,
+    attemptedAt: a.attemptedAt.toISOString(),
+    failureCode: a.failureCode ?? null,
+    failureMessage: a.failureMessage ?? null,
+    retryable: a.retryable,
+  }));
+}
+
+export async function retryPaymentAttempt(
+  tenantId: string,
+  invoiceId: string
+): Promise<boolean> {
+  const invoice = await prisma.billingInvoice.findFirst({
+    where: { id: invoiceId, tenantId },
+    select: { providerInvoiceId: true, status: true },
+  });
+  if (!invoice || !invoice.providerInvoiceId) return false;
+  if (invoice.status !== "OPEN") return false;
+
+  const { stripeBillingAdapter } = await import("@/adapters/billing/stripe.adapter");
+  return stripeBillingAdapter.retryInvoicePayment(invoice.providerInvoiceId);
+}

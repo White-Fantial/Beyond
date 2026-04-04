@@ -22,6 +22,15 @@ import {
 } from "@/lib/billing/labels";
 import { formatPriceMinor } from "@/lib/billing/labels";
 import { mockBillingAdapter } from "@/adapters/billing";
+
+function getBillingAdapter() {
+  if (process.env.STRIPE_SECRET_KEY) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { stripeBillingAdapter } = require("@/adapters/billing/stripe.adapter");
+    return stripeBillingAdapter;
+  }
+  return mockBillingAdapter;
+}
 import type {
   OwnerBillingOverview,
   OwnerSubscriptionSummary,
@@ -569,7 +578,7 @@ export async function previewPlanChange(
   }
 
   const providerPreview = sub.providerSubscriptionId
-    ? await mockBillingAdapter.previewPlanChange(sub.providerSubscriptionId, targetPlan.id)
+    ? await getBillingAdapter().previewPlanChange(sub.providerSubscriptionId, targetPlan.id)
     : null;
 
   const prorationPreviewMinor = providerPreview?.prorationMinor ?? null;

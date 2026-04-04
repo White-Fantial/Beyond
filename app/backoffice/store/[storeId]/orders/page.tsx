@@ -1,6 +1,5 @@
 import { requireStorePermission } from "@/lib/auth/permissions";
 import { PERMISSIONS } from "@/lib/auth/constants";
-import { listOrders } from "@/services/order.service";
 import BackofficeOrdersClient from "./BackofficeOrdersClient";
 
 export default async function BackofficeOrdersPage({
@@ -11,16 +10,12 @@ export default async function BackofficeOrdersPage({
   const { storeId } = await params;
   await requireStorePermission(storeId, PERMISSIONS.ORDERS);
 
-  const { orders, total } = await listOrders(storeId, { limit: 50 });
-
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-4">Order Management</h1>
-      <BackofficeOrdersClient
-        storeId={storeId}
-        initialOrders={orders}
-        initialTotal={total}
-      />
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold text-gray-900">Live Orders</h1>
+      </div>
+      <BackofficeOrdersClient storeId={storeId} />
     </div>
   );
 }

@@ -16,6 +16,7 @@ function getNavItems(storeId: string, storeRole: StoreRoleKey) {
   const allItems = [
     { href: `${base}/dashboard`, label: "Dashboard", icon: "📊", roles: ["MANAGER", "OWNER", "ADMIN"] },
     { href: `${base}/orders`, label: "Orders", icon: "📦", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/orders/kitchen`, label: "Kitchen Display", icon: "🍳", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
     { href: `${base}/operations`, label: "Operations", icon: "🔧", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
     { href: `${base}/inventory`, label: "Inventory", icon: "📋", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
     { href: `${base}/products`, label: "Products", icon: "🍽️", roles: ["MANAGER", "OWNER", "ADMIN"] },

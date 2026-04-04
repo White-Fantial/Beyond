@@ -9,7 +9,7 @@
  * TODO: Persist cart to sessionStorage or server-side cart_sessions table.
  */
 
-import React, { createContext, useContext, useReducer, useCallback } from "react";
+import React, { createContext, useContext, useReducer, useCallback, useEffect } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -165,11 +165,40 @@ export function CartProvider({
   storeId: string;
   initialPickupTime?: Date;
 }) {
-  const [state, dispatch] = useReducer(cartReducer, {
-    storeId,
-    items: [],
-    pickupTime: initialPickupTime ?? null,
-  });
+  function getInitialState(): CartState {
+    if (typeof window === "undefined") {
+      return { storeId, items: [], pickupTime: initialPickupTime ?? null };
+    }
+    try {
+      const raw = sessionStorage.getItem(`beyond_cart_${storeId}`);
+      if (raw) {
+        const saved = JSON.parse(raw) as { items: CartItem[]; pickupTime: string | null };
+        return {
+          storeId,
+          items: saved.items ?? [],
+          pickupTime: saved.pickupTime ? new Date(saved.pickupTime) : (initialPickupTime ?? null),
+        };
+      }
+    } catch {
+      // ignore malformed storage
+    }
+    return { storeId, items: [], pickupTime: initialPickupTime ?? null };
+  }
+
+  const [state, dispatch] = useReducer(cartReducer, undefined, getInitialState);
+
+  // Persist to sessionStorage on every cart change
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      sessionStorage.setItem(
+        `beyond_cart_${storeId}`,
+        JSON.stringify({ items: state.items, pickupTime: state.pickupTime?.toISOString() ?? null })
+      );
+    } catch {
+      // ignore quota errors
+    }
+  }, [storeId, state.items, state.pickupTime]);
 
   const addItem = useCallback((item: CartItem) => {
     dispatch({ type: "ADD_ITEM", payload: item });

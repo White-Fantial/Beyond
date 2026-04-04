@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
-import { getAdminTenantBillingDetail } from "@/services/admin/admin-subscription.service";
+import {
+  getAdminTenantBillingDetail,
+  getPaymentAttempts,
+} from "@/services/admin/admin-subscription.service";
 import { listAdminPlans } from "@/services/admin/admin-plan.service";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminTenantSubscriptionCard from "@/components/admin/billing/AdminTenantSubscriptionCard";
@@ -10,6 +13,7 @@ import AdminUsageSummaryCard from "@/components/admin/billing/AdminUsageSummaryC
 import AdminBillingRecordTable from "@/components/admin/billing/AdminBillingRecordTable";
 import AdminSubscriptionEventTable from "@/components/admin/billing/AdminSubscriptionEventTable";
 import AdminBillingNoteForm from "@/components/admin/billing/AdminBillingNoteForm";
+import AdminPaymentAttemptTable from "@/components/admin/billing/AdminPaymentAttemptTable";
 
 interface PageProps {
   params: Promise<{ tenantId: string }>;
@@ -20,8 +24,12 @@ export default async function AdminTenantBillingDetailPage({ params }: PageProps
   const { tenantId } = await params;
 
   let detail;
+  let paymentAttempts;
   try {
-    detail = await getAdminTenantBillingDetail(tenantId);
+    [detail, paymentAttempts] = await Promise.all([
+      getAdminTenantBillingDetail(tenantId),
+      getPaymentAttempts(tenantId),
+    ]);
   } catch {
     notFound();
   }
@@ -99,11 +107,19 @@ export default async function AdminTenantBillingDetailPage({ params }: PageProps
       </div>
 
       {/* Subscription Events */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
+      <div className="bg-white rounded-lg border border-gray-200 p-5 mb-6">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">
           Subscription Event History ({detail.subscriptionEvents.length})
         </h2>
         <AdminSubscriptionEventTable events={detail.subscriptionEvents} />
+      </div>
+
+      {/* Payment Attempts */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">
+          Payment Attempts ({paymentAttempts.length})
+        </h2>
+        <AdminPaymentAttemptTable attempts={paymentAttempts} tenantId={tenantId} />
       </div>
     </div>
   );

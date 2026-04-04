@@ -246,9 +246,12 @@ export default async function OwnerBillingPage() {
       </div>
 
       {/* Footer */}
-      <div className="text-sm text-gray-500">
+      <div className="text-sm text-gray-500 flex items-center gap-4 flex-wrap">
         <Link href="/owner/billing/plans" className="text-brand-600 hover:text-brand-800 font-medium">
           Manage your plan →
+        </Link>
+        <Link href="/owner/billing/payment-methods" className="text-brand-600 hover:text-brand-800 font-medium">
+          Manage payment methods →
         </Link>
       </div>
     </div>
