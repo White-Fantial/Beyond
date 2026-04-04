@@ -50,24 +50,23 @@ export interface GuestOrderStatus {
 
 export type SubscriptionFrequency = "WEEKLY" | "BIWEEKLY" | "MONTHLY";
 
-export interface SubscriptionCartItem {
-  productId: string;
-  productName: string;
-  unitPriceAmount: number;
-  quantity: number;
-  selectedModifiers: StorefrontCheckoutModifier[];
-  notes?: string;
+export interface SubscriptionPlanPublic {
+  id: string;
+  name: string;
+  price: number; // minor units
+  interval: string; // "WEEKLY" | "BIWEEKLY" | "MONTHLY"
+  benefits: string[];
 }
 
 export interface PlaceGuestSubscriptionInput {
   storeId: string;
+  planId: string;
   customerName: string;
   customerPhone: string;
   customerEmail: string;
   frequency: SubscriptionFrequency;
-  startDate: string; // ISO date string (YYYY-MM-DD)
+  startDate: string; // YYYY-MM-DD
   notes?: string;
-  items: SubscriptionCartItem[];
   currencyCode: string;
 }
 

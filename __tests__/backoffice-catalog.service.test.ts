@@ -13,6 +13,7 @@ vi.mock("@/lib/prisma", () => ({
     catalogProduct: {
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       findUnique: vi.fn(),
       findUniqueOrThrow: vi.fn(),
     },
@@ -29,6 +30,7 @@ vi.mock("@/lib/prisma", () => ({
     store: {
       findUniqueOrThrow: vi.fn(),
     },
+    $transaction: vi.fn(),
   },
 }));
 
@@ -48,6 +50,8 @@ import {
   createBackofficeModifierOption,
   updateBackofficeModifierOption,
   deleteBackofficeModifierOption,
+  bulkRestoreAvailability,
+  reorderCategories,
 } from "@/services/backoffice/backoffice-catalog.service";
 
 // ─── Typed mock helpers ───────────────────────────────────────────────────────
@@ -61,6 +65,7 @@ type MockPrisma = {
   catalogProduct: {
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+    updateMany: ReturnType<typeof vi.fn>;
     findUniqueOrThrow: ReturnType<typeof vi.fn>;
   };
   catalogModifierGroup: {
@@ -74,6 +79,7 @@ type MockPrisma = {
     findUniqueOrThrow: ReturnType<typeof vi.fn>;
   };
   store: { findUniqueOrThrow: ReturnType<typeof vi.fn> };
+  $transaction: ReturnType<typeof vi.fn>;
 };
 
 const mockPrisma = prisma as unknown as MockPrisma;
@@ -517,5 +523,250 @@ describe("deleteBackofficeModifierOption", () => {
     await expect(
       deleteBackofficeModifierOption(STORE_ID, TENANT_ID, ACTOR_ID, "opt-pos")
     ).rejects.toThrow("Cannot delete POS-sourced");
+  });
+});
+
+// ─── bulkRestoreAvailability tests ───────────────────────────────────────────
+
+describe("bulkRestoreAvailability", () => {
+  it("returns the count of restored products", async () => {
+    mockPrisma.catalogProduct.updateMany.mockResolvedValue({ count: 3 });
+
+    const result = await bulkRestoreAvailability(STORE_ID, TENANT_ID, ACTOR_ID);
+
+    expect(result).toBe(3);
+  });
+
+  it("calls updateMany with correct where clause (storeId, isSoldOut, deletedAt)", async () => {
+    mockPrisma.catalogProduct.updateMany.mockResolvedValue({ count: 2 });
+
+    await bulkRestoreAvailability(STORE_ID, TENANT_ID, ACTOR_ID);
+
+    const call = mockPrisma.catalogProduct.updateMany.mock.calls[0][0];
+    expect(call.where.storeId).toBe(STORE_ID);
+    expect(call.where.isSoldOut).toBe(true);
+    expect(call.where.deletedAt).toBeNull();
+  });
+
+  it("calls updateMany with data { isSoldOut: false }", async () => {
+    mockPrisma.catalogProduct.updateMany.mockResolvedValue({ count: 1 });
+
+    await bulkRestoreAvailability(STORE_ID, TENANT_ID, ACTOR_ID);
+
+    const call = mockPrisma.catalogProduct.updateMany.mock.calls[0][0];
+    expect(call.data.isSoldOut).toBe(false);
+  });
+
+  it("logs audit event with action BACKOFFICE_BULK_RESTORE_AVAILABILITY", async () => {
+    const { logAuditEvent } = await import("@/lib/audit");
+    mockPrisma.catalogProduct.updateMany.mockResolvedValue({ count: 5 });
+
+    await bulkRestoreAvailability(STORE_ID, TENANT_ID, ACTOR_ID);
+
+    expect(logAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "BACKOFFICE_BULK_RESTORE_AVAILABILITY",
+        targetType: "CatalogProduct",
+        targetId: STORE_ID,
+      })
+    );
+  });
+
+  it("includes restoredCount in audit metadata", async () => {
+    const { logAuditEvent } = await import("@/lib/audit");
+    mockPrisma.catalogProduct.updateMany.mockResolvedValue({ count: 7 });
+
+    await bulkRestoreAvailability(STORE_ID, TENANT_ID, ACTOR_ID);
+
+    expect(logAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ metadata: { restoredCount: 7 } })
+    );
+  });
+
+  it("returns 0 when no products are sold out", async () => {
+    mockPrisma.catalogProduct.updateMany.mockResolvedValue({ count: 0 });
+
+    const result = await bulkRestoreAvailability(STORE_ID, TENANT_ID, ACTOR_ID);
+
+    expect(result).toBe(0);
+  });
+
+  it("passes correct tenantId and actorUserId to audit log", async () => {
+    const { logAuditEvent } = await import("@/lib/audit");
+    mockPrisma.catalogProduct.updateMany.mockResolvedValue({ count: 1 });
+
+    await bulkRestoreAvailability(STORE_ID, TENANT_ID, ACTOR_ID);
+
+    expect(logAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ tenantId: TENANT_ID, actorUserId: ACTOR_ID, storeId: STORE_ID })
+    );
+  });
+
+  it("throws when prisma updateMany rejects", async () => {
+    mockPrisma.catalogProduct.updateMany.mockRejectedValue(new Error("DB error"));
+
+    await expect(bulkRestoreAvailability(STORE_ID, TENANT_ID, ACTOR_ID)).rejects.toThrow("DB error");
+  });
+
+  it("does not call logAuditEvent when updateMany throws", async () => {
+    const { logAuditEvent } = await import("@/lib/audit");
+    mockPrisma.catalogProduct.updateMany.mockRejectedValue(new Error("DB error"));
+
+    await expect(bulkRestoreAvailability(STORE_ID, TENANT_ID, ACTOR_ID)).rejects.toThrow();
+    expect(logAuditEvent).not.toHaveBeenCalled();
+  });
+
+  it("calls updateMany exactly once", async () => {
+    mockPrisma.catalogProduct.updateMany.mockResolvedValue({ count: 4 });
+
+    await bulkRestoreAvailability(STORE_ID, TENANT_ID, ACTOR_ID);
+
+    expect(mockPrisma.catalogProduct.updateMany).toHaveBeenCalledOnce();
+  });
+
+  it("calls logAuditEvent exactly once on success", async () => {
+    const { logAuditEvent } = await import("@/lib/audit");
+    mockPrisma.catalogProduct.updateMany.mockResolvedValue({ count: 2 });
+
+    await bulkRestoreAvailability(STORE_ID, TENANT_ID, ACTOR_ID);
+
+    expect(logAuditEvent).toHaveBeenCalledOnce();
+  });
+});
+
+// ─── reorderCategories tests ─────────────────────────────────────────────────
+
+describe("reorderCategories", () => {
+  it("calls $transaction with the correct number of updates", async () => {
+    mockPrisma.$transaction.mockResolvedValue([]);
+
+    const items = [
+      { id: "cat-001", displayOrder: 0 },
+      { id: "cat-002", displayOrder: 1 },
+    ];
+    await reorderCategories(STORE_ID, TENANT_ID, ACTOR_ID, items);
+
+    expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
+  });
+
+  it("calls catalogCategory.update for each item", async () => {
+    // Simulate $transaction by calling the array of promises
+    mockPrisma.$transaction.mockImplementation(async (ops: unknown[]) => ops);
+    mockPrisma.catalogCategory.update.mockResolvedValue({});
+
+    const items = [
+      { id: "cat-001", displayOrder: 0 },
+      { id: "cat-002", displayOrder: 1 },
+      { id: "cat-003", displayOrder: 2 },
+    ];
+    await reorderCategories(STORE_ID, TENANT_ID, ACTOR_ID, items);
+
+    expect(mockPrisma.catalogCategory.update).toHaveBeenCalledTimes(3);
+  });
+
+  it("passes correct displayOrder to each update", async () => {
+    mockPrisma.$transaction.mockImplementation(async (ops: unknown[]) => ops);
+    mockPrisma.catalogCategory.update.mockResolvedValue({});
+
+    const items = [
+      { id: "cat-001", displayOrder: 5 },
+      { id: "cat-002", displayOrder: 10 },
+    ];
+    await reorderCategories(STORE_ID, TENANT_ID, ACTOR_ID, items);
+
+    const calls = mockPrisma.catalogCategory.update.mock.calls;
+    expect(calls[0][0].data.displayOrder).toBe(5);
+    expect(calls[1][0].data.displayOrder).toBe(10);
+  });
+
+  it("passes correct id in where clause for each update", async () => {
+    mockPrisma.$transaction.mockImplementation(async (ops: unknown[]) => ops);
+    mockPrisma.catalogCategory.update.mockResolvedValue({});
+
+    const items = [
+      { id: "cat-A", displayOrder: 0 },
+      { id: "cat-B", displayOrder: 1 },
+    ];
+    await reorderCategories(STORE_ID, TENANT_ID, ACTOR_ID, items);
+
+    const calls = mockPrisma.catalogCategory.update.mock.calls;
+    expect(calls[0][0].where.id).toBe("cat-A");
+    expect(calls[1][0].where.id).toBe("cat-B");
+  });
+
+  it("logs audit event with action BACKOFFICE_CATEGORIES_REORDERED", async () => {
+    const { logAuditEvent } = await import("@/lib/audit");
+    mockPrisma.$transaction.mockResolvedValue([]);
+
+    await reorderCategories(STORE_ID, TENANT_ID, ACTOR_ID, [{ id: "cat-001", displayOrder: 0 }]);
+
+    expect(logAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "BACKOFFICE_CATEGORIES_REORDERED" })
+    );
+  });
+
+  it("includes count in audit metadata", async () => {
+    const { logAuditEvent } = await import("@/lib/audit");
+    mockPrisma.$transaction.mockResolvedValue([]);
+
+    const items = [
+      { id: "cat-001", displayOrder: 0 },
+      { id: "cat-002", displayOrder: 1 },
+    ];
+    await reorderCategories(STORE_ID, TENANT_ID, ACTOR_ID, items);
+
+    expect(logAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ metadata: { count: 2 } })
+    );
+  });
+
+  it("handles empty items array (calls $transaction with empty array)", async () => {
+    mockPrisma.$transaction.mockResolvedValue([]);
+
+    await reorderCategories(STORE_ID, TENANT_ID, ACTOR_ID, []);
+
+    expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
+    const arg = mockPrisma.$transaction.mock.calls[0][0];
+    expect(arg).toHaveLength(0);
+  });
+
+  it("passes correct storeId and tenantId to audit log", async () => {
+    const { logAuditEvent } = await import("@/lib/audit");
+    mockPrisma.$transaction.mockResolvedValue([]);
+
+    await reorderCategories(STORE_ID, TENANT_ID, ACTOR_ID, []);
+
+    expect(logAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ storeId: STORE_ID, tenantId: TENANT_ID, actorUserId: ACTOR_ID })
+    );
+  });
+
+  it("uses storeId as targetId in audit log", async () => {
+    const { logAuditEvent } = await import("@/lib/audit");
+    mockPrisma.$transaction.mockResolvedValue([]);
+
+    await reorderCategories(STORE_ID, TENANT_ID, ACTOR_ID, []);
+
+    expect(logAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ targetId: STORE_ID, targetType: "CatalogCategory" })
+    );
+  });
+
+  it("throws when $transaction rejects", async () => {
+    mockPrisma.$transaction.mockRejectedValue(new Error("Transaction failed"));
+
+    await expect(
+      reorderCategories(STORE_ID, TENANT_ID, ACTOR_ID, [{ id: "cat-001", displayOrder: 0 }])
+    ).rejects.toThrow("Transaction failed");
+  });
+
+  it("does not call logAuditEvent when $transaction throws", async () => {
+    const { logAuditEvent } = await import("@/lib/audit");
+    mockPrisma.$transaction.mockRejectedValue(new Error("Transaction failed"));
+
+    await expect(
+      reorderCategories(STORE_ID, TENANT_ID, ACTOR_ID, [{ id: "cat-001", displayOrder: 0 }])
+    ).rejects.toThrow();
+    expect(logAuditEvent).not.toHaveBeenCalled();
   });
 });

@@ -9,7 +9,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { createCanonicalOrderFromInbound } from "@/services/order.service";
-import type { PlaceGuestOrderInput, PlaceGuestOrderResult, GuestOrderStatus } from "@/types/storefront";
+import type { PlaceGuestOrderInput, PlaceGuestOrderResult, GuestOrderStatus, PlaceGuestSubscriptionInput, PlaceGuestSubscriptionResult, GuestSubscriptionStatus, SubscriptionPlanPublic } from "@/types/storefront";
 
 // ─── Public Types ─────────────────────────────────────────────────────────────
 
@@ -447,5 +447,101 @@ export async function getGuestOrderStatus(
     customerName: order.customerName ?? null,
     estimatedPickupAt: order.originSubmittedAt?.toISOString() ?? null,
     updatedAt: order.updatedAt.toISOString(),
+  };
+}
+
+// ─── Subscription Plans ───────────────────────────────────────────────────────
+
+export async function getSubscriptionPlansForStore(
+  storeId: string
+): Promise<SubscriptionPlanPublic[]> {
+  const plans = await prisma.subscriptionPlan.findMany({
+    where: { storeId, isActive: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return plans.map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    interval: p.interval,
+    benefits: Array.isArray(p.benefits) ? (p.benefits as string[]) : [],
+  }));
+}
+
+export async function enrollGuestSubscription(
+  input: PlaceGuestSubscriptionInput
+): Promise<PlaceGuestSubscriptionResult> {
+  const plan = await prisma.subscriptionPlan.findUniqueOrThrow({
+    where: { id: input.planId },
+    select: { id: true, storeId: true, price: true, interval: true },
+  });
+
+  if (plan.storeId !== input.storeId) {
+    throw new Error("Plan does not belong to this store");
+  }
+
+  const startDate = new Date(input.startDate);
+  const nextBillingDate = new Date(startDate);
+  if (input.frequency === "WEEKLY") {
+    nextBillingDate.setDate(nextBillingDate.getDate() + 7);
+  } else if (input.frequency === "BIWEEKLY") {
+    nextBillingDate.setDate(nextBillingDate.getDate() + 14);
+  } else {
+    nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
+  }
+
+  const store = await prisma.store.findUniqueOrThrow({
+    where: { id: input.storeId },
+    select: { tenantId: true },
+  });
+
+  const subscription = await prisma.subscription.create({
+    data: {
+      planId: input.planId,
+      customerId: input.customerEmail,
+      status: "ACTIVE",
+      startDate,
+      nextBillingDate,
+      tenantId: store.tenantId,
+      storeId: input.storeId,
+    },
+  });
+
+  return {
+    subscriptionId: subscription.id,
+    status: subscription.status,
+    startDate: subscription.startDate.toISOString(),
+    nextBillingDate: subscription.nextBillingDate.toISOString(),
+    totalAmount: plan.price,
+    currencyCode: input.currencyCode,
+  };
+}
+
+export async function getGuestSubscriptionStatus(
+  subscriptionId: string
+): Promise<GuestSubscriptionStatus | null> {
+  const sub = await prisma.subscription.findUnique({
+    where: { id: subscriptionId },
+    select: {
+      id: true,
+      status: true,
+      customerId: true,
+      startDate: true,
+      nextBillingDate: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!sub) return null;
+
+  return {
+    subscriptionId: sub.id,
+    status: sub.status,
+    customerName: null,
+    frequency: null,
+    startDate: sub.startDate.toISOString(),
+    nextBillingDate: sub.nextBillingDate.toISOString(),
+    updatedAt: sub.updatedAt.toISOString(),
   };
 }

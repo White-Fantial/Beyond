@@ -4,9 +4,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    store: { findFirst: vi.fn() },
+    store: { findFirst: vi.fn(), findUniqueOrThrow: vi.fn() },
     catalogProduct: { findMany: vi.fn() },
     order: { findFirst: vi.fn() },
+    subscriptionPlan: { findMany: vi.fn(), findUniqueOrThrow: vi.fn() },
+    subscription: { create: vi.fn(), findUnique: vi.fn() },
   },
 }));
 
@@ -19,13 +21,18 @@ import { createCanonicalOrderFromInbound } from "@/services/order.service";
 import {
   placeGuestOrder,
   getGuestOrderStatus,
+  getSubscriptionPlansForStore,
+  enrollGuestSubscription,
+  getGuestSubscriptionStatus,
 } from "@/services/customer-menu.service";
-import type { PlaceGuestOrderInput } from "@/types/storefront";
+import type { PlaceGuestOrderInput, PlaceGuestSubscriptionInput } from "@/types/storefront";
 
 const mockPrisma = prisma as unknown as {
-  store: { findFirst: ReturnType<typeof vi.fn> };
+  store: { findFirst: ReturnType<typeof vi.fn>; findUniqueOrThrow: ReturnType<typeof vi.fn> };
   catalogProduct: { findMany: ReturnType<typeof vi.fn> };
   order: { findFirst: ReturnType<typeof vi.fn> };
+  subscriptionPlan: { findMany: ReturnType<typeof vi.fn>; findUniqueOrThrow: ReturnType<typeof vi.fn> };
+  subscription: { create: ReturnType<typeof vi.fn>; findUnique: ReturnType<typeof vi.fn> };
 };
 const mockCreateOrder = createCanonicalOrderFromInbound as ReturnType<typeof vi.fn>;
 
@@ -69,10 +76,61 @@ function makeInput(overrides: Partial<PlaceGuestOrderInput> = {}): PlaceGuestOrd
   };
 }
 
+const PLAN_ID = "plan-001";
+const SUB_ID = "sub-001";
+
+function makePlan(overrides: Partial<{ id: string; storeId: string; price: number; interval: string; isActive: boolean; benefits: string[] }> = {}) {
+  return {
+    id: PLAN_ID,
+    storeId: STORE_ID,
+    name: "Weekly Box",
+    price: 2500,
+    interval: "WEEKLY",
+    isActive: true,
+    benefits: ["Fresh produce", "Free delivery"],
+    createdAt: new Date("2025-01-01T00:00:00Z"),
+    ...overrides,
+  };
+}
+
+function makeSubInput(overrides: Partial<PlaceGuestSubscriptionInput> = {}): PlaceGuestSubscriptionInput {
+  return {
+    storeId: STORE_ID,
+    planId: PLAN_ID,
+    customerName: "Alice",
+    customerPhone: "+64 21 000 0000",
+    customerEmail: "alice@example.com",
+    frequency: "WEEKLY",
+    startDate: "2025-07-01",
+    currencyCode: "NZD",
+    ...overrides,
+  };
+}
+
+function makeSubscription(overrides: Partial<{ id: string; status: string; startDate: Date; nextBillingDate: Date }> = {}) {
+  return {
+    id: SUB_ID,
+    planId: PLAN_ID,
+    customerId: "alice@example.com",
+    status: "ACTIVE",
+    startDate: new Date("2025-07-01T00:00:00Z"),
+    nextBillingDate: new Date("2025-07-08T00:00:00Z"),
+    tenantId: TENANT_ID,
+    storeId: STORE_ID,
+    updatedAt: new Date("2025-07-01T00:00:00Z"),
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockPrisma.store.findFirst.mockResolvedValue(makeStore());
+  mockPrisma.store.findUniqueOrThrow.mockResolvedValue(makeStore());
   mockPrisma.catalogProduct.findMany.mockResolvedValue([makeProduct()]);
+  mockPrisma.subscriptionPlan.findMany.mockResolvedValue([makePlan()]);
+  mockPrisma.subscriptionPlan.findUniqueOrThrow.mockResolvedValue(makePlan());
+  mockPrisma.subscription.create.mockResolvedValue(makeSubscription());
+  mockPrisma.subscription.findUnique.mockResolvedValue(makeSubscription());
   mockCreateOrder.mockResolvedValue({
     order: { id: ORDER_ID, status: "RECEIVED" },
     created: true,
