@@ -171,6 +171,22 @@ export class StripeBillingAdapter implements BillingProviderAdapter {
     }
   }
 
+  /** Attach an existing payment method to a customer */
+  async attachPaymentMethod(
+    providerMethodId: string,
+    providerCustomerId: string
+  ): Promise<boolean> {
+    const stripe = getStripe();
+    try {
+      await stripe.paymentMethods.attach(providerMethodId, {
+        customer: providerCustomerId,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   /** List all payment methods for a customer (for payment method management UI) */
   async listPaymentMethods(
     providerCustomerId: string
