@@ -410,3 +410,25 @@ export interface OwnerSubscriptionActionResult {
   subscriptionId: string;
   newStatus: string;
 }
+
+// ─── Phase 10: Team Management ────────────────────────────────────────────────
+
+export interface OwnerTeamStoreAssignment {
+  storeMembershipId: string;
+  storeId: string;
+  storeName: string;
+  storeRole: string;
+  status: string;
+}
+
+export interface OwnerTeamMember {
+  membershipId: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  joinedAt: string | null;
+  invitedAt: string | null;
+  storeAssignments: OwnerTeamStoreAssignment[];
+}
