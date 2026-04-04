@@ -18,12 +18,21 @@ export async function GET(
     const categories = await prisma.catalogCategory.findMany({
       where: { storeId, deletedAt: null },
       include: {
-        products: { where: { deletedAt: null }, orderBy: { displayOrder: "asc" } },
+        productCategories: {
+          where: { product: { deletedAt: null } },
+          orderBy: { sortOrder: "asc" },
+          include: { product: true },
+        },
       },
       orderBy: { displayOrder: "asc" },
     });
 
-    return NextResponse.json({ categories });
+    const categoriesWithProducts = categories.map((c) => ({
+      ...c,
+      products: c.productCategories.map((pc) => pc.product),
+    }));
+
+    return NextResponse.json({ categories: categoriesWithProducts });
   } catch (err) {
     console.error("[backoffice/catalog/products GET]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

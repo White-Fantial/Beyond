@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getCurrentUserAuthContext } from "@/lib/auth/context";
 import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
 import { prisma } from "@/lib/prisma";
@@ -9,7 +9,7 @@ import { stripeBillingAdapter } from "@/adapters/billing/stripe.adapter";
  *
  * Returns payment methods for the current owner's billing account.
  */
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

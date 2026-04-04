@@ -13,18 +13,18 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
- * GET /api/sse/store/[storeSlug]/orders/[orderId]
+ * GET /api/sse/store/[storeId]/orders/[orderId]
  *
  * Public (no auth) SSE stream for the storefront confirmation page.
  * Streams order status updates until COMPLETED/CANCELLED/FAILED.
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ storeSlug: string; orderId: string }> }
+  { params }: { params: Promise<{ storeId: string; orderId: string }> }
 ) {
-  const { storeSlug, orderId } = await params;
+  const { storeId, orderId } = await params;
 
-  const store = await getStoreBySlugForCustomer(storeSlug);
+  const store = await getStoreBySlugForCustomer(storeId);
   if (!store) {
     return new Response("Store not found", { status: 404 });
   }
