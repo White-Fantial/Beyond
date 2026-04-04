@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { seedBilling } from "./seeds/billing";
 import { seedNotifications } from "./seeds/notifications";
+import { seedLoyalty } from "./seeds/loyalty";
 
 const prisma = new PrismaClient();
 
@@ -107,6 +108,7 @@ async function main() {
 
   await seedBilling();
   await seedNotifications();
+  await seedLoyalty();
 
   console.log("\n✅ Seed complete!\n");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
