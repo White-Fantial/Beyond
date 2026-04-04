@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import CustomerNotificationBell from "@/components/customer/notifications/CustomerNotificationBell";
+import LocaleSwitcher from "@/components/LocaleSwitcher";
 
 const navItems = [
   { href: "/app", label: "Home", icon: "🏠" },
@@ -38,6 +39,7 @@ export default function CustomerNav() {
             </Link>
           ))}
           <CustomerNotificationBell />
+          <LocaleSwitcher />
         </div>
       </div>
     </nav>
