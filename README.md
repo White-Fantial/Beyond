@@ -174,7 +174,7 @@ Detailed documentation is in the [`doc/`](./doc/) folder:
 
 | Document | Description |
 |----------|-------------|
-| [doc/roadmap.md](./doc/roadmap.md) | Development roadmap — completed, in-progress, and planned items; future Owner Console phases |
+| [doc/roadmap.md](./doc/roadmap.md) | Development roadmap — completed items, and all planned / not-yet-implemented features (Backoffice Phase 3, Storefront Phase 3, Baemin/Coupang Eats/Toss adapters, Customer Portal Phase 3, i18n, Web Push, CSV/PDF export) |
 | [doc/admin-console.md](./doc/admin-console.md) | Admin Console — routes, write actions, impersonation, logs, jobs, billing, feature flags |
 | [doc/owner-console.md](./doc/owner-console.md) | Owner Console — dashboard, store settings, staff, catalog, reports & analytics, customer & subscription management (Phase 5), billing deep dive (Phase 6) |
 | [doc/architecture.md](./doc/architecture.md) | Architecture — multi-tenant model, order model, catalog layers, channel integrations, customer order UI |

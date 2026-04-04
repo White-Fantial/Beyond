@@ -56,9 +56,30 @@
 
 ## Planned
 
+### Backoffice
+
+- [ ] **Backoffice Phase 3 — Catalog & Inventory Management** — sold-out / visibility toggles per product; bulk restore availability; category display-order reordering; modifier-option sold-out control; `BackofficeCatalogClient` page at `/backoffice/store/[storeId]/catalog`; service: `services/backoffice/backoffice-catalog.service.ts`; 5 API routes under `/api/backoffice/[storeId]/catalog/`; `SoldOutBadge`, `BulkRestoreButton`, `ProductVisibilityRow`, `CategoryReorderList` UI components; Catalog link added to `BackofficeSidebar`
+
+### Public Storefront
+
+- [ ] **Storefront Phase 3 — Subscription Enrollment Flow** — 3-step enrollment flow (`SubscriptionEnrollmentFlow` client component) on `/store/[storeSlug]/subscriptions`; plan browser listing available subscription plans; `POST /api/store/[storeSlug]/subscriptions` guest enrolment with SSE broadcast; confirmation page at `/store/[storeSlug]/subscriptions/confirmation/[subscriptionId]` with account CTA; service functions `getSubscriptionPlansForStore`, `enrollGuestSubscription` in `customer-menu.service.ts`; types in `types/storefront.ts`
+
+### Customer Portal
+
+- [ ] **Customer Portal Phase 3 — Loyalty & Payment Methods** — loyalty account overview and earn/redeem history at `/app/loyalty`; saved payment methods management at `/app/payment-methods` (list/add/remove/set-default); `LoyaltyAccount`, `LoyaltyTransaction`, `ReferralCode` Prisma models; service functions in `customer.service.ts`; API routes under `/api/customer/loyalty/` and `/api/customer/payment-methods/`; UI components in `components/customer/loyalty/` and `components/customer/payment-methods/`
+
+### Integrations & Adapters
+
+- [ ] **Baemin Adapter** — inbound order webhook with HMAC-SHA256 signature verification; OAuth 2.0 token exchange; `BAEMIN` added to `ConnectionProvider` enum; `adapters/integrations/baemin.adapter.ts` and `adapters/integrations/baemin/types.ts`; webhook route updated for `baemin` provider
+- [ ] **Coupang Eats Adapter** — inbound order webhook with HMAC-SHA256 signature verification; OAuth 2.0 + PKCE token exchange; `COUPANG_EATS` added to `ConnectionProvider` enum; `adapters/integrations/coupang-eats.adapter.ts` and `adapters/integrations/coupang-eats/types.ts`; webhook route updated for `coupang-eats` provider
+- [ ] **Toss Payments Adapter** — `adapters/toss.adapter.ts` implementing `BillingProviderAdapter`; Toss Payments checkout widget integration on storefront checkout; `POST /api/webhooks/billing/toss` handler; `adapters/toss/types.ts`
 - [ ] POS adapter implementations (Posbank, OKPOS)
-- [ ] Delivery platform adapters (Baemin, Coupang Eats)
-- [ ] Payment gateway integration (Toss Payments)
+
+### Cross-Cutting
+
+- [ ] **CSV / PDF Export** — downloadable CSV and PDF export for Owner Console reports (`/owner/reports`) and Admin Logs Console (`/admin/logs`); export service utilities; API routes with `Content-Disposition` headers
+- [ ] **i18n Foundation** — `next-intl` integration; Korean (ko) and English (en) locale message files; locale switcher component; all UI strings externalised to message files
+- [ ] **Web Push Notifications** — browser push subscription management (`/app/notifications/push-settings`); service worker registration; `PushSubscription` Prisma model; owner alert evaluator triggers push delivery alongside in-app notifications
 - [ ] Sales analytics charts (canonical order aggregation)
 
 ---
