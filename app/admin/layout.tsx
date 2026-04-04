@@ -42,6 +42,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               {item.label}
             </a>
           ))}
+          <form action="/api/auth/logout" method="POST" className="shrink-0">
+            <button
+              type="submit"
+              className="px-3 py-1.5 rounded text-xs font-medium text-gray-300 hover:bg-gray-700 hover:text-white whitespace-nowrap"
+            >
+              Log out
+            </button>
+          </form>
         </nav>
 
         <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
