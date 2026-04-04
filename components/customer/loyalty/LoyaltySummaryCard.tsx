@@ -22,19 +22,6 @@ interface Props {
 
 export default function LoyaltySummaryCard({ summary }: Props) {
   const { account, nextTier, pointsToNextTier } = summary;
-  const progressPct =
-    nextTier && pointsToNextTier !== null
-      ? Math.max(
-          0,
-          Math.min(
-            100,
-            ((account.points - (nextTier.minPoints - (pointsToNextTier + account.points - account.points))) /
-              nextTier.minPoints) *
-              100
-          )
-        )
-      : 100;
-
   const tierProgress =
     nextTier && pointsToNextTier !== null
       ? Math.round(((account.points) / nextTier.minPoints) * 100)

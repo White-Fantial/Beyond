@@ -969,9 +969,9 @@ export async function redeemLoyaltyPoints(
 
   await logAuditEvent({
     action: "LOYALTY_REDEEM",
-    entityType: "LoyaltyAccount",
-    entityId: account.id,
-    actorId: userId,
+    targetType: "LoyaltyAccount",
+    targetId: account.id,
+    actorUserId: userId,
     metadata: { orderId, points, newBalance: newPoints },
   });
 
@@ -1051,9 +1051,9 @@ export async function addSavedPaymentMethod(
 
   await logAuditEvent({
     action: "PAYMENT_METHOD_ADD",
-    entityType: "SavedPaymentMethod",
-    entityId: row.id,
-    actorId: userId,
+    targetType: "SavedPaymentMethod",
+    targetId: row.id,
+    actorUserId: userId,
     metadata: { last4: input.last4, brand: input.brand },
   });
 
@@ -1092,9 +1092,9 @@ export async function removeSavedPaymentMethod(
 
   await logAuditEvent({
     action: "PAYMENT_METHOD_REMOVE",
-    entityType: "SavedPaymentMethod",
-    entityId: methodId,
-    actorId: userId,
+    targetType: "SavedPaymentMethod",
+    targetId: methodId,
+    actorUserId: userId,
     metadata: { last4: method.last4 },
   });
 }
