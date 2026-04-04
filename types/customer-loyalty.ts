@@ -12,8 +12,7 @@ export interface LoyaltyTierThreshold {
 
 export interface LoyaltyAccount {
   id: string;
-  customerId: string;
-  tenantId: string;
+  userId: string;
   points: number;
   tier: LoyaltyTier;
   createdAt: string; // ISO 8601
@@ -52,7 +51,7 @@ export interface LoyaltyTransactionListOptions {
 
 export interface ReferralCode {
   id: string;
-  customerId: string;
+  userId: string;
   code: string;
   usedCount: number;
   rewardPoints: number;

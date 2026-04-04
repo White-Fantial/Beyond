@@ -310,8 +310,6 @@ model Tenant {
   alertRules    AlertRule[]
   notifications Notification[]
 
-  loyaltyAccounts LoyaltyAccount[]
-
   @@map("tenants")
 }
 
@@ -338,6 +336,8 @@ model User {
   alertRulesCreated        AlertRule[]            @relation("AlertRuleCreatedBy")
   customerNotifications    CustomerNotification[]
   customerAddresses        CustomerAddress[]
+  loyaltyAccount           LoyaltyAccount?
+  savedPaymentMethods      SavedPaymentMethod[]
 
   @@map("users")
 }
@@ -1091,9 +1091,6 @@ model Customer {
   updatedAt DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
-
-  loyaltyAccount     LoyaltyAccount?
-  savedPaymentMethods SavedPaymentMethod[]
 
   @@index([tenantId])
   @@index([tenantId, email])
@@ -2070,21 +2067,18 @@ enum LoyaltyTier {
 }
 
 model LoyaltyAccount {
-  id        String       @id @default(uuid())
-  tenantId  String
-  customerId String      @unique
-  points    Int          @default(0)
-  tier      LoyaltyTier  @default(BRONZE)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id        String      @id @default(uuid())
+  userId    String      @unique
+  points    Int         @default(0)
+  tier      LoyaltyTier @default(BRONZE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
-  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions LoyaltyTransaction[]
   referralCodes ReferralCode[]
 
-  @@index([tenantId])
-  @@index([customerId])
+  @@index([userId])
   @@map("loyalty_accounts")
 }
 
@@ -2105,7 +2099,7 @@ model LoyaltyTransaction {
 
 model ReferralCode {
   id           String   @id @default(uuid())
-  customerId   String
+  userId       String
   accountId    String
   code         String   @unique
   usedCount    Int      @default(0)
@@ -2115,26 +2109,26 @@ model ReferralCode {
 
   account LoyaltyAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
-  @@index([customerId])
+  @@index([userId])
   @@map("referral_codes")
 }
 
 model SavedPaymentMethod {
-  id                 String   @id @default(uuid())
-  customerId         String
-  provider           String   @default("STRIPE")
-  last4              String
-  brand              String
-  expiryMonth        Int
-  expiryYear         Int
-  isDefault          Boolean  @default(false)
-  providerMethodId   String
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id               String   @id @default(uuid())
+  userId           String
+  provider         String   @default("STRIPE")
+  last4            String
+  brand            String
+  expiryMonth      Int
+  expiryYear       Int
+  isDefault        Boolean  @default(false)
+  providerMethodId String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([customerId])
+  @@index([userId])
   @@map("saved_payment_methods")
 }
 

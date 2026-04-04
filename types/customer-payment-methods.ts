@@ -2,7 +2,7 @@
 
 export interface SavedPaymentMethod {
   id: string;
-  customerId: string;
+  userId: string;
   provider: string;
   last4: string;
   brand: string;
