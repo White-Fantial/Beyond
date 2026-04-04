@@ -16,7 +16,7 @@ export default async function BackofficeModifiersPage({
   return (
     <div>
       <h1 className="text-xl font-bold text-gray-900 mb-4">Modifiers Management</h1>
-      <CatalogModifiersClient initialGroups={modifierGroups} />
+      <CatalogModifiersClient storeId={storeId} initialGroups={modifierGroups} />
     </div>
   );
 }

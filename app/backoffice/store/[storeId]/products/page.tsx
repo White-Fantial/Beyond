@@ -16,7 +16,7 @@ export default async function BackofficeProductsPage({
   return (
     <div>
       <h1 className="text-xl font-bold text-gray-900 mb-4">Product Management</h1>
-      <CatalogProductsClient initialProducts={products} />
+      <CatalogProductsClient storeId={storeId} initialProducts={products} />
     </div>
   );
 }

@@ -45,3 +45,47 @@ export interface GuestOrderStatus {
   estimatedPickupAt: string | null;
   updatedAt: string;
 }
+
+// ─── Subscription Checkout ─────────────────────────────────────────────────
+
+export type SubscriptionFrequency = "WEEKLY" | "BIWEEKLY" | "MONTHLY";
+
+export interface SubscriptionCartItem {
+  productId: string;
+  productName: string;
+  unitPriceAmount: number;
+  quantity: number;
+  selectedModifiers: StorefrontCheckoutModifier[];
+  notes?: string;
+}
+
+export interface PlaceGuestSubscriptionInput {
+  storeId: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  frequency: SubscriptionFrequency;
+  startDate: string; // ISO date string (YYYY-MM-DD)
+  notes?: string;
+  items: SubscriptionCartItem[];
+  currencyCode: string;
+}
+
+export interface PlaceGuestSubscriptionResult {
+  subscriptionId: string;
+  status: string;
+  startDate: string;
+  nextBillingDate: string;
+  totalAmount: number;
+  currencyCode: string;
+}
+
+export interface GuestSubscriptionStatus {
+  subscriptionId: string;
+  status: string;
+  customerName: string | null;
+  frequency: string | null;
+  startDate: string;
+  nextBillingDate: string;
+  updatedAt: string;
+}
