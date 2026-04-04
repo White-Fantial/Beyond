@@ -58,6 +58,7 @@ export default function CheckoutClient({ storeSlug, storeName, pickupSlots }: Pr
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!selectedSlot) return;
     setSubmitting(true);
 
     try {

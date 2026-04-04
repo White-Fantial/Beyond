@@ -7,21 +7,35 @@ export default async function CatalogPage({ params }: { params: { storeId: strin
   const { storeId } = params;
   await requireStorePermission(storeId, PERMISSIONS.INVENTORY);
 
-  const categories = await prisma.catalogCategory.findMany({
+  const rawCategories = await prisma.catalogCategory.findMany({
     where: { storeId, deletedAt: null },
     include: {
-      products: { where: { deletedAt: null }, orderBy: { displayOrder: "asc" } },
+      productCategories: {
+        where: { product: { deletedAt: null } },
+        orderBy: { sortOrder: "asc" },
+        include: { product: true },
+      },
     },
     orderBy: { displayOrder: "asc" },
   });
 
-  const modifierGroups = await prisma.catalogModifierGroup.findMany({
+  const categories = rawCategories.map((c) => ({
+    ...c,
+    products: c.productCategories.map((pc) => pc.product),
+  }));
+
+  const rawModifierGroups = await prisma.catalogModifierGroup.findMany({
     where: { storeId, deletedAt: null },
     include: {
-      options: { where: { deletedAt: null }, orderBy: { displayOrder: "asc" } },
+      modifierOptions: { where: { deletedAt: null }, orderBy: { displayOrder: "asc" } },
     },
     orderBy: { displayOrder: "asc" },
   });
+
+  const modifierGroups = rawModifierGroups.map((g) => ({
+    ...g,
+    options: g.modifierOptions,
+  }));
 
   return (
     <BackofficeCatalogClient
