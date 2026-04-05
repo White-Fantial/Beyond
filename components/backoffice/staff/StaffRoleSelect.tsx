@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { StoreRoleKey } from "@/types/backoffice";
+import { capitalizeFirst } from "./staffUtils";
 
 const ROLES: StoreRoleKey[] = ["STAFF", "SUPERVISOR", "MANAGER", "ADMIN"];
 
@@ -37,7 +38,7 @@ export default function StaffRoleSelect({ storeId, storeMembershipId, currentRol
       className="text-sm border border-gray-200 rounded px-2 py-1 disabled:opacity-50"
     >
       {ROLES.map((r) => (
-        <option key={r} value={r}>{r.charAt(0) + r.slice(1).toLowerCase()}</option>
+        <option key={r} value={r}>{capitalizeFirst(r)}</option>
       ))}
     </select>
   );
