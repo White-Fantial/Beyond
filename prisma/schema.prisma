@@ -311,6 +311,8 @@ model Tenant {
   alertRules    AlertRule[]
   notifications Notification[]
   promoCodes    PromoCode[]
+  productReviews ProductReview[]
+  supportTickets SupportTicket[]
 
   @@map("tenants")
 }
@@ -341,6 +343,10 @@ model User {
   loyaltyAccount           LoyaltyAccount?
   savedPaymentMethods      SavedPaymentMethod[]
   promoCodesCreated        PromoCode[]            @relation("PromoCodeCreatedBy")
+  productReviews           ProductReview[]        @relation("UserProductReviews")
+  supportTickets           SupportTicket[]        @relation("UserSupportTickets")
+  ticketMessages           SupportTicketMessage[] @relation("UserTicketMessages")
+  pushSubscriptions        PushSubscription[]
 
   @@map("users")
 }
@@ -2273,4 +2279,89 @@ model PromoRedemption {
   @@index([promoCodeId])
   @@index([orderId])
   @@map("promo_redemptions")
+}
+
+// ─── Reviews ──────────────────────────────────────────────────────────────────
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ProductReview {
+  id              String       @id @default(uuid())
+  tenantId        String
+  userId          String
+  productId       String?
+  orderId         String?
+  rating          Int
+  title           String?
+  body            String?
+  status          ReviewStatus @default(PENDING)
+  moderatedAt     DateTime?
+  moderatedBy     String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user            User         @relation("UserProductReviews", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([userId])
+  @@index([productId])
+  @@map("product_reviews")
+}
+
+// ─── Support Tickets ──────────────────────────────────────────────────────────
+
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum SupportTicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model SupportTicket {
+  id          String                @id @default(uuid())
+  tenantId    String
+  userId      String
+  subject     String
+  status      SupportTicketStatus   @default(OPEN)
+  priority    SupportTicketPriority @default(MEDIUM)
+  orderId     String?
+  resolvedAt  DateTime?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  tenant      Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User                  @relation("UserSupportTickets", fields: [userId], references: [id], onDelete: Cascade)
+  messages    SupportTicketMessage[]
+
+  @@index([tenantId, status])
+  @@index([userId])
+  @@map("support_tickets")
+}
+
+model SupportTicketMessage {
+  id        String        @id @default(uuid())
+  ticketId  String
+  authorId  String
+  body      String
+  isStaff   Boolean       @default(false)
+  createdAt DateTime      @default(now())
+
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author    User          @relation("UserTicketMessages", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("support_ticket_messages")
 }
