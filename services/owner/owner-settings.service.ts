@@ -6,7 +6,12 @@
  */
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
-import type { OwnerStoreSettingsView, OwnerStoreHoursRow } from "@/types/owner";
+import type {
+  OwnerStoreSettingsView,
+  OwnerStoreHoursRow,
+  OwnerCatalogSettings,
+  TenantSettingsView,
+} from "@/types/owner";
 
 // ─── Read ─────────────────────────────────────────────────────────────────────
 
@@ -262,5 +267,134 @@ export async function updateOwnerStoreHours(input: UpdateStoreHoursInput): Promi
     targetType: "StoreHours",
     targetId: storeId,
     metadata: { days: hours.map((h) => h.dayOfWeek) },
+  });
+}
+
+// ─── Catalog Settings ─────────────────────────────────────────────────────────
+
+export async function getCatalogSettingsForTenant(
+  tenantId: string
+): Promise<OwnerCatalogSettings[]> {
+  const stores = await prisma.store.findMany({
+    where: { tenantId, status: { not: "ARCHIVED" } },
+    include: { catalogSettings: true },
+    orderBy: { name: "asc" },
+  });
+
+  return stores.map((store) => ({
+    id: store.catalogSettings?.id ?? null,
+    storeId: store.id,
+    storeName: store.name,
+    sourceConnectionId: store.catalogSettings?.sourceConnectionId ?? null,
+    sourceType: store.catalogSettings?.sourceType ?? "LOCAL",
+    autoSync: store.catalogSettings?.autoSync ?? false,
+    syncIntervalMinutes: store.catalogSettings?.syncIntervalMinutes ?? 60,
+  }));
+}
+
+export interface UpdateCatalogSettingsInput {
+  storeId: string;
+  tenantId: string;
+  actorUserId: string;
+  data: {
+    sourceType?: string;
+    autoSync?: boolean;
+    syncIntervalMinutes?: number;
+    sourceConnectionId?: string | null;
+  };
+}
+
+export async function updateOwnerCatalogSettings(
+  input: UpdateCatalogSettingsInput
+): Promise<void> {
+  const { storeId, tenantId, actorUserId, data } = input;
+
+  await prisma.catalogSettings.upsert({
+    where: { storeId },
+    create: {
+      storeId,
+      sourceType: (data.sourceType as Parameters<typeof prisma.catalogSettings.create>[0]["data"]["sourceType"]) ?? "LOCAL",
+      autoSync: data.autoSync ?? false,
+      syncIntervalMinutes: data.syncIntervalMinutes ?? 60,
+      sourceConnectionId: data.sourceConnectionId ?? null,
+    },
+    update: {
+      sourceType: data.sourceType as Parameters<typeof prisma.catalogSettings.update>[0]["data"]["sourceType"],
+      autoSync: data.autoSync,
+      syncIntervalMinutes: data.syncIntervalMinutes,
+      sourceConnectionId: data.sourceConnectionId,
+    },
+  });
+
+  await logAuditEvent({
+    tenantId,
+    storeId,
+    actorUserId,
+    action: "OWNER_STORE_SETTINGS_UPDATED",
+    targetType: "CatalogSettings",
+    targetId: storeId,
+    metadata: { fields: Object.keys(data) },
+  });
+}
+
+// ─── Tenant Settings ──────────────────────────────────────────────────────────
+
+export async function getOwnerTenantSettings(
+  tenantId: string
+): Promise<TenantSettingsView | null> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: {
+      id: true,
+      displayName: true,
+      legalName: true,
+      timezone: true,
+      currency: true,
+      countryCode: true,
+    },
+  });
+  if (!tenant) return null;
+  return {
+    id: tenant.id,
+    displayName: tenant.displayName,
+    legalName: tenant.legalName,
+    timezone: tenant.timezone,
+    currency: tenant.currency,
+    countryCode: tenant.countryCode,
+  };
+}
+
+export interface UpdateTenantSettingsInput {
+  tenantId: string;
+  actorUserId: string;
+  data: {
+    displayName?: string;
+    timezone?: string;
+    currency?: string;
+  };
+}
+
+export async function updateOwnerTenantSettings(
+  input: UpdateTenantSettingsInput
+): Promise<void> {
+  const { tenantId, actorUserId, data } = input;
+
+  await prisma.tenant.update({
+    where: { id: tenantId },
+    data: {
+      displayName: data.displayName,
+      timezone: data.timezone,
+      currency: data.currency,
+    },
+  });
+
+  await logAuditEvent({
+    tenantId,
+    storeId: null,
+    actorUserId,
+    action: "OWNER_STORE_SETTINGS_UPDATED",
+    targetType: "Tenant",
+    targetId: tenantId,
+    metadata: { fields: Object.keys(data) },
   });
 }

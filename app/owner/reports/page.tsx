@@ -11,6 +11,7 @@ import OwnerProductPerformanceTable from "@/components/owner/reports/OwnerProduc
 import OwnerSubscriptionSummaryCards from "@/components/owner/reports/OwnerSubscriptionSummaryCards";
 import OwnerInsightsPanel from "@/components/owner/reports/OwnerInsightsPanel";
 import OwnerEmptyReportState from "@/components/owner/reports/OwnerEmptyReportState";
+import ExportButton from "@/components/ExportButton";
 
 interface Props {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -51,6 +52,10 @@ export default async function OwnerReportsPage({ searchParams }: Props) {
           <p className="text-sm text-gray-500 mt-0.5">
             {report.fromDate} — {report.toDate} · {report.currencyCode}
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ExportButton href="/api/owner/reports/export?format=csv" label="Export CSV" />
+          <ExportButton href="/api/owner/reports/export?format=html" label="Export PDF" />
         </div>
       </div>
 

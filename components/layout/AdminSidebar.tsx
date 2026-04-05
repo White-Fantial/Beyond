@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import LocaleSwitcher from "@/components/LocaleSwitcher";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: "🏠", exact: true },
@@ -94,6 +95,7 @@ export default function AdminSidebar() {
       </nav>
 
       <div className="px-3 py-4 border-t border-gray-700">
+        <LocaleSwitcher className="mb-3 px-3" />
         <form action="/api/auth/logout" method="POST">
           <button
             type="submit"

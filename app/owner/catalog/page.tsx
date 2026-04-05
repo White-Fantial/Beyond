@@ -1,26 +1,12 @@
 import { requireOwnerPortalAccess } from "@/lib/owner/auth-guard";
-import { prisma } from "@/lib/prisma";
-
-const SOURCE_TYPE_LABELS: Record<string, string> = {
-  POS: "POS",
-  LOCAL: "Local",
-  MERGED: "Merged",
-  DELIVERY: "Delivery",
-  IMPORTED: "Imported",
-};
+import { getCatalogSettingsForTenant } from "@/services/owner/owner-settings.service";
+import CatalogSettingsForm from "@/components/owner/settings/CatalogSettingsForm";
 
 export default async function OwnerCatalogPage() {
   const ctx = await requireOwnerPortalAccess();
-
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
 
-  const stores = tenantId
-    ? await prisma.store.findMany({
-        where: { tenantId, status: { not: "ARCHIVED" } },
-        include: { catalogSettings: true },
-        orderBy: { name: "asc" },
-      })
-    : [];
+  const stores = tenantId ? await getCatalogSettingsForTenant(tenantId) : [];
 
   return (
     <div>
@@ -33,47 +19,14 @@ export default async function OwnerCatalogPage() {
         {stores.length === 0 ? (
           <p className="text-gray-400 text-sm">No stores found.</p>
         ) : (
-          stores.map((store) => {
-            const settings = store.catalogSettings;
-            return (
-              <div key={store.id} className="bg-white rounded-lg border border-gray-200 p-5">
-                <h2 className="text-sm font-semibold text-gray-800 mb-4">{store.name}</h2>
-                <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <SettingField
-                    label="Source Type"
-                    value={SOURCE_TYPE_LABELS[settings?.sourceType ?? "LOCAL"] ?? "LOCAL"}
-                  />
-                  <SettingField
-                    label="Auto Sync"
-                    value={settings?.autoSync ? "On" : "Off"}
-                  />
-                  <SettingField
-                    label="Sync Interval"
-                    value={`${settings?.syncIntervalMinutes ?? 60}분`}
-                  />
-                  <SettingField
-                    label="Source Connection"
-                    value={settings?.sourceConnectionId ? "Settings됨" : "—"}
-                  />
-                </dl>
-              </div>
-            );
-          })
+          stores.map((s) => (
+            <div key={s.storeId} className="bg-white rounded-lg border border-gray-200 p-5">
+              <h2 className="text-sm font-semibold text-gray-800 mb-4">{s.storeName}</h2>
+              <CatalogSettingsForm storeId={s.storeId} initial={s} />
+            </div>
+          ))
         )}
       </div>
-
-      <p className="mt-4 text-xs text-gray-400">
-        * Catalog settings editing will be available in a future update.
-      </p>
-    </div>
-  );
-}
-
-function SettingField({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</dt>
-      <dd className="mt-1 text-sm text-gray-900">{value}</dd>
     </div>
   );
 }

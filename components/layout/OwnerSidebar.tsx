@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import LocaleSwitcher from "@/components/LocaleSwitcher";
 
 const navItems = [
   { href: "/owner/stores", label: "My Stores", icon: "🏬", exact: false },
@@ -78,6 +79,7 @@ export default function OwnerSidebar() {
       </nav>
 
       <div className="px-3 py-4 border-t border-gray-100">
+        <LocaleSwitcher className="mb-3 px-3" />
         <form action="/api/auth/logout" method="POST">
           <button
             type="submit"

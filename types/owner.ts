@@ -411,7 +411,18 @@ export interface OwnerSubscriptionActionResult {
   newStatus: string;
 }
 
-// ─── Phase 10: Team Management ────────────────────────────────────────────────
+// ─── Phase 10: Tenant Settings ───────────────────────────────────────────────
+
+export interface TenantSettingsView {
+  id: string;
+  displayName: string;
+  legalName: string;
+  timezone: string;
+  currency: string;
+  countryCode: string;
+}
+
+// ─── Phase 11: Team Management ────────────────────────────────────────────────
 
 export interface OwnerTeamStoreAssignment {
   storeMembershipId: string;
