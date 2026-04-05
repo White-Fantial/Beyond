@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { StoreRoleKey } from "@/lib/auth/constants";
-import LocaleSwitcher from "@/components/LocaleSwitcher";
 
 interface BackofficeSidebarProps {
   storeId: string;
@@ -62,7 +61,6 @@ export default function BackofficeSidebar({ storeId, storeRole, storeName }: Bac
       </nav>
 
       <div className="px-3 py-4 border-t border-gray-100">
-        <LocaleSwitcher className="mb-2 px-3" />
         <Link
           href="/backoffice/select-store"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 w-full"
