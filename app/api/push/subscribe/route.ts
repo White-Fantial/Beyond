@@ -9,8 +9,15 @@ export async function POST(req: NextRequest) {
   try {
     const ctx = await requireAuth();
     const body = await req.json();
-    const record = await registerPushSubscription(ctx.userId, body);
-    return NextResponse.json({ data: record }, { status: 201 });
+    try {
+      const record = await registerPushSubscription(ctx.userId, body);
+      return NextResponse.json({ data: record }, { status: 201 });
+    } catch (validationErr) {
+      if (validationErr instanceof Error && validationErr.message.startsWith("Push subscription")) {
+        return NextResponse.json({ error: validationErr.message }, { status: 400 });
+      }
+      throw validationErr;
+    }
   } catch (err) {
     console.error("[push/subscribe POST]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

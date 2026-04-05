@@ -78,7 +78,8 @@ export async function sendPushToUser(
       try {
         await sendPushNotification(sub, payload);
         sent++;
-      } catch {
+      } catch (err) {
+        console.error(`[sendPushToUser] Failed to send to endpoint ${sub.endpoint}:`, err);
         failed++;
       }
     })
