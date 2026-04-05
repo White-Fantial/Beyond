@@ -311,6 +311,8 @@ model Tenant {
   alertRules    AlertRule[]
   notifications Notification[]
   promoCodes    PromoCode[]
+  giftCards     GiftCard[]
+  webhookEndpoints WebhookEndpoint[]
   productReviews ProductReview[]
   supportTickets SupportTicket[]
 
@@ -347,6 +349,7 @@ model User {
   supportTickets           SupportTicket[]        @relation("UserSupportTickets")
   ticketMessages           SupportTicketMessage[] @relation("UserTicketMessages")
   pushSubscriptions        PushSubscription[]
+  pushPreference           PushPreference?
 
   @@map("users")
 }
@@ -414,6 +417,7 @@ model Store {
   storeHours             StoreHours[]
   alertRules             AlertRule[]
   promoCodes             PromoCode[]
+  giftCards              GiftCard[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -2364,4 +2368,154 @@ model SupportTicketMessage {
 
   @@index([ticketId])
   @@map("support_ticket_messages")
+}
+
+// ─── Push Preferences ─────────────────────────────────────────────────────────
+
+model PushPreference {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  orders      Boolean  @default(true)
+  promotions  Boolean  @default(true)
+  loyalty     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_preferences")
+}
+
+// ─── Gift Cards ───────────────────────────────────────────────────────────────
+
+enum GiftCardTransactionType {
+  ISSUE
+  REDEEM
+  REFUND
+  VOID
+}
+
+model GiftCard {
+  id             String    @id @default(uuid())
+  tenantId       String
+  storeId        String?
+  code           String    @unique
+  initialValue   Int
+  currentBalance Int
+  issuedToEmail  String?
+  expiresAt      DateTime?
+  isVoided       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  store          Store?    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  transactions   GiftCardTransaction[]
+
+  @@index([tenantId])
+  @@index([storeId])
+  @@map("gift_cards")
+}
+
+model GiftCardTransaction {
+  id         String                  @id @default(uuid())
+  giftCardId String
+  type       GiftCardTransactionType
+  amount     Int
+  orderId    String?
+  note       String?
+  createdAt  DateTime                @default(now())
+
+  giftCard   GiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+
+  @@index([giftCardId])
+  @@map("gift_card_transactions")
+}
+
+// ─── Email Log ────────────────────────────────────────────────────────────────
+
+enum EmailLogStatus {
+  SENT
+  FAILED
+  BOUNCED
+}
+
+model EmailLog {
+  id          String         @id @default(uuid())
+  to          String
+  subject     String
+  template    String
+  status      EmailLogStatus @default(SENT)
+  errorMessage String?
+  providerId  String?
+  createdAt   DateTime       @default(now())
+
+  @@index([to])
+  @@index([createdAt])
+  @@map("email_logs")
+}
+
+// ─── Compliance Events ────────────────────────────────────────────────────────
+
+enum ComplianceEventType {
+  DATA_EXPORT
+  ERASURE_REQUEST
+  ERASURE_COMPLETE
+}
+
+model ComplianceEvent {
+  id          String              @id @default(uuid())
+  userId      String
+  type        ComplianceEventType
+  performedBy String
+  metadata    Json?
+  createdAt   DateTime            @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("compliance_events")
+}
+
+// ─── Outbound Webhooks ────────────────────────────────────────────────────────
+
+enum WebhookDeliveryStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model WebhookEndpoint {
+  id         String    @id @default(uuid())
+  tenantId   String
+  url        String
+  secret     String
+  events     String[]
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@index([tenantId])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id             String                @id @default(uuid())
+  endpointId     String
+  event          String
+  payload        Json
+  status         WebhookDeliveryStatus @default(PENDING)
+  httpStatus     Int?
+  responseBody   String?
+  attemptCount   Int                   @default(0)
+  lastAttemptAt  DateTime?
+  createdAt      DateTime              @default(now())
+
+  endpoint       WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([endpointId])
+  @@index([event])
+  @@map("webhook_deliveries")
 }

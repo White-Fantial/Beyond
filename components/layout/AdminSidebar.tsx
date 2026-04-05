@@ -13,6 +13,7 @@ const navItems = [
   { href: "/admin/jobs", label: "Jobs Console", icon: "⚙️" },
   { href: "/admin/logs", label: "Logs", icon: "📋" },
   { href: "/admin/feature-flags", label: "Feature Flags", icon: "🚩" },
+  { href: "/admin/compliance", label: "Compliance", icon: "🛡️" },
 ];
 
 const billingSubItems = [

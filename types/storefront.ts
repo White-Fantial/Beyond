@@ -28,12 +28,18 @@ export interface PlaceGuestOrderInput {
   notes?: string;
   items: StorefrontCheckoutItem[];
   currencyCode: string;
+  promoCode?: string;
+  redeemLoyaltyPoints?: boolean;
+  userId?: string; // for loyalty tracking when customer is logged in
 }
 
 export interface PlaceGuestOrderResult {
   orderId: string;
   status: string;
   estimatedPickupAt: string;
+  discountApplied?: number; // discount in minor units
+  loyaltyPointsEarned?: number;
+  loyaltyPointsRedeemed?: number;
 }
 
 // ─── Order Status ─────────────────────────────────────────────────────────────

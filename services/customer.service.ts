@@ -41,6 +41,7 @@ import type {
   SavedPaymentMethod,
   AddPaymentMethodInput,
 } from "@/types/customer-payment-methods";
+import type { ReferralStats, PushPreferences } from "@/types/customer-referrals";
 
 // ─── Errors ───────────────────────────────────────────────────────────────────
 
@@ -1124,4 +1125,64 @@ export async function setDefaultPaymentMethod(
 
   const updated = await prisma.savedPaymentMethod.findUniqueOrThrow({ where: { id: methodId } });
   return toSavedPaymentMethod(updated);
+}
+
+// ─── Referral Stats ───────────────────────────────────────────────────────────
+
+export async function getReferralStats(userId: string): Promise<ReferralStats> {
+  const code = await getReferralCode(userId);
+
+  const referralTransactions = await prisma.loyaltyTransaction.findMany({
+    where: {
+      account: { userId },
+      description: { contains: "referral", mode: "insensitive" },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+
+  const pointsEarned = referralTransactions
+    .filter((t) => t.pointsDelta > 0)
+    .reduce((sum, t) => sum + t.pointsDelta, 0);
+
+  return {
+    code,
+    totalReferrals: code.usedCount,
+    pointsEarned,
+    referralHistory: referralTransactions.map((t) => ({
+      id: t.id,
+      pointsDelta: t.pointsDelta,
+      description: t.description,
+      createdAt: t.createdAt.toISOString(),
+    })),
+  };
+}
+
+// ─── Push Preferences ─────────────────────────────────────────────────────────
+
+export async function getUserPushPreferences(userId: string): Promise<PushPreferences> {
+  const pref = await prisma.pushPreference.findUnique({ where: { userId } });
+  if (!pref) return { orders: true, promotions: true, loyalty: true };
+  return { orders: pref.orders, promotions: pref.promotions, loyalty: pref.loyalty };
+}
+
+export async function updatePushPreferences(
+  userId: string,
+  prefs: Partial<PushPreferences>
+): Promise<PushPreferences> {
+  const row = await prisma.pushPreference.upsert({
+    where: { userId },
+    create: {
+      userId,
+      orders: prefs.orders ?? true,
+      promotions: prefs.promotions ?? true,
+      loyalty: prefs.loyalty ?? true,
+    },
+    update: {
+      ...(prefs.orders !== undefined ? { orders: prefs.orders } : {}),
+      ...(prefs.promotions !== undefined ? { promotions: prefs.promotions } : {}),
+      ...(prefs.loyalty !== undefined ? { loyalty: prefs.loyalty } : {}),
+    },
+  });
+  return { orders: row.orders, promotions: row.promotions, loyalty: row.loyalty };
 }

@@ -9,6 +9,7 @@ const navItems = [
   { href: "/app/orders", label: "My Orders", icon: "📦" },
   { href: "/app/subscriptions", label: "Subscriptions", icon: "🔄" },
   { href: "/app/loyalty", label: "Rewards", icon: "🏅" },
+  { href: "/app/referrals", label: "Referrals", icon: "🎁" },
   { href: "/app/reviews", label: "Reviews", icon: "⭐" },
   { href: "/app/support", label: "Support", icon: "🎧" },
   { href: "/app/payment-methods", label: "Payments", icon: "💳" },
