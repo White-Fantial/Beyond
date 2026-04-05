@@ -179,3 +179,48 @@ export interface BackofficeLiveOrdersResponse {
 export interface BackofficeOrderDetailResponse {
   data: BackofficeOrderDetail;
 }
+
+// ─── Staff & Scheduling ───────────────────────────────────────────────────────
+
+export type StoreRoleKey = "OWNER" | "ADMIN" | "MANAGER" | "SUPERVISOR" | "STAFF";
+export type StoreMembershipStatus = "ACTIVE" | "INACTIVE" | "REMOVED";
+
+export interface BackofficeStaffMember {
+  membershipId: string;
+  storeMembershipId: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: StoreRoleKey;
+  status: StoreMembershipStatus;
+  joinedAt: string | null;
+  /** ISO datetime of last activity or null */
+  lastLoginAt: string | null;
+}
+
+export interface BackofficeStaffListResult {
+  items: BackofficeStaffMember[];
+  total: number;
+}
+
+export interface BackofficeUpdateStaffRoleInput {
+  role?: StoreRoleKey;
+  status?: StoreMembershipStatus;
+}
+
+export interface BackofficeStoreHours {
+  id: string;
+  dayOfWeek: number;
+  /** "Mon", "Tue", etc. */
+  dayLabel: string;
+  isOpen: boolean;
+  openTimeLocal: string;
+  closeTimeLocal: string;
+  pickupStartTimeLocal: string | null;
+  pickupEndTimeLocal: string | null;
+}
+
+export interface BackofficeScheduleData {
+  storeId: string;
+  hours: BackofficeStoreHours[];
+}
