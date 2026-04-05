@@ -35,6 +35,8 @@
 
 - [x] **Real-Time Notifications — SSE Infrastructure** — in-process channel registry at `lib/sse/stream-manager.ts`; three SSE endpoints: backoffice Kanban (`/api/sse/store/[storeId]/orders`), owner notification bell (`/api/sse/owner/notifications`), storefront confirmation (`/api/sse/store/[storeSlug]/orders/[orderId]`); SSE-first with polling fallback on all consumers; 11 unit tests
 - [x] **Subscription Billing Engine** — Stripe adapter at `adapters/billing/stripe.adapter.ts` fully implements `BillingProviderAdapter`; billing scheduler with 3-day lookahead window; Stripe webhook handler (`invoice.paid`, `invoice.payment_failed`, `subscription.updated`, `subscription.deleted`, all idempotent); payment method management UI at `/owner/billing/payment-methods`; 15 unit tests
+- [x] **Transactional Email** — email adapter interface at `adapters/email/base.ts` with Resend implementation (`resend.adapter.ts`); renderer + templates for order confirmation, subscription notice, alert digest; `sendEmail()` with `EmailLog` Prisma model (migration 20260405220000) persisting every delivery; `setEmailAdapter()` for test injection; lib utilities in `lib/email/`; 21 unit tests
+- [x] **Web Push Notifications** — browser push subscription management at `/app/notifications`; `PushOptIn` component with service-worker registration; `PushSubscription` Prisma model; service: `push-notifications.service.ts` (register/unregister/send/list); `POST`/`DELETE /api/push/subscribe`, `GET /api/push/vapid-key`; lib utilities in `lib/push/`; 22 unit tests
 
 ### Integrations & Adapters
 
@@ -48,6 +50,7 @@
 - [x] **Backoffice Phase 1 — Live Dashboard & Operational Reports** — live KPI cards, channel breakdown, active orders list at `/backoffice/store/[storeId]/dashboard`; full operational report at `/backoffice/store/[storeId]/reports` (daily series, channel breakdown, status funnel, top products, peak-hour heatmap); 9 UI components; 34 unit tests
 - [x] **Backoffice Phase 2 — Live Order Management** — 4-column Kanban board (New → Accepted → In Preparation → Ready) with per-order actions; Order Detail Drawer; Kitchen Display mode at `/backoffice/store/[storeId]/orders/kitchen` (full-screen, tablet-optimised, 15s auto-refresh); new-order toast badge; SSE-first push; 17 unit tests
 - [x] **Backoffice Phase 3 — Catalog & Inventory Management** — sold-out / visibility toggles per product; bulk restore availability; category display-order reordering; modifier-option sold-out control; `BackofficeCatalogClient` at `/backoffice/store/[storeId]/catalog`; service: `services/backoffice/backoffice-catalog.service.ts`; API routes under `/api/backoffice/[storeId]/catalog/`
+- [x] **Backoffice Phase 4 — Staff & Scheduling** — staff roster table at `/backoffice/store/[storeId]/staff`; `listStaffMembers`, `updateStaffMember`, `getScheduleData` service functions; schedule grid UI; service: `services/backoffice/backoffice-staff.service.ts`; 3 API routes; 4 UI components in `components/backoffice/staff/`; BackofficeSidebar updated; 21 unit tests
 
 ### Public Storefront
 
@@ -59,6 +62,9 @@
 
 - [x] **Customer Portal Phase 1** — order history (`/app/orders`, `/app/orders/[orderId]`), subscription management (`/app/subscriptions`) with pause/resume/cancel/next-date, account settings (`/app/account`) with profile edit and password change; 10 API routes; 7 UI components; 35 unit tests
 - [x] **Customer Portal Phase 2 — Notifications & Address Management** — in-app notification bell with unread badge; notifications page at `/app/notifications` (All / Unread tabs, mark-as-read, mark-all-read); address book at `/app/addresses` (add/edit/delete/set-default); `CustomerAddress` and `CustomerNotification` Prisma models; 28 unit tests
+- [x] **Customer Portal Phase 3 — Loyalty & Payment Methods** — loyalty account overview and earn/redeem history at `/app/loyalty`; saved payment methods management at `/app/payment-methods` (list/add/remove/set-default); `LoyaltyAccount`, `LoyaltyTransaction`, `ReferralCode`, `SavedPaymentMethod` Prisma models; seed at `prisma/seeds/loyalty.ts`; 7 API routes; 7 UI components; 23 unit tests
+- [x] **Customer Portal Phase 4 — Reviews & Support** — product review submission and history at `/app/reviews`; support ticket list, detail, and reply at `/app/support` and `/app/support/[ticketId]`; `ProductReview`, `SupportTicket`, `SupportTicketMessage` Prisma models; services: `customer-reviews.service.ts`, `customer-support.service.ts`; 6 API routes; 8 UI components; CustomerNav updated; 22 unit tests
+- [x] **Customer Portal Phase 5 — Referrals & Push Settings** — referral stats and share card at `/app/referrals`; web push preference management; `PushPreference` Prisma model; service functions `getReferralStats`, `getUserPushPreferences`, `updatePushPreferences`; 3 API routes; 3 UI components; CustomerNav updated; 21 unit tests
 
 ### Owner Console
 
@@ -71,6 +77,12 @@
 - [x] **Owner Console Phase 7 — Team Activity & Audit** — activity hub at `/owner/activity`; tabbed view: Activity Feed, Role Changes, Settings Changes, Integration Changes; 4 service functions; 4 API routes; 25 unit tests
 - [x] **Owner Console Phase 8 — Automation & Notifications** — alert rule builder (7 metric types); notification centre at `/owner/notifications`; `NotificationBell` with live unread badge; alert rules management at `/owner/alert-rules`; `AlertRule` + `Notification` Prisma models; 4 services; 7 API routes; 45 unit tests
 - [x] **Owner Console Phase 9 — Advanced Analytics & Forecasting** — order volume heatmap (weekday × hour); linear-regression revenue forecast with confidence interval; per-store production estimates; churn risk signals (HIGH/MEDIUM/LOW); 4 service functions; 4 API routes; 6 UI components; 36 unit tests
+- [x] **Owner Console Phase 10 — Advanced Settings** — multi-store catalog settings at `/owner/settings`; tenant-level settings (timezone, locale, billing contact); store basic-info editor; operation settings (prep time, ordering windows, holiday overrides); `CatalogSettings` + `StoreOperationSettings` + `StoreHours` upserts; 6 service functions; OwnerSidebar updated; 28 unit tests
+- [x] **Owner Console Phase 11 — Integrations Management** — tenant-scoped connection cards at `/owner/integrations`; connect / disconnect / reconnect flow; connection action log viewer; service functions `getOwnerTenantConnectionCards`, `disconnectOwnerConnection`, `getOwnerConnectionActionLogs`; API routes under `/api/owner/integrations/`; OwnerSidebar updated; 22 unit tests
+- [x] **Owner Console Phase 12 — Promotions & Discounts** — promo code list at `/owner/promotions` and detail at `/owner/promotions/[promoId]`; `PromoCode` + `PromoRedemption` Prisma models (migration 20260405000000); service: `owner-promotions.service.ts` (list/detail/create/update/delete/apply); types: `types/owner-promotions.ts`; 7 API routes; 3 UI components; OwnerSidebar updated; 27 unit tests
+- [x] **Owner Console Phase 13 — Gift Cards** — gift card list at `/owner/gift-cards` and detail page; `GiftCard` + `GiftCardTransaction` Prisma models (migration 20260405210000); service: `owner-gift-cards.service.ts` (list/detail/issue/void/lookup/validate/apply); types: `types/owner-gift-cards.ts`; 5 API routes; 4 UI components; OwnerSidebar "Promotions & Gifts" section; 25 unit tests
+- [x] **Owner Console — Team Management** — tenant-level team member list at `/owner/team`; invite, role change, and remove actions; last-owner guard; service: `owner-team.service.ts` (`listOwnerTeamMembers`, `getOwnerTeamMember`, `inviteOwnerTeamMember`, `updateOwnerTeamMember`, `removeOwnerTeamMember`); OwnerSidebar updated; 25 unit tests
+- [x] **Owner Console — Outbound Webhooks** — webhook endpoint list at `/owner/webhooks` and detail at `/owner/webhooks/[endpointId]`; `WebhookEndpoint` + `WebhookDelivery` Prisma models (migration 20260405240000); service: `owner-webhooks.service.ts` (list/detail/create/toggle/delete/deliveries); lib: `lib/webhooks/deliver.ts` (dispatchWebhook + HMAC signing); types: `types/owner-webhooks.ts`; 5 API routes; 4 UI components; OwnerSidebar updated; 22 unit tests
 
 ### Admin Console
 
@@ -84,14 +96,11 @@
 - [x] **Admin Console Phase 7 — Integrations Admin Panel** — connection detail page, status change, credential rotation, action log viewer
 - [x] **Admin Console Phase 8 — System Monitoring** — real-time platform health dashboard at `/admin/system`; `admin-system`, `admin-health`, `admin-metrics`, `admin-incident` services; lib helpers in `lib/admin/system/`; 9 UI components
 - [x] **Admin Console Phase 9 — Feature Flags / Runtime Config** — flag lifecycle management, scoped assignments, percentage rollout, evaluation engine, audit trail
+- [x] **Admin Console Phase 10 — GDPR & Compliance** — compliance event log and data-subject management at `/admin/compliance`; `ComplianceEvent` Prisma model (migration 20260405230000); service: `admin-compliance.service.ts` (`exportUserData`, `anonymiseUser`, `getRetentionReport`); 2 API routes (CSV export + erasure); AdminSidebar updated; 18 unit tests
 
 ---
 
 ## Planned
-
-### Customer Portal
-
-- [ ] **Customer Portal Phase 3 — Loyalty & Payment Methods** — loyalty account overview and earn/redeem history at `/app/loyalty`; saved payment methods management at `/app/payment-methods` (list/add/remove/set-default); `LoyaltyAccount`, `LoyaltyTransaction`, `ReferralCode` Prisma models; service functions in `customer.service.ts`; API routes under `/api/customer/loyalty/` and `/api/customer/payment-methods/`; UI components in `components/customer/loyalty/` and `components/customer/payment-methods/`
 
 ### Integrations & Adapters
 
@@ -100,4 +109,3 @@
 ### Cross-Cutting
 
 - [ ] **CSV / PDF Export** — downloadable CSV and PDF export for Owner Console reports (`/owner/reports`) and Admin Logs Console (`/admin/logs`); export service utilities; API routes with `Content-Disposition` headers
-- [ ] **Web Push Notifications** — browser push subscription management (`/app/notifications/push-settings`); service worker registration; `PushSubscription` Prisma model; owner alert evaluator triggers push delivery alongside in-app notifications
