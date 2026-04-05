@@ -100,5 +100,4 @@
 ### Cross-Cutting
 
 - [ ] **CSV / PDF Export** — downloadable CSV and PDF export for Owner Console reports (`/owner/reports`) and Admin Logs Console (`/admin/logs`); export service utilities; API routes with `Content-Disposition` headers
-- [ ] **i18n Foundation** — `next-intl` integration; Korean (ko) and English (en) locale message files; locale switcher component; all UI strings externalised to message files
 - [ ] **Web Push Notifications** — browser push subscription management (`/app/notifications/push-settings`); service worker registration; `PushSubscription` Prisma model; owner alert evaluator triggers push delivery alongside in-app notifications
