@@ -11,6 +11,14 @@ interface PickupSlot {
   isAsap: boolean;
 }
 
+interface PromoResult {
+  valid: boolean;
+  discountMinor: number;
+  discountType: string;
+  discountValue: string;
+  description: string | null;
+}
+
 interface Props {
   storeSlug: string;
   storeName: string;
@@ -39,7 +47,14 @@ export default function CheckoutClient({ storeSlug, storeName, pickupSlots }: Pr
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [promoCode, setPromoCode] = useState("");
+  const [promoResult, setPromoResult] = useState<PromoResult | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [redeemPoints, setRedeemPoints] = useState(false);
+
   const cartItems = state.items;
+  const effectiveTotal = Math.max(0, totalAmount - (promoResult?.discountMinor ?? 0));
 
   if (cartItems.length === 0 || !selectedSlot) {    return (
       <div className="max-w-lg mx-auto px-4 py-8 text-center">
@@ -53,6 +68,36 @@ export default function CheckoutClient({ storeSlug, storeName, pickupSlots }: Pr
         </Link>
       </div>
     );
+  }
+
+  async function validatePromo() {
+    if (!promoCode.trim()) return;
+    setPromoError(null);
+    setPromoResult(null);
+    setPromoLoading(true);
+    try {
+      const res = await fetch(`/api/store/${storeSlug}/promo/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoCode.trim(), orderAmountMinor: totalAmount }),
+      });
+      const body = (await res.json()) as { data?: PromoResult; error?: string };
+      if (!res.ok) {
+        setPromoError(body.error ?? "Invalid promo code.");
+      } else {
+        setPromoResult(body.data ?? null);
+      }
+    } catch {
+      setPromoError("Could not validate promo code. Please try again.");
+    } finally {
+      setPromoLoading(false);
+    }
+  }
+
+  function clearPromo() {
+    setPromoCode("");
+    setPromoResult(null);
+    setPromoError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -82,10 +127,20 @@ export default function CheckoutClient({ storeSlug, storeName, pickupSlots }: Pr
           notes: notes || undefined,
           items: orderItems,
           currencyCode: "NZD",
+          ...(promoResult?.valid ? { promoCode: promoCode.trim() } : {}),
+          redeemLoyaltyPoints: redeemPoints,
         }),
       });
 
-      const body = (await res.json()) as { data?: { orderId: string }; error?: string };
+      const body = (await res.json()) as {
+        data?: {
+          orderId: string;
+          discountApplied?: number;
+          loyaltyPointsEarned?: number;
+          loyaltyPointsRedeemed?: number;
+        };
+        error?: string;
+      };
 
       if (!res.ok) {
         setError(body.error ?? "Something went wrong. Please try again.");
@@ -93,7 +148,12 @@ export default function CheckoutClient({ storeSlug, storeName, pickupSlots }: Pr
       }
 
       clearCart();
-      router.push(`/store/${storeSlug}/confirmation/${body.data!.orderId}`);
+      const { orderId, discountApplied, loyaltyPointsEarned } = body.data!;
+      const params = new URLSearchParams();
+      if (discountApplied) params.set("discount", String(discountApplied));
+      if (loyaltyPointsEarned) params.set("earned", String(loyaltyPointsEarned));
+      const qs = params.toString() ? `?${params.toString()}` : "";
+      router.push(`/store/${storeSlug}/confirmation/${orderId}${qs}`);
     } catch {
       setError("Network error. Please check your connection and try again.");
     } finally {
@@ -137,11 +197,25 @@ export default function CheckoutClient({ storeSlug, storeName, pickupSlots }: Pr
             );
           })}
         </ul>
-        <div className="border-t border-gray-100 mt-2 pt-2 flex justify-between text-sm font-bold text-gray-900">
-          <span>
-            {totalItems} item{totalItems !== 1 ? "s" : ""}
-          </span>
-          <span>{formatPrice(totalAmount)}</span>
+        <div className="border-t border-gray-100 mt-2 pt-2 space-y-1">
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>
+              {totalItems} item{totalItems !== 1 ? "s" : ""}
+            </span>
+            <span>{formatPrice(totalAmount)}</span>
+          </div>
+          {promoResult && promoResult.discountMinor > 0 && (
+            <div className="flex justify-between text-sm text-green-700">
+              <span>Promo discount</span>
+              <span>−{formatPrice(promoResult.discountMinor)}</span>
+            </div>
+          )}
+          {promoResult && promoResult.discountMinor > 0 && (
+            <div className="flex justify-between text-sm font-bold text-gray-900">
+              <span>Total</span>
+              <span>{formatPrice(effectiveTotal)}</span>
+            </div>
+          )}
         </div>
         <Link
           href={`/store/${storeSlug}/cart`}
@@ -233,6 +307,67 @@ export default function CheckoutClient({ storeSlug, storeName, pickupSlots }: Pr
         />
       </div>
 
+      {/* Promo Code */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <h2 className="text-sm font-semibold text-gray-700 mb-2">Promo Code</h2>
+        {promoResult ? (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-green-700 font-medium">
+              ✅ {promoCode.toUpperCase()}: −{formatPrice(promoResult.discountMinor)}
+              {promoResult.description && (
+                <span className="block text-xs text-green-600 font-normal">
+                  {promoResult.description}
+                </span>
+              )}
+            </span>
+            <button
+              type="button"
+              onClick={clearPromo}
+              className="text-xs text-gray-500 hover:text-gray-700 ml-4"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={promoCode}
+              onChange={(e) => {
+                setPromoCode(e.target.value);
+                setPromoError(null);
+              }}
+              placeholder="Enter promo code"
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+            <button
+              type="button"
+              onClick={validatePromo}
+              disabled={promoLoading || !promoCode.trim()}
+              className="px-4 py-2 bg-brand-600 hover:bg-brand-700 disabled:bg-brand-400 text-white text-sm font-semibold rounded-lg transition-colors shrink-0"
+            >
+              {promoLoading ? "…" : "Apply"}
+            </button>
+          </div>
+        )}
+        {promoError && (
+          <p className="mt-1 text-xs text-red-600">{promoError}</p>
+        )}
+      </div>
+
+      {/* Loyalty points */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={redeemPoints}
+            onChange={(e) => setRedeemPoints(e.target.checked)}
+            className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+          />
+          <span className="text-sm text-gray-700">Redeem loyalty points</span>
+        </label>
+      </div>
+
       {/* Error */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
@@ -247,9 +382,10 @@ export default function CheckoutClient({ storeSlug, storeName, pickupSlots }: Pr
           disabled={submitting}
           className="w-full py-3 bg-brand-600 hover:bg-brand-700 disabled:bg-brand-400 text-white font-semibold rounded-full transition-colors"
         >
-          {submitting ? "Placing Order…" : `Place Order · ${formatPrice(totalAmount)}`}
+          {submitting ? "Placing Order…" : `Place Order · ${formatPrice(effectiveTotal)}`}
         </button>
       </div>
     </form>
   );
 }
+

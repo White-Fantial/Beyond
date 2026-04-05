@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { GuestOrderStatus } from "@/types/storefront";
 
@@ -62,6 +63,9 @@ export default function ConfirmationClient({
   initialStatus,
 }: Props) {
   const [status, setStatus] = useState(initialStatus);
+  const searchParams = useSearchParams();
+  const discountApplied = Number(searchParams.get("discount") ?? 0);
+  const loyaltyPointsEarned = Number(searchParams.get("earned") ?? 0);
 
   useEffect(() => {
     if (TERMINAL_STATUSES.includes(status.status)) return;
@@ -162,6 +166,28 @@ export default function ConfirmationClient({
         </p>
         <p className="text-xs text-gray-400 mt-1">from {storeName}</p>
       </div>
+
+      {/* Savings summary */}
+      {(discountApplied > 0 || loyaltyPointsEarned > 0) && (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-1">
+          <p className="text-sm font-semibold text-green-800">🎉 Savings & Rewards</p>
+          {discountApplied > 0 && (
+            <p className="text-sm text-green-700">
+              Promo discount applied: −
+              {new Intl.NumberFormat("en-NZ", {
+                style: "currency",
+                currency: "NZD",
+                minimumFractionDigits: 2,
+              }).format(discountApplied / 100)}
+            </p>
+          )}
+          {loyaltyPointsEarned > 0 && (
+            <p className="text-sm text-green-700">
+              +{loyaltyPointsEarned} loyalty point{loyaltyPointsEarned !== 1 ? "s" : ""} earned
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Polling indicator */}
       {!isTerminal && (

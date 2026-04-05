@@ -9,6 +9,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { createCanonicalOrderFromInbound } from "@/services/order.service";
+import { applyPromoCode } from "@/services/owner/owner-promotions.service";
 import type { PlaceGuestOrderInput, PlaceGuestOrderResult, GuestOrderStatus, PlaceGuestSubscriptionInput, PlaceGuestSubscriptionResult, GuestSubscriptionStatus, SubscriptionPlanPublic } from "@/types/storefront";
 
 // ─── Public Types ─────────────────────────────────────────────────────────────
@@ -338,6 +339,59 @@ export async function getProductDetailForOrdering(
   };
 }
 
+// ─── Promo Code Validation ────────────────────────────────────────────────────
+
+export interface ValidatePromoResult {
+  valid: boolean;
+  discountMinor: number;
+  discountType: string;
+  discountValue: string;
+  description: string | null;
+}
+
+/**
+ * Validates a promo code for the given tenant and order amount WITHOUT writing to DB.
+ * Throws a descriptive error if the code is invalid.
+ */
+export async function validatePromoCode(
+  tenantId: string,
+  code: string,
+  orderAmountMinor: number
+): Promise<ValidatePromoResult> {
+  const promo = await prisma.promoCode.findFirst({
+    where: { tenantId, code: code.toUpperCase().trim(), status: "ACTIVE" },
+  });
+
+  if (!promo) throw new Error(`Promo code "${code}" is not valid`);
+
+  const now = new Date();
+  if (promo.startsAt && promo.startsAt > now)
+    throw new Error(`Promo code "${code}" is not yet active`);
+  if (promo.expiresAt && promo.expiresAt < now)
+    throw new Error(`Promo code "${code}" has expired`);
+  if (promo.maxUses != null && promo.usedCount >= promo.maxUses)
+    throw new Error(`Promo code "${code}" has reached its usage limit`);
+
+  const minOrder = promo.minOrderAmount ? Number(promo.minOrderAmount) * 100 : 0;
+  if (orderAmountMinor < minOrder)
+    throw new Error(`Minimum order amount not met for promo code "${code}"`);
+
+  let discountMinor = 0;
+  if (promo.discountType === "PERCENT") {
+    discountMinor = Math.round((orderAmountMinor * Number(promo.discountValue)) / 100);
+  } else if (promo.discountType === "FIXED_AMOUNT") {
+    discountMinor = Math.min(Math.round(Number(promo.discountValue) * 100), orderAmountMinor);
+  }
+
+  return {
+    valid: true,
+    discountMinor,
+    discountType: promo.discountType,
+    discountValue: String(promo.discountValue),
+    description: promo.description,
+  };
+}
+
 // ─── Guest Order Placement ────────────────────────────────────────────────────
 
 /**
@@ -349,7 +403,11 @@ export async function getProductDetailForOrdering(
 export async function placeGuestOrder(
   input: PlaceGuestOrderInput
 ): Promise<PlaceGuestOrderResult> {
-  const { storeId, customerName, customerPhone, customerEmail, pickupTime, notes, items, currencyCode } = input;
+  const {
+    storeId, customerName, customerPhone, customerEmail,
+    pickupTime, notes, items, currencyCode,
+    promoCode, redeemLoyaltyPoints: redeemPoints, userId,
+  } = input;
 
   const store = await prisma.store.findFirst({
     where: { id: storeId, status: "ACTIVE" },
@@ -396,7 +454,29 @@ export async function placeGuestOrder(
     };
   });
 
-  const totalAmount = normalizedItems.reduce((sum, i) => sum + i.totalPriceAmount, 0);
+  const subtotal = normalizedItems.reduce((sum, i) => sum + i.totalPriceAmount, 0);
+
+  // ── Promo discount ────────────────────────────────────────────────────────
+  let discountApplied = 0;
+  if (promoCode) {
+    const promoValidation = await validatePromoCode(store.tenantId, promoCode, subtotal);
+    discountApplied = promoValidation.discountMinor;
+  }
+
+  const afterPromo = Math.max(0, subtotal - discountApplied);
+
+  // ── Loyalty redemption ────────────────────────────────────────────────────
+  let pointsToRedeem = 0;
+  let loyaltyAccountId: string | null = null;
+  if (redeemPoints && userId) {
+    const loyaltyAccount = await prisma.loyaltyAccount.findUnique({ where: { userId } });
+    if (loyaltyAccount && loyaltyAccount.points > 0) {
+      pointsToRedeem = Math.min(loyaltyAccount.points, afterPromo);
+      loyaltyAccountId = loyaltyAccount.id;
+    }
+  }
+
+  const totalAmount = Math.max(0, afterPromo - pointsToRedeem);
 
   const { order } = await createCanonicalOrderFromInbound({
     tenantId: store.tenantId,
@@ -413,10 +493,71 @@ export async function placeGuestOrder(
     rawPayload: { source: "storefront", pickupTime, customerName, items: input.items },
   });
 
+  // ── Record promo redemption (linked to orderId) ───────────────────────────
+  if (promoCode && discountApplied > 0) {
+    await applyPromoCode(store.tenantId, promoCode, subtotal, userId, order.id);
+  }
+
+  // ── Record loyalty redemption ─────────────────────────────────────────────
+  if (pointsToRedeem > 0 && loyaltyAccountId) {
+    await prisma.$transaction([
+      prisma.loyaltyAccount.update({
+        where: { id: loyaltyAccountId },
+        data: { points: { decrement: pointsToRedeem } },
+      }),
+      prisma.loyaltyTransaction.create({
+        data: {
+          accountId: loyaltyAccountId,
+          orderId: order.id,
+          type: "REDEEM",
+          pointsDelta: -pointsToRedeem,
+          description: `Redeemed ${pointsToRedeem} points for order ${order.id}`,
+        },
+      }),
+    ]);
+  }
+
+  // ── Earn loyalty points on final paid amount ──────────────────────────────
+  let loyaltyPointsEarned = 0;
+  if (userId && totalAmount > 0) {
+    loyaltyPointsEarned = Math.floor(totalAmount / 100);
+    if (loyaltyPointsEarned > 0) {
+      // Reuse account from redeem step if available; otherwise look up or create
+      let earnAccountId = loyaltyAccountId;
+      if (!earnAccountId) {
+        let account = await prisma.loyaltyAccount.findUnique({ where: { userId } });
+        if (!account) {
+          account = await prisma.loyaltyAccount.create({
+            data: { userId, points: 0, tier: "BRONZE" },
+          });
+        }
+        earnAccountId = account.id;
+      }
+      await prisma.$transaction([
+        prisma.loyaltyAccount.update({
+          where: { id: earnAccountId },
+          data: { points: { increment: loyaltyPointsEarned } },
+        }),
+        prisma.loyaltyTransaction.create({
+          data: {
+            accountId: earnAccountId,
+            orderId: order.id,
+            type: "EARN",
+            pointsDelta: loyaltyPointsEarned,
+            description: `Earned ${loyaltyPointsEarned} points for order ${order.id}`,
+          },
+        }),
+      ]);
+    }
+  }
+
   return {
     orderId: order.id,
     status: order.status,
     estimatedPickupAt: pickupTime,
+    ...(discountApplied > 0 ? { discountApplied } : {}),
+    ...(loyaltyPointsEarned > 0 ? { loyaltyPointsEarned } : {}),
+    ...(pointsToRedeem > 0 ? { loyaltyPointsRedeemed: pointsToRedeem } : {}),
   };
 }
 
