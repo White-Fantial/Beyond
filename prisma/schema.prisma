@@ -312,6 +312,7 @@ model Tenant {
   notifications Notification[]
   promoCodes    PromoCode[]
   giftCards     GiftCard[]
+  webhookEndpoints WebhookEndpoint[]
   productReviews ProductReview[]
   supportTickets SupportTicket[]
 
@@ -2473,4 +2474,48 @@ model ComplianceEvent {
   @@index([userId])
   @@index([createdAt])
   @@map("compliance_events")
+}
+
+// ─── Outbound Webhooks ────────────────────────────────────────────────────────
+
+enum WebhookDeliveryStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model WebhookEndpoint {
+  id         String    @id @default(uuid())
+  tenantId   String
+  url        String
+  secret     String
+  events     String[]
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@index([tenantId])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id             String                @id @default(uuid())
+  endpointId     String
+  event          String
+  payload        Json
+  status         WebhookDeliveryStatus @default(PENDING)
+  httpStatus     Int?
+  responseBody   String?
+  attemptCount   Int                   @default(0)
+  lastAttemptAt  DateTime?
+  createdAt      DateTime              @default(now())
+
+  endpoint       WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([endpointId])
+  @@index([event])
+  @@map("webhook_deliveries")
 }

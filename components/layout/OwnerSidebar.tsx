@@ -12,6 +12,7 @@ const navItems = [
 
 const giftsItems = [
   { href: "/owner/gift-cards", label: "Gift Cards", icon: "🎁" },
+  { href: "/owner/webhooks", label: "Webhooks", icon: "🔗" },
 ];
   { href: "/owner/billing", label: "Billing", icon: "💳" },
   { href: "/owner/reports", label: "Reports", icon: "📈" },
