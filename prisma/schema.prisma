@@ -310,6 +310,7 @@ model Tenant {
 
   alertRules    AlertRule[]
   notifications Notification[]
+  promoCodes    PromoCode[]
 
   @@map("tenants")
 }
@@ -339,6 +340,7 @@ model User {
   customerAddresses        CustomerAddress[]
   loyaltyAccount           LoyaltyAccount?
   savedPaymentMethods      SavedPaymentMethod[]
+  promoCodesCreated        PromoCode[]            @relation("PromoCodeCreatedBy")
 
   @@map("users")
 }
@@ -405,6 +407,7 @@ model Store {
   storeOperationSettings StoreOperationSettings?
   storeHours             StoreHours[]
   alertRules             AlertRule[]
+  promoCodes             PromoCode[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -2212,4 +2215,62 @@ model PushSubscription {
   @@unique([userId, endpoint])
   @@index([userId])
   @@map("push_subscriptions")
+}
+
+// ─── Promotions ───────────────────────────────────────────────────────────────
+
+enum PromoDiscountType {
+  PERCENT
+  FIXED_AMOUNT
+  FREE_ITEM
+}
+
+enum PromoStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+model PromoCode {
+  id             String           @id @default(uuid())
+  tenantId       String
+  storeId        String?
+  code           String
+  description    String?
+  discountType   PromoDiscountType
+  discountValue  Decimal          @db.Decimal(10, 4)
+  minOrderAmount Decimal?         @db.Decimal(10, 4)
+  maxUses        Int?
+  usedCount      Int              @default(0)
+  status         PromoStatus      @default(ACTIVE)
+  startsAt       DateTime?
+  expiresAt      DateTime?
+  createdBy      String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  store          Store?           @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdByUser  User?            @relation("PromoCodeCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  redemptions    PromoRedemption[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, status])
+  @@index([storeId])
+  @@map("promo_codes")
+}
+
+model PromoRedemption {
+  id          String    @id @default(uuid())
+  promoCodeId String
+  orderId     String?
+  userId      String?
+  discountMinor Int
+  redeemedAt  DateTime  @default(now())
+
+  promoCode   PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+
+  @@index([promoCodeId])
+  @@index([orderId])
+  @@map("promo_redemptions")
 }

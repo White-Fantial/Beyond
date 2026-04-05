@@ -7,6 +7,7 @@ const navItems = [
   { href: "/owner/stores", label: "My Stores", icon: "🏬", exact: false },
   { href: "/owner/dashboard", label: "Tenant Dashboard", icon: "🏠", exact: true },
   { href: "/owner/customers", label: "Customers", icon: "👥", exact: false },
+  { href: "/owner/promotions", label: "Promotions", icon: "🏷️" },
   { href: "/owner/billing", label: "Billing", icon: "💳" },
   { href: "/owner/reports", label: "Reports", icon: "📈" },
   { href: "/owner/analytics", label: "Analytics", icon: "🔬" },
