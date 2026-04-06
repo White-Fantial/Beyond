@@ -14,6 +14,8 @@ const giftsItems = [
   { href: "/owner/gift-cards", label: "Gift Cards", icon: "🎁" },
   { href: "/owner/webhooks", label: "Webhooks", icon: "🔗" },
 ];
+
+const settingsItems = [
   { href: "/owner/billing", label: "Billing", icon: "💳" },
   { href: "/owner/reports", label: "Reports", icon: "📈" },
   { href: "/owner/analytics", label: "Analytics", icon: "🔬" },
@@ -90,6 +92,30 @@ export default function OwnerSidebar() {
           </span>
         </div>
         {automationItems.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive
+                  ? "bg-brand-50 text-brand-700"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
+            >
+              <span>{item.icon}</span>
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+
+        {/* Settings section */}
+        <div className="pt-3 pb-1 px-3">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+            Settings &amp; Reports
+          </span>
+        </div>
+        {settingsItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link

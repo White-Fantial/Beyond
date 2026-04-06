@@ -5,7 +5,8 @@ import AddWebhookEndpointForm from "@/components/owner/webhooks/AddWebhookEndpoi
 
 export default async function OwnerWebhooksPage() {
   const ctx = await requireAuth();
-  const result = await listWebhookEndpoints(ctx.tenantId);
+  const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
+  const result = await listWebhookEndpoints(tenantId);
 
   return (
     <div className="space-y-6">

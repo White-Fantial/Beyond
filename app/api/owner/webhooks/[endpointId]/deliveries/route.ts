@@ -7,8 +7,9 @@ export async function GET(
   { params }: { params: { endpointId: string } }
 ) {
   const ctx = await requireAuth();
+  const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    const deliveries = await listWebhookDeliveries(ctx.tenantId, params.endpointId);
+    const deliveries = await listWebhookDeliveries(tenantId, params.endpointId);
     return NextResponse.json({ data: deliveries });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Not found";

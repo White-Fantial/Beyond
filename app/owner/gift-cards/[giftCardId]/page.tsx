@@ -9,8 +9,9 @@ interface Props {
 
 export default async function GiftCardDetailPage({ params }: Props) {
   const ctx = await requireAuth();
+  const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    const detail = await getGiftCardDetail(ctx.tenantId, params.giftCardId);
+    const detail = await getGiftCardDetail(tenantId, params.giftCardId);
     return (
       <div className="space-y-6">
         <div>

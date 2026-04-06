@@ -10,8 +10,9 @@ export async function GET(
   { params }: { params: { endpointId: string } }
 ) {
   const ctx = await requireAuth();
+  const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    const detail = await getWebhookEndpointDetail(ctx.tenantId, params.endpointId);
+    const detail = await getWebhookEndpointDetail(tenantId, params.endpointId);
     return NextResponse.json({ data: detail });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Not found";
@@ -24,8 +25,9 @@ export async function DELETE(
   { params }: { params: { endpointId: string } }
 ) {
   const ctx = await requireAuth();
+  const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    await deleteWebhookEndpoint(ctx.tenantId, params.endpointId);
+    await deleteWebhookEndpoint(tenantId, params.endpointId);
     return NextResponse.json({ success: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error deleting endpoint";

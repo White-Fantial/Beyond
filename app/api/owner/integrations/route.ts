@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { requireOwnerPortalAccess } from "@/lib/owner/auth-guard";
 import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
 import { getOwnerTenantConnectionCards } from "@/services/owner/owner-integrations.service";
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const ctx = await requireOwnerPortalAccess();
 

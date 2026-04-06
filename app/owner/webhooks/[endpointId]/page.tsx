@@ -9,8 +9,9 @@ interface Props {
 
 export default async function WebhookEndpointDetailPage({ params }: Props) {
   const ctx = await requireAuth();
+  const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    const detail = await getWebhookEndpointDetail(ctx.tenantId, params.endpointId);
+    const detail = await getWebhookEndpointDetail(tenantId, params.endpointId);
     return (
       <div className="space-y-6">
         <div>

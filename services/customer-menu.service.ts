@@ -22,6 +22,7 @@ export interface CustomerStore {
   status: string;
   currency: string;
   timezone: string;
+  tenantId: string;
   phone?: string | null;
   email?: string | null;
 }
@@ -101,6 +102,7 @@ export async function getStoreBySlugForCustomer(
       status: true,
       currency: true,
       timezone: true,
+      tenantId: true,
       phone: true,
       email: true,
     },

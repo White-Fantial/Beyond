@@ -5,7 +5,8 @@ import IssueGiftCardForm from "@/components/owner/gift-cards/IssueGiftCardForm";
 
 export default async function OwnerGiftCardsPage() {
   const ctx = await requireAuth();
-  const result = await listGiftCards(ctx.tenantId);
+  const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
+  const result = await listGiftCards(tenantId);
 
   return (
     <div className="space-y-6">
