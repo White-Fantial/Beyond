@@ -38,7 +38,7 @@ CREATE TYPE "StoreMembershipStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'REMOVED');
 CREATE TYPE "ConnectionType" AS ENUM ('POS', 'DELIVERY', 'PAYMENT');
 
 -- CreateEnum
-CREATE TYPE "ConnectionProvider" AS ENUM ('LOYVERSE', 'UBER_EATS', 'DOORDASH', 'STRIPE', 'OTHER');
+CREATE TYPE "ConnectionProvider" AS ENUM ('LOYVERSE', 'LIGHTSPEED', 'UBER_EATS', 'DOORDASH', 'STRIPE', 'OTHER');
 
 -- CreateEnum
 CREATE TYPE "ConnectionStatus" AS ENUM ('NOT_CONNECTED', 'CONNECTING', 'CONNECTED', 'ERROR', 'REAUTH_REQUIRED', 'DISCONNECTED');
@@ -146,10 +146,43 @@ CREATE TYPE "FlagScopeType" AS ENUM ('GLOBAL', 'TENANT', 'STORE', 'USER', 'ROLE'
 CREATE TYPE "CustomerNotificationType" AS ENUM ('ORDER_STATUS_UPDATE', 'SUBSCRIPTION_REMINDER', 'PAYMENT_ISSUE', 'GENERAL');
 
 -- CreateEnum
+CREATE TYPE "LoyaltyTransactionType" AS ENUM ('EARN', 'REDEEM', 'ADJUSTMENT');
+
+-- CreateEnum
+CREATE TYPE "LoyaltyTier" AS ENUM ('BRONZE', 'SILVER', 'GOLD', 'PLATINUM');
+
+-- CreateEnum
 CREATE TYPE "AlertMetricType" AS ENUM ('CANCELLATION_RATE', 'REVENUE_DROP', 'SOLD_OUT_COUNT', 'ORDER_FAILURE_RATE', 'LOW_STOCK_ITEMS', 'POS_DISCONNECT', 'DELIVERY_DISCONNECT');
 
 -- CreateEnum
 CREATE TYPE "NotificationType" AS ENUM ('ALERT_TRIGGERED', 'SYSTEM_INFO', 'BILLING_REMINDER', 'SUBSCRIPTION_EVENT', 'INTEGRATION_ISSUE', 'STAFF_ACTIVITY');
+
+-- CreateEnum
+CREATE TYPE "PromoDiscountType" AS ENUM ('PERCENT', 'FIXED_AMOUNT', 'FREE_ITEM');
+
+-- CreateEnum
+CREATE TYPE "PromoStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'EXPIRED');
+
+-- CreateEnum
+CREATE TYPE "ReviewStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+
+-- CreateEnum
+CREATE TYPE "SupportTicketStatus" AS ENUM ('OPEN', 'IN_PROGRESS', 'WAITING_CUSTOMER', 'RESOLVED', 'CLOSED');
+
+-- CreateEnum
+CREATE TYPE "SupportTicketPriority" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'URGENT');
+
+-- CreateEnum
+CREATE TYPE "GiftCardTransactionType" AS ENUM ('ISSUE', 'REDEEM', 'REFUND', 'VOID');
+
+-- CreateEnum
+CREATE TYPE "EmailLogStatus" AS ENUM ('SENT', 'FAILED', 'BOUNCED');
+
+-- CreateEnum
+CREATE TYPE "ComplianceEventType" AS ENUM ('DATA_EXPORT', 'ERASURE_REQUEST', 'ERASURE_COMPLETE');
+
+-- CreateEnum
+CREATE TYPE "WebhookDeliveryStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED');
 
 -- CreateTable
 CREATE TABLE "tenants" (
@@ -1440,6 +1473,62 @@ CREATE TABLE "customer_addresses" (
 );
 
 -- CreateTable
+CREATE TABLE "loyalty_accounts" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "points" INTEGER NOT NULL DEFAULT 0,
+    "tier" "LoyaltyTier" NOT NULL DEFAULT 'BRONZE',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "loyalty_accounts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "loyalty_transactions" (
+    "id" TEXT NOT NULL,
+    "accountId" TEXT NOT NULL,
+    "orderId" TEXT,
+    "type" "LoyaltyTransactionType" NOT NULL,
+    "pointsDelta" INTEGER NOT NULL,
+    "description" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "loyalty_transactions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "referral_codes" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "accountId" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "usedCount" INTEGER NOT NULL DEFAULT 0,
+    "rewardPoints" INTEGER NOT NULL DEFAULT 100,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "referral_codes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "saved_payment_methods" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "provider" TEXT NOT NULL DEFAULT 'STRIPE',
+    "last4" TEXT NOT NULL,
+    "brand" TEXT NOT NULL,
+    "expiryMonth" INTEGER NOT NULL,
+    "expiryYear" INTEGER NOT NULL,
+    "isDefault" BOOLEAN NOT NULL DEFAULT false,
+    "providerMethodId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "saved_payment_methods_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "alert_rules" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
@@ -1471,6 +1560,200 @@ CREATE TABLE "notifications" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "notifications_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "push_subscriptions" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "endpoint" TEXT NOT NULL,
+    "p256dhKey" TEXT NOT NULL,
+    "authKey" TEXT NOT NULL,
+    "userAgent" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "push_subscriptions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "promo_codes" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "storeId" TEXT,
+    "code" TEXT NOT NULL,
+    "description" TEXT,
+    "discountType" "PromoDiscountType" NOT NULL,
+    "discountValue" DECIMAL(10,4) NOT NULL,
+    "minOrderAmount" DECIMAL(10,4),
+    "maxUses" INTEGER,
+    "usedCount" INTEGER NOT NULL DEFAULT 0,
+    "status" "PromoStatus" NOT NULL DEFAULT 'ACTIVE',
+    "startsAt" TIMESTAMP(3),
+    "expiresAt" TIMESTAMP(3),
+    "createdBy" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "promo_codes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "promo_redemptions" (
+    "id" TEXT NOT NULL,
+    "promoCodeId" TEXT NOT NULL,
+    "orderId" TEXT,
+    "userId" TEXT,
+    "discountMinor" INTEGER NOT NULL,
+    "redeemedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "promo_redemptions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "product_reviews" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "productId" TEXT,
+    "orderId" TEXT,
+    "rating" INTEGER NOT NULL,
+    "title" TEXT,
+    "body" TEXT,
+    "status" "ReviewStatus" NOT NULL DEFAULT 'PENDING',
+    "moderatedAt" TIMESTAMP(3),
+    "moderatedBy" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "product_reviews_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "support_tickets" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "subject" TEXT NOT NULL,
+    "status" "SupportTicketStatus" NOT NULL DEFAULT 'OPEN',
+    "priority" "SupportTicketPriority" NOT NULL DEFAULT 'MEDIUM',
+    "orderId" TEXT,
+    "resolvedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "support_tickets_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "support_ticket_messages" (
+    "id" TEXT NOT NULL,
+    "ticketId" TEXT NOT NULL,
+    "authorId" TEXT NOT NULL,
+    "body" TEXT NOT NULL,
+    "isStaff" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "support_ticket_messages_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "push_preferences" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "orders" BOOLEAN NOT NULL DEFAULT true,
+    "promotions" BOOLEAN NOT NULL DEFAULT true,
+    "loyalty" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "push_preferences_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "gift_cards" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "storeId" TEXT,
+    "code" TEXT NOT NULL,
+    "initialValue" INTEGER NOT NULL,
+    "currentBalance" INTEGER NOT NULL,
+    "issuedToEmail" TEXT,
+    "expiresAt" TIMESTAMP(3),
+    "isVoided" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "gift_cards_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "gift_card_transactions" (
+    "id" TEXT NOT NULL,
+    "giftCardId" TEXT NOT NULL,
+    "type" "GiftCardTransactionType" NOT NULL,
+    "amount" INTEGER NOT NULL,
+    "orderId" TEXT,
+    "note" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "gift_card_transactions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "email_logs" (
+    "id" TEXT NOT NULL,
+    "to" TEXT NOT NULL,
+    "subject" TEXT NOT NULL,
+    "template" TEXT NOT NULL,
+    "status" "EmailLogStatus" NOT NULL DEFAULT 'SENT',
+    "errorMessage" TEXT,
+    "providerId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "email_logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "compliance_events" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "type" "ComplianceEventType" NOT NULL,
+    "performedBy" TEXT NOT NULL,
+    "metadata" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "compliance_events_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "webhook_endpoints" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "secret" TEXT NOT NULL,
+    "events" TEXT[],
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "webhook_endpoints_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "webhook_deliveries" (
+    "id" TEXT NOT NULL,
+    "endpointId" TEXT NOT NULL,
+    "event" TEXT NOT NULL,
+    "payload" JSONB NOT NULL,
+    "status" "WebhookDeliveryStatus" NOT NULL DEFAULT 'PENDING',
+    "httpStatus" INTEGER,
+    "responseBody" TEXT,
+    "attemptCount" INTEGER NOT NULL DEFAULT 0,
+    "lastAttemptAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "webhook_deliveries_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -1867,6 +2150,24 @@ CREATE INDEX "customer_notifications_userId_readAt_idx" ON "customer_notificatio
 CREATE INDEX "customer_addresses_userId_idx" ON "customer_addresses"("userId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "loyalty_accounts_userId_key" ON "loyalty_accounts"("userId");
+
+-- CreateIndex
+CREATE INDEX "loyalty_accounts_userId_idx" ON "loyalty_accounts"("userId");
+
+-- CreateIndex
+CREATE INDEX "loyalty_transactions_accountId_createdAt_idx" ON "loyalty_transactions"("accountId", "createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "referral_codes_code_key" ON "referral_codes"("code");
+
+-- CreateIndex
+CREATE INDEX "referral_codes_userId_idx" ON "referral_codes"("userId");
+
+-- CreateIndex
+CREATE INDEX "saved_payment_methods_userId_idx" ON "saved_payment_methods"("userId");
+
+-- CreateIndex
 CREATE INDEX "alert_rules_tenantId_enabled_idx" ON "alert_rules"("tenantId", "enabled");
 
 -- CreateIndex
@@ -1877,6 +2178,81 @@ CREATE INDEX "notifications_tenantId_userId_createdAt_idx" ON "notifications"("t
 
 -- CreateIndex
 CREATE INDEX "notifications_userId_readAt_idx" ON "notifications"("userId", "readAt");
+
+-- CreateIndex
+CREATE INDEX "push_subscriptions_userId_idx" ON "push_subscriptions"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "push_subscriptions_userId_endpoint_key" ON "push_subscriptions"("userId", "endpoint");
+
+-- CreateIndex
+CREATE INDEX "promo_codes_tenantId_status_idx" ON "promo_codes"("tenantId", "status");
+
+-- CreateIndex
+CREATE INDEX "promo_codes_storeId_idx" ON "promo_codes"("storeId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "promo_codes_tenantId_code_key" ON "promo_codes"("tenantId", "code");
+
+-- CreateIndex
+CREATE INDEX "promo_redemptions_promoCodeId_idx" ON "promo_redemptions"("promoCodeId");
+
+-- CreateIndex
+CREATE INDEX "promo_redemptions_orderId_idx" ON "promo_redemptions"("orderId");
+
+-- CreateIndex
+CREATE INDEX "product_reviews_tenantId_status_idx" ON "product_reviews"("tenantId", "status");
+
+-- CreateIndex
+CREATE INDEX "product_reviews_userId_idx" ON "product_reviews"("userId");
+
+-- CreateIndex
+CREATE INDEX "product_reviews_productId_idx" ON "product_reviews"("productId");
+
+-- CreateIndex
+CREATE INDEX "support_tickets_tenantId_status_idx" ON "support_tickets"("tenantId", "status");
+
+-- CreateIndex
+CREATE INDEX "support_tickets_userId_idx" ON "support_tickets"("userId");
+
+-- CreateIndex
+CREATE INDEX "support_ticket_messages_ticketId_idx" ON "support_ticket_messages"("ticketId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "push_preferences_userId_key" ON "push_preferences"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "gift_cards_code_key" ON "gift_cards"("code");
+
+-- CreateIndex
+CREATE INDEX "gift_cards_tenantId_idx" ON "gift_cards"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "gift_cards_storeId_idx" ON "gift_cards"("storeId");
+
+-- CreateIndex
+CREATE INDEX "gift_card_transactions_giftCardId_idx" ON "gift_card_transactions"("giftCardId");
+
+-- CreateIndex
+CREATE INDEX "email_logs_to_idx" ON "email_logs"("to");
+
+-- CreateIndex
+CREATE INDEX "email_logs_createdAt_idx" ON "email_logs"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "compliance_events_userId_idx" ON "compliance_events"("userId");
+
+-- CreateIndex
+CREATE INDEX "compliance_events_createdAt_idx" ON "compliance_events"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "webhook_endpoints_tenantId_idx" ON "webhook_endpoints"("tenantId");
+
+-- CreateIndex
+CREATE INDEX "webhook_deliveries_endpointId_idx" ON "webhook_deliveries"("endpointId");
+
+-- CreateIndex
+CREATE INDEX "webhook_deliveries_event_idx" ON "webhook_deliveries"("event");
 
 -- AddForeignKey
 ALTER TABLE "memberships" ADD CONSTRAINT "memberships_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -2092,6 +2468,18 @@ ALTER TABLE "customer_notifications" ADD CONSTRAINT "customer_notifications_user
 ALTER TABLE "customer_addresses" ADD CONSTRAINT "customer_addresses_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "loyalty_accounts" ADD CONSTRAINT "loyalty_accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "loyalty_transactions" ADD CONSTRAINT "loyalty_transactions_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "loyalty_accounts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "referral_codes" ADD CONSTRAINT "referral_codes_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "loyalty_accounts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "saved_payment_methods" ADD CONSTRAINT "saved_payment_methods_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "alert_rules" ADD CONSTRAINT "alert_rules_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -2105,3 +2493,54 @@ ALTER TABLE "notifications" ADD CONSTRAINT "notifications_tenantId_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "notifications" ADD CONSTRAINT "notifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "push_subscriptions" ADD CONSTRAINT "push_subscriptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "promo_codes" ADD CONSTRAINT "promo_codes_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "promo_codes" ADD CONSTRAINT "promo_codes_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "promo_codes" ADD CONSTRAINT "promo_codes_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "promo_redemptions" ADD CONSTRAINT "promo_redemptions_promoCodeId_fkey" FOREIGN KEY ("promoCodeId") REFERENCES "promo_codes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "support_tickets" ADD CONSTRAINT "support_tickets_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "support_tickets" ADD CONSTRAINT "support_tickets_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "support_ticket_messages" ADD CONSTRAINT "support_ticket_messages_ticketId_fkey" FOREIGN KEY ("ticketId") REFERENCES "support_tickets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "support_ticket_messages" ADD CONSTRAINT "support_ticket_messages_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "push_preferences" ADD CONSTRAINT "push_preferences_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "gift_cards" ADD CONSTRAINT "gift_cards_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "gift_cards" ADD CONSTRAINT "gift_cards_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "gift_card_transactions" ADD CONSTRAINT "gift_card_transactions_giftCardId_fkey" FOREIGN KEY ("giftCardId") REFERENCES "gift_cards"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "webhook_endpoints" ADD CONSTRAINT "webhook_endpoints_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "webhook_deliveries" ADD CONSTRAINT "webhook_deliveries_endpointId_fkey" FOREIGN KEY ("endpointId") REFERENCES "webhook_endpoints"("id") ON DELETE CASCADE ON UPDATE CASCADE;
