@@ -7,7 +7,7 @@ import TicketStatusBadge from "./TicketStatusBadge";
 
 interface Props { ticket: SupportTicketDetail; userId: string }
 
-export default function TicketThread({ ticket, userId: _userId }: Props) {
+export default function TicketThread({ ticket }: Props) {
   const router = useRouter();
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();

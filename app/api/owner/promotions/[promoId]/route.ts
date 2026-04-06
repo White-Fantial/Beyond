@@ -13,7 +13,8 @@ export async function GET(
   try {
     const { promoId } = await params;
     const ctx = await requireAuth();
-    const data = await getPromoCodeDetail(ctx.tenantId, promoId);
+    const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
+    const data = await getPromoCodeDetail(tenantId, promoId);
     return NextResponse.json({ data });
   } catch (err) {
     console.error("[owner/promotions/:id GET]", err);
@@ -28,8 +29,9 @@ export async function PATCH(
   try {
     const { promoId } = await params;
     const ctx = await requireAuth();
+    const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
     const body = await req.json();
-    const data = await updatePromoCode(ctx.tenantId, promoId, body);
+    const data = await updatePromoCode(tenantId, promoId, body);
     return NextResponse.json({ data });
   } catch (err) {
     console.error("[owner/promotions/:id PATCH]", err);
@@ -44,7 +46,8 @@ export async function DELETE(
   try {
     const { promoId } = await params;
     const ctx = await requireAuth();
-    await deletePromoCode(ctx.tenantId, promoId);
+    const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
+    await deletePromoCode(tenantId, promoId);
     return NextResponse.json({ data: null });
   } catch (err) {
     console.error("[owner/promotions/:id DELETE]", err);

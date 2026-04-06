@@ -10,7 +10,7 @@ interface Props {
   initialTotal: number;
 }
 
-export default function ReviewList({ initialItems, initialTotal: _initialTotal }: Props) {
+export default function ReviewList({ initialItems }: Props) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
 

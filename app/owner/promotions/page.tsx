@@ -5,7 +5,8 @@ import CreatePromoForm from "@/components/owner/promotions/CreatePromoForm";
 
 export default async function OwnerPromotionsPage() {
   const ctx = await requireAuth();
-  const result = await listPromoCodes(ctx.tenantId);
+  const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
+  const result = await listPromoCodes(tenantId);
 
   return (
     <div className="space-y-6">

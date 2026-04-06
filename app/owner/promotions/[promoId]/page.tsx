@@ -10,7 +10,8 @@ export default async function OwnerPromoDetailPage({
 }) {
   const { promoId } = await params;
   const ctx = await requireAuth();
-  const promo = await getPromoCodeDetail(ctx.tenantId, promoId);
+  const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
+  const promo = await getPromoCodeDetail(tenantId, promoId);
 
   return (
     <div className="space-y-6">

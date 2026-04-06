@@ -34,14 +34,15 @@ export interface UserDataExport {
   notifications: Array<{
     id: string;
     type: string;
-    message: string;
+    title: string;
+    body: string;
     createdAt: string;
   }>;
   reviews: Array<{
     id: string;
-    productId: string;
+    productId: string | null;
     rating: number;
-    comment: string | null;
+    body: string | null;
     createdAt: string;
   }>;
   supportTickets: Array<{
@@ -74,8 +75,8 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
         })
       ),
       prisma.subscription.findMany({
-        where: { customerEmail: { not: null } },
-        select: { id: true, status: true, startDate: true, customerEmail: true },
+        where: { customerId: userId },
+        select: { id: true, status: true, startDate: true, customerId: true },
       }),
       prisma.customerAddress.findMany({
         where: { userId },
@@ -85,11 +86,11 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
         where: { userId },
         orderBy: { createdAt: "desc" },
         take: 200,
-        select: { id: true, type: true, message: true, createdAt: true },
+        select: { id: true, type: true, title: true, body: true, createdAt: true },
       }),
       prisma.productReview.findMany({
         where: { userId },
-        select: { id: true, productId: true, rating: true, comment: true, createdAt: true },
+        select: { id: true, productId: true, rating: true, body: true, createdAt: true },
       }),
       prisma.supportTicket.findMany({
         where: { userId },
@@ -123,7 +124,6 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
         createdAt: o.createdAt.toISOString(),
       })),
     subscriptions: subscriptions
-      .filter((s) => s.customerEmail === userEmail)
       .map((s) => ({
         id: s.id,
         status: s.status,
@@ -138,14 +138,15 @@ export async function exportUserData(userId: string): Promise<UserDataExport> {
     notifications: notifications.map((n) => ({
       id: n.id,
       type: n.type,
-      message: n.message,
+      title: n.title,
+      body: n.body,
       createdAt: n.createdAt.toISOString(),
     })),
     reviews: reviews.map((r) => ({
       id: r.id,
       productId: r.productId,
       rating: r.rating,
-      comment: r.comment,
+      body: r.body,
       createdAt: r.createdAt.toISOString(),
     })),
     supportTickets: tickets.map((t) => ({

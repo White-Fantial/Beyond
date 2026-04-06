@@ -7,8 +7,9 @@ export async function GET(
   { params }: { params: { giftCardId: string } }
 ) {
   const ctx = await requireAuth();
+  const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    const detail = await getGiftCardDetail(ctx.tenantId, params.giftCardId);
+    const detail = await getGiftCardDetail(tenantId, params.giftCardId);
     return NextResponse.json({ data: detail });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Not found";

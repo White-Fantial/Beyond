@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
               { key: "revenueMinor", label: "Revenue (minor unit)", align: "right" },
               { key: "orderCount", label: "Orders", align: "right" },
             ],
-            rows: report.revenueTrend,
+            rows: report.revenueTrend as unknown as Record<string, unknown>[],
           },
           {
             title: "Channel Breakdown",
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
               { key: "revenueMinor", label: "Revenue (minor unit)", align: "right" },
               { key: "orderCount", label: "Orders", align: "right" },
             ],
-            rows: report.channelBreakdown,
+            rows: report.channelBreakdown as unknown as Record<string, unknown>[],
           },
           {
             title: "Top Products",
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
               { key: "orderCount", label: "Orders", align: "right" },
               { key: "revenueMinor", label: "Revenue (minor unit)", align: "right" },
             ],
-            rows: report.topProducts,
+            rows: report.topProducts as unknown as Record<string, unknown>[],
           },
         ],
       });
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Default: CSV of revenue trend
-    const csv = toCsv(report.revenueTrend, [
+    const csv = toCsv(report.revenueTrend as unknown as Record<string, unknown>[], [
       { key: "dateLabel", label: "Date" },
       { key: "dateKey", label: "Date (ISO)" },
       { key: "revenueMinor", label: "Revenue (minor unit)" },

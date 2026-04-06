@@ -7,8 +7,9 @@ export async function POST(
   { params }: { params: { endpointId: string } }
 ) {
   const ctx = await requireAuth();
+  const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    const endpoint = await toggleWebhookEndpoint(ctx.tenantId, params.endpointId);
+    const endpoint = await toggleWebhookEndpoint(tenantId, params.endpointId);
     return NextResponse.json({ data: endpoint });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error toggling endpoint";

@@ -23,9 +23,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const review = await createCustomerReview(ctx.userId, tenantId, body);
     return NextResponse.json({ data: review }, { status: 201 });
-  } catch (err: any) {
-    if (err.message?.includes("Rating must be")) {
-      return NextResponse.json({ error: err.message }, { status: 400 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes("Rating must be")) {
+      return NextResponse.json({ error: message }, { status: 400 });
     }
     console.error("[customer/reviews POST]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

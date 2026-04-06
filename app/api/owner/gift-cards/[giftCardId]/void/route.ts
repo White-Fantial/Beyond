@@ -7,8 +7,9 @@ export async function POST(
   { params }: { params: { giftCardId: string } }
 ) {
   const ctx = await requireAuth();
+  const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    const card = await voidGiftCard(ctx.tenantId, params.giftCardId);
+    const card = await voidGiftCard(tenantId, params.giftCardId);
     return NextResponse.json({ data: card });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error voiding gift card";

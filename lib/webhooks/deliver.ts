@@ -6,6 +6,7 @@
  */
 import { createHmac, randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export function generateWebhookSecret(): string {
   return "whsec_" + randomBytes(24).toString("hex");
@@ -77,7 +78,7 @@ async function deliverToEndpoint(
     data: {
       endpointId,
       event,
-      payload,
+      payload: payload as Prisma.InputJsonValue,
       status,
       httpStatus,
       responseBody,

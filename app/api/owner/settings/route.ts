@@ -9,7 +9,7 @@ function resolveTenantId(ctx: Awaited<ReturnType<typeof requireOwnerAdminAccess>
   return ctx.tenantMemberships[0]?.tenantId ?? "";
 }
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const ctx = await requireOwnerAdminAccess();
     const tenantId = resolveTenantId(ctx);
