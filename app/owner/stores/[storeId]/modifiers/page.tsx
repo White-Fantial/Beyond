@@ -15,7 +15,7 @@ export default async function StoreModifiersPage({ params }: Props) {
       <div>
         <h2 className="text-base font-semibold text-gray-800">Modifier Groups</h2>
         <p className="text-xs text-gray-500 mt-0.5">
-          * Only modifier sold-out status and online visibility can be edited. Modifier name and price are POS read-only.
+          Menu data is managed in Beyond. All fields can be edited here.
         </p>
       </div>
 
@@ -31,7 +31,7 @@ export default async function StoreModifiersPage({ params }: Props) {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-gray-800">{group.name}</span>
                   <span className="text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">
-                    {group.sourceType}
+                    {group.originType ?? group.sourceType}
                   </span>
                   <span className="text-xs text-gray-400">Order {group.displayOrder}</span>
                 </div>
@@ -47,7 +47,7 @@ export default async function StoreModifiersPage({ params }: Props) {
                   >
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${opt.isSoldOut ? "bg-red-400" : "bg-green-400"}`} />
                     <span className="flex-1 text-gray-800">{opt.name}</span>
-                    <span className="text-gray-400 text-xs">🔒 {opt.priceDeltaAmount > 0 ? `+${opt.priceDeltaAmount / 100}` : opt.priceDeltaAmount < 0 ? `${opt.priceDeltaAmount / 100}` : "기본"}</span>
+                    <span className="text-gray-400 text-xs">{opt.priceDeltaAmount > 0 ? `+${opt.priceDeltaAmount / 100}` : opt.priceDeltaAmount < 0 ? `${opt.priceDeltaAmount / 100}` : "기본"}</span>
                     {opt.isSoldOut && (
                       <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">Sold Out</span>
                     )}

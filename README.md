@@ -114,7 +114,22 @@ Beyond is organised into four separate portals, each with its own URL namespace,
 - **JWT Session** — sessions are stored as signed JWTs in an `httpOnly` cookie (`beyond_session`).
 - **Multi-Portal Routing** — four separate URL namespaces each have their own layout and sidebar, automatically guarded by `middleware.ts`.
 - **Server Components by default** — client components (`"use client"`) are used only where interactivity is required.
-- **Customer Order UI** — the public ordering portal reads only the internal catalog tables. No provider-specific fields or sync metadata are ever exposed to customer-facing code.
+- **Internal Catalog Ownership (Phase 1)** — Beyond internal catalog is the canonical operational model. All catalog reads (customer order UI, backoffice, owner console) use only the internal `catalog_*` tables. External POS/delivery data is treated as an import source (provenance), not a live authority. See [doc/architecture.md](./doc/architecture.md) for details.
+- **Customer Order UI** — the public ordering portal reads only the internal catalog tables. No provider-specific fields, external sync metadata, or source-lock logic are ever exposed to customer-facing code.
+
+---
+
+## Catalog Architecture (Phase 1)
+
+Beyond internal catalog is the **only canonical operational model**.
+
+| Concept | Description |
+|---------|-------------|
+| **Internal catalog** | `catalog_categories`, `catalog_products`, `catalog_modifier_groups`, `catalog_modifier_options` — always the source of truth |
+| **originType** | Where a catalog entity ORIGINALLY came from (`BEYOND_CREATED`, `IMPORTED_FROM_POS`, `IMPORTED_FROM_DELIVERY`, `IMPORTED_FROM_OTHER`). Historical metadata only — does not restrict editing. |
+| **originConnectionId / originExternalRef** | Which external connection/ID this entity was first imported from. Not the current authority. |
+| **External channels** | POS systems and delivery platforms are future import/mapping/sync targets (Phase 2+). They do not directly overwrite internal catalog. |
+| **Editing** | ALL catalog entities (regardless of origin) are fully editable in Beyond. There is no source-lock. |
 
 ---
 

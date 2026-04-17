@@ -4,15 +4,19 @@
  * Orchestrates a complete sync from Loyverse to the internal catalog:
  * 1. Fetch raw data from Loyverse API.
  * 2. Persist raw mirror rows (external_catalog_* tables).
- * 3. Upsert internal catalog entities (catalog_* tables) using source keys.
+ * 3. Upsert internal catalog entities (catalog_* tables) using origin keys.
  * 4. Upsert relational links (product–category, product–modifier group).
  * 5. Upsert channel_entity_mapping rows.
  *
- * Source-of-truth matching:
- *   category:       sourceOfTruthConnectionId + sourceCategoryRef
- *   product:        sourceOfTruthConnectionId + sourceProductRef
- *   modifier group: sourceOfTruthConnectionId + sourceModifierGroupRef
- *   modifier option: sourceOfTruthConnectionId + sourceModifierOptionRef
+ * Phase 1 — internal catalog ownership:
+ * - The Beyond internal catalog is the canonical operational model.
+ * - This sync populates internal catalog rows on first import (provenance = IMPORTED_FROM_POS).
+ * - Subsequent syncs update internal catalog data, but internal edits made in Beyond
+ *   are NOT protected by any source lock — they are valid Beyond-side changes.
+ * - TODO Phase 2: add conflict-resolution policy before syncing again overwrites Beyond edits.
+ *
+ * Matching is done by origin keys (originConnectionId + originExternalRef), with
+ * fallback to legacy keys (sourceOfTruthConnectionId + source*Ref) for backward compat.
  *
  * Never matches by name.
  */
@@ -244,6 +248,11 @@ export async function runLoyverseFullCatalogSync(
           tenantId,
           storeId,
           sourceType: "POS",
+          // Phase 1: provenance — this entity was initially imported from a POS system.
+          originType: "IMPORTED_FROM_POS",
+          originConnectionId: connectionId,
+          originExternalRef: parsed.externalId,
+          importedAt: now,
           sourceOfTruthConnectionId: connectionId,
           sourceCategoryRef: parsed.externalId,
           name: parsed.normalizedName,
@@ -290,6 +299,11 @@ export async function runLoyverseFullCatalogSync(
           tenantId,
           storeId,
           sourceType: "POS",
+          // Phase 1: provenance — this entity was initially imported from a POS system.
+          originType: "IMPORTED_FROM_POS",
+          originConnectionId: connectionId,
+          originExternalRef: parsed.externalId,
+          importedAt: now,
           sourceOfTruthConnectionId: connectionId,
           sourceModifierGroupRef: parsed.externalId,
           name: parsed.normalizedName,
@@ -331,6 +345,11 @@ export async function runLoyverseFullCatalogSync(
             storeId,
             modifierGroupId: internalGroupId,
             sourceType: "POS",
+            // Phase 1: provenance — this entity was initially imported from a POS system.
+            originType: "IMPORTED_FROM_POS",
+            originConnectionId: connectionId,
+            originExternalRef: opt.externalId,
+            importedAt: now,
             sourceOfTruthConnectionId: connectionId,
             sourceModifierOptionRef: opt.externalId,
             name: opt.normalizedName,
@@ -385,6 +404,11 @@ export async function runLoyverseFullCatalogSync(
           tenantId,
           storeId,
           sourceType: "POS",
+          // Phase 1: provenance — this entity was initially imported from a POS system.
+          originType: "IMPORTED_FROM_POS",
+          originConnectionId: connectionId,
+          originExternalRef: parsed.externalId,
+          importedAt: now,
           sourceOfTruthConnectionId: connectionId,
           sourceProductRef: parsed.externalId,
           name: parsed.normalizedName,

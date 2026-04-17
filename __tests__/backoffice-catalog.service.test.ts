@@ -169,7 +169,7 @@ beforeEach(() => {
 // ─── Category tests ───────────────────────────────────────────────────────────
 
 describe("createBackofficeCategory", () => {
-  it("creates a category with sourceType LOCAL", async () => {
+  it("creates a category with sourceType LOCAL and originType BEYOND_CREATED", async () => {
     mockPrisma.catalogCategory.create.mockResolvedValue(LOCAL_CATEGORY);
 
     const result = await createBackofficeCategory(STORE_ID, TENANT_ID, ACTOR_ID, {
@@ -179,6 +179,7 @@ describe("createBackofficeCategory", () => {
     expect(mockPrisma.catalogCategory.create).toHaveBeenCalledOnce();
     const callArg = mockPrisma.catalogCategory.create.mock.calls[0][0];
     expect(callArg.data.sourceType).toBe("LOCAL");
+    expect(callArg.data.originType).toBe("BEYOND_CREATED");
     expect(callArg.data.storeId).toBe(STORE_ID);
     expect(callArg.data.tenantId).toBe(TENANT_ID);
     expect(result.name).toBe("Burgers");
@@ -186,10 +187,9 @@ describe("createBackofficeCategory", () => {
 });
 
 describe("updateBackofficeCategory", () => {
-  it("updates name for LOCAL category", async () => {
+  it("updates name for any category (Phase 1: no source-lock)", async () => {
     mockPrisma.catalogCategory.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "LOCAL",
     });
     mockPrisma.catalogCategory.update.mockResolvedValue({
       ...LOCAL_CATEGORY,
@@ -204,23 +204,25 @@ describe("updateBackofficeCategory", () => {
     expect(mockPrisma.catalogCategory.update).toHaveBeenCalledOnce();
   });
 
-  it("throws when attempting to change name of POS category", async () => {
+  it("allows updating name for POS-originated category (Phase 1: no source-lock)", async () => {
     mockPrisma.catalogCategory.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "POS",
+    });
+    mockPrisma.catalogCategory.update.mockResolvedValue({
+      ...POS_CATEGORY,
+      name: "Updated POS Name",
     });
 
-    await expect(
-      updateBackofficeCategory(STORE_ID, TENANT_ID, ACTOR_ID, POS_CATEGORY.id, {
-        name: "Should Fail",
-      })
-    ).rejects.toThrow("Cannot edit name");
+    const result = await updateBackofficeCategory(STORE_ID, TENANT_ID, ACTOR_ID, POS_CATEGORY.id, {
+      name: "Updated POS Name",
+    });
+
+    expect(result.name).toBe("Updated POS Name");
   });
 
-  it("allows visibility update for POS category", async () => {
+  it("allows visibility update for POS-originated category", async () => {
     mockPrisma.catalogCategory.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "POS",
     });
     mockPrisma.catalogCategory.update.mockResolvedValue({
       ...POS_CATEGORY,
@@ -237,7 +239,6 @@ describe("updateBackofficeCategory", () => {
   it("throws when category does not belong to store", async () => {
     mockPrisma.catalogCategory.findUniqueOrThrow.mockResolvedValue({
       storeId: "other-store",
-      sourceType: "LOCAL",
     });
 
     await expect(
@@ -247,10 +248,9 @@ describe("updateBackofficeCategory", () => {
 });
 
 describe("deleteBackofficeCategory", () => {
-  it("soft-deletes a LOCAL category", async () => {
+  it("soft-deletes a category", async () => {
     mockPrisma.catalogCategory.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "LOCAL",
     });
     mockPrisma.catalogCategory.update.mockResolvedValue({});
 
@@ -260,22 +260,23 @@ describe("deleteBackofficeCategory", () => {
     expect(updateCall.data.deletedAt).toBeInstanceOf(Date);
   });
 
-  it("throws when trying to delete a POS category", async () => {
+  it("soft-deletes a POS-originated category (Phase 1: no source-lock)", async () => {
     mockPrisma.catalogCategory.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "POS",
     });
+    mockPrisma.catalogCategory.update.mockResolvedValue({});
 
-    await expect(
-      deleteBackofficeCategory(STORE_ID, TENANT_ID, ACTOR_ID, POS_CATEGORY.id)
-    ).rejects.toThrow("Cannot delete POS-sourced");
+    await deleteBackofficeCategory(STORE_ID, TENANT_ID, ACTOR_ID, POS_CATEGORY.id);
+
+    const updateCall = mockPrisma.catalogCategory.update.mock.calls[0][0];
+    expect(updateCall.data.deletedAt).toBeInstanceOf(Date);
   });
 });
 
 // ─── Product tests ────────────────────────────────────────────────────────────
 
 describe("createBackofficeProduct", () => {
-  it("creates a product with sourceType LOCAL and correct price", async () => {
+  it("creates a product with sourceType LOCAL, originType BEYOND_CREATED, and correct price", async () => {
     mockPrisma.catalogProduct.create.mockResolvedValue(LOCAL_PRODUCT);
 
     const result = await createBackofficeProduct(STORE_ID, TENANT_ID, ACTOR_ID, {
@@ -286,16 +287,16 @@ describe("createBackofficeProduct", () => {
     expect(mockPrisma.catalogProduct.create).toHaveBeenCalledOnce();
     const callArg = mockPrisma.catalogProduct.create.mock.calls[0][0];
     expect(callArg.data.sourceType).toBe("LOCAL");
+    expect(callArg.data.originType).toBe("BEYOND_CREATED");
     expect(callArg.data.basePriceAmount).toBe(1200);
     expect(result.basePriceAmount).toBe(1200);
   });
 });
 
 describe("updateBackofficeProduct", () => {
-  it("updates price for LOCAL product", async () => {
+  it("updates price for any product (Phase 1: no source-lock)", async () => {
     mockPrisma.catalogProduct.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "LOCAL",
     });
     mockPrisma.catalogProduct.update.mockResolvedValue({
       ...LOCAL_PRODUCT,
@@ -309,23 +310,25 @@ describe("updateBackofficeProduct", () => {
     expect(result.basePriceAmount).toBe(1500);
   });
 
-  it("throws when attempting to change price of POS product", async () => {
+  it("allows updating price for POS-originated product (Phase 1: no source-lock)", async () => {
     mockPrisma.catalogProduct.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "POS",
+    });
+    mockPrisma.catalogProduct.update.mockResolvedValue({
+      ...POS_PRODUCT,
+      basePriceAmount: 999,
     });
 
-    await expect(
-      updateBackofficeProduct(STORE_ID, TENANT_ID, ACTOR_ID, POS_PRODUCT.id, {
-        basePriceAmount: 999,
-      })
-    ).rejects.toThrow("Cannot edit");
+    const result = await updateBackofficeProduct(STORE_ID, TENANT_ID, ACTOR_ID, POS_PRODUCT.id, {
+      basePriceAmount: 999,
+    });
+
+    expect(result.basePriceAmount).toBe(999);
   });
 
-  it("allows isSoldOut update for POS product", async () => {
+  it("allows isSoldOut update for any product", async () => {
     mockPrisma.catalogProduct.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "POS",
     });
     mockPrisma.catalogProduct.update.mockResolvedValue({
       ...POS_PRODUCT,
@@ -341,10 +344,9 @@ describe("updateBackofficeProduct", () => {
 });
 
 describe("deleteBackofficeProduct", () => {
-  it("soft-deletes a LOCAL product", async () => {
+  it("soft-deletes a product", async () => {
     mockPrisma.catalogProduct.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "LOCAL",
     });
     mockPrisma.catalogProduct.update.mockResolvedValue({});
 
@@ -354,22 +356,23 @@ describe("deleteBackofficeProduct", () => {
     expect(updateCall.data.deletedAt).toBeInstanceOf(Date);
   });
 
-  it("throws when trying to delete a POS product", async () => {
+  it("soft-deletes a POS-originated product (Phase 1: no source-lock)", async () => {
     mockPrisma.catalogProduct.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "POS",
     });
+    mockPrisma.catalogProduct.update.mockResolvedValue({});
 
-    await expect(
-      deleteBackofficeProduct(STORE_ID, TENANT_ID, ACTOR_ID, POS_PRODUCT.id)
-    ).rejects.toThrow("Cannot delete POS-sourced");
+    await deleteBackofficeProduct(STORE_ID, TENANT_ID, ACTOR_ID, POS_PRODUCT.id);
+
+    const updateCall = mockPrisma.catalogProduct.update.mock.calls[0][0];
+    expect(updateCall.data.deletedAt).toBeInstanceOf(Date);
   });
 });
 
 // ─── Modifier Group tests ─────────────────────────────────────────────────────
 
 describe("createBackofficeModifierGroup", () => {
-  it("creates a modifier group with sourceType LOCAL", async () => {
+  it("creates a modifier group with sourceType LOCAL and originType BEYOND_CREATED", async () => {
     mockPrisma.catalogModifierGroup.create.mockResolvedValue(LOCAL_GROUP);
 
     const result = await createBackofficeModifierGroup(STORE_ID, TENANT_ID, ACTOR_ID, {
@@ -379,15 +382,15 @@ describe("createBackofficeModifierGroup", () => {
     expect(mockPrisma.catalogModifierGroup.create).toHaveBeenCalledOnce();
     const callArg = mockPrisma.catalogModifierGroup.create.mock.calls[0][0];
     expect(callArg.data.sourceType).toBe("LOCAL");
+    expect(callArg.data.originType).toBe("BEYOND_CREATED");
     expect(result.name).toBe("Extras");
   });
 });
 
 describe("updateBackofficeModifierGroup", () => {
-  it("updates a LOCAL modifier group name", async () => {
+  it("updates a modifier group name (Phase 1: no source-lock)", async () => {
     mockPrisma.catalogModifierGroup.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "LOCAL",
     });
     mockPrisma.catalogModifierGroup.update.mockResolvedValue({
       ...LOCAL_GROUP,
@@ -407,10 +410,9 @@ describe("updateBackofficeModifierGroup", () => {
 });
 
 describe("deleteBackofficeModifierGroup", () => {
-  it("soft-deletes a LOCAL modifier group", async () => {
+  it("soft-deletes a modifier group", async () => {
     mockPrisma.catalogModifierGroup.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "LOCAL",
     });
     mockPrisma.catalogModifierGroup.update.mockResolvedValue({});
 
@@ -420,22 +422,23 @@ describe("deleteBackofficeModifierGroup", () => {
     expect(updateCall.data.deletedAt).toBeInstanceOf(Date);
   });
 
-  it("throws when trying to delete a POS modifier group", async () => {
+  it("soft-deletes a POS-originated modifier group (Phase 1: no source-lock)", async () => {
     mockPrisma.catalogModifierGroup.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "POS",
     });
+    mockPrisma.catalogModifierGroup.update.mockResolvedValue({});
 
-    await expect(
-      deleteBackofficeModifierGroup(STORE_ID, TENANT_ID, ACTOR_ID, "grp-pos")
-    ).rejects.toThrow("Cannot delete POS-sourced");
+    await deleteBackofficeModifierGroup(STORE_ID, TENANT_ID, ACTOR_ID, "grp-pos");
+
+    const updateCall = mockPrisma.catalogModifierGroup.update.mock.calls[0][0];
+    expect(updateCall.data.deletedAt).toBeInstanceOf(Date);
   });
 });
 
 // ─── Modifier Option tests ────────────────────────────────────────────────────
 
 describe("createBackofficeModifierOption", () => {
-  it("creates an option with sourceType LOCAL", async () => {
+  it("creates an option with sourceType LOCAL and originType BEYOND_CREATED", async () => {
     mockPrisma.catalogModifierGroup.findUniqueOrThrow.mockResolvedValue({ id: LOCAL_GROUP.id });
     mockPrisma.catalogModifierOption.create.mockResolvedValue(LOCAL_OPTION);
 
@@ -450,16 +453,16 @@ describe("createBackofficeModifierOption", () => {
     expect(mockPrisma.catalogModifierOption.create).toHaveBeenCalledOnce();
     const callArg = mockPrisma.catalogModifierOption.create.mock.calls[0][0];
     expect(callArg.data.sourceType).toBe("LOCAL");
+    expect(callArg.data.originType).toBe("BEYOND_CREATED");
     expect(callArg.data.modifierGroupId).toBe(LOCAL_GROUP.id);
     expect(result.name).toBe("Extra Cheese");
   });
 });
 
 describe("updateBackofficeModifierOption", () => {
-  it("updates price delta for LOCAL option", async () => {
+  it("updates price delta for any option (Phase 1: no source-lock)", async () => {
     mockPrisma.catalogModifierOption.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "LOCAL",
     });
     mockPrisma.catalogModifierOption.update.mockResolvedValue({
       ...LOCAL_OPTION,
@@ -477,10 +480,30 @@ describe("updateBackofficeModifierOption", () => {
     expect(result.priceDeltaAmount).toBe(200);
   });
 
-  it("allows isSoldOut update regardless of sourceType", async () => {
+  it("allows updating price delta for POS-originated option (Phase 1: no source-lock)", async () => {
     mockPrisma.catalogModifierOption.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
+    });
+    mockPrisma.catalogModifierOption.update.mockResolvedValue({
+      ...LOCAL_OPTION,
       sourceType: "POS",
+      priceDeltaAmount: 300,
+    });
+
+    const result = await updateBackofficeModifierOption(
+      STORE_ID,
+      TENANT_ID,
+      ACTOR_ID,
+      LOCAL_OPTION.id,
+      { priceDeltaAmount: 300 }
+    );
+
+    expect(result.priceDeltaAmount).toBe(300);
+  });
+
+  it("allows isSoldOut update for any option", async () => {
+    mockPrisma.catalogModifierOption.findUniqueOrThrow.mockResolvedValue({
+      storeId: STORE_ID,
     });
     mockPrisma.catalogModifierOption.update.mockResolvedValue({
       ...LOCAL_OPTION,
@@ -501,10 +524,9 @@ describe("updateBackofficeModifierOption", () => {
 });
 
 describe("deleteBackofficeModifierOption", () => {
-  it("soft-deletes a LOCAL option", async () => {
+  it("soft-deletes an option", async () => {
     mockPrisma.catalogModifierOption.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "LOCAL",
     });
     mockPrisma.catalogModifierOption.update.mockResolvedValue({});
 
@@ -514,15 +536,16 @@ describe("deleteBackofficeModifierOption", () => {
     expect(updateCall.data.deletedAt).toBeInstanceOf(Date);
   });
 
-  it("throws when trying to delete a POS option", async () => {
+  it("soft-deletes a POS-originated option (Phase 1: no source-lock)", async () => {
     mockPrisma.catalogModifierOption.findUniqueOrThrow.mockResolvedValue({
       storeId: STORE_ID,
-      sourceType: "POS",
     });
+    mockPrisma.catalogModifierOption.update.mockResolvedValue({});
 
-    await expect(
-      deleteBackofficeModifierOption(STORE_ID, TENANT_ID, ACTOR_ID, "opt-pos")
-    ).rejects.toThrow("Cannot delete POS-sourced");
+    await deleteBackofficeModifierOption(STORE_ID, TENANT_ID, ACTOR_ID, "opt-pos");
+
+    const updateCall = mockPrisma.catalogModifierOption.update.mock.calls[0][0];
+    expect(updateCall.data.deletedAt).toBeInstanceOf(Date);
   });
 });
 

@@ -6,11 +6,20 @@ interface Props {
   searchParams: { search?: string; filter?: string };
 }
 
-const SOURCE_BADGE: Record<string, { label: string; className: string }> = {
-  POS: { label: "POS", className: "bg-blue-100 text-blue-700" },
-  LOCAL: { label: "LOCAL", className: "bg-green-100 text-green-700" },
-  MERGED: { label: "MERGED", className: "bg-purple-100 text-purple-700" },
-  DELIVERY: { label: "DELIVERY", className: "bg-orange-100 text-orange-700" },
+// Phase 1: originType replaces sourceType as the provenance badge.
+// These show where a product ORIGINALLY came from — they are informational only.
+const ORIGIN_BADGE: Record<string, { label: string; className: string }> = {
+  BEYOND_CREATED: { label: "Beyond", className: "bg-green-100 text-green-700" },
+  IMPORTED_FROM_POS: { label: "Imported (POS)", className: "bg-blue-100 text-blue-700" },
+  IMPORTED_FROM_DELIVERY: { label: "Imported (Delivery)", className: "bg-orange-100 text-orange-700" },
+  IMPORTED_FROM_OTHER: { label: "Imported", className: "bg-gray-100 text-gray-600" },
+};
+// @deprecated: fallback for old sourceType values during migration
+const SOURCE_BADGE_COMPAT: Record<string, { label: string; className: string }> = {
+  POS: ORIGIN_BADGE.IMPORTED_FROM_POS,
+  LOCAL: ORIGIN_BADGE.BEYOND_CREATED,
+  MERGED: { label: "Merged", className: "bg-purple-100 text-purple-700" },
+  DELIVERY: ORIGIN_BADGE.IMPORTED_FROM_DELIVERY,
 };
 
 function formatPrice(amount: number, currency: string) {
@@ -34,7 +43,7 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
         <div>
           <h2 className="text-base font-semibold text-gray-800">Products</h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            * Only online/subscription visibility settings can be edited. POS-based data (name, price) is read-only.
+            Menu data is managed in Beyond. All fields can be edited here.
           </p>
         </div>
         <div className="flex gap-2 text-xs">
@@ -47,7 +56,7 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {products.length === 0 ? (
           <div className="p-8 text-center text-sm text-gray-400">
-            No products found. POS 또는 Catalog Sync 후 확인하세요.
+            No products found. Add products or import via Catalog Sync.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -56,8 +65,8 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
                 <tr>
                   <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Product Name</th>
                   <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Online Name</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Source</th>
-                  <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500">Price(읽기전용)</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Origin</th>
+                  <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500">Price</th>
                   <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Visible</th>
                   <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Subscription</th>
                   <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Featured</th>
@@ -66,8 +75,7 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {products.map((p) => {
-                  const srcBadge = SOURCE_BADGE[p.sourceType] ?? { label: p.sourceType, className: "bg-gray-100 text-gray-600" };
-                  const isPosLocked = p.sourceType === "POS" || p.sourceType === "MERGED";
+                  const originBadge = ORIGIN_BADGE[p.originType] ?? SOURCE_BADGE_COMPAT[p.sourceType] ?? { label: p.originType, className: "bg-gray-100 text-gray-600" };
                   return (
                     <tr key={p.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
@@ -78,16 +86,12 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
                       </td>
                       <td className="px-4 py-3 text-gray-600">{p.onlineName ?? <span className="text-gray-300">-</span>}</td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${srcBadge.className}`}>
-                          {srcBadge.label}
+                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${originBadge.className}`}>
+                          {originBadge.label}
                         </span>
-                        {isPosLocked && (
-                          <div className="text-xs text-gray-400 mt-0.5">🔒 Read-only</div>
-                        )}
                       </td>
                       <td className="px-4 py-3 text-right text-gray-500">
                         {formatPrice(p.basePriceAmount, p.currency)}
-                        {isPosLocked && <div className="text-xs text-gray-300">POS 기준</div>}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className={`text-xs px-1.5 py-0.5 rounded ${p.isVisibleOnOnlineOrder ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"}`}>

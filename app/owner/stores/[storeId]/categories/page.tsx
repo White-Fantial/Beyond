@@ -15,7 +15,7 @@ export default async function StoreCategoriesPage({ params }: Props) {
       <div>
         <h2 className="text-base font-semibold text-gray-800">Categories</h2>
         <p className="text-xs text-gray-500 mt-0.5">
-          * Only display order, visibility settings, image, and color can be edited. Category name is POS read-only.
+          Menu data is managed in Beyond. All fields can be edited here.
         </p>
       </div>
 
@@ -27,8 +27,8 @@ export default async function StoreCategoriesPage({ params }: Props) {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Category Name (🔒 Read-only)</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Source</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Category Name</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Origin</th>
                   <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Order</th>
                   <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Online Visible</th>
                   <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Subscription Visible</th>
@@ -51,7 +51,7 @@ export default async function StoreCategoriesPage({ params }: Props) {
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
-                        {cat.sourceType}
+                        {cat.originType ?? cat.sourceType}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center text-gray-600">{cat.displayOrder}</td>

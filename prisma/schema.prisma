@@ -9,12 +9,25 @@ datasource db {
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
+// @deprecated — use CatalogOriginType instead.
+// Kept for migration compatibility; all new code should use originType.
 enum CatalogSourceType {
   POS
   DELIVERY
   LOCAL
   MERGED
   IMPORTED
+}
+
+// Phase 1: Internal catalog ownership.
+// Records where a catalog entity ORIGINALLY came from (historical provenance only).
+// This is NOT the current authoritative source — Beyond internal catalog IS the
+// canonical operational model regardless of origin.
+enum CatalogOriginType {
+  BEYOND_CREATED      // created directly inside Beyond
+  IMPORTED_FROM_POS   // initially imported from a POS system
+  IMPORTED_FROM_DELIVERY // initially imported from a delivery platform
+  IMPORTED_FROM_OTHER // initially imported from another source
 }
 
 enum CatalogChannelType {
@@ -1166,6 +1179,13 @@ model CatalogCategory {
   id                       String            @id @default(uuid())
   tenantId                 String
   storeId                  String
+  // Phase 1: provenance fields — records where this entity ORIGINALLY came from.
+  // Beyond internal catalog is always the canonical operational model.
+  originType               CatalogOriginType @default(BEYOND_CREATED)
+  originConnectionId       String?   // nullable — which external connection first created this
+  originExternalRef        String?   // nullable — the external system's id at initial import time
+  importedAt               DateTime? // nullable — when this entity was first imported
+  // @deprecated: use originType / originConnectionId / originExternalRef instead.
   sourceType               CatalogSourceType
   sourceOfTruthConnectionId String?
   sourceCategoryRef        String?
@@ -1189,6 +1209,7 @@ model CatalogCategory {
 
   @@index([tenantId, storeId])
   @@index([storeId, isActive, isVisibleOnOnlineOrder, displayOrder])
+  @@index([storeId, originConnectionId, originExternalRef])
   @@index([storeId, sourceOfTruthConnectionId, sourceCategoryRef])
   @@map("catalog_categories")
 }
@@ -1197,6 +1218,12 @@ model CatalogProduct {
   id                        String            @id @default(uuid())
   tenantId                  String
   storeId                   String
+  // Phase 1: provenance fields — historical origin only; not current authoritative source.
+  originType                CatalogOriginType @default(BEYOND_CREATED)
+  originConnectionId        String?
+  originExternalRef         String?
+  importedAt                DateTime?
+  // @deprecated: use originType / originConnectionId / originExternalRef instead.
   sourceType                CatalogSourceType
   sourceOfTruthConnectionId String?
   sourceProductRef          String?
@@ -1229,6 +1256,7 @@ model CatalogProduct {
 
   @@index([tenantId, storeId])
   @@index([storeId, isActive, isVisibleOnOnlineOrder, displayOrder])
+  @@index([storeId, originConnectionId, originExternalRef])
   @@index([storeId, sourceOfTruthConnectionId, sourceProductRef])
   @@index([storeId, name])
   @@map("catalog_products")
@@ -1257,6 +1285,12 @@ model CatalogModifierGroup {
   id                        String            @id @default(uuid())
   tenantId                  String
   storeId                   String
+  // Phase 1: provenance fields — historical origin only; not current authoritative source.
+  originType                CatalogOriginType @default(BEYOND_CREATED)
+  originConnectionId        String?
+  originExternalRef         String?
+  importedAt                DateTime?
+  // @deprecated: use originType / originConnectionId / originExternalRef instead.
   sourceType                CatalogSourceType
   sourceOfTruthConnectionId String?
   sourceModifierGroupRef    String?
@@ -1277,6 +1311,7 @@ model CatalogModifierGroup {
   productModifierGroups CatalogProductModifierGroup[]
 
   @@index([tenantId, storeId])
+  @@index([storeId, originConnectionId, originExternalRef])
   @@index([storeId, sourceOfTruthConnectionId, sourceModifierGroupRef])
   @@index([storeId, isActive, displayOrder])
   @@map("catalog_modifier_groups")
@@ -1287,6 +1322,12 @@ model CatalogModifierOption {
   tenantId                  String
   storeId                   String
   modifierGroupId           String
+  // Phase 1: provenance fields — historical origin only; not current authoritative source.
+  originType                CatalogOriginType @default(BEYOND_CREATED)
+  originConnectionId        String?
+  originExternalRef         String?
+  importedAt                DateTime?
+  // @deprecated: use originType / originConnectionId / originExternalRef instead.
   sourceType                CatalogSourceType
   sourceOfTruthConnectionId String?
   sourceModifierOptionRef   String?
@@ -1307,6 +1348,7 @@ model CatalogModifierOption {
 
   @@index([tenantId, storeId])
   @@index([modifierGroupId, isActive, isSoldOut, displayOrder])
+  @@index([storeId, originConnectionId, originExternalRef])
   @@index([storeId, sourceOfTruthConnectionId, sourceModifierOptionRef])
   @@map("catalog_modifier_options")
 }
