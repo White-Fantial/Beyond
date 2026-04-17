@@ -1,10 +1,13 @@
 /**
- * Catalog service — internal catalog CRUD operations.
+ * Catalog service — internal catalog read/write helpers.
  *
- * Rules:
- * - All reads/writes use the new catalog_* tables.
- * - Source-of-truth entities (sourceType = POS) may not have their
- *   core fields directly edited; only local merchandising fields are mutable.
+ * Phase 1 — Beyond internal catalog ownership:
+ * - Beyond internal catalog is the ONLY canonical operational model.
+ * - All reads use the internal catalog_* tables. External mirror tables are
+ *   never read by customer-facing or backoffice paths.
+ * - All catalog entities (regardless of origin) are fully editable in Beyond.
+ * - provenance (originType, originConnectionId, originExternalRef) records
+ *   where an entity ORIGINALLY came from — it does NOT lock editing rights.
  * - Money is always in integer minor units (never float).
  */
 
@@ -17,15 +20,6 @@ import type {
   CatalogProductCategory,
   CatalogProductModifierGroup,
 } from "@prisma/client";
-
-// ─── Errors ───────────────────────────────────────────────────────────────────
-
-export class PosSourceLockError extends Error {
-  constructor(field: string) {
-    super(`Field "${field}" is source-locked and cannot be edited directly for POS-sourced entities.`);
-    this.name = "PosSourceLockError";
-  }
-}
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 

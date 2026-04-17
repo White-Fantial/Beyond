@@ -12,9 +12,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const tenantId = resolveActorTenantId(ctx, params.storeId);
     const body = await req.json();
 
-    // Strip source-locked fields
+    // Phase 1: name and priceDeltaAmount are now editable in Beyond.
+    // Strip only internal provenance fields that should never be overridden via API.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { name: _name, priceDeltaAmount: _priceDeltaAmount, sourceType: _sourceType, sourceModifierOptionRef: _sourceModifierOptionRef, ...safeData } = body;
+    const { sourceType: _sourceType, sourceModifierOptionRef: _sourceModifierOptionRef, sourceOfTruthConnectionId: _sourceOfTruthConnectionId, originConnectionId: _originConnectionId, originExternalRef: _originExternalRef, originType: _originType, ...safeData } = body;
 
     await updateOwnerModifierOption({
       optionId: params.optionId,

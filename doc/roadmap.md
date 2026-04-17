@@ -30,6 +30,17 @@
 - [x] Order HTTP API routes (list, status update, forward-to-POS)
 - [x] Inbound order webhook routes (Uber Eats / DoorDash) with signature verification
 - [x] Product availability control — `isSoldOut` per product, inventory management page, operations overview
+- [x] **Catalog Phase 1 — Internal Catalog Ownership** — Beyond internal catalog is now the canonical operational model. Added provenance fields (`originType`, `originConnectionId`, `originExternalRef`, `importedAt`). `CatalogOriginType` enum (`BEYOND_CREATED`, `IMPORTED_FROM_POS`, `IMPORTED_FROM_DELIVERY`, `IMPORTED_FROM_OTHER`). Removed all source-lock logic from backoffice and owner catalog services. All catalog entities are now fully editable regardless of origin. UI updated to remove POS-lock messages; origin shown as informational badge only. `types/owner.ts` updated with `originType`. Migration `20260417000000_catalog_phase1_provenance`. 61 tests in `__tests__/backoffice-catalog.service.test.ts` + `__tests__/catalog-internal-ownership.test.ts`.
+
+#### Catalog Phase 2 (Planned)
+- [ ] External catalog import UI (map external entities to internal catalog rows)
+- [ ] Conflict-resolution policy for sync vs. local edits
+- [ ] Import preview and diff view
+
+#### Catalog Phase 3 (Planned)
+- [ ] Channel publish — push internal catalog changes to POS/delivery channels
+- [ ] Two-way sync with conflict-resolution
+- [ ] Outbound change log
 
 ### Platform Infrastructure
 

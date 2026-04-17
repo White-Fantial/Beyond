@@ -1,8 +1,9 @@
 /**
- * Backoffice Catalog Service — Phase 3.
+ * Backoffice Catalog Service — Phase 3, updated for Phase 1 internal ownership.
  *
  * Full CRUD for categories, products, modifier groups, and modifier options.
- * POS-sourced entities have core fields locked (name/description/price).
+ * Phase 1 change: ALL catalog entities are editable in Beyond regardless of
+ * their originType (BEYOND_CREATED, IMPORTED_FROM_POS, etc.).
  * Soft-delete is used for all deletes (deletedAt timestamp).
  */
 
@@ -124,6 +125,7 @@ export async function createBackofficeCategory(
       tenantId,
       storeId,
       sourceType: "LOCAL",
+      originType: "BEYOND_CREATED",
       name: input.name,
       description: input.description ?? null,
       displayOrder: input.displayOrder ?? 0,
@@ -156,29 +158,18 @@ export async function updateBackofficeCategory(
 ): Promise<CatalogCategory> {
   const existing = await prisma.catalogCategory.findUniqueOrThrow({
     where: { id: categoryId },
-    select: { storeId: true, sourceType: true },
+    select: { storeId: true },
   });
 
   if (existing.storeId !== storeId) {
     throw new Error("Category does not belong to this store");
   }
 
-  const isPOS = existing.sourceType === "POS";
-
-  if (isPOS && (input.name !== undefined || input.description !== undefined)) {
-    throw new Error(
-      "Cannot edit name or description for POS-sourced categories. Only display settings can be changed."
-    );
-  }
-
+  // Phase 1: Beyond owns the catalog. All fields are editable regardless of origin.
   const data: Record<string, unknown> = {};
-  if (!isPOS) {
-    if (input.name !== undefined) data.name = input.name;
-    if (input.description !== undefined) data.description = input.description;
-    if (input.displayOrder !== undefined) data.displayOrder = input.displayOrder;
-  } else {
-    if (input.displayOrder !== undefined) data.displayOrder = input.displayOrder;
-  }
+  if (input.name !== undefined) data.name = input.name;
+  if (input.description !== undefined) data.description = input.description;
+  if (input.displayOrder !== undefined) data.displayOrder = input.displayOrder;
   if (input.isVisibleOnOnlineOrder !== undefined)
     data.isVisibleOnOnlineOrder = input.isVisibleOnOnlineOrder;
   if (input.isVisibleOnSubscription !== undefined)
@@ -211,18 +202,14 @@ export async function deleteBackofficeCategory(
 ): Promise<void> {
   const existing = await prisma.catalogCategory.findUniqueOrThrow({
     where: { id: categoryId },
-    select: { storeId: true, sourceType: true },
+    select: { storeId: true },
   });
 
   if (existing.storeId !== storeId) {
     throw new Error("Category does not belong to this store");
   }
 
-  if (existing.sourceType === "POS") {
-    throw new Error(
-      "Cannot delete POS-sourced categories. Hide it using visibility settings instead."
-    );
-  }
+  // Phase 1: Beyond owns all catalog entities. Any category can be soft-deleted.
 
   await prisma.catalogCategory.update({
     where: { id: categoryId },
@@ -252,6 +239,7 @@ export async function createBackofficeProduct(
       tenantId,
       storeId,
       sourceType: "LOCAL",
+      originType: "BEYOND_CREATED",
       name: input.name,
       description: input.description ?? null,
       basePriceAmount: input.basePriceAmount,
@@ -291,35 +279,19 @@ export async function updateBackofficeProduct(
 ): Promise<CatalogProduct> {
   const existing = await prisma.catalogProduct.findUniqueOrThrow({
     where: { id: productId },
-    select: { storeId: true, sourceType: true },
+    select: { storeId: true },
   });
 
   if (existing.storeId !== storeId) {
     throw new Error("Product does not belong to this store");
   }
 
-  const isPOS = existing.sourceType === "POS";
-
-  if (
-    isPOS &&
-    (input.name !== undefined ||
-      input.description !== undefined ||
-      input.basePriceAmount !== undefined)
-  ) {
-    throw new Error(
-      "Cannot edit name, description, or price for POS-sourced products. Only display settings can be changed."
-    );
-  }
-
+  // Phase 1: Beyond owns the catalog. All fields are editable regardless of origin.
   const data: Record<string, unknown> = {};
-  if (!isPOS) {
-    if (input.name !== undefined) data.name = input.name;
-    if (input.description !== undefined) data.description = input.description;
-    if (input.basePriceAmount !== undefined) data.basePriceAmount = input.basePriceAmount;
-    if (input.displayOrder !== undefined) data.displayOrder = input.displayOrder;
-  } else {
-    if (input.displayOrder !== undefined) data.displayOrder = input.displayOrder;
-  }
+  if (input.name !== undefined) data.name = input.name;
+  if (input.description !== undefined) data.description = input.description;
+  if (input.basePriceAmount !== undefined) data.basePriceAmount = input.basePriceAmount;
+  if (input.displayOrder !== undefined) data.displayOrder = input.displayOrder;
   if (input.isVisibleOnOnlineOrder !== undefined)
     data.isVisibleOnOnlineOrder = input.isVisibleOnOnlineOrder;
   if (input.isVisibleOnSubscription !== undefined)
@@ -356,18 +328,14 @@ export async function deleteBackofficeProduct(
 ): Promise<void> {
   const existing = await prisma.catalogProduct.findUniqueOrThrow({
     where: { id: productId },
-    select: { storeId: true, sourceType: true },
+    select: { storeId: true },
   });
 
   if (existing.storeId !== storeId) {
     throw new Error("Product does not belong to this store");
   }
 
-  if (existing.sourceType === "POS") {
-    throw new Error(
-      "Cannot delete POS-sourced products. Hide it using visibility settings instead."
-    );
-  }
+  // Phase 1: Beyond owns all catalog entities. Any product can be soft-deleted.
 
   await prisma.catalogProduct.update({
     where: { id: productId },
@@ -397,6 +365,7 @@ export async function createBackofficeModifierGroup(
       tenantId,
       storeId,
       sourceType: "LOCAL",
+      originType: "BEYOND_CREATED",
       name: input.name,
       description: input.description ?? null,
       selectionMin: input.selectionMin ?? 0,
@@ -430,32 +399,21 @@ export async function updateBackofficeModifierGroup(
 ): Promise<CatalogModifierGroup> {
   const existing = await prisma.catalogModifierGroup.findUniqueOrThrow({
     where: { id: groupId },
-    select: { storeId: true, sourceType: true },
+    select: { storeId: true },
   });
 
   if (existing.storeId !== storeId) {
     throw new Error("Modifier group does not belong to this store");
   }
 
-  const isPOS = existing.sourceType === "POS";
-
-  if (isPOS && (input.name !== undefined || input.description !== undefined)) {
-    throw new Error(
-      "Cannot edit name or description for POS-sourced modifier groups. Only display settings can be changed."
-    );
-  }
-
+  // Phase 1: Beyond owns the catalog. All fields are editable regardless of origin.
   const data: Record<string, unknown> = {};
-  if (!isPOS) {
-    if (input.name !== undefined) data.name = input.name;
-    if (input.description !== undefined) data.description = input.description;
-    if (input.selectionMin !== undefined) data.selectionMin = input.selectionMin;
-    if (input.selectionMax !== undefined) data.selectionMax = input.selectionMax;
-    if (input.isRequired !== undefined) data.isRequired = input.isRequired;
-    if (input.displayOrder !== undefined) data.displayOrder = input.displayOrder;
-  } else {
-    if (input.displayOrder !== undefined) data.displayOrder = input.displayOrder;
-  }
+  if (input.name !== undefined) data.name = input.name;
+  if (input.description !== undefined) data.description = input.description;
+  if (input.selectionMin !== undefined) data.selectionMin = input.selectionMin;
+  if (input.selectionMax !== undefined) data.selectionMax = input.selectionMax;
+  if (input.isRequired !== undefined) data.isRequired = input.isRequired;
+  if (input.displayOrder !== undefined) data.displayOrder = input.displayOrder;
   if (input.isVisibleOnOnlineOrder !== undefined)
     data.isVisibleOnOnlineOrder = input.isVisibleOnOnlineOrder;
 
@@ -485,18 +443,14 @@ export async function deleteBackofficeModifierGroup(
 ): Promise<void> {
   const existing = await prisma.catalogModifierGroup.findUniqueOrThrow({
     where: { id: groupId },
-    select: { storeId: true, sourceType: true },
+    select: { storeId: true },
   });
 
   if (existing.storeId !== storeId) {
     throw new Error("Modifier group does not belong to this store");
   }
 
-  if (existing.sourceType === "POS") {
-    throw new Error(
-      "Cannot delete POS-sourced modifier groups. Hide it using visibility settings instead."
-    );
-  }
+  // Phase 1: Beyond owns all catalog entities. Any modifier group can be soft-deleted.
 
   await prisma.catalogModifierGroup.update({
     where: { id: groupId },
@@ -534,6 +488,7 @@ export async function createBackofficeModifierOption(
       storeId,
       modifierGroupId: groupId,
       sourceType: "LOCAL",
+      originType: "BEYOND_CREATED",
       name: input.name,
       description: input.description ?? null,
       priceDeltaAmount: input.priceDeltaAmount ?? 0,
@@ -567,34 +522,20 @@ export async function updateBackofficeModifierOption(
 ): Promise<CatalogModifierOption> {
   const existing = await prisma.catalogModifierOption.findUniqueOrThrow({
     where: { id: optionId },
-    select: { storeId: true, sourceType: true },
+    select: { storeId: true },
   });
 
   if (existing.storeId !== storeId) {
     throw new Error("Modifier option does not belong to this store");
   }
 
-  const isPOS = existing.sourceType === "POS";
-
-  if (
-    isPOS &&
-    (input.name !== undefined ||
-      input.description !== undefined ||
-      input.priceDeltaAmount !== undefined)
-  ) {
-    throw new Error(
-      "Cannot edit name, description, or price for POS-sourced modifier options."
-    );
-  }
-
+  // Phase 1: Beyond owns the catalog. All fields are editable regardless of origin.
   const data: Record<string, unknown> = {};
-  if (!isPOS) {
-    if (input.name !== undefined) data.name = input.name;
-    if (input.description !== undefined) data.description = input.description;
-    if (input.priceDeltaAmount !== undefined) data.priceDeltaAmount = input.priceDeltaAmount;
-    if (input.displayOrder !== undefined) data.displayOrder = input.displayOrder;
-    if (input.isDefault !== undefined) data.isDefault = input.isDefault;
-  }
+  if (input.name !== undefined) data.name = input.name;
+  if (input.description !== undefined) data.description = input.description;
+  if (input.priceDeltaAmount !== undefined) data.priceDeltaAmount = input.priceDeltaAmount;
+  if (input.displayOrder !== undefined) data.displayOrder = input.displayOrder;
+  if (input.isDefault !== undefined) data.isDefault = input.isDefault;
   if (input.isSoldOut !== undefined) data.isSoldOut = input.isSoldOut;
 
   const option = await prisma.catalogModifierOption.update({
@@ -623,16 +564,14 @@ export async function deleteBackofficeModifierOption(
 ): Promise<void> {
   const existing = await prisma.catalogModifierOption.findUniqueOrThrow({
     where: { id: optionId },
-    select: { storeId: true, sourceType: true },
+    select: { storeId: true },
   });
 
   if (existing.storeId !== storeId) {
     throw new Error("Modifier option does not belong to this store");
   }
 
-  if (existing.sourceType === "POS") {
-    throw new Error("Cannot delete POS-sourced modifier options.");
-  }
+  // Phase 1: Beyond owns all catalog entities. Any modifier option can be soft-deleted.
 
   await prisma.catalogModifierOption.update({
     where: { id: optionId },

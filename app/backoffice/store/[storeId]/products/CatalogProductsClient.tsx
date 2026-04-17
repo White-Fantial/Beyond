@@ -33,6 +33,7 @@ export default function CatalogProductsClient({ storeId, initialProducts }: Prop
   const [isPending, startTransition] = useTransition();
 
   const isPOS = modal.editTarget?.sourceType === "POS";
+  // Phase 1: isPOS is kept for informational use only — it no longer restricts editing.
 
   function openCreate() {
     setForm(emptyForm);
@@ -230,8 +231,8 @@ export default function CatalogProductsClient({ storeId, initialProducts }: Prop
                   </td>
                   <td className="px-4 py-2">
                     {product.sourceType === "POS" && (
-                      <span className="rounded bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700">
-                        POS
+                      <span className="rounded bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-600" title="Originally imported from POS">
+                        Imported
                       </span>
                     )}
                   </td>
@@ -242,15 +243,13 @@ export default function CatalogProductsClient({ storeId, initialProducts }: Prop
                     >
                       Edit
                     </button>
-                    {product.sourceType !== "POS" && (
-                      <button
-                        onClick={() => handleDelete(product)}
-                        disabled={isPending}
-                        className="rounded bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
-                      >
-                        Delete
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleDelete(product)}
+                      disabled={isPending}
+                      className="rounded bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -268,8 +267,8 @@ export default function CatalogProductsClient({ storeId, initialProducts }: Prop
             </h2>
 
             {isPOS && (
-              <p className="mb-4 rounded border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">
-                This item is managed by your POS system. Only display settings can be edited.
+              <p className="mb-4 rounded border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-600">
+                Origin: Imported from POS. All fields are editable in Beyond.
               </p>
             )}
 
@@ -285,9 +284,8 @@ export default function CatalogProductsClient({ storeId, initialProducts }: Prop
                 <input
                   type="text"
                   value={form.name}
-                  disabled={isPOS}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm disabled:bg-gray-100"
+                  className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
                 />
               </div>
 
@@ -295,10 +293,9 @@ export default function CatalogProductsClient({ storeId, initialProducts }: Prop
                 <label className="mb-1 block text-xs font-medium text-gray-700">Description</label>
                 <textarea
                   value={form.description}
-                  disabled={isPOS}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   rows={2}
-                  className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm disabled:bg-gray-100"
+                  className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
                 />
               </div>
 
@@ -312,9 +309,8 @@ export default function CatalogProductsClient({ storeId, initialProducts }: Prop
                     step="0.01"
                     min="0"
                     value={form.basePriceAmount}
-                    disabled={isPOS}
                     onChange={(e) => setForm((f) => ({ ...f, basePriceAmount: e.target.value }))}
-                    className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm disabled:bg-gray-100"
+                    className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
                   />
                 </div>
                 <div>

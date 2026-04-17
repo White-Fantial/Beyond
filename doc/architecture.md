@@ -206,69 +206,120 @@ A partial unique index (`WHERE canonical_order_key IS NOT NULL`) enforces unique
 
 ---
 
-## Catalog Architecture
+## Catalog Architecture (Phase 1 — Internal Ownership)
 
-### Overview
+### Design Philosophy
 
-The catalog system is organized into three layers:
+**Beyond internal catalog is the canonical operational model.**
+
+> External POS systems and delivery platforms are import sources, not authorities.
+> All catalog reads (customer ordering UI, backoffice, owner console) use only the
+> internal catalog tables. External data flows are managed as import/sync operations
+> against the canonical internal model.
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│  1. Internal Catalog Tables                                           │
-│     catalog_categories, catalog_products, catalog_modifier_groups,   │
-│     catalog_modifier_options, catalog_product_categories,            │
-│     catalog_product_modifier_groups                                  │
-├──────────────────────────────────────────────────────────────────────┤
-│  2. External Raw Mirror Tables                                        │
-│     external_catalog_categories, external_catalog_products,          │
-│     external_catalog_modifier_groups, external_catalog_modifier_options│
-│     external_catalog_product_modifier_group_links                    │
-├──────────────────────────────────────────────────────────────────────┤
-│  3. Channel Mapping Table                                             │
-│     channel_entity_mappings                                          │
-└──────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Internal Catalog Layer (canonical)                                          │
+│  catalog_categories, catalog_products, catalog_modifier_groups,              │
+│  catalog_modifier_options, catalog_product_categories,                       │
+│  catalog_product_modifier_groups                                             │
+│                                                                              │
+│  ← ALL customer UI / backoffice / owner console reads come here             │
+│  ← originType records historical import source only                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  External Raw Mirror Layer (phase 2+)                                        │
+│  external_catalog_categories, external_catalog_products,                     │
+│  external_catalog_modifier_groups, external_catalog_modifier_options         │
+│                                                                              │
+│  ← Read-only snapshot of what external systems currently have               │
+│  ← Never read by customer-facing or backoffice code                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Channel Mapping Layer (phase 2+)                                            │
+│  channel_entity_mappings                                                     │
+│                                                                              │
+│  ← Bidirectional lookup: internal UUID ↔ external channel ID               │
+│  ← Used for outbound order forwarding only (not catalog reads)              │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-| Layer | Purpose | Key fields |
-|-------|---------|------------|
-| **Internal catalog** | Single normalized source of truth for all catalog reads (UI, order UI, subscriptions). IDs are internal UUIDs only. | `id`, `tenantId`, `storeId`, `sourceType`, `sourceOfTruthConnectionId`, `source*Ref` |
-| **External mirror** | Raw, unmodified copy of each record fetched from Loyverse. Used for debugging, diffing, and re-syncing. | `connectionId`, `externalId`, `rawPayload`, `lastSyncedAt` |
-| **Channel mapping** | Bidirectional lookup table between internal IDs and external channel IDs. Used when sending orders outbound to Loyverse or any channel. | `internalEntityId`, `externalEntityId`, `connectionId`, `entityType` |
+### Provenance (originType)
 
-### Sync Philosophy
+Every internal catalog entity carries provenance fields that record **where it ORIGINALLY came from**. These are historical metadata only — they do not restrict editing or represent the current authoritative source.
 
-Beyond uses **full catalog sync** rather than incremental/partial sync. On each sync run:
-1. All categories, modifier groups, modifier options, and items are fetched from Loyverse.
-2. Raw mirror rows are upserted (one per external entity).
-3. Internal catalog rows are upserted using source keys (never names).
-4. Product–category and product–modifier-group links are reconciled.
-5. Channel mapping rows are upserted.
+| Field | Purpose |
+|-------|---------|
+| `originType` | `BEYOND_CREATED` / `IMPORTED_FROM_POS` / `IMPORTED_FROM_DELIVERY` / `IMPORTED_FROM_OTHER` |
+| `originConnectionId` | Which external connection first created this entity (nullable) |
+| `originExternalRef` | The external system's ID at initial import time (nullable) |
+| `importedAt` | When this entity was first imported (nullable) |
 
-### Source-locked vs Locally Editable Fields
+**Key principle:** `originType = IMPORTED_FROM_POS` does NOT mean the POS is the current authority. It means the entity was initially bootstrapped from POS data. Beyond owns it now.
 
-| Field | Editable locally? | Notes |
-|-------|------------------|-------|
-| `name` | ❌ Source-locked (POS) | Updated only via sync |
-| `basePriceAmount` | ❌ Source-locked (POS) | Updated only via sync |
-| `displayOrder` | ✅ Local | Reorder categories/products in the backoffice |
-| `isVisibleOnOnlineOrder` | ✅ Local | Toggle visibility on online ordering channel |
-| `isVisibleOnSubscription` | ✅ Local | Toggle visibility on subscription channel |
-| `isFeatured` | ✅ Local | Mark products as featured on the menu |
-| `onlineName` | ✅ Local | Override display name for online ordering |
-| `imageUrl` | ✅ Local | Upload a custom image |
-| `CatalogModifierOption.isSoldOut` | ✅ Local | Mark option as sold out |
+### Editing Policy (Phase 1)
+
+All catalog entities are **fully editable in Beyond**, regardless of origin:
+
+| Field | Editable? | Notes |
+|-------|-----------|-------|
+| `name` | ✅ Always editable | No source-lock |
+| `description` | ✅ Always editable | No source-lock |
+| `basePriceAmount` | ✅ Always editable | No source-lock |
+| `displayOrder` | ✅ Always editable | |
+| `isVisibleOnOnlineOrder` | ✅ Always editable | |
+| `isVisibleOnSubscription` | ✅ Always editable | |
+| `isFeatured` | ✅ Always editable | |
+| `onlineName` | ✅ Always editable | |
+| `imageUrl` | ✅ Always editable | |
+| `isSoldOut` | ✅ Always editable | |
+
+> **Note for Phase 2+**: When external catalog sync/import is added, a conflict-resolution policy will be needed to decide whether a subsequent sync overwrites local Beyond edits. This policy is intentionally deferred to Phase 2.
+
+### Sync Philosophy (Phase 1)
+
+The catalog sync service (`catalog-sync.service.ts`) operates as an **import pipeline**, not a sync authority:
+
+1. Fetch raw data from the external POS (Loyverse, etc.).
+2. Persist raw mirror rows (`external_catalog_*` tables) for debugging/diffing.
+3. **First-time import**: create internal catalog rows and set `originType = IMPORTED_FROM_POS` + `originConnectionId` + `originExternalRef` + `importedAt`.
+4. **Subsequent syncs**: update internal catalog rows (Phase 2 will add conflict-resolution policy before this step).
+5. Reconcile product–category and product–modifier-group links.
+6. Upsert channel mapping rows.
+
+Matching uses origin keys (`originConnectionId + originExternalRef`), with fallback to legacy source keys for backward compatibility. **Never** matches by name.
+
+### Internal-only Read Principle
+
+Customer-facing, backoffice, and owner-console code **must only read from internal catalog tables**:
+
+- ✅ `catalog_categories`, `catalog_products`, `catalog_modifier_groups`, `catalog_modifier_options`
+- ❌ `external_catalog_*` tables — never in customer/backoffice read paths
+- ❌ External IDs — internal UUIDs only in UI/order code
+
+Services enforce this at the module level:
+- `services/customer-menu.service.ts` → internal catalog only
+- `services/catalog.service.ts` → internal catalog only
+- `services/backoffice/backoffice-catalog.service.ts` → internal catalog only
+- `services/owner/owner-catalog.service.ts` → internal catalog only
 
 ### Catalog API Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/catalog/categories?storeId=` | List catalog categories |
-| `PATCH` | `/api/catalog/categories` | Reorder or update category visibility |
-| `GET` | `/api/catalog/products?storeId=` | List catalog products |
-| `PATCH` | `/api/catalog/products` | Update allowed local merchandising fields |
+| `GET` | `/api/catalog/categories?storeId=` | List catalog categories (internal only) |
+| `PATCH` | `/api/catalog/categories` | Reorder or update category |
+| `GET` | `/api/catalog/products?storeId=` | List catalog products (internal only) |
+| `PATCH` | `/api/catalog/products` | Update product fields (all fields editable) |
 | `GET` | `/api/catalog/modifier-groups?storeId=` | List modifier groups with nested options |
-| `PATCH` | `/api/catalog/modifier-groups` | Toggle modifier option sold-out |
-| `POST` | `/api/catalog/sync` | Trigger full Loyverse catalog sync for a store |
+| `PATCH` | `/api/catalog/modifier-groups` | Update modifier group or option |
+| `POST` | `/api/catalog/sync` | Trigger full catalog import from POS |
+
+### Phase Roadmap
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| **Phase 1** | ✅ Complete | Internal catalog ownership. provenance fields. No source-lock. Internal-only reads. |
+| **Phase 2** | 🔜 Planned | External catalog import foundation. Import mapping UI. Conflict-resolution policy. |
+| **Phase 3** | 🔜 Planned | Channel publish. Two-way sync. Outbound push to POS/delivery. |
 
 ---
 

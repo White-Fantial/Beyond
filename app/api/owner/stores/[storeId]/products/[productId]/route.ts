@@ -12,9 +12,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const tenantId = resolveActorTenantId(ctx, params.storeId);
     const body = await req.json();
 
-    // Only local fields are accepted — strip any source-locked fields
+    // Phase 1: name, basePriceAmount, and description are now editable in Beyond.
+    // Strip only internal provenance fields that should never be overridden via API.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { name: _name, basePriceAmount: _basePriceAmount, sourceType: _sourceType, sourceProductRef: _sourceProductRef, sku: _sku, barcode: _barcode, ...safeData } = body;
+    const { sourceType: _sourceType, sourceProductRef: _sourceProductRef, sku: _sku, barcode: _barcode, sourceOfTruthConnectionId: _sourceOfTruthConnectionId, originConnectionId: _originConnectionId, originExternalRef: _originExternalRef, originType: _originType, ...safeData } = body;
 
     await updateOwnerProduct({
       productId: params.productId,

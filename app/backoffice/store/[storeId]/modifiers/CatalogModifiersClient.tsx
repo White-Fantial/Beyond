@@ -56,6 +56,7 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
 
   const isGroupPOS = groupModal.editTarget?.sourceType === "POS";
   const isOptionPOS = optionModal.editTarget?.sourceType === "POS";
+  // Phase 1: isGroupPOS/isOptionPOS are kept for informational use only — they no longer restrict editing.
 
   // ─── Expand/collapse ────────────────────────────────────────────────────────
 
@@ -295,8 +296,8 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                 >
                   <span className="font-medium text-gray-900">{group.name}</span>
                   {group.sourceType === "POS" && (
-                    <span className="rounded bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700">
-                      POS
+                    <span className="rounded bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-600" title="Originally imported from POS">
+                      Imported
                     </span>
                   )}
                   <span className="text-xs text-gray-400">
@@ -311,15 +312,13 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                   >
                     Edit
                   </button>
-                  {group.sourceType !== "POS" && (
-                    <button
-                      onClick={() => handleDeleteGroup(group)}
-                      disabled={isPending}
-                      className="rounded bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
-                    >
-                      Delete
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleDeleteGroup(group)}
+                    disabled={isPending}
+                    className="rounded bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
 
@@ -349,8 +348,8 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                               </span>
                             )}
                             {opt.sourceType === "POS" && (
-                              <span className="ml-1 rounded bg-orange-100 px-1 py-0.5 text-xs text-orange-600">
-                                POS
+                              <span className="ml-1 rounded bg-blue-50 px-1 py-0.5 text-xs text-blue-600" title="Originally imported from POS">
+                                Imported
                               </span>
                             )}
                           </span>
@@ -371,15 +370,13 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                             >
                               Edit
                             </button>
-                            {opt.sourceType !== "POS" && (
-                              <button
-                                onClick={() => handleDeleteOption(group.id, opt)}
-                                disabled={isPending}
-                                className="rounded bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 hover:bg-red-100"
-                              >
-                                Del
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleDeleteOption(group.id, opt)}
+                              disabled={isPending}
+                              className="rounded bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 hover:bg-red-100"
+                            >
+                              Del
+                            </button>
                           </div>
                         </li>
                       ))}
@@ -401,8 +398,8 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
             </h2>
 
             {isGroupPOS && (
-              <p className="mb-4 rounded border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">
-                This item is managed by your POS system. Only display settings can be edited.
+              <p className="mb-4 rounded border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-600">
+                Origin: Imported from POS. All fields are editable in Beyond.
               </p>
             )}
 
@@ -418,9 +415,8 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                 <input
                   type="text"
                   value={groupForm.name}
-                  disabled={isGroupPOS}
                   onChange={(e) => setGroupForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm disabled:bg-gray-100"
+                  className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
                 />
               </div>
 
@@ -428,10 +424,9 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                 <label className="mb-1 block text-xs font-medium text-gray-700">Description</label>
                 <textarea
                   value={groupForm.description}
-                  disabled={isGroupPOS}
                   onChange={(e) => setGroupForm((f) => ({ ...f, description: e.target.value }))}
                   rows={2}
-                  className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm disabled:bg-gray-100"
+                  className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
                 />
               </div>
 
@@ -442,11 +437,10 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                     type="number"
                     min="0"
                     value={groupForm.selectionMin}
-                    disabled={isGroupPOS}
                     onChange={(e) =>
                       setGroupForm((f) => ({ ...f, selectionMin: parseInt(e.target.value) || 0 }))
                     }
-                    className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm disabled:bg-gray-100"
+                    className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
                   />
                 </div>
                 <div>
@@ -457,9 +451,8 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                     type="number"
                     min="0"
                     value={groupForm.selectionMax}
-                    disabled={isGroupPOS}
                     onChange={(e) => setGroupForm((f) => ({ ...f, selectionMax: e.target.value }))}
-                    className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm disabled:bg-gray-100"
+                    className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
                   />
                 </div>
               </div>
@@ -483,7 +476,6 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                   <input
                     type="checkbox"
                     checked={groupForm.isRequired}
-                    disabled={isGroupPOS}
                     onChange={(e) => setGroupForm((f) => ({ ...f, isRequired: e.target.checked }))}
                   />
                   Required
@@ -529,8 +521,8 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
             </h2>
 
             {isOptionPOS && (
-              <p className="mb-4 rounded border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">
-                This item is managed by your POS system. Only sold-out status can be edited.
+              <p className="mb-4 rounded border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-600">
+                Origin: Imported from POS. All fields are editable in Beyond.
               </p>
             )}
 
@@ -546,9 +538,8 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                 <input
                   type="text"
                   value={optionForm.name}
-                  disabled={isOptionPOS}
                   onChange={(e) => setOptionForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm disabled:bg-gray-100"
+                  className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
                 />
               </div>
 
@@ -557,9 +548,8 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                 <input
                   type="text"
                   value={optionForm.description}
-                  disabled={isOptionPOS}
                   onChange={(e) => setOptionForm((f) => ({ ...f, description: e.target.value }))}
-                  className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm disabled:bg-gray-100"
+                  className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
                 />
               </div>
 
@@ -573,11 +563,10 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                     step="0.01"
                     min="0"
                     value={optionForm.priceDeltaAmount}
-                    disabled={isOptionPOS}
                     onChange={(e) =>
                       setOptionForm((f) => ({ ...f, priceDeltaAmount: e.target.value }))
                     }
-                    className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm disabled:bg-gray-100"
+                    className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
                   />
                 </div>
                 <div>
@@ -587,11 +576,10 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                   <input
                     type="number"
                     value={optionForm.displayOrder}
-                    disabled={isOptionPOS}
                     onChange={(e) =>
                       setOptionForm((f) => ({ ...f, displayOrder: parseInt(e.target.value) || 0 }))
                     }
-                    className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm disabled:bg-gray-100"
+                    className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
                   />
                 </div>
               </div>
@@ -600,7 +588,6 @@ export default function CatalogModifiersClient({ storeId, initialGroups }: Props
                 <input
                   type="checkbox"
                   checked={optionForm.isDefault}
-                  disabled={isOptionPOS}
                   onChange={(e) => setOptionForm((f) => ({ ...f, isDefault: e.target.checked }))}
                 />
                 Default option

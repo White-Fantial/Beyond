@@ -164,9 +164,20 @@ export interface OwnerStaffRow {
 
 // ─── Catalog ──────────────────────────────────────────────────────────────────
 
+// Phase 1: CatalogOriginType reflects where an entity ORIGINALLY came from.
+// It is historical metadata only — Beyond internal catalog is always the canonical model.
+export type CatalogOriginType =
+  | "BEYOND_CREATED"
+  | "IMPORTED_FROM_POS"
+  | "IMPORTED_FROM_DELIVERY"
+  | "IMPORTED_FROM_OTHER";
+
 export interface OwnerCategoryRow {
   id: string;
   name: string;
+  /** Phase 1: originType replaces sourceType as the provenance indicator. */
+  originType: CatalogOriginType;
+  /** @deprecated Use originType instead. Kept for backward compatibility. */
   sourceType: string;
   displayOrder: number;
   isActive: boolean;
@@ -182,6 +193,9 @@ export interface OwnerCategoryRow {
 export interface OwnerProductRow {
   id: string;
   name: string;
+  /** Phase 1: originType replaces sourceType as the provenance indicator. */
+  originType: CatalogOriginType;
+  /** @deprecated Use originType instead. Kept for backward compatibility. */
   sourceType: string;
   onlineName: string | null;
   subscriptionName: string | null;
@@ -202,6 +216,9 @@ export interface OwnerProductRow {
 export interface OwnerModifierGroupRow {
   id: string;
   name: string;
+  /** Phase 1: originType replaces sourceType as the provenance indicator. */
+  originType: CatalogOriginType;
+  /** @deprecated Use originType instead. Kept for backward compatibility. */
   sourceType: string;
   displayOrder: number;
   isActive: boolean;
@@ -212,6 +229,9 @@ export interface OwnerModifierGroupRow {
 export interface OwnerModifierOptionRow {
   id: string;
   name: string;
+  /** Phase 1: originType replaces sourceType as the provenance indicator. */
+  originType: CatalogOriginType;
+  /** @deprecated Use originType instead. Kept for backward compatibility. */
   sourceType: string;
   priceDeltaAmount: number;
   displayOrder: number;

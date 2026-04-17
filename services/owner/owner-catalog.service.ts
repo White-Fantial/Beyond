@@ -1,9 +1,11 @@
 /**
- * Owner Catalog Service — owner-level local fields management.
+ * Owner Catalog Service — owner-level catalog management.
  *
- * IMPORTANT: Only local/merchandising fields may be updated here.
- * POS source-of-truth fields (name, basePriceAmount, modifier structure)
- * are NEVER modified by this service.
+ * Phase 1 — Beyond internal catalog ownership:
+ * - Beyond internal catalog is the canonical operational model.
+ * - All catalog entities (regardless of origin) are fully editable in Beyond.
+ * - provenance (originType) is exposed as auxiliary metadata only.
+ * - Audit trail is maintained for all changes.
  */
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
@@ -27,6 +29,8 @@ export async function listOwnerCategories(storeId: string): Promise<OwnerCategor
   return categories.map((c) => ({
     id: c.id,
     name: c.name,
+    originType: c.originType,
+    // @deprecated: use originType instead
     sourceType: c.sourceType,
     displayOrder: c.displayOrder,
     isActive: c.isActive,
@@ -81,6 +85,8 @@ export async function listOwnerProducts(
   return products.map((p) => ({
     id: p.id,
     name: p.name,
+    originType: p.originType,
+    // @deprecated: use originType instead
     sourceType: p.sourceType,
     onlineName: p.onlineName,
     subscriptionName: p.subscriptionName,
@@ -114,6 +120,8 @@ export async function listOwnerModifierGroups(storeId: string): Promise<OwnerMod
   return groups.map((g) => ({
     id: g.id,
     name: g.name,
+    originType: g.originType,
+    // @deprecated: use originType instead
     sourceType: g.sourceType,
     displayOrder: g.displayOrder,
     isActive: g.isActive,
@@ -121,6 +129,8 @@ export async function listOwnerModifierGroups(storeId: string): Promise<OwnerMod
     options: g.modifierOptions.map((o) => ({
       id: o.id,
       name: o.name,
+      originType: o.originType,
+      // @deprecated: use originType instead
       sourceType: o.sourceType,
       priceDeltaAmount: o.priceDeltaAmount,
       displayOrder: o.displayOrder,
@@ -139,6 +149,9 @@ export interface UpdateOwnerCategoryInput {
   tenantId: string;
   actorUserId: string;
   data: {
+    // Phase 1: name and description are now editable in Beyond regardless of origin.
+    name?: string;
+    description?: string | null;
     displayOrder?: number;
     isVisibleOnOnlineOrder?: boolean;
     isVisibleOnSubscription?: boolean;
@@ -157,10 +170,12 @@ export async function updateOwnerCategory(input: UpdateOwnerCategoryInput): Prom
     where: { id: categoryId, storeId },
   });
 
-  // Never update: name, sourceType, sourceCategoryRef, sourceOfTruthConnectionId
+  // Phase 1: Beyond owns the catalog. All fields are editable regardless of origin.
   await prisma.catalogCategory.update({
     where: { id: categoryId },
     data: {
+      name: data.name,
+      description: data.description,
       displayOrder: data.displayOrder,
       isVisibleOnOnlineOrder: data.isVisibleOnOnlineOrder,
       isVisibleOnSubscription: data.isVisibleOnSubscription,
@@ -188,6 +203,10 @@ export interface UpdateOwnerProductInput {
   tenantId: string;
   actorUserId: string;
   data: {
+    // Phase 1: core fields (name, price, description) are now editable in Beyond regardless of origin.
+    name?: string;
+    description?: string | null;
+    basePriceAmount?: number;
     onlineName?: string | null;
     subscriptionName?: string | null;
     shortDescription?: string | null;
@@ -208,10 +227,13 @@ export async function updateOwnerProduct(input: UpdateOwnerProductInput): Promis
     where: { id: productId, storeId },
   });
 
-  // Never update: name, basePriceAmount, sourceType, sourceProductRef, sku, barcode
+  // Phase 1: Beyond owns the catalog. All fields are editable regardless of origin.
   await prisma.catalogProduct.update({
     where: { id: productId },
     data: {
+      name: data.name,
+      description: data.description,
+      basePriceAmount: data.basePriceAmount,
       onlineName: data.onlineName,
       subscriptionName: data.subscriptionName,
       shortDescription: data.shortDescription,
@@ -241,6 +263,9 @@ export interface UpdateOwnerModifierOptionInput {
   tenantId: string;
   actorUserId: string;
   data: {
+    // Phase 1: core fields are now editable in Beyond regardless of origin.
+    name?: string;
+    priceDeltaAmount?: number;
     isSoldOut?: boolean;
     isDefault?: boolean;
     displayOrder?: number;
@@ -256,10 +281,12 @@ export async function updateOwnerModifierOption(
     where: { id: optionId, storeId },
   });
 
-  // Never update: name, priceDeltaAmount, sourceType, sourceModifierOptionRef
+  // Phase 1: Beyond owns the catalog. All fields are editable regardless of origin.
   await prisma.catalogModifierOption.update({
     where: { id: optionId },
     data: {
+      name: data.name,
+      priceDeltaAmount: data.priceDeltaAmount,
       isSoldOut: data.isSoldOut,
       isDefault: data.isDefault,
       displayOrder: data.displayOrder,
@@ -283,6 +310,8 @@ export interface UpdateOwnerModifierGroupInput {
   tenantId: string;
   actorUserId: string;
   data: {
+    // Phase 1: name is now editable in Beyond regardless of origin.
+    name?: string;
     isVisibleOnOnlineOrder?: boolean;
     displayOrder?: number;
   };
@@ -300,6 +329,7 @@ export async function updateOwnerModifierGroup(
   await prisma.catalogModifierGroup.update({
     where: { id: groupId },
     data: {
+      name: data.name,
       isVisibleOnOnlineOrder: data.isVisibleOnOnlineOrder,
       displayOrder: data.displayOrder,
     },
