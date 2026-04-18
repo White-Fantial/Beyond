@@ -38,8 +38,8 @@ export default function RecipeForm({
   const [servings, setServings] = useState(initial?.servings ?? 1);
   const [prepTime, setPrepTime] = useState(initial?.prepTimeMinutes ?? 0);
   const [cookTime, setCookTime] = useState(initial?.cookTimeMinutes ?? 0);
-  const [yieldQty, setYieldQty] = useState(initial?.yieldQty ?? 1);
-  const [yieldUnit, setYieldUnit] = useState(
+  const [yieldQty] = useState(initial?.yieldQty ?? 1);
+  const [yieldUnit] = useState(
     initial?.yieldUnit ?? "EACH"
   );
   const [recommendedPrice, setRecommendedPrice] = useState(
@@ -255,7 +255,7 @@ export default function RecipeForm({
             </label>
             <select
               value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value)}
+              onChange={(e) => setDifficulty(e.target.value as "EASY" | "MEDIUM" | "HARD")}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             >
               <option value="EASY">쉬움</option>

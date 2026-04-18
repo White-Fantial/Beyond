@@ -311,15 +311,8 @@ export async function updateMarketplaceRecipe(
   if (!existing) throw new Error(`MarketplaceRecipe ${id} not found`);
 
   // Snapshot ingredient costs
-  let ingredientCreate:
-    | {
-        platformIngredientId: string;
-        quantity: number;
-        unit: string;
-        notes: string | null;
-        unitCostSnapshot: number;
-      }[]
-    | undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let ingredientCreate: any[] | undefined;
 
   if (input.ingredients !== undefined) {
     const platformIngredientIds = input.ingredients.map(
@@ -336,7 +329,7 @@ export async function updateMarketplaceRecipe(
       platformIngredients.map((pi) => [pi.id, pi.referenceUnitCost])
     );
     ingredientCreate = input.ingredients.map((i) => ({
-      platformIngredientId: i.platformIngredientId,
+      platformIngredient: { connect: { id: i.platformIngredientId } },
       quantity: i.quantity,
       unit: i.unit,
       notes: i.notes ?? null,

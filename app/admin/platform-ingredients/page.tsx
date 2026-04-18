@@ -1,6 +1,5 @@
 import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
 import { listPlatformIngredients } from "@/services/marketplace/platform-ingredients.service";
-import Link from "next/link";
 
 export default async function AdminPlatformIngredientsPage() {
   await requirePlatformAdmin();
