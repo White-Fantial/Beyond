@@ -1,5 +1,4 @@
 import { requireAuth } from "@/lib/auth/permissions";
-import { redirect } from "next/navigation";
 import {
   getUserApplication,
   getProviderStripeStatus,
