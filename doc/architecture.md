@@ -394,6 +394,7 @@ Located at: `/owner/stores/[storeId]/integrations/[connectionId]/mapping`
 | **Phase 5** | ✅ Complete | External change detection. Import-to-import diff. Field-level and structure-level change logs. Acknowledge/Ignore UI. |
 | **Phase 6** | ✅ Complete | Conflict detection & resolution foundation. `CatalogConflict` + `CatalogConflictField` + `CatalogConflictResolutionLog` + `InternalCatalogChange` models. Field-level and structure-level conflict detection. Conflict center UI. Resolution decision recording (no data applied yet). |
 | **Phase 7** | ✅ Complete | Policy-based two-way sync. `CatalogSyncPolicy` + `CatalogSyncPlan` + `CatalogSyncPlanItem` + `CatalogSyncExecutionLog` models. Planner builds sync plans from open external changes and resolved conflicts. Executor applies READY items via inbound-apply (external→internal) or publish service (internal→external). Field whitelist enforced. Loop guard prevents echo conflicts. |
+| **Phase 8** | ✅ Complete | Advanced Merge Editor & Manual Reconciliation. `CatalogMergeDraft` + `CatalogMergeDraftField` + `CatalogMergeDraftStructure` + `CatalogMergeExecutionLog` models. Operator-controlled field/structure choices, business-rule validation, sync plan generation from draft, apply via Phase 7 executor. Merge Queue + Editor UI. |
 
 ---
 
@@ -547,6 +548,79 @@ CANCELLED (manual)
 | `POST` | `/api/catalog/sync/plan-items/[planItemId]/retry` | Retry FAILED item |
 | `GET` | `/api/catalog/sync/inbox?connectionId=` | Inbox summary + open changes |
 | `GET` | `/api/catalog/sync/summary?connectionId=` | Sync summary counts |
+
+---
+
+## Advanced Merge Editor Layer (Phase 8)
+
+### Overview
+
+Phase 8 adds an operator-controlled merge session layer on top of Phase 6 conflict detection and Phase 7 sync execution. Where Phase 7 auto-applies based on policies, Phase 8 gives operators a fine-grained UI to manually choose exactly which value wins for each conflicted field or structural relationship.
+
+### Merge Draft Lifecycle
+
+```
+createMergeDraftFromConflict(conflictId)
+  │  → Creates CatalogMergeDraft (status=DRAFT)
+  │  → Pre-populates CatalogMergeDraftField rows from conflict fields (default: TAKE_INTERNAL)
+  │
+  ▼
+Operator sets choices via upsertMergeFieldChoice / upsertMergeStructureChoice
+  │  → CatalogMergeDraftField: TAKE_INTERNAL | TAKE_EXTERNAL | CUSTOM_VALUE
+  │  → CatalogMergeDraftStructure: KEEP_INTERNAL_SET | TAKE_EXTERNAL_SET | MERGE_SELECTED | CUSTOM_STRUCTURE
+  │
+  ▼
+validateMergeDraft(draftId)
+  │  → Runs business rules (name length, priceAmount ≥ 0, minSelect ≤ maxSelect, boolean types, etc.)
+  │  → status = VALIDATED | INVALID
+  │
+  ▼
+generateSyncPlanFromMergeDraft(draftId)
+  │  → Resolves all field/structure values
+  │  → Creates CatalogSyncPlan + CatalogSyncPlanItems per applyTarget
+  │    - INTERNAL_ONLY  → APPLY_INTERNAL_PATCH items
+  │    - EXTERNAL_ONLY  → APPLY_EXTERNAL_PATCH items
+  │    - INTERNAL_THEN_EXTERNAL → both
+  │  → status = PLAN_GENERATED
+  │
+  ▼
+applyMergeDraft(draftId)
+  │  → Delegates to Phase 7 applySyncPlan(generatedPlanId)
+  │  → status = APPLIED (or PLAN_GENERATED if any items failed)
+```
+
+### Models
+
+| Model | Purpose |
+|-------|---------|
+| `CatalogMergeDraft` | Top-level merge session. Links to conflict, entity, apply target, lifecycle status. |
+| `CatalogMergeDraftField` | Per-field choice: which value to use (internal / external / custom). Stores all three values and the resolved value. |
+| `CatalogMergeDraftStructure` | Per-structural-relationship choice (categoryLinks, modifierGroupLinks, parentRelation). |
+| `CatalogMergeExecutionLog` | Audit log of every lifecycle transition on a draft. |
+
+### API Endpoints (Phase 8)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/catalog/merge-drafts?connectionId=` | List merge drafts |
+| `POST` | `/api/catalog/merge-drafts` | Create draft from conflict |
+| `GET` | `/api/catalog/merge-drafts/[draftId]` | Get single draft |
+| `PATCH` | `/api/catalog/merge-drafts/[draftId]` | Update metadata / applyTarget |
+| `POST` | `/api/catalog/merge-drafts/[draftId]/fields` | Upsert field choice |
+| `POST` | `/api/catalog/merge-drafts/[draftId]/structures` | Upsert structure choice |
+| `POST` | `/api/catalog/merge-drafts/[draftId]/reset` | Reset to DRAFT |
+| `POST` | `/api/catalog/merge-drafts/[draftId]/validate` | Validate draft |
+| `POST` | `/api/catalog/merge-drafts/[draftId]/generate-plan` | Generate sync plan |
+| `POST` | `/api/catalog/merge-drafts/[draftId]/apply` | Apply the draft |
+| `GET` | `/api/catalog/merge-drafts/[draftId]/preview` | Preview resolved values + validation |
+
+### Sub-services
+
+| File | Purpose |
+|------|---------|
+| `services/catalog-merge/resolve-values.ts` | Pure functions: `resolveFieldValue`, `resolveStructureValue`. Computes resolved value from choice strategy. |
+| `services/catalog-merge/validate.ts` | Business-rule validation: `validateMergeDraftData`. Returns `MergeValidationResult` with errors array. |
+| `services/catalog-merge/plan-generator.ts` | `generateSyncPlanFromMergeDraft` — creates a CatalogSyncPlan from a VALIDATED draft via Prisma transaction. |
 
 ---
 

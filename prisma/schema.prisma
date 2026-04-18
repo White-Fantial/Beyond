@@ -2073,6 +2073,147 @@ model CatalogSyncExecutionLog {
   @@map("catalog_sync_execution_logs")
 }
 
+// ─── Phase 8: Advanced Manual Merge ──────────────────────────────────────────
+
+enum CatalogMergeDraftStatus {
+  DRAFT
+  VALIDATED
+  INVALID
+  PLAN_GENERATED
+  APPLIED
+  CANCELLED
+}
+
+enum CatalogMergeFieldChoice {
+  TAKE_INTERNAL
+  TAKE_EXTERNAL
+  CUSTOM_VALUE
+}
+
+enum CatalogMergeStructureChoice {
+  KEEP_INTERNAL_SET
+  TAKE_EXTERNAL_SET
+  MERGE_SELECTED
+  CUSTOM_STRUCTURE
+}
+
+enum CatalogMergeParentChoice {
+  KEEP_INTERNAL_PARENT
+  TAKE_EXTERNAL_PARENT
+  SET_CUSTOM_PARENT
+}
+
+enum CatalogMergeApplyTarget {
+  INTERNAL_ONLY
+  EXTERNAL_ONLY
+  INTERNAL_THEN_EXTERNAL
+}
+
+model CatalogMergeDraft {
+  id                   String                    @id @default(uuid())
+  tenantId             String
+  storeId              String
+  connectionId         String
+
+  conflictId           String?
+  internalEntityType   CatalogEntityType
+  internalEntityId     String
+
+  externalEntityType   CatalogEntityType?
+  externalEntityId     String?
+
+  status               CatalogMergeDraftStatus   @default(DRAFT)
+  applyTarget          CatalogMergeApplyTarget   @default(INTERNAL_THEN_EXTERNAL)
+
+  title                String?
+  summary              String?
+  validationErrors     Json?
+  generatedPlanId      String?
+
+  createdByUserId      String?
+  updatedByUserId      String?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+
+  fieldChoices         CatalogMergeDraftField[]
+  structureChoices     CatalogMergeDraftStructure[]
+  executionLogs        CatalogMergeExecutionLog[]
+
+  @@index([tenantId, storeId, connectionId, status])
+  @@index([conflictId])
+  @@index([generatedPlanId])
+  @@map("catalog_merge_drafts")
+}
+
+model CatalogMergeDraftField {
+  id                   String                  @id @default(uuid())
+  draftId              String
+
+  fieldPath            String
+  choice               CatalogMergeFieldChoice
+
+  baselineValue        Json?
+  internalValue        Json?
+  externalValue        Json?
+  customValue          Json?
+
+  resolvedValue        Json?
+  note                 String?
+
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+
+  draft                CatalogMergeDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@index([draftId])
+  @@unique([draftId, fieldPath])
+  @@map("catalog_merge_draft_fields")
+}
+
+model CatalogMergeDraftStructure {
+  id                   String                      @id @default(uuid())
+  draftId              String
+
+  fieldPath            String
+  choice               String
+
+  baselineValue        Json?
+  internalValue        Json?
+  externalValue        Json?
+  customValue          Json?
+
+  resolvedValue        Json?
+  note                 String?
+
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+
+  draft                CatalogMergeDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@index([draftId])
+  @@unique([draftId, fieldPath])
+  @@map("catalog_merge_draft_structures")
+}
+
+model CatalogMergeExecutionLog {
+  id                   String   @id @default(uuid())
+  draftId              String
+  generatedPlanId      String?
+
+  status               String
+  requestPayload       Json?
+  responsePayload      Json?
+  errorMessage         String?
+  changedByUserId      String?
+  createdAt            DateTime @default(now())
+
+  draft                CatalogMergeDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@index([draftId])
+  @@index([generatedPlanId])
+  @@map("catalog_merge_execution_logs")
+}
+
 // ─── Admin Jobs ───────────────────────────────────────────────────────────────
 
 enum JobType {
