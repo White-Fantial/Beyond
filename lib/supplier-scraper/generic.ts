@@ -13,6 +13,8 @@ import type { SupplierScraper, ScrapedProduct } from "./base";
 const DEFAULT_USER_AGENT =
   "Mozilla/5.0 (compatible; BeyondBot/1.0; +https://beyondplatform.io/bot)";
 
+const SCRAPE_TIMEOUT_MS = 15_000;
+
 /** Price normalised to minor units (cents). Returns null if unparseable. */
 function parsePrice(raw: unknown): number | null {
   if (raw === null || raw === undefined) return null;
@@ -109,7 +111,7 @@ export class GenericScraper implements SupplierScraper {
           "User-Agent": DEFAULT_USER_AGENT,
           Accept: "text/html,application/xhtml+xml",
         },
-        signal: AbortSignal.timeout(15_000),
+        signal: AbortSignal.timeout(SCRAPE_TIMEOUT_MS),
       });
       if (!res.ok) {
         throw new Error(`HTTP ${res.status} fetching ${url}`);

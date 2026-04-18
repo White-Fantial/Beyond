@@ -98,8 +98,11 @@ export async function scrapeAllSupplierProducts(
     try {
       const result = await scrapeSupplierProduct(tenantId, product.id);
       results.push(result);
-    } catch {
-      // Continue scraping remaining products even if one fails
+    } catch (err) {
+      console.error(
+        `[supplier-scraper] Failed to scrape product ${product.id}:`,
+        err instanceof Error ? err.message : String(err)
+      );
     }
   }
 

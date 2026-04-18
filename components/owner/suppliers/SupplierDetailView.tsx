@@ -37,6 +37,8 @@ export default function SupplierDetailView({ supplier }: Props) {
   const [productError, setProductError] = useState<string | null>(null);
   const [scrapingAll, setScrapingAll] = useState(false);
   const [scrapeResults, setScrapeResults] = useState<string | null>(null);
+  const [scrapingProductId, setScrapingProductId] = useState<string | null>(null);
+  const [productScrapeError, setProductScrapeError] = useState<string | null>(null);
 
   async function handleAddProduct(e: React.FormEvent) {
     e.preventDefault();
@@ -101,6 +103,8 @@ export default function SupplierDetailView({ supplier }: Props) {
   }
 
   async function handleScrapeProduct(productId: string) {
+    setScrapingProductId(productId);
+    setProductScrapeError(null);
     try {
       const res = await fetch(
         `/api/owner/suppliers/${supplier.id}/products/${productId}/scrape`,
@@ -108,9 +112,14 @@ export default function SupplierDetailView({ supplier }: Props) {
       );
       if (res.ok) {
         router.refresh();
+      } else {
+        const data = await res.json();
+        setProductScrapeError(data.error ?? "Scrape failed");
       }
     } catch {
-      // silent
+      setProductScrapeError("Network error. Please try again.");
+    } finally {
+      setScrapingProductId(null);
     }
   }
 
@@ -289,9 +298,10 @@ export default function SupplierDetailView({ supplier }: Props) {
                     {product.externalUrl && (
                       <button
                         onClick={() => handleScrapeProduct(product.id)}
-                        className="text-brand-600 hover:text-brand-800 text-xs font-medium"
+                        disabled={scrapingProductId === product.id}
+                        className="text-brand-600 hover:text-brand-800 text-xs font-medium disabled:opacity-50"
                       >
-                        Scrape
+                        {scrapingProductId === product.id ? "Scraping…" : "Scrape"}
                       </button>
                     )}
                   </td>
@@ -299,6 +309,9 @@ export default function SupplierDetailView({ supplier }: Props) {
               ))}
             </tbody>
           </table>
+        )}
+        {productScrapeError && (
+          <p className="mt-2 text-sm text-red-600 px-5 py-2">{productScrapeError}</p>
         )}
       </div>
     </div>
