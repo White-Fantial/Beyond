@@ -898,7 +898,7 @@ describe("Policy: NEVER → BLOCKED regardless of conflict", () => {
 describe("Policy: ALWAYS → READY", () => {
   it("ALWAYS auto-apply mode maps to READY", () => {
     // Simulate an explicit policy with ALWAYS
-    const autoApplyMode: string = "ALWAYS";
+    const autoApplyMode = "ALWAYS" as "ALWAYS" | "NEVER" | "SAFE_ONLY";
     const itemStatus = autoApplyMode === "NEVER" ? "BLOCKED" : "READY";
     expect(itemStatus).toBe("READY");
   });

@@ -174,6 +174,7 @@ export async function applySyncPlanItem(planItemId: string): Promise<{ success: 
       case "LINK_MAPPING":
       case "UNLINK_MAPPING": {
         if (item.mappingId) {
+          // LINK_MAPPING → activate the mapping; UNLINK_MAPPING → archive it
           await prisma.channelEntityMapping.update({
             where: { id: item.mappingId },
             data: {
