@@ -19,7 +19,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { publishEntitiesBulk } from "@/services/catalog-publish.service";
-import type { CatalogEntityType, CatalogPublishAction, BulkPublishItem } from "@/types/catalog-publish";
+import type { CatalogPublishAction, BulkPublishItem } from "@/types/catalog-publish";
 
 export async function POST(req: NextRequest) {
   try {

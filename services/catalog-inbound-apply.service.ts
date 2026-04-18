@@ -14,6 +14,7 @@
  *   - Previews are non-destructive dry runs.
  */
 
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type {
   ApplyExternalFieldPatchInput,
@@ -127,7 +128,7 @@ async function fetchInternalEntityCurrentValues(
         select: {
           name: true,
           description: true,
-          priceAmount: true,
+          basePriceAmount: true,
           isActive: true,
           isSoldOut: true,
           imageUrl: true,
@@ -152,8 +153,8 @@ async function fetchInternalEntityCurrentValues(
         select: {
           name: true,
           description: true,
-          minSelect: true,
-          maxSelect: true,
+          selectionMin: true,
+          selectionMax: true,
         },
       });
       return row as Record<string, unknown> | null;
@@ -164,7 +165,7 @@ async function fetchInternalEntityCurrentValues(
         select: {
           name: true,
           description: true,
-          priceAmount: true,
+          priceDeltaAmount: true,
           isActive: true,
         },
       });
@@ -234,7 +235,7 @@ async function recordInternalChanges(opts: {
     entityType,
     internalEntityId,
     fieldPath,
-    previousValue: previousValues[fieldPath] ?? null,
+    previousValue: (previousValues[fieldPath] ?? Prisma.JsonNull) as Parameters<typeof prisma.internalCatalogChange.create>[0]["data"]["previousValue"],
     currentValue: currentValue as Parameters<typeof prisma.internalCatalogChange.create>[0]["data"]["currentValue"],
     changedByUserId: changedByUserId ?? null,
     changeSource: externalChangeId
@@ -379,7 +380,7 @@ export async function applyExternalStructurePatchToInternal(
       entityType: internalEntityType,
       internalEntityId,
       fieldPath: "structurePatch",
-      previousValue: null,
+      previousValue: Prisma.JsonNull,
       currentValue: { note: "structure patch from external — limited support" } as Parameters<typeof prisma.internalCatalogChange.create>[0]["data"]["currentValue"],
       changedByUserId: changedByUserId ?? null,
       changeSource: externalChangeId

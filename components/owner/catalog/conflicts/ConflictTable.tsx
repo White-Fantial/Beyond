@@ -7,6 +7,7 @@
 import { useState } from "react";
 import type {
   CatalogConflictDto,
+  CatalogConflictFieldDto,
   CatalogConflictType,
   CatalogConflictStatus,
   CatalogConflictResolutionStrategy,
@@ -43,7 +44,7 @@ function Badge({ label, colorClass }: { label: string; colorClass: string }) {
   );
 }
 
-function FieldDiffRow({ field }: { field: CatalogConflictDto["conflictFields"] extends Array<infer T> ? T : never }) {
+function FieldDiffRow({ field }: { field: CatalogConflictFieldDto }) {
   return (
     <tr className="bg-gray-50 border-t border-gray-100">
       <td colSpan={7} className="px-6 py-3">

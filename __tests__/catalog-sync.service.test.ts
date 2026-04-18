@@ -627,9 +627,12 @@ describe("applySyncPlan — APPLY_EXTERNAL_PATCH", () => {
     const result = await applySyncPlanItem("item-ep");
     expect(result.success).toBe(true);
     expect(publishEntityToConnection).toHaveBeenCalledWith({
+      tenantId: "t1",
+      storeId: "s1",
       connectionId: "conn-1",
-      entityType: "PRODUCT",
-      entityId: "prod-ep",
+      internalEntityType: "PRODUCT",
+      internalEntityId: "prod-ep",
+      action: "UPDATE",
     });
   });
 });
@@ -895,7 +898,7 @@ describe("Policy: NEVER → BLOCKED regardless of conflict", () => {
 describe("Policy: ALWAYS → READY", () => {
   it("ALWAYS auto-apply mode maps to READY", () => {
     // Simulate an explicit policy with ALWAYS
-    const autoApplyMode = "ALWAYS" as const;
+    const autoApplyMode: string = "ALWAYS";
     const itemStatus = autoApplyMode === "NEVER" ? "BLOCKED" : "READY";
     expect(itemStatus).toBe("READY");
   });
@@ -938,7 +941,7 @@ describe("Plan idempotency", () => {
   it("existsReadyItemForChange check returns true when duplicate item exists", async () => {
     (prisma.catalogSyncPlanItem.count as ReturnType<typeof vi.fn>).mockResolvedValue(1);
     // Simulates that a READY item already exists — plan builder will skip
-    const count = await (prisma.catalogSyncPlanItem.count as ReturnType<typeof vi.fn>)({
+    const count = await (prisma.catalogSyncPlanItem.count as unknown as (args: unknown) => Promise<number>)({
       where: {
         externalChangeId: "change-dup",
         action: "APPLY_INTERNAL_PATCH",

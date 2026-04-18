@@ -23,6 +23,7 @@
  */
 
 import crypto from "crypto";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { compareCategoryFields } from "./external-change-detection/compare-category";
 import { compareProductFields } from "./external-change-detection/compare-product";
@@ -38,6 +39,8 @@ import type {
   ExternalChangeSummary,
   CatalogEntityType,
   ExternalCatalogChangeStatus,
+  ExternalCatalogChangeKind,
+  ExternalChangeFieldChangeType,
 } from "@/types/catalog-external-changes";
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -634,7 +637,7 @@ interface CreateChangeLogInput {
   connectionId: string;
   entityType: CatalogEntityType;
   externalEntityId: string;
-  changeKind: string;
+  changeKind: ExternalCatalogChangeKind;
   importRunId: string;
   comparedImportRunId: string | null;
   previousEntityHash?: string;
@@ -701,8 +704,8 @@ async function createFieldDiffs(
     data: diffs.map((d) => ({
       changeId,
       fieldPath: d.fieldPath,
-      previousValue: d.previousValue !== undefined ? (d.previousValue as Parameters<typeof prisma.externalCatalogChangeField.create>[0]["data"]["previousValue"]) : null,
-      currentValue: d.currentValue !== undefined ? (d.currentValue as Parameters<typeof prisma.externalCatalogChangeField.create>[0]["data"]["currentValue"]) : null,
+      previousValue: d.previousValue !== undefined ? (d.previousValue as Prisma.InputJsonValue) : Prisma.JsonNull,
+      currentValue: d.currentValue !== undefined ? (d.currentValue as Prisma.InputJsonValue) : Prisma.JsonNull,
       changeType: d.changeType,
     })),
   });
@@ -824,7 +827,7 @@ function toDto(row: {
       fieldPath: f.fieldPath,
       previousValue: f.previousValue,
       currentValue: f.currentValue,
-      changeType: f.changeType as ExternalCatalogChangeDto["fieldDiffs"] extends Array<infer T> ? T["changeType"] : never,
+      changeType: f.changeType as ExternalChangeFieldChangeType,
       createdAt: f.createdAt.toISOString(),
     })),
   };

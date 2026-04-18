@@ -11,7 +11,7 @@
  *   4. Validation + Plan preview section
  */
 
-import { getMergeDraft, validateMergeDraft } from "@/services/catalog-merge.service";
+import { getMergeDraft } from "@/services/catalog-merge.service";
 import { validateMergeDraftData } from "@/services/catalog-merge/validate";
 import MergeEditorHeader from "@/components/owner/catalog/merge/MergeEditorHeader";
 import FieldMergeSection from "@/components/owner/catalog/merge/FieldMergeSection";

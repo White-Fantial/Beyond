@@ -202,7 +202,7 @@ describe("getDashboardData", () => {
 
     const result = await getDashboardData(STORE_ID);
     // Channel value is passed through as-is (cast to BackofficeOrderChannel)
-    expect(result.channelBreakdown.some((c) => c.channel === "MYSTERY_CHANNEL")).toBe(true);
+    expect(result.channelBreakdown.some((c) => (c.channel as string) === "MYSTERY_CHANNEL")).toBe(true);
   });
 
   it("runs Prisma queries in parallel (Promise.all)", async () => {

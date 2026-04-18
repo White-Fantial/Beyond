@@ -35,27 +35,6 @@ interface PageProps {
 
 const ENTITY_TYPES: CatalogEntityType[] = ["CATEGORY", "PRODUCT", "MODIFIER_GROUP", "MODIFIER_OPTION"];
 
-async function getInternalEntityName(entityType: CatalogEntityType, entityId: string): Promise<string | null> {
-  switch (entityType) {
-    case "CATEGORY": {
-      const e = await prisma.catalogCategory.findUnique({ where: { id: entityId }, select: { name: true } });
-      return e?.name ?? null;
-    }
-    case "PRODUCT": {
-      const e = await prisma.catalogProduct.findUnique({ where: { id: entityId }, select: { name: true } });
-      return e?.name ?? null;
-    }
-    case "MODIFIER_GROUP": {
-      const e = await prisma.catalogModifierGroup.findUnique({ where: { id: entityId }, select: { name: true } });
-      return e?.name ?? null;
-    }
-    case "MODIFIER_OPTION": {
-      const e = await prisma.catalogModifierOption.findUnique({ where: { id: entityId }, select: { name: true } });
-      return e?.name ?? null;
-    }
-  }
-}
-
 async function buildPublishRows(storeId: string, connectionId: string): Promise<PublishEntityRowData[]> {
   const rows: PublishEntityRowData[] = [];
 

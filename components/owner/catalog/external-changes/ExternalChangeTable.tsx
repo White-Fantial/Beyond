@@ -5,7 +5,7 @@
  */
 
 import { useState } from "react";
-import type { ExternalCatalogChangeDto, ExternalCatalogChangeKind, ExternalCatalogChangeStatus, CatalogEntityType } from "@/types/catalog-external-changes";
+import type { ExternalCatalogChangeDto, ExternalCatalogChangeKind, ExternalCatalogChangeStatus } from "@/types/catalog-external-changes";
 
 interface Props {
   changes: ExternalCatalogChangeDto[];

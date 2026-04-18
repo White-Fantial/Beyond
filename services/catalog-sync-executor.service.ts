@@ -116,9 +116,12 @@ export async function applySyncPlanItem(planItemId: string): Promise<{ success: 
         }
 
         const result = await publishEntityToConnection({
+          tenantId: item.plan.tenantId,
+          storeId: item.plan.storeId,
           connectionId: item.plan.connectionId,
-          entityType: item.internalEntityType as CatalogEntityType,
-          entityId: item.internalEntityId,
+          internalEntityType: item.internalEntityType as CatalogEntityType,
+          internalEntityId: item.internalEntityId,
+          action: "UPDATE",
         });
 
         const success = result.status === "SUCCEEDED" || result.status === "SKIPPED";
@@ -139,7 +142,7 @@ export async function applySyncPlanItem(planItemId: string): Promise<{ success: 
           where: { id: item.id },
           data: {
             status: success ? "APPLIED" : "FAILED",
-            publishJobId: result.publishJobId ?? undefined,
+            publishJobId: result.jobId ?? undefined,
           },
         });
 
@@ -174,7 +177,7 @@ export async function applySyncPlanItem(planItemId: string): Promise<{ success: 
           await prisma.channelEntityMapping.update({
             where: { id: item.mappingId },
             data: {
-              lastPublishAction: item.action === "LINK_MAPPING" ? "LINKED" : "UNLINKED",
+              status: item.action === "LINK_MAPPING" ? "ACTIVE" : "ARCHIVED",
             },
           });
         }
@@ -260,7 +263,7 @@ export async function retrySyncPlanItem(planItemId: string): Promise<{ success: 
   });
 
   if (!item || item.status !== "FAILED") {
-    return { success: false, error: `Item status is ${item.status} — only FAILED items can be retried` };
+    return { success: false, error: `Item status is ${item?.status ?? "not found"} — only FAILED items can be retried` };
   }
 
   // Reset to READY then apply
@@ -345,7 +348,7 @@ export async function cancelSyncPlan(planId: string): Promise<void> {
 export async function getSyncInboxSummary(connectionId: string) {
   const [openExternalChanges, openConflicts, planItems, latestPlan] = await Promise.all([
     prisma.externalCatalogChange.count({
-      where: { connectionId, status: { in: ["OPEN", "PENDING"] } },
+      where: { connectionId, status: "OPEN" },
     }),
     prisma.catalogConflict.count({
       where: { connectionId, status: { in: ["OPEN", "IN_REVIEW"] } },

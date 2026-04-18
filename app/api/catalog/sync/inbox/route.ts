@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
   // Open external changes for display
   const openChanges = await prisma.externalCatalogChange.findMany({
-    where: { connectionId, status: { in: ["OPEN", "PENDING"] } },
+    where: { connectionId, status: "OPEN" },
     orderBy: { detectedAt: "desc" },
     take: 20,
   });
