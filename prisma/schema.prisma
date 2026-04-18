@@ -87,6 +87,8 @@ enum PlatformRole {
   USER
   PLATFORM_ADMIN
   PLATFORM_SUPPORT
+  RECIPE_PROVIDER   // Can submit premium recipes for moderation
+  PLATFORM_MODERATOR // Reviews/approves premium recipes; registers basic recipes
 }
 
 enum MembershipRole {
@@ -379,6 +381,12 @@ model User {
   ticketMessages           SupportTicketMessage[] @relation("UserTicketMessages")
   pushSubscriptions        PushSubscription[]
   pushPreference           PushPreference?
+
+  platformIngredients      PlatformIngredient[]   @relation("PlatformIngredientCreatedBy")
+  marketplaceRecipes       MarketplaceRecipe[]    @relation("MarketplaceRecipeProvider")
+  marketplaceRecipesCreated MarketplaceRecipe[]   @relation("MarketplaceRecipeCreatedBy")
+  recipeReviews            MarketplaceRecipeReview[]
+  recipePurchases          MarketplaceRecipePurchase[]
 
   @@map("users")
 }
@@ -3328,6 +3336,7 @@ model Recipe {
   yieldQty         Int             @default(1)
   yieldUnit        RecipeYieldUnit @default(EACH)
   notes            String?
+  marketplaceSourceId String?      // links to MarketplaceRecipe if imported from marketplace
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   deletedAt        DateTime?
@@ -3412,4 +3421,194 @@ model IngredientSupplierLink {
   @@index([ingredientId])
   @@index([supplierProductId])
   @@map("ingredient_supplier_links")
+}
+
+// ─── Marketplace Enums ────────────────────────────────────────────────────────
+
+/// Type of marketplace recipe. BASIC is free (registered by admin/moderator);
+/// PREMIUM is paid (registered by RECIPE_PROVIDER, reviewed by moderator).
+enum MarketplaceRecipeType {
+  BASIC
+  PREMIUM
+}
+
+/// Lifecycle status for a marketplace recipe.
+enum MarketplaceRecipeStatus {
+  DRAFT             // Provider is still writing
+  PENDING_REVIEW    // Submitted; awaiting moderator review
+  CHANGE_REQUESTED  // Moderator requested changes
+  APPROVED          // Moderator approved; not yet published
+  PUBLISHED         // Visible on the marketplace
+  REJECTED          // Permanently rejected
+  ARCHIVED          // Taken down / no longer available
+}
+
+/// Difficulty level label for display.
+enum RecipeDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+/// Audit action recorded on MarketplaceRecipeReview log entries.
+enum RecipeReviewAction {
+  SUBMITTED          // Provider submitted the recipe for review
+  APPROVED           // Moderator approved
+  REJECTED           // Moderator rejected
+  CHANGE_REQUESTED   // Moderator requested changes
+  REVISION_SUBMITTED // Provider re-submitted after changes
+  PUBLISHED          // Moderator published to marketplace
+  ARCHIVED           // Admin/moderator archived
+}
+
+// ─── Marketplace Models ───────────────────────────────────────────────────────
+
+/// Platform-global ingredient catalogue used by marketplace recipes.
+/// Managed by PLATFORM_ADMIN and PLATFORM_MODERATOR; read-only for RECIPE_PROVIDER.
+model PlatformIngredient {
+  id                String         @id @default(uuid())
+  name              String
+  description       String?
+  category          String?        // e.g. "채소", "육류", "유제품"
+  unit              IngredientUnit @default(GRAM)
+  referenceUnitCost Int            @default(0) // minor currency units per unit
+  currency          String         @default("KRW")
+  isActive          Boolean        @default(true)
+  createdByUserId   String
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  deletedAt         DateTime?
+
+  createdBy           User                          @relation("PlatformIngredientCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  marketplaceIngredients MarketplaceRecipeIngredient[]
+
+  @@index([isActive])
+  @@index([category])
+  @@map("platform_ingredients")
+}
+
+/// A recipe listed in the Beyond marketplace.
+model MarketplaceRecipe {
+  id              String                  @id @default(uuid())
+  type            MarketplaceRecipeType   @default(PREMIUM)
+  status          MarketplaceRecipeStatus @default(DRAFT)
+  title           String
+  description     String?
+  thumbnailUrl    String?
+  providerId      String?         // userId of RECIPE_PROVIDER; null for BASIC recipes
+  createdByUserId String
+
+  // Yield / serving
+  yieldQty        Int             @default(1)
+  yieldUnit       RecipeYieldUnit @default(EACH)
+  servings        Int?
+
+  // Metadata
+  cuisineTag         String?
+  difficulty         RecipeDifficulty?
+  prepTimeMinutes    Int?
+  cookTimeMinutes    Int?
+
+  // Pricing (minor currency units)
+  currency           String  @default("KRW")
+  estimatedCostPrice Int     @default(0) // auto-computed from ingredients
+  recommendedPrice   Int     @default(0) // provider's suggested price
+  salePrice          Int     @default(0) // actual listed price (0 for BASIC)
+
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  provider    User?  @relation("MarketplaceRecipeProvider", fields: [providerId], references: [id], onDelete: SetNull)
+  createdBy   User   @relation("MarketplaceRecipeCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  steps       MarketplaceRecipeStep[]
+  ingredients MarketplaceRecipeIngredient[]
+  reviews     MarketplaceRecipeReview[]
+  purchases   MarketplaceRecipePurchase[]
+
+  @@index([status])
+  @@index([type, status])
+  @@index([providerId])
+  @@map("marketplace_recipes")
+}
+
+/// An ordered step in a marketplace recipe's cooking instructions.
+model MarketplaceRecipeStep {
+  id              String   @id @default(uuid())
+  recipeId        String
+  stepNumber      Int
+  instruction     String
+  imageUrl        String?
+  durationMinutes Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  recipe MarketplaceRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, stepNumber])
+  @@index([recipeId])
+  @@map("marketplace_recipe_steps")
+}
+
+/// Ingredient line item in a marketplace recipe (references PlatformIngredient).
+model MarketplaceRecipeIngredient {
+  id                   String         @id @default(uuid())
+  recipeId             String
+  platformIngredientId String
+  quantity             Decimal        @default(1) @db.Decimal(12, 4)
+  unit                 IngredientUnit @default(GRAM)
+  notes                String?
+  unitCostSnapshot     Int            @default(0) // snapshot of referenceUnitCost at time of save
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipe             MarketplaceRecipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  platformIngredient PlatformIngredient  @relation(fields: [platformIngredientId], references: [id], onDelete: Restrict)
+
+  @@unique([recipeId, platformIngredientId])
+  @@index([recipeId])
+  @@index([platformIngredientId])
+  @@map("marketplace_recipe_ingredients")
+}
+
+/// Audit log of moderation actions on a marketplace recipe.
+model MarketplaceRecipeReview {
+  id         String             @id @default(uuid())
+  recipeId   String
+  reviewerId String
+  action     RecipeReviewAction
+  notes      String?
+  createdAt  DateTime           @default(now())
+
+  recipe   MarketplaceRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  reviewer User              @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([recipeId, createdAt])
+  @@index([reviewerId])
+  @@map("marketplace_recipe_reviews")
+}
+
+/// Record that a user (or tenant) has purchased a premium marketplace recipe.
+model MarketplaceRecipePurchase {
+  id          String   @id @default(uuid())
+  recipeId    String
+  buyerUserId String
+  tenantId    String?
+  pricePaid   Int      @default(0) // minor currency units
+  currency    String   @default("KRW")
+  paymentRef  String?
+  purchasedAt DateTime @default(now())
+  refundedAt  DateTime?
+
+  recipe MarketplaceRecipe @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+  buyer  User              @relation(fields: [buyerUserId], references: [id], onDelete: Restrict)
+
+  @@unique([recipeId, buyerUserId])
+  @@index([buyerUserId])
+  @@index([recipeId])
+  @@index([tenantId])
+  @@map("marketplace_recipe_purchases")
 }

@@ -33,6 +33,8 @@ export interface UserAuthContext {
   platformRole: PlatformRoleKey;
   isPlatformAdmin: boolean;
   isPlatformSupport: boolean;
+  isPlatformModerator: boolean;
+  isRecipeProvider: boolean;
   tenantMemberships: TenantMembershipContext[];
   // Flattened store memberships across all tenants
   storeMemberships: StoreMembershipContext[];
@@ -102,6 +104,8 @@ async function buildUserAuthContext(userId: string): Promise<UserAuthContext | n
   const platformRole = user.platformRole as PlatformRoleKey;
   const isPlatformAdmin = platformRole === PLATFORM_ROLES.PLATFORM_ADMIN;
   const isPlatformSupport = platformRole === PLATFORM_ROLES.PLATFORM_SUPPORT;
+  const isPlatformModerator = platformRole === PLATFORM_ROLES.PLATFORM_MODERATOR;
+  const isRecipeProvider = platformRole === PLATFORM_ROLES.RECIPE_PROVIDER;
 
   const tenantMemberships: TenantMembershipContext[] = user.memberships.map((m) => {
     const membershipRole = m.role as MembershipRoleKey;
@@ -144,6 +148,8 @@ async function buildUserAuthContext(userId: string): Promise<UserAuthContext | n
     platformRole,
     isPlatformAdmin,
     isPlatformSupport,
+    isPlatformModerator,
+    isRecipeProvider,
     tenantMemberships,
     storeMemberships: allStoreMemberships,
     permissions: Array.from(allPermissions),

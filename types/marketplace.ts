@@ -1,0 +1,255 @@
+import type { IngredientUnit } from "./owner-ingredients";
+import type { RecipeYieldUnit } from "./owner-recipes";
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+export type MarketplaceRecipeType = "BASIC" | "PREMIUM";
+export type MarketplaceRecipeStatus =
+  | "DRAFT"
+  | "PENDING_REVIEW"
+  | "CHANGE_REQUESTED"
+  | "APPROVED"
+  | "PUBLISHED"
+  | "REJECTED"
+  | "ARCHIVED";
+export type RecipeDifficulty = "EASY" | "MEDIUM" | "HARD";
+export type RecipeReviewAction =
+  | "SUBMITTED"
+  | "APPROVED"
+  | "REJECTED"
+  | "CHANGE_REQUESTED"
+  | "REVISION_SUBMITTED"
+  | "PUBLISHED"
+  | "ARCHIVED";
+
+export const MARKETPLACE_RECIPE_STATUS_LABELS: Record<
+  MarketplaceRecipeStatus,
+  string
+> = {
+  DRAFT: "초안",
+  PENDING_REVIEW: "검토 대기",
+  CHANGE_REQUESTED: "수정 요청",
+  APPROVED: "승인됨",
+  PUBLISHED: "게시됨",
+  REJECTED: "반려됨",
+  ARCHIVED: "보관됨",
+};
+
+export const RECIPE_DIFFICULTY_LABELS: Record<RecipeDifficulty, string> = {
+  EASY: "쉬움",
+  MEDIUM: "보통",
+  HARD: "어려움",
+};
+
+// ─── PlatformIngredient ───────────────────────────────────────────────────────
+
+export interface PlatformIngredient {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  unit: IngredientUnit;
+  referenceUnitCost: number;
+  currency: string;
+  isActive: boolean;
+  createdByUserId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformIngredientListResult {
+  items: PlatformIngredient[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface CreatePlatformIngredientInput {
+  name: string;
+  description?: string;
+  category?: string;
+  unit: IngredientUnit;
+  referenceUnitCost: number;
+  currency?: string;
+}
+
+export interface UpdatePlatformIngredientInput {
+  name?: string;
+  description?: string;
+  category?: string;
+  unit?: IngredientUnit;
+  referenceUnitCost?: number;
+  currency?: string;
+  isActive?: boolean;
+}
+
+export interface PlatformIngredientFilters {
+  category?: string;
+  isActive?: boolean;
+  page?: number;
+  pageSize?: number;
+}
+
+// ─── MarketplaceRecipe ────────────────────────────────────────────────────────
+
+export interface MarketplaceRecipeIngredientItem {
+  id: string;
+  recipeId: string;
+  platformIngredientId: string;
+  platformIngredientName: string;
+  quantity: number;
+  unit: IngredientUnit;
+  notes: string | null;
+  unitCostSnapshot: number;
+  lineCost: number; // quantity × unitCostSnapshot
+}
+
+export interface MarketplaceRecipeStep {
+  id: string;
+  recipeId: string;
+  stepNumber: number;
+  instruction: string;
+  imageUrl: string | null;
+  durationMinutes: number | null;
+}
+
+export interface MarketplaceRecipe {
+  id: string;
+  type: MarketplaceRecipeType;
+  status: MarketplaceRecipeStatus;
+  title: string;
+  description: string | null;
+  thumbnailUrl: string | null;
+  providerId: string | null;
+  providerName: string | null;
+  createdByUserId: string;
+  yieldQty: number;
+  yieldUnit: RecipeYieldUnit;
+  servings: number | null;
+  cuisineTag: string | null;
+  difficulty: RecipeDifficulty | null;
+  prepTimeMinutes: number | null;
+  cookTimeMinutes: number | null;
+  currency: string;
+  estimatedCostPrice: number;
+  recommendedPrice: number;
+  salePrice: number;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MarketplaceRecipeDetail extends MarketplaceRecipe {
+  steps: MarketplaceRecipeStep[];
+  ingredients: MarketplaceRecipeIngredientItem[];
+  ingredientCount: number;
+}
+
+export interface MarketplaceRecipeListResult {
+  items: MarketplaceRecipe[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface MarketplaceRecipeIngredientInput {
+  platformIngredientId: string;
+  quantity: number;
+  unit: IngredientUnit;
+  notes?: string;
+}
+
+export interface MarketplaceRecipeStepInput {
+  stepNumber: number;
+  instruction: string;
+  imageUrl?: string;
+  durationMinutes?: number;
+}
+
+export interface CreateMarketplaceRecipeInput {
+  type: MarketplaceRecipeType;
+  title: string;
+  description?: string;
+  thumbnailUrl?: string;
+  yieldQty: number;
+  yieldUnit: RecipeYieldUnit;
+  servings?: number;
+  cuisineTag?: string;
+  difficulty?: RecipeDifficulty;
+  prepTimeMinutes?: number;
+  cookTimeMinutes?: number;
+  currency?: string;
+  recommendedPrice?: number;
+  salePrice?: number;
+  steps?: MarketplaceRecipeStepInput[];
+  ingredients?: MarketplaceRecipeIngredientInput[];
+}
+
+export interface UpdateMarketplaceRecipeInput {
+  title?: string;
+  description?: string;
+  thumbnailUrl?: string;
+  yieldQty?: number;
+  yieldUnit?: RecipeYieldUnit;
+  servings?: number;
+  cuisineTag?: string;
+  difficulty?: RecipeDifficulty;
+  prepTimeMinutes?: number;
+  cookTimeMinutes?: number;
+  currency?: string;
+  recommendedPrice?: number;
+  salePrice?: number;
+  steps?: MarketplaceRecipeStepInput[];
+  ingredients?: MarketplaceRecipeIngredientInput[];
+}
+
+export interface MarketplaceRecipeFilters {
+  type?: MarketplaceRecipeType;
+  status?: MarketplaceRecipeStatus;
+  cuisineTag?: string;
+  difficulty?: RecipeDifficulty;
+  providerId?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+// ─── Moderation ───────────────────────────────────────────────────────────────
+
+export interface MarketplaceRecipeReview {
+  id: string;
+  recipeId: string;
+  reviewerId: string;
+  reviewerName: string;
+  action: RecipeReviewAction;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface ReviewActionInput {
+  action: RecipeReviewAction;
+  notes?: string;
+}
+
+// ─── Purchase ─────────────────────────────────────────────────────────────────
+
+export interface MarketplaceRecipePurchase {
+  id: string;
+  recipeId: string;
+  buyerUserId: string;
+  tenantId: string | null;
+  pricePaid: number;
+  currency: string;
+  paymentRef: string | null;
+  purchasedAt: string;
+  refundedAt: string | null;
+}
+
+export interface PurchaseRecipeInput {
+  tenantId?: string;
+  paymentRef?: string;
+}
+
+export interface RecipeAccessResult {
+  hasAccess: boolean;
+  reason: "basic" | "purchased" | "provider" | "admin" | "not_purchased";
+}
