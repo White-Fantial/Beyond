@@ -350,8 +350,8 @@ export async function getRecipeForUser(
       const basePrice = preferredLink.supplierProduct.basePrice;
 
       const userObserved = obsByProductId.get(productId);
-      if (userObserved !== undefined && userObserved > 0) {
-        effectiveCost = userObserved; // priority 1: user's own price
+      if (userObserved !== undefined) {
+        effectiveCost = userObserved; // priority 1: user's own price (even if 0)
       } else if (basePrice > 0) {
         effectiveCost = basePrice; // priority 2: global base price
       }

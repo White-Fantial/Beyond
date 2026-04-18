@@ -170,10 +170,9 @@ export async function scrapeForUser(
     return { userId, scraped: 0, skipped: 0, failed: 0, results: [] };
   }
 
-  // 2. Find supplier products linked to ingredients used in this user's recipes
-  //    Scope: recipes owned by this tenant where the recipe's store belongs to the user.
-  //    Since recipes are tenant-scoped (not user-scoped), we collect all products
-  //    that appear in any recipe of this tenant and have a supplier with credentials.
+  // 2. Find supplier products linked to ingredients used in any recipe in this tenant.
+  //    Recipes are tenant-scoped, not user-scoped. We identify products that are
+  //    actively used in recipes and whose supplier the user has credentials for.
   const linkedProducts = await prisma.supplierProduct.findMany({
     where: {
       deletedAt: null,
