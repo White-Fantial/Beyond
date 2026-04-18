@@ -118,13 +118,14 @@ Beyond is organised into four separate portals, each with its own URL namespace,
 - **Channel Mapping Layer (Phase 3)** — Internal and external catalog entities are linked via the `channel_entity_mappings` table. Internal UUIDs and external IDs are always strictly separated. Mappings can be AUTO or MANUAL, and may require review before publish/sync.
 - **One-way Publish Layer (Phase 4)** — Internal catalog changes are pushed outbound to external channels via `CatalogPublishJob`. Publish is strictly one-way: internal → external.
 - **External Change Detection (Phase 5)** — After each successful import, successive import runs are compared and differences are logged as `ExternalCatalogChange` records with field-level diffs. Detected changes are review-only and do not automatically update the internal catalog. Operators can Acknowledge or Ignore changes via the UI. This layer is the precursor to conflict detection (Phase 6) and two-way sync (Phase 7).
+- **Conflict Detection & Resolution Foundation (Phase 6)** — Conflicts are derived from comparing internal catalog state against external detected changes. A conflict requires both sides to have changed the same field or structural area differently since the last known baseline. Not every external change becomes a conflict. Conflicts are stored with field-level and structure-level details. Resolution decisions (KEEP_INTERNAL, ACCEPT_EXTERNAL, MERGE_MANUALLY, DEFER, IGNORE) are recorded but not automatically applied. Actual data sync execution is deferred to Phase 7. Phase 6 uses current internal state plus lightweight change cues; richer internal field history will be extended later.
 - **Customer Order UI** — the public ordering portal reads only the internal catalog tables. No provider-specific fields, external sync metadata, or source-lock logic are ever exposed to customer-facing code.
 
 ---
 
-## Catalog Architecture (Phases 1–4)
+## Catalog Architecture (Phases 1–6)
 
-Beyond internal catalog is the **only canonical operational model**. External channel data flows through a five-layer architecture:
+Beyond internal catalog is the **only canonical operational model**. External channel data flows through a seven-layer architecture:
 
 | Layer | Tables | Purpose |
 |-------|--------|---------|
@@ -133,6 +134,8 @@ Beyond internal catalog is the **only canonical operational model**. External ch
 | **External Normalized** | `external_catalog_categories`, `external_catalog_products`, … | Normalized read-only mirror of external channel state. |
 | **Channel Mapping** | `channel_entity_mappings` | Links internal UUIDs to external entity IDs. Required for publish/sync. |
 | **Publish Layer** | `catalog_publish_jobs` | Per-operation outbound publish history (status, error, payload). |
+| **External Change Detection** | `external_catalog_changes`, `external_catalog_change_fields` | Field-level diffs between successive import runs per entity. |
+| **Conflict Detection & Resolution** | `catalog_conflicts`, `catalog_conflict_fields`, `catalog_conflict_resolution_logs`, `internal_catalog_changes` | Conflicts between internal changes and external changes. Resolution decision recording. |
 
 | Concept | Description |
 |---------|-------------|

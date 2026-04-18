@@ -1,0 +1,29 @@
+/**
+ * POST /api/catalog/conflicts/[conflictId]/start-review
+ *
+ * Moves a conflict to IN_REVIEW status.
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { setConflictStatus } from "@/services/catalog-conflict.service";
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { conflictId: string } }
+) {
+  let body: Record<string, string> = {};
+  try { body = await req.json(); } catch { /* ignore */ }
+
+  try {
+    await setConflictStatus({
+      conflictId: params.conflictId,
+      newStatus: "IN_REVIEW",
+      note: body.note,
+      changedByUserId: body.userId,
+    });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
