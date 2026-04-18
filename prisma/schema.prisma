@@ -1914,10 +1914,163 @@ model InternalCatalogChange {
 
   changedAt       DateTime @default(now())
   changedByUserId String?
+  changeSource    String?
 
   @@index([tenantId, storeId, entityType, internalEntityId, changedAt])
   @@index([tenantId, storeId, changedAt])
   @@map("internal_catalog_changes")
+}
+
+// ─── Catalog Sync (Phase 7) ───────────────────────────────────────────────────
+
+enum CatalogSyncDirection {
+  INTERNAL_TO_EXTERNAL
+  EXTERNAL_TO_INTERNAL
+  BIDIRECTIONAL
+  DISABLED
+}
+
+enum CatalogSyncConflictStrategy {
+  MANUAL_REVIEW
+  PREFER_INTERNAL
+  PREFER_EXTERNAL
+  LAST_WRITE_WINS
+}
+
+enum CatalogSyncAutoApplyMode {
+  NEVER
+  SAFE_ONLY
+  ALWAYS
+}
+
+enum CatalogSyncPolicyScope {
+  CATEGORY
+  PRODUCT
+  MODIFIER_GROUP
+  MODIFIER_OPTION
+  PRODUCT_CATEGORY_LINK
+  PRODUCT_MODIFIER_GROUP_LINK
+}
+
+model CatalogSyncPolicy {
+  id               String                     @id @default(uuid())
+  tenantId         String
+  storeId          String
+  connectionId     String
+  scope            CatalogSyncPolicyScope
+  fieldPath        String?
+  direction        CatalogSyncDirection
+  conflictStrategy CatalogSyncConflictStrategy
+  autoApplyMode    CatalogSyncAutoApplyMode
+  isEnabled        Boolean                    @default(true)
+  priority         Int                        @default(100)
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+
+  @@index([tenantId, storeId, connectionId, scope, isEnabled])
+  @@index([tenantId, storeId, connectionId, fieldPath])
+  @@map("catalog_sync_policies")
+}
+
+enum CatalogSyncPlanStatus {
+  DRAFT
+  READY
+  PARTIALLY_BLOCKED
+  BLOCKED
+  APPLIED
+  FAILED
+  CANCELLED
+}
+
+enum CatalogSyncAction {
+  APPLY_INTERNAL_PATCH
+  APPLY_EXTERNAL_PATCH
+  CREATE_INTERNAL_ENTITY
+  CREATE_EXTERNAL_ENTITY
+  ARCHIVE_INTERNAL_ENTITY
+  ARCHIVE_EXTERNAL_ENTITY
+  LINK_MAPPING
+  UNLINK_MAPPING
+  SKIP
+}
+
+enum CatalogSyncItemStatus {
+  PENDING
+  READY
+  BLOCKED
+  APPLIED
+  FAILED
+  SKIPPED
+}
+
+model CatalogSyncPlan {
+  id                      String                @id @default(uuid())
+  tenantId                String
+  storeId                 String
+  connectionId            String
+  source                  String?
+  status                  CatalogSyncPlanStatus @default(DRAFT)
+  basedOnImportRunId      String?
+  basedOnExternalChangeId String?
+  basedOnConflictId       String?
+  summary                 String?
+  createdByUserId         String?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+
+  items CatalogSyncPlanItem[]
+
+  @@index([tenantId, storeId, connectionId, status])
+  @@map("catalog_sync_plans")
+}
+
+model CatalogSyncPlanItem {
+  id                 String                @id @default(uuid())
+  planId             String
+  internalEntityType CatalogEntityType?
+  internalEntityId   String?
+  externalEntityType CatalogEntityType?
+  externalEntityId   String?
+  scope              CatalogSyncPolicyScope
+  fieldPath          String?
+  action             CatalogSyncAction
+  direction          CatalogSyncDirection?
+  status             CatalogSyncItemStatus @default(PENDING)
+  blockedReason      String?
+  previewBeforeValue Json?
+  previewAfterValue  Json?
+  mappingId          String?
+  externalChangeId   String?
+  conflictId         String?
+  publishJobId       String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  plan CatalogSyncPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId, status])
+  @@index([conflictId])
+  @@index([externalChangeId])
+  @@map("catalog_sync_plan_items")
+}
+
+model CatalogSyncExecutionLog {
+  id              String            @id @default(uuid())
+  planId          String
+  planItemId      String?
+  status          String
+  action          CatalogSyncAction
+  requestPayload  Json?
+  responsePayload Json?
+  errorMessage    String?
+  errorCode       String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime          @default(now())
+
+  @@index([planId])
+  @@index([planItemId])
+  @@map("catalog_sync_execution_logs")
 }
 
 // ─── Admin Jobs ───────────────────────────────────────────────────────────────
