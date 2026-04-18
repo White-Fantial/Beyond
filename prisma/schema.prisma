@@ -1269,6 +1269,7 @@ model CatalogProduct {
 
   productCategories     CatalogProductCategory[]
   productModifierGroups CatalogProductModifierGroup[]
+  recipes               Recipe[]
 
   @@index([tenantId, storeId])
   @@index([storeId, isActive, isVisibleOnOnlineOrder, displayOrder])
@@ -3268,4 +3269,147 @@ model WebhookDelivery {
   @@index([endpointId])
   @@index([event])
   @@map("webhook_deliveries")
+}
+
+// ─── Cost Management ──────────────────────────────────────────────────────────
+
+enum IngredientUnit {
+  GRAM
+  KG
+  ML
+  LITER
+  EACH
+  TSP
+  TBSP
+  OZ
+  LB
+  CUP
+  PIECE
+}
+
+enum RecipeYieldUnit {
+  EACH
+  BATCH
+  SERVING
+  GRAM
+  KG
+  ML
+  LITER
+}
+
+model Ingredient {
+  id          String         @id @default(uuid())
+  tenantId    String
+  storeId     String
+  name        String
+  description String?
+  unit        IngredientUnit @default(GRAM)
+  unitCost    Int            @default(0) // minor currency units (e.g. cents)
+  currency    String         @default("NZD")
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
+
+  recipeIngredients    RecipeIngredient[]
+  supplierLinks        IngredientSupplierLink[]
+
+  @@index([tenantId, storeId])
+  @@index([storeId, name])
+  @@map("ingredients")
+}
+
+model Recipe {
+  id               String          @id @default(uuid())
+  tenantId         String
+  storeId          String
+  catalogProductId String?
+  name             String
+  yieldQty         Int             @default(1)
+  yieldUnit        RecipeYieldUnit @default(EACH)
+  notes            String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  deletedAt        DateTime?
+
+  catalogProduct CatalogProduct?  @relation(fields: [catalogProductId], references: [id], onDelete: SetNull)
+  ingredients    RecipeIngredient[]
+
+  @@index([tenantId, storeId])
+  @@index([storeId, catalogProductId])
+  @@map("recipes")
+}
+
+model RecipeIngredient {
+  id           String         @id @default(uuid())
+  recipeId     String
+  ingredientId String
+  quantity     Decimal        @default(1) @db.Decimal(12, 4)
+  unit         IngredientUnit @default(GRAM)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+
+  @@unique([recipeId, ingredientId])
+  @@index([recipeId])
+  @@index([ingredientId])
+  @@map("recipe_ingredients")
+}
+
+model Supplier {
+  id           String   @id @default(uuid())
+  tenantId     String
+  storeId      String
+  name         String
+  websiteUrl   String?
+  contactEmail String?
+  contactPhone String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  products SupplierProduct[]
+
+  @@index([tenantId, storeId])
+  @@index([storeId, name])
+  @@map("suppliers")
+}
+
+model SupplierProduct {
+  id            String         @id @default(uuid())
+  supplierId    String
+  name          String
+  externalUrl   String?
+  currentPrice  Int            @default(0) // minor currency units per unit
+  unit          IngredientUnit @default(EACH)
+  lastScrapedAt DateTime?
+  metadata      Json           @default("{}")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+
+  supplier          Supplier                 @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  ingredientLinks   IngredientSupplierLink[]
+
+  @@index([supplierId])
+  @@map("supplier_products")
+}
+
+model IngredientSupplierLink {
+  id                String   @id @default(uuid())
+  ingredientId      String
+  supplierProductId String
+  isPreferred       Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  ingredient      Ingredient      @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  supplierProduct SupplierProduct @relation(fields: [supplierProductId], references: [id], onDelete: Cascade)
+
+  @@unique([ingredientId, supplierProductId])
+  @@index([ingredientId])
+  @@index([supplierProductId])
+  @@map("ingredient_supplier_links")
 }
