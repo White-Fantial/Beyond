@@ -563,3 +563,128 @@ All customer-facing data queries go through `services/customer-menu.service.ts`.
 - Only reads `catalog_*` tables — never external mirror tables or mapping tables
 - Never exposes `sourceRef`, `sourceType`, `syncChecksum`, or any provider-specific field
 - Money values are always returned as integer minor units (e.g. `1250` for $12.50)
+
+
+---
+
+## Catalog Architecture (Phases 1–4)
+
+Beyond uses a layered catalog architecture where the **internal canonical catalog** is the authoritative source of truth for all operational data.
+
+### Layers
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Layer 1: Internal Catalog (canonical)              │
+│  CatalogCategory / CatalogProduct /                 │
+│  CatalogModifierGroup / CatalogModifierOption       │
+│  → Always the authoritative source                  │
+└───────────────────┬─────────────────────────────────┘
+                    │ import (Phase 2)
+┌───────────────────▼─────────────────────────────────┐
+│  Layer 2: External Raw Snapshot                     │
+│  ExternalCatalogSnapshot (per import run)           │
+└───────────────────┬─────────────────────────────────┘
+                    │ normalize
+┌───────────────────▼─────────────────────────────────┐
+│  Layer 3: External Normalized Catalog               │
+│  ExternalCatalogCategory / ExternalCatalogProduct   │
+│  ExternalCatalogModifierGroup / etc.                │
+└───────────────────┬─────────────────────────────────┘
+                    │ match/link (Phase 3)
+┌───────────────────▼─────────────────────────────────┐
+│  Layer 4: Channel Mapping Layer                     │
+│  ChannelEntityMapping                               │
+│  status: ACTIVE / NEEDS_REVIEW / BROKEN / ARCHIVED  │
+└───────────────────┬─────────────────────────────────┘
+                    │ publish (Phase 4)
+┌───────────────────▼─────────────────────────────────┐
+│  Layer 5: Outbound Publish Layer                    │
+│  CatalogPublishJob (history + status)               │
+│  ChannelEntityMapping.lastPublish* (summary)        │
+└─────────────────────────────────────────────────────┘
+```
+
+### Phase 1 — Internal Catalog Ownership
+All catalog entities (Category, Product, ModifierGroup, ModifierOption) are owned and editable within Beyond. Provenance is recorded via `CatalogOriginType` but does not restrict editability.
+
+### Phase 2 — Catalog Import Foundation
+`runFullCatalogImport` fetches external catalog data per provider, stores a raw snapshot via `ExternalCatalogSnapshot`, and normalizes it into `ExternalCatalog*` tables. Each import run is tracked via `CatalogImportRun`.
+
+### Phase 3 — Channel Mapping Layer
+`ChannelEntityMapping` links internal entities to their external counterparts. Mappings are created automatically (AUTO-matched by name similarity) or manually. Status: `ACTIVE | NEEDS_REVIEW | UNMATCHED | BROKEN | ARCHIVED`.
+
+### Phase 4 — One-way Publish from Beyond
+
+**Publish = one-way push: internal canonical catalog → external channel.**
+
+The publish layer is responsible for propagating Beyond internal catalog changes to external provider channels (POS, delivery platforms, etc.).
+
+#### Publish Flow
+
+```
+internal entity
+  → mapping lookup (ChannelEntityMapping)
+  → prerequisite validation
+  → provider payload builder (per provider)
+  → provider adapter (HTTP call)
+  → result persistence (CatalogPublishJob)
+  → mapping publish summary update (ChannelEntityMapping.lastPublish*)
+```
+
+#### Key Principles
+
+- **Internal catalog is always the canonical source.** Publish is an outbound operation, not a two-way sync.
+- **Mapping layer determines action:** ACTIVE mapping → UPDATE/ARCHIVE; no mapping → CREATE.
+- **Publish failure does NOT roll back internal catalog.** Publish failure means external application failure only.
+- **External normalized catalog is still primarily refreshed via import**, not assumed authoritative from publish success alone. Publish success updates `lastPublish*` fields on mappings for tracking purposes only.
+- **PRODUCT_CATEGORY_LINK / PRODUCT_MODIFIER_GROUP_LINK** are handled implicitly as part of PRODUCT publish (the product payload carries resolved external category/modifier-group ids from active mappings). Standalone link publish is planned for a future iteration.
+
+#### Models Added (Phase 4)
+
+| Model / Enum | Purpose |
+|---|---|
+| `CatalogPublishJob` | Per-operation publish history (status, error, payload) |
+| `CatalogPublishAction` | CREATE / UPDATE / ARCHIVE / UNARCHIVE |
+| `CatalogPublishStatus` | PENDING / RUNNING / SUCCEEDED / FAILED / SKIPPED / CANCELLED |
+| `CatalogPublishScope` | CATEGORY / PRODUCT / MODIFIER_GROUP / MODIFIER_OPTION / PRODUCT_CATEGORY_LINK / PRODUCT_MODIFIER_GROUP_LINK |
+| `ChannelEntityMapping.lastPublish*` | Publish summary fields (lastPublishedAt, lastPublishStatus, lastPublishAction, lastPublishHash, lastPublishError) |
+
+#### Changed-only Publish
+
+When `onlyChanged=true`, a SHA-256 hash of publish-relevant fields is computed for each internal entity. If the hash matches `lastPublishHash` on the mapping, the job is marked SKIPPED without calling the provider. ARCHIVE/UNARCHIVE always execute regardless of hash.
+
+#### Publish UI
+
+Located at `/owner/stores/[storeId]/integrations/[connectionId]/publish`. Shows:
+- Connection status and publish summary
+- Per-entity table with action buttons (Create / Update / Archive / Unarchive)
+- Bulk actions (Publish All Changed, Retry Failed)
+- Recent publish job history
+
+#### API Routes (Phase 4)
+
+| Method | Route | Purpose |
+|--------|-------|---------|
+| `POST` | `/api/catalog/publish/entity` | Publish single entity |
+| `POST` | `/api/catalog/publish/bulk` | Publish multiple entities |
+| `POST` | `/api/catalog/publish/connection` | Publish full connection catalog |
+| `GET` | `/api/catalog/publish/jobs` | List publish jobs |
+| `GET` | `/api/catalog/publish/jobs/[jobId]` | Get single publish job |
+| `POST` | `/api/catalog/publish/jobs/[jobId]/retry` | Retry a FAILED job |
+
+#### Provider Adapters (Phase 4)
+
+| Provider | Status |
+|---|---|
+| Loyverse | Category CREATE/UPDATE, Product CREATE/UPDATE/ARCHIVE implemented. Modifier group/option standalone not supported by Loyverse API. |
+| Uber Eats | Stub — not yet implemented (Uber Eats uses full-menu PUT model) |
+| DoorDash | Stub — not yet implemented |
+
+#### TODO — Future Phases
+
+```
+// TODO Phase 5: external change detection after import
+// TODO Phase 6: field-level conflict detection between internal changes and external changes
+// TODO Phase 7: policy-based two-way sync (auto-merge vs manual review)
+```

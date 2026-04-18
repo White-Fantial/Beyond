@@ -116,13 +116,14 @@ Beyond is organised into four separate portals, each with its own URL namespace,
 - **Server Components by default** — client components (`"use client"`) are used only where interactivity is required.
 - **Internal Catalog Ownership (Phase 1)** — Beyond internal catalog is the canonical operational model. All catalog reads (customer order UI, backoffice, owner console) use only the internal `catalog_*` tables. External POS/delivery data is treated as an import source (provenance), not a live authority.
 - **Channel Mapping Layer (Phase 3)** — Internal and external catalog entities are linked via the `channel_entity_mappings` table. Internal UUIDs and external IDs are always strictly separated. Mappings can be AUTO or MANUAL, and may require review before publish/sync.
+- **One-way Publish Layer (Phase 4)** — Internal catalog changes are pushed outbound to external channels via `CatalogPublishJob`. Publish is strictly one-way: internal → external. External → internal sync is planned for Phase 5+.
 - **Customer Order UI** — the public ordering portal reads only the internal catalog tables. No provider-specific fields, external sync metadata, or source-lock logic are ever exposed to customer-facing code.
 
 ---
 
-## Catalog Architecture (Phases 1–3)
+## Catalog Architecture (Phases 1–4)
 
-Beyond internal catalog is the **only canonical operational model**. External channel data flows through a four-layer architecture:
+Beyond internal catalog is the **only canonical operational model**. External channel data flows through a five-layer architecture:
 
 | Layer | Tables | Purpose |
 |-------|--------|---------|
@@ -130,6 +131,7 @@ Beyond internal catalog is the **only canonical operational model**. External ch
 | **External Snapshot** | `external_catalog_snapshots` | Immutable append-only raw payload per entity per import run. |
 | **External Normalized** | `external_catalog_categories`, `external_catalog_products`, … | Normalized read-only mirror of external channel state. |
 | **Channel Mapping** | `channel_entity_mappings` | Links internal UUIDs to external entity IDs. Required for publish/sync. |
+| **Publish Layer** | `catalog_publish_jobs` | Per-operation outbound publish history (status, error, payload). |
 
 | Concept | Description |
 |---------|-------------|
@@ -138,6 +140,9 @@ Beyond internal catalog is the **only canonical operational model**. External ch
 | **Mapping statuses** | `ACTIVE` (safe), `NEEDS_REVIEW` (auto-matched, needs approval), `UNMATCHED` (no candidate), `BROKEN` (entities missing/invalid), `ARCHIVED` (historical). |
 | **Editing** | ALL catalog entities (regardless of origin) are fully editable in Beyond. There is no source-lock. |
 | **ID separation** | Internal UUIDs and external IDs are always strictly separated. The mapping layer is the only bridge. |
+| **Publish flow** | `internal entity → mapping lookup → prerequisite validation → payload builder → provider adapter → CatalogPublishJob`. |
+| **Publish does not replace import** | External normalized catalog tables are refreshed via import. Publish success updates `lastPublish*` fields on mappings for tracking only — it does NOT make external tables authoritative. |
+| **changed-only publish** | A SHA-256 hash of publish-relevant fields is compared against `lastPublishHash` on the mapping. If equal, the job is SKIPPED. ARCHIVE/UNARCHIVE always run. |
 
 See [doc/architecture.md](./doc/architecture.md) for detailed diagrams and API reference.
 

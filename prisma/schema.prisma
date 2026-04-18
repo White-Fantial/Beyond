@@ -1614,13 +1614,90 @@ model ChannelEntityMapping {
   lastValidatedAt DateTime?
   linkedAt        DateTime  @default(now())
   unlinkedAt      DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+
+  // Phase 4: Publish summary fields — snapshot of the last outbound publish result.
+  // Detailed per-operation history lives in CatalogPublishJob.
+  lastPublishedAt   DateTime?
+  lastPublishStatus CatalogPublishStatus?
+  lastPublishAction CatalogPublishAction?
+  lastPublishHash   String?
+  lastPublishError  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId, storeId, connectionId, internalEntityType, internalEntityId])
   @@index([tenantId, storeId, connectionId, externalEntityType, externalEntityId])
   @@index([tenantId, storeId, connectionId, status])
   @@map("channel_entity_mappings")
+}
+
+// ─── Phase 4: Outbound Publish Layer ─────────────────────────────────────────
+//
+// Publish = one-way push from internal Beyond catalog → external channel.
+// The mapping layer (ChannelEntityMapping) determines whether to CREATE or UPDATE.
+// External normalized catalog is still primarily refreshed via import, not assumed
+// to be authoritative from publish success alone.
+//
+// TODO Phase 5: external change detection after import
+// TODO Phase 6: conflict detection between internal changes and external changes
+// TODO Phase 7: policy-based two-way sync
+
+enum CatalogPublishAction {
+  CREATE
+  UPDATE
+  ARCHIVE
+  UNARCHIVE
+}
+
+enum CatalogPublishStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+  CANCELLED
+}
+
+enum CatalogPublishScope {
+  CATEGORY
+  PRODUCT
+  MODIFIER_GROUP
+  MODIFIER_OPTION
+  PRODUCT_CATEGORY_LINK
+  PRODUCT_MODIFIER_GROUP_LINK
+}
+
+model CatalogPublishJob {
+  id           String @id @default(uuid())
+  tenantId     String
+  storeId      String
+  connectionId String
+
+  internalEntityType CatalogEntityType?
+  internalEntityId   String?
+
+  scope  CatalogPublishScope
+  action CatalogPublishAction
+  status CatalogPublishStatus @default(PENDING)
+
+  requestedByUserId String?
+  triggerSource     String? // MANUAL_UI | BULK_UI | API | SYSTEM
+
+  requestPayload  Json?
+  responsePayload Json?
+  errorMessage    String?
+  errorCode       String?
+
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, storeId, connectionId, status])
+  @@index([tenantId, storeId, connectionId, internalEntityType, internalEntityId])
+  @@map("catalog_publish_jobs")
 }
 
 // ─── Admin Jobs ───────────────────────────────────────────────────────────────
