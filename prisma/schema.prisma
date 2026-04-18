@@ -1376,7 +1376,65 @@ model CatalogProductModifierGroup {
   @@map("catalog_product_modifier_groups")
 }
 
+// ─── Phase 2: Import Run & Raw Snapshot ──────────────────────────────────────
+
+/// Tracks a full catalog import run for a given channel connection.
+model CatalogImportRun {
+  id           String    @id @default(uuid())
+  tenantId     String
+  storeId      String
+  connectionId String
+  provider     String    // LOYVERSE, UBER_EATS, DOORDASH, etc.
+  status       String    // PENDING, RUNNING, SUCCEEDED, FAILED
+
+  startedAt   DateTime
+  completedAt DateTime?
+
+  importedCategoriesCount      Int @default(0)
+  importedProductsCount        Int @default(0)
+  importedModifierGroupsCount  Int @default(0)
+  importedModifierOptionsCount Int @default(0)
+
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+
+  snapshots ExternalCatalogSnapshot[]
+
+  @@index([tenantId, storeId, createdAt])
+  @@index([connectionId, status])
+  @@map("catalog_import_runs")
+}
+
+/// Raw snapshot of a single external catalog entity as returned by the provider API.
+/// One row per entity per import run — immutable append-only record.
+model ExternalCatalogSnapshot {
+  id               String @id @default(uuid())
+  tenantId         String
+  storeId          String
+  connectionId     String
+
+  entityType       String // CATEGORY, PRODUCT, MODIFIER_GROUP, MODIFIER_OPTION
+  externalEntityId String
+
+  payload         Json
+  payloadChecksum String // SHA-256 of the JSON payload for dedup / diff
+
+  fetchedAt DateTime
+
+  importRunId String
+  importRun   CatalogImportRun @relation(fields: [importRunId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([connectionId, entityType, externalEntityId])
+  @@index([importRunId])
+  @@map("external_catalog_snapshots")
+}
+
 // ─── External Raw Mirror Tables ───────────────────────────────────────────────
+// Phase 2: enhanced with entityHash (fingerprint of normalised key fields for diff)
+// and importRunId (which import run last upserted this row).
 
 model ExternalCatalogCategory {
   id                String           @id @default(uuid())
@@ -1390,6 +1448,10 @@ model ExternalCatalogCategory {
   rawPayload        Json
   externalUpdatedAt DateTime?
   syncChecksum      String?
+  // Phase 2: fingerprint of key normalised fields for future diff support
+  entityHash        String?
+  // Phase 2: last import run that upserted this row
+  importRunId       String?
   lastSyncedAt      DateTime         @default(now())
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
@@ -1412,6 +1474,10 @@ model ExternalCatalogProduct {
   rawPayload            Json
   externalUpdatedAt     DateTime?
   syncChecksum          String?
+  // Phase 2: fingerprint of key normalised fields for future diff support
+  entityHash            String?
+  // Phase 2: last import run that upserted this row
+  importRunId           String?
   lastSyncedAt          DateTime         @default(now())
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
@@ -1433,6 +1499,10 @@ model ExternalCatalogModifierGroup {
   rawPayload        Json
   externalUpdatedAt DateTime?
   syncChecksum      String?
+  // Phase 2: fingerprint of key normalised fields for future diff support
+  entityHash        String?
+  // Phase 2: last import run that upserted this row
+  importRunId       String?
   lastSyncedAt      DateTime         @default(now())
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
@@ -1455,6 +1525,10 @@ model ExternalCatalogModifierOption {
   rawPayload            Json
   externalUpdatedAt     DateTime?
   syncChecksum          String?
+  // Phase 2: fingerprint of key normalised fields for future diff support
+  entityHash            String?
+  // Phase 2: last import run that upserted this row
+  importRunId           String?
   lastSyncedAt          DateTime         @default(now())
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
