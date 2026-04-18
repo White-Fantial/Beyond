@@ -1413,6 +1413,11 @@ model CatalogImportRun {
 
   errorMessage String?
 
+  // Phase 5: diff / change-detection status
+  comparedToImportRunId String?
+  diffStatus            String?   // PENDING, RUNNING, SUCCEEDED, FAILED
+  diffCompletedAt       DateTime?
+
   createdAt DateTime @default(now())
 
   snapshots ExternalCatalogSnapshot[]
@@ -1563,6 +1568,8 @@ model ExternalCatalogProductModifierGroupLink {
   externalProductId       String
   externalModifierGroupId String
   rawPayload              Json?
+  // Phase 5: import run tracking for deleted-link detection
+  importRunId             String?
   lastSyncedAt            DateTime         @default(now())
   createdAt               DateTime         @default(now())
   updatedAt               DateTime         @updatedAt
@@ -1698,6 +1705,80 @@ model CatalogPublishJob {
   @@index([tenantId, storeId, connectionId, status])
   @@index([tenantId, storeId, connectionId, internalEntityType, internalEntityId])
   @@map("catalog_publish_jobs")
+}
+
+// ─── Phase 5: External Change Detection ──────────────────────────────────────
+
+enum ExternalCatalogChangeKind {
+  CREATED
+  UPDATED
+  DELETED
+  RELINKED
+  STRUCTURE_UPDATED
+}
+
+enum ExternalCatalogChangeStatus {
+  OPEN
+  ACKNOWLEDGED
+  IGNORED
+  SUPERSEDED
+}
+
+/// Records a detected change in an external catalog entity between two import runs.
+model ExternalCatalogChange {
+  id           String @id @default(uuid())
+  tenantId     String
+  storeId      String
+  connectionId String
+
+  entityType       CatalogEntityType
+  externalEntityId String
+
+  internalEntityId String?
+  mappingId        String?
+
+  changeKind ExternalCatalogChangeKind
+  status     ExternalCatalogChangeStatus @default(OPEN)
+
+  previousEntityHash String?
+  currentEntityHash  String?
+
+  importRunId         String
+  comparedImportRunId String?
+
+  summary        String?
+  detectedAt     DateTime  @default(now())
+  acknowledgedAt DateTime?
+  ignoredAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fieldDiffs ExternalCatalogChangeField[]
+
+  @@index([tenantId, storeId, connectionId, status])
+  @@index([tenantId, storeId, connectionId, entityType])
+  @@index([connectionId, externalEntityId, entityType])
+  @@index([importRunId])
+  @@map("external_catalog_changes")
+}
+
+/// Records a field-level diff for a single ExternalCatalogChange.
+model ExternalCatalogChangeField {
+  id       String @id @default(uuid())
+  changeId String
+
+  fieldPath String
+  previousValue Json?
+  currentValue  Json?
+  changeType    String // VALUE_CHANGED | ADDED | REMOVED | ORDER_CHANGED | PARENT_CHANGED
+
+  createdAt DateTime @default(now())
+
+  change ExternalCatalogChange @relation(fields: [changeId], references: [id], onDelete: Cascade)
+
+  @@index([changeId])
+  @@map("external_catalog_change_fields")
 }
 
 // ─── Admin Jobs ───────────────────────────────────────────────────────────────

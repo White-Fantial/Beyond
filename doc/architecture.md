@@ -390,8 +390,8 @@ Located at: `/owner/stores/[storeId]/integrations/[connectionId]/mapping`
 | **Phase 1** | ✅ Complete | Internal catalog ownership. Provenance fields. No source-lock. Internal-only reads. |
 | **Phase 2** | ✅ Complete | External catalog import. CatalogImportRun + ExternalCatalog* tables. entityHash fingerprinting. |
 | **Phase 3** | ✅ Complete | Channel mapping layer. Auto-match engine. Manual link/relink/unlink. NEEDS_REVIEW / UNMATCHED / BROKEN states. Mapping review UI. |
-| **Phase 4** | 🔜 Planned | Publish engine. Internal → external outbound payload builders. Mapping-based create/update/archive publish. |
-| **Phase 5** | 🔜 Planned | External change detection. Field-level external diff logs. |
+| **Phase 4** | ✅ Complete | Publish engine. Internal → external outbound payload builders. Mapping-based create/update/archive publish. |
+| **Phase 5** | ✅ Complete | External change detection. Import-to-import diff. Field-level and structure-level change logs. Acknowledge/Ignore UI. |
 | **Phase 6** | 🔜 Planned | Conflict detection. Review center for field/structure conflicts. |
 | **Phase 7** | 🔜 Planned | Policy-based two-way sync. |
 
@@ -688,3 +688,76 @@ Located at `/owner/stores/[storeId]/integrations/[connectionId]/publish`. Shows:
 // TODO Phase 6: field-level conflict detection between internal changes and external changes
 // TODO Phase 7: policy-based two-way sync (auto-merge vs manual review)
 ```
+
+---
+
+### Phase 5 — External Change Detection
+
+Phase 5 adds a **detection-only** layer that compares successive external catalog import results and logs any differences. The internal catalog is never modified automatically.
+
+#### Architecture
+
+```
+┌───────────────────────────────────────────────────────────────────────────────┐
+│  Layer 5b: External Change Detection Layer (Phase 5)                         │
+│  external_catalog_changes, external_catalog_change_fields                    │
+│                                                                               │
+│  ← Compares current import run vs. previous successful run                  │
+│  ← Logs CREATED / UPDATED / DELETED / RELINKED / STRUCTURE_UPDATED per-entity│
+│  ← Field-level diffs stored per change (name, price, links, …)              │
+│  ← Does NOT modify internal catalog                                          │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Detection Flow
+
+1. `runFullCatalogImport` completes with status `SUCCEEDED`.
+2. `detectExternalChangesForImportRun(importRunId)` is called asynchronously (failure does not fail the import).
+3. The service finds the previous SUCCEEDED import for the same connection.
+4. For each entity type (category, product, modifier group, modifier option):
+   - Entities present in current but absent from previous → **CREATED**
+   - Entities whose `entityHash` changed → **UPDATED** (field diffs computed)
+   - Entities present in previous but absent from current → **DELETED**
+   - Structure changes (category/modifier-group link changes) → **STRUCTURE_UPDATED** or **RELINKED**
+5. Mapping layer is consulted: if an ACTIVE/NEEDS_REVIEW mapping exists, `internalEntityId` and `mappingId` are set on the change log.
+6. Supersede logic: existing OPEN changes for the same entity are set to SUPERSEDED when a newer change is recorded.
+7. `CatalogImportRun.diffStatus` is updated to SUCCEEDED or FAILED.
+
+#### Models Added (Phase 5)
+
+| Model | Purpose |
+|-------|---------|
+| `ExternalCatalogChange` | One row per detected change (entity-level) |
+| `ExternalCatalogChangeField` | One row per field-level diff within a change |
+
+| Enum | Values |
+|------|--------|
+| `ExternalCatalogChangeKind` | CREATED, UPDATED, DELETED, RELINKED, STRUCTURE_UPDATED |
+| `ExternalCatalogChangeStatus` | OPEN, ACKNOWLEDGED, IGNORED, SUPERSEDED |
+
+`CatalogImportRun` gains: `comparedToImportRunId`, `diffStatus`, `diffCompletedAt`.
+
+#### Constraints
+
+- **No automatic internal catalog updates.** Detected changes are review-only.
+- **No conflict resolution.** That is Phase 6.
+- **No two-way sync.** That is Phase 7.
+
+#### API Routes (Phase 5)
+
+| Method | Route | Purpose |
+|--------|-------|---------|
+| `POST` | `/api/catalog/external-changes/detect` | Trigger detection for an import run |
+| `GET` | `/api/catalog/external-changes` | List changes (filterable) |
+| `GET` | `/api/catalog/external-changes/summary` | Summary counts |
+| `GET` | `/api/catalog/external-changes/[changeId]` | Single change with field diffs |
+| `POST` | `/api/catalog/external-changes/[changeId]/acknowledge` | Mark as ACKNOWLEDGED |
+| `POST` | `/api/catalog/external-changes/[changeId]/ignore` | Mark as IGNORED |
+
+#### UI (Phase 5)
+
+Located at `/owner/stores/[storeId]/integrations/[connectionId]/external-changes`.
+
+- Summary cards: Open / Updated / Created / Missing / Structure / Mapped vs Unmapped
+- Filterable change list with inline field-diff preview
+- Acknowledge and Ignore actions per change row

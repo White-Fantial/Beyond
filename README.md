@@ -116,7 +116,8 @@ Beyond is organised into four separate portals, each with its own URL namespace,
 - **Server Components by default** — client components (`"use client"`) are used only where interactivity is required.
 - **Internal Catalog Ownership (Phase 1)** — Beyond internal catalog is the canonical operational model. All catalog reads (customer order UI, backoffice, owner console) use only the internal `catalog_*` tables. External POS/delivery data is treated as an import source (provenance), not a live authority.
 - **Channel Mapping Layer (Phase 3)** — Internal and external catalog entities are linked via the `channel_entity_mappings` table. Internal UUIDs and external IDs are always strictly separated. Mappings can be AUTO or MANUAL, and may require review before publish/sync.
-- **One-way Publish Layer (Phase 4)** — Internal catalog changes are pushed outbound to external channels via `CatalogPublishJob`. Publish is strictly one-way: internal → external. External → internal sync is planned for Phase 5+.
+- **One-way Publish Layer (Phase 4)** — Internal catalog changes are pushed outbound to external channels via `CatalogPublishJob`. Publish is strictly one-way: internal → external.
+- **External Change Detection (Phase 5)** — After each successful import, successive import runs are compared and differences are logged as `ExternalCatalogChange` records with field-level diffs. Detected changes are review-only and do not automatically update the internal catalog. Operators can Acknowledge or Ignore changes via the UI. This layer is the precursor to conflict detection (Phase 6) and two-way sync (Phase 7).
 - **Customer Order UI** — the public ordering portal reads only the internal catalog tables. No provider-specific fields, external sync metadata, or source-lock logic are ever exposed to customer-facing code.
 
 ---

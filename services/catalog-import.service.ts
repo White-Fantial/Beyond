@@ -26,6 +26,7 @@
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { createCatalogAdapter } from "@/adapters/catalog";
+import { detectExternalChangesForImportRun } from "./external-change-detection.service";
 import type { RawCatalogCategory, RawCatalogProduct, RawCatalogModifierGroup, RawCatalogModifierOption } from "@/adapters/catalog/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -234,10 +235,12 @@ export async function runFullCatalogImport(
           channelType: providerToChannelType(provider),
           externalProductId: link.productExternalId,
           externalModifierGroupId: link.groupExternalId,
+          importRunId,
           lastSyncedAt: now,
           updatedAt: now,
         },
         update: {
+          importRunId,
           lastSyncedAt: now,
           updatedAt: now,
         },
@@ -255,6 +258,13 @@ export async function runFullCatalogImport(
         importedModifierGroupsCount: mgCount,
         importedModifierOptionsCount: moCount,
       },
+    });
+
+    // 6. Trigger external change detection (Phase 5).
+    //    Failure here does NOT affect the import result — diff errors are
+    //    recorded in importRun.diffStatus only.
+    detectExternalChangesForImportRun({ importRunId }).catch((err) => {
+      console.error(`[catalog-import] change-detection failed for run ${importRunId}:`, err);
     });
 
     return {
