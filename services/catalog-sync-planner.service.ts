@@ -29,7 +29,8 @@ import type {
   ResolvedPolicy,
   SyncPlanPreview,
 } from "@/types/catalog-sync";
-import type { CatalogEntityType } from "@/types/catalog-external-changes";
+import type { CatalogEntityType, ExternalCatalogChangeStatus } from "@/types/catalog-external-changes";
+import type { CatalogConflictStatus } from "@/types/catalog-conflicts";
 
 // ─── Default policies ─────────────────────────────────────────────────────────
 
@@ -177,12 +178,13 @@ export async function buildSyncPlanForConnection(
     ? { id: externalChangeId, connectionId }
     : {
         connectionId,
-        status: { in: ["OPEN", "PENDING"] as const },
+        status: { in: ["OPEN", "ACKNOWLEDGED"] as ExternalCatalogChangeStatus[] },
       };
 
   const externalChanges = await prisma.externalCatalogChange.findMany({
     where: changeWhere,
     orderBy: { detectedAt: "asc" },
+    include: { fieldDiffs: true },
   });
 
   // Load open conflicts (unresolved → BLOCKED candidates)
@@ -190,7 +192,7 @@ export async function buildSyncPlanForConnection(
     ? { id: conflictId, connectionId: { in: [connectionId] } }
     : {
         connectionId,
-        status: { in: ["OPEN", "IN_REVIEW"] as const },
+        status: { in: ["OPEN", "IN_REVIEW"] as CatalogConflictStatus[] },
       };
 
   const openConflicts = await prisma.catalogConflict.findMany({
@@ -242,8 +244,8 @@ export async function buildSyncPlanForConnection(
     const scope = entityTypeToScope(entityType);
     const isBlocked = blockedChangeIds.has(change.id);
 
-    // Get field diffs (stored as JSON array on the change)
-    const fieldDiffs = (change.fieldDiffs as Array<{ fieldPath: string; previousValue: unknown; currentValue: unknown }> | null) ?? [];
+    // Get field diffs from the included relation
+    const fieldDiffs = change.fieldDiffs ?? [];
 
     if (fieldDiffs.length === 0) {
       // No field diffs — create a single APPLY_INTERNAL_PATCH item
