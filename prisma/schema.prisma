@@ -3430,6 +3430,46 @@ model IngredientSupplierLink {
   @@map("ingredient_supplier_links")
 }
 
+model SupplierCredential {
+  id           String    @id @default(uuid())
+  tenantId     String
+  userId       String
+  supplierId   String
+  loginUrl     String?
+  username     String
+  passwordEnc  String
+  lastVerified DateTime?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  supplier          Supplier                   @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  priceObservations SupplierPriceObservation[]
+
+  @@unique([tenantId, userId, supplierId])
+  @@index([tenantId, userId])
+  @@index([supplierId])
+  @@map("supplier_credentials")
+}
+
+model SupplierPriceObservation {
+  id                String   @id @default(uuid())
+  supplierProductId String
+  userId            String
+  credentialId      String
+  observedPrice     Int
+  scrapedAt         DateTime
+
+  supplierProduct SupplierProduct    @relation(fields: [supplierProductId], references: [id], onDelete: Cascade)
+  credential      SupplierCredential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierProductId, userId])
+  @@index([supplierProductId])
+  @@index([credentialId])
+  @@map("supplier_price_observations")
+}
+
 // ─── Marketplace Enums ────────────────────────────────────────────────────────
 
 /// Type of marketplace recipe. BASIC is free (registered by admin/moderator);
