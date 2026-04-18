@@ -14,6 +14,7 @@ const navItems = [
   { href: "/admin/logs", label: "Logs", icon: "📋" },
   { href: "/admin/feature-flags", label: "Feature Flags", icon: "🚩" },
   { href: "/admin/compliance", label: "Compliance", icon: "🛡️" },
+  { href: "/admin/ingredient-requests", label: "재료 요청", icon: "🥬" },
 ];
 
 const billingSubItems = [
