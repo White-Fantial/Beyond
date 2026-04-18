@@ -211,6 +211,7 @@ Detailed documentation is in the [`doc/`](./doc/) folder:
 
 | Document | Description |
 |----------|-------------|
+| [features.md](./features.md) | **Feature Reference** — complete catalogue of every feature, categorised by functional area |
 | [doc/roadmap.md](./doc/roadmap.md) | Development roadmap — all completed phases grouped by area (Core, Catalog, Backoffice, Storefront, Customer Portal, Owner Console, Admin Console, Integrations), and planned work (Customer Portal Phase 3, Lightspeed/Baemin/Coupang Eats adapters, CSV/PDF export, Web Push) |
 | [doc/admin-console.md](./doc/admin-console.md) | Admin Console — routes, write actions, impersonation, logs, jobs, billing, feature flags |
 | [doc/owner-console.md](./doc/owner-console.md) | Owner Console — dashboard, store settings, staff, catalog, reports & analytics, customer & subscription management (Phase 5), billing deep dive (Phase 6) |
