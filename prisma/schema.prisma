@@ -387,6 +387,8 @@ model User {
   marketplaceRecipesCreated MarketplaceRecipe[]   @relation("MarketplaceRecipeCreatedBy")
   recipeReviews            MarketplaceRecipeReview[]
   recipePurchases          MarketplaceRecipePurchase[]
+  ingredientRequests       IngredientRequest[]    @relation("IngredientRequestedBy")
+  ingredientRequestsReviewed IngredientRequest[]  @relation("IngredientRequestReviewedBy")
 
   @@map("users")
 }
@@ -3486,6 +3488,7 @@ model PlatformIngredient {
 
   createdBy           User                          @relation("PlatformIngredientCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
   marketplaceIngredients MarketplaceRecipeIngredient[]
+  ingredientRequests  IngredientRequest[]            @relation("IngredientRequestResolved")
 
   @@index([isActive])
   @@index([category])
@@ -3596,6 +3599,13 @@ model MarketplaceRecipeReview {
   @@map("marketplace_recipe_reviews")
 }
 
+enum IngredientRequestStatus {
+  PENDING    // Awaiting moderator review
+  APPROVED   // Moderator approved — resolvedPlatformIngredientId is set
+  REJECTED   // Moderator rejected
+  DUPLICATE  // Already exists in the platform catalogue
+}
+
 /// Record that a user (or tenant) has purchased a premium marketplace recipe.
 model MarketplaceRecipePurchase {
   id          String   @id @default(uuid())
@@ -3616,4 +3626,31 @@ model MarketplaceRecipePurchase {
   @@index([recipeId])
   @@index([tenantId])
   @@map("marketplace_recipe_purchases")
+}
+
+/// A user's request to add a new ingredient to the platform catalogue.
+/// Moderators review these and can create a matching PlatformIngredient (APPROVED),
+/// point to an existing one (DUPLICATE), or decline (REJECTED).
+model IngredientRequest {
+  id                         String                  @id @default(uuid())
+  requestedByUserId          String
+  name                       String                  // requested ingredient name
+  description                String?
+  category                   String?
+  unit                       IngredientUnit          @default(GRAM)
+  notes                      String?                 // requester's usage context
+  status                     IngredientRequestStatus @default(PENDING)
+  resolvedPlatformIngredientId String?               // set on APPROVED or DUPLICATE
+  reviewedByUserId           String?
+  reviewNotes                String?
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
+
+  requestedBy       User               @relation("IngredientRequestedBy", fields: [requestedByUserId], references: [id], onDelete: Restrict)
+  reviewedBy        User?              @relation("IngredientRequestReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  resolvedIngredient PlatformIngredient? @relation("IngredientRequestResolved", fields: [resolvedPlatformIngredientId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([requestedByUserId])
+  @@map("ingredient_requests")
 }

@@ -253,3 +253,68 @@ export interface RecipeAccessResult {
   hasAccess: boolean;
   reason: "basic" | "purchased" | "provider" | "admin" | "not_purchased";
 }
+
+// ─── IngredientRequest ────────────────────────────────────────────────────────
+
+export type IngredientRequestStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "DUPLICATE";
+
+export const INGREDIENT_REQUEST_STATUS_LABELS: Record<
+  IngredientRequestStatus,
+  string
+> = {
+  PENDING: "검토 대기",
+  APPROVED: "승인됨",
+  REJECTED: "반려됨",
+  DUPLICATE: "중복",
+};
+
+export interface IngredientRequest {
+  id: string;
+  requestedByUserId: string;
+  requestedByName: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  unit: string;
+  notes: string | null;
+  status: IngredientRequestStatus;
+  resolvedPlatformIngredientId: string | null;
+  reviewedByUserId: string | null;
+  reviewNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IngredientRequestListResult {
+  items: IngredientRequest[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface CreateIngredientRequestInput {
+  name: string;
+  description?: string;
+  category?: string;
+  unit?: string;
+  notes?: string;
+}
+
+export interface ReviewIngredientRequestInput {
+  status: "APPROVED" | "REJECTED" | "DUPLICATE";
+  /** Required when status is APPROVED or DUPLICATE — the PlatformIngredient id to link. */
+  resolvedPlatformIngredientId?: string;
+  reviewNotes?: string;
+}
+
+export interface IngredientRequestFilters {
+  status?: IngredientRequestStatus;
+  requestedByUserId?: string;
+  page?: number;
+  pageSize?: number;
+}
+
