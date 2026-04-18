@@ -91,6 +91,20 @@ enum PlatformRole {
   PLATFORM_MODERATOR // Reviews/approves premium recipes; registers basic recipes
 }
 
+/// Status of a recipe provider onboarding application.
+enum ProviderApplicationStatus {
+  PENDING    // Awaiting admin review
+  APPROVED   // Admin approved — platformRole set to RECIPE_PROVIDER
+  REJECTED   // Admin rejected
+}
+
+/// Payout status for a marketplace recipe purchase.
+enum RecipePayoutStatus {
+  PENDING      // Transfer not yet initiated
+  TRANSFERRED  // Stripe Transfer completed
+  FAILED       // Transfer failed
+}
+
 enum MembershipRole {
   OWNER
   ADMIN
@@ -365,6 +379,13 @@ model User {
   updatedAt          DateTime     @updatedAt
   archivedAt         DateTime?
 
+  // Stripe Connect (for RECIPE_PROVIDER payouts)
+  stripeConnectAccountId      String?
+  stripeConnectOnboarded      Boolean  @default(false)
+  stripeConnectPayoutsEnabled Boolean  @default(false)
+  providerAppliedAt           DateTime?
+  providerApprovedAt          DateTime?
+
   memberships              Membership[]           @relation("UserMemberships")
   invitedMemberships       Membership[]           @relation("MembershipInvitedBy")
   auditLogs                AuditLog[]             @relation("AuditLogActor")
@@ -389,6 +410,8 @@ model User {
   recipePurchases          MarketplaceRecipePurchase[]
   ingredientRequests       IngredientRequest[]    @relation("IngredientRequestedBy")
   ingredientRequestsReviewed IngredientRequest[]  @relation("IngredientRequestReviewedBy")
+  providerApplications       ProviderOnboardingApplication[] @relation("ProviderApplicationUser")
+  providerApplicationsReviewed ProviderOnboardingApplication[] @relation("ProviderApplicationReviewer")
 
   @@map("users")
 }
@@ -3655,6 +3678,15 @@ model MarketplaceRecipePurchase {
   pricePaid   Int      @default(0) // minor currency units
   currency    String   @default("KRW")
   paymentRef  String?
+
+  // Stripe Payment
+  stripePaymentIntentId String?         @unique
+  stripeTransferId      String?
+  platformFeeAmount     Int             @default(0) // minor currency units
+  providerPayoutAmount  Int             @default(0) // minor currency units
+  payoutStatus          RecipePayoutStatus @default(PENDING)
+  transferredAt         DateTime?
+
   purchasedAt DateTime @default(now())
   refundedAt  DateTime?
 
@@ -3693,4 +3725,29 @@ model IngredientRequest {
   @@index([status])
   @@index([requestedByUserId])
   @@map("ingredient_requests")
+}
+
+/// A user's application to become a RECIPE_PROVIDER.
+/// Admin reviews and can APPROVE (upgrading platformRole to RECIPE_PROVIDER) or REJECT.
+model ProviderOnboardingApplication {
+  id              String                    @id @default(uuid())
+  userId          String
+  businessName    String
+  businessType    String                    @default("INDIVIDUAL") // INDIVIDUAL | COMPANY
+  taxId           String?
+  portfolioUrl    String?
+  introduction    String?
+  status          ProviderApplicationStatus @default(PENDING)
+  adminNotes      String?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+  reviewedAt      DateTime?
+  reviewedByUserId String?
+
+  applicant   User  @relation("ProviderApplicationUser",     fields: [userId],             references: [id], onDelete: Restrict)
+  reviewedBy  User? @relation("ProviderApplicationReviewer", fields: [reviewedByUserId],   references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@map("provider_onboarding_applications")
 }
