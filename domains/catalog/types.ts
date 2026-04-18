@@ -12,7 +12,11 @@ export type CatalogChannelType =
   | "SUBSCRIPTION"
   | "OTHER";
 export type CatalogEntityType = "CATEGORY" | "PRODUCT" | "MODIFIER_GROUP" | "MODIFIER_OPTION";
+/** @deprecated Use CatalogMappingStatus from types/catalog-mapping.ts (Phase 3). */
 export type MappingStatus = "ACTIVE" | "BROKEN" | "PENDING" | "DISCONNECTED";
+// Phase 3 mapping statuses.
+export type CatalogMappingStatus = "ACTIVE" | "NEEDS_REVIEW" | "UNMATCHED" | "BROKEN" | "ARCHIVED";
+export type CatalogMappingSource = "AUTO" | "MANUAL" | "IMPORT_SEEDED";
 
 // ─── Internal catalog ─────────────────────────────────────────────────────────
 
@@ -141,8 +145,9 @@ export interface CatalogProductModifierGroup {
   modifierGroup?: CatalogModifierGroup;
 }
 
-// ─── Channel mapping ──────────────────────────────────────────────────────────
+// ─── Channel mapping (Phase 3) ────────────────────────────────────────────────
 
+/** @deprecated Prefer ChannelEntityMappingRow from types/catalog-mapping.ts (Phase 3). */
 export interface ChannelEntityMapping {
   id: string;
   tenantId: string;

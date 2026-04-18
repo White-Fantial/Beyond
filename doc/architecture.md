@@ -206,7 +206,7 @@ A partial unique index (`WHERE canonical_order_key IS NOT NULL`) enforces unique
 
 ---
 
-## Catalog Architecture (Phase 1 — Internal Ownership)
+## Catalog Architecture (Phases 1–3)
 
 ### Design Philosophy
 
@@ -216,31 +216,56 @@ A partial unique index (`WHERE canonical_order_key IS NOT NULL`) enforces unique
 > All catalog reads (customer ordering UI, backoffice, owner console) use only the
 > internal catalog tables. External data flows are managed as import/sync operations
 > against the canonical internal model.
+>
+> **Internal IDs and external IDs are always strictly separated.** The mapping layer
+> is the ONLY place where the two ID spaces touch.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  Internal Catalog Layer (canonical)                                          │
+│  Layer 1 — Internal Catalog (canonical)                                      │
 │  catalog_categories, catalog_products, catalog_modifier_groups,              │
 │  catalog_modifier_options, catalog_product_categories,                       │
 │  catalog_product_modifier_groups                                             │
 │                                                                              │
 │  ← ALL customer UI / backoffice / owner console reads come here             │
 │  ← originType records historical import source only                         │
+│  ← Fully editable in Beyond regardless of origin                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  External Raw Mirror Layer (phase 2+)                                        │
+│  Layer 2 — External Raw Snapshot (Phase 2+)                                  │
+│  external_catalog_snapshots                                                  │
+│                                                                              │
+│  ← Immutable append-only raw payload per entity per import run             │
+│  ← Used for auditing and future diff/replay                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Layer 3 — External Normalized Catalog (Phase 2+)                            │
 │  external_catalog_categories, external_catalog_products,                     │
 │  external_catalog_modifier_groups, external_catalog_modifier_options         │
 │                                                                              │
 │  ← Read-only snapshot of what external systems currently have               │
-│  ← Never read by customer-facing or backoffice code                         │
+│  ← Normalised key fields + entityHash for future diff support              │
+│  ← Never read by customer-facing or backoffice code                        │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  Channel Mapping Layer (phase 2+)                                            │
+│  Layer 4 — Channel Mapping Layer (Phase 3)                                   │
 │  channel_entity_mappings                                                     │
 │                                                                              │
-│  ← Bidirectional lookup: internal UUID ↔ external channel ID               │
-│  ← Used for outbound order forwarding only (not catalog reads)              │
+│  ← Links internal catalog UUIDs to external channel entity IDs             │
+│  ← Per-entity-type: CATEGORY, PRODUCT, MODIFIER_GROUP, MODIFIER_OPTION    │
+│  ← One internal entity ↔ one external entity per connection (active)      │
+│  ← Statuses: ACTIVE / NEEDS_REVIEW / UNMATCHED / BROKEN / ARCHIVED       │
+│  ← Sources: AUTO / MANUAL / IMPORT_SEEDED                                 │
+│  ← Required before outbound publish or inbound reconciliation (Phase 4+)  │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+### Channel Catalog Flow
+
+```
+Loyverse ↔ Beyond internal catalog
+Uber Eats ↔ Beyond internal catalog
+DoorDash  ↔ Beyond internal catalog
+```
+
+Beyond never syncs channel-to-channel directly. All catalog flows go through the internal catalog as the single source of truth.
 
 ### Provenance (originType)
 
@@ -272,20 +297,47 @@ All catalog entities are **fully editable in Beyond**, regardless of origin:
 | `imageUrl` | ✅ Always editable | |
 | `isSoldOut` | ✅ Always editable | |
 
-> **Note for Phase 2+**: When external catalog sync/import is added, a conflict-resolution policy will be needed to decide whether a subsequent sync overwrites local Beyond edits. This policy is intentionally deferred to Phase 2.
+### Channel Mapping Layer (Phase 3)
 
-### Sync Philosophy (Phase 1)
+The `channel_entity_mappings` table is the **only** place where internal catalog UUIDs touch external channel entity IDs.
 
-The catalog sync service (`catalog-sync.service.ts`) operates as an **import pipeline**, not a sync authority:
+#### Mapping statuses
 
-1. Fetch raw data from the external POS (Loyverse, etc.).
-2. Persist raw mirror rows (`external_catalog_*` tables) for debugging/diffing.
-3. **First-time import**: create internal catalog rows and set `originType = IMPORTED_FROM_POS` + `originConnectionId` + `originExternalRef` + `importedAt`.
-4. **Subsequent syncs**: update internal catalog rows (Phase 2 will add conflict-resolution policy before this step).
-5. Reconcile product–category and product–modifier-group links.
-6. Upsert channel mapping rows.
+| Status | Meaning |
+|--------|---------|
+| `ACTIVE` | Verified link — safe for publish/sync (Phase 4+) |
+| `NEEDS_REVIEW` | Auto-matched but requires human approval |
+| `UNMATCHED` | External entity has no viable internal candidate |
+| `BROKEN` | Mapped entities are missing, deleted, or structurally invalid |
+| `ARCHIVED` | Historical record — superseded or manually unlinked |
 
-Matching uses origin keys (`originConnectionId + originExternalRef`), with fallback to legacy source keys for backward compatibility. **Never** matches by name.
+#### Mapping sources
+
+| Source | Meaning |
+|--------|---------|
+| `AUTO` | Created by the deterministic auto-match engine |
+| `MANUAL` | Explicitly linked by an owner/manager in the review UI |
+| `IMPORT_SEEDED` | Pre-populated during initial import |
+
+#### Auto-match confidence
+
+The auto-match engine assigns a confidence score (0–1):
+
+| Score | Meaning |
+|-------|---------|
+| 0.98+ | Exact `originExternalRef` match → ACTIVE |
+| 0.90 | Exact name + price match → NEEDS_REVIEW |
+| 0.80 | Exact name only → NEEDS_REVIEW |
+| 0.65 | Fuzzy sole candidate → NEEDS_REVIEW |
+| ≤ 0.60 | Ambiguous / no candidate → UNMATCHED |
+
+**Ambiguity rule**: if two candidates are within 0.05 confidence of each other, the match is considered ambiguous and the row gets NEEDS_REVIEW (not automatically linked).
+
+#### Uniqueness invariants
+
+- One active external entity → at most one active internal entity (per connection + entityType).
+- One active internal entity → at most one active external entity (per connection + entityType).
+- Enforced via partial unique SQL indexes (`WHERE status NOT IN ('ARCHIVED', 'UNMATCHED')`).
 
 ### Internal-only Read Principle
 
@@ -311,15 +363,37 @@ Services enforce this at the module level:
 | `PATCH` | `/api/catalog/products` | Update product fields (all fields editable) |
 | `GET` | `/api/catalog/modifier-groups?storeId=` | List modifier groups with nested options |
 | `PATCH` | `/api/catalog/modifier-groups` | Update modifier group or option |
-| `POST` | `/api/catalog/sync` | Trigger full catalog import from POS |
+| `POST` | `/api/catalog/import` | Trigger full catalog import from external channel |
+| `GET` | `/api/catalog/mappings?connectionId=` | List entity mappings for a connection |
+| `GET` | `/api/catalog/mappings/review-summary?connectionId=` | Mapping status counts by entity type |
+| `GET` | `/api/catalog/mappings/unmatched?connectionId=&entityType=` | Unmatched external entities |
+| `POST` | `/api/catalog/mappings/auto-match` | Run auto-match for unmatched external entities |
+| `POST` | `/api/catalog/mappings/link` | Manually link internal ↔ external entity |
+| `POST` | `/api/catalog/mappings/relink` | Re-link to a different internal entity |
+| `POST` | `/api/catalog/mappings/unlink` | Archive a mapping |
+| `POST` | `/api/catalog/mappings/approve` | Approve a NEEDS_REVIEW mapping |
+| `POST` | `/api/catalog/mappings/validate` | Validate all mappings for a connection |
+
+### Mapping Review UI
+
+Located at: `/owner/stores/[storeId]/integrations/[connectionId]/mapping`
+
+- Shows review summary cards (Active / Needs Review / Unmatched / Broken)
+- Filterable by entity type and status
+- Per-row actions: Approve, Unlink
+- Auto-Match and Validate action buttons
 
 ### Phase Roadmap
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| **Phase 1** | ✅ Complete | Internal catalog ownership. provenance fields. No source-lock. Internal-only reads. |
-| **Phase 2** | 🔜 Planned | External catalog import foundation. Import mapping UI. Conflict-resolution policy. |
-| **Phase 3** | 🔜 Planned | Channel publish. Two-way sync. Outbound push to POS/delivery. |
+| **Phase 1** | ✅ Complete | Internal catalog ownership. Provenance fields. No source-lock. Internal-only reads. |
+| **Phase 2** | ✅ Complete | External catalog import. CatalogImportRun + ExternalCatalog* tables. entityHash fingerprinting. |
+| **Phase 3** | ✅ Complete | Channel mapping layer. Auto-match engine. Manual link/relink/unlink. NEEDS_REVIEW / UNMATCHED / BROKEN states. Mapping review UI. |
+| **Phase 4** | 🔜 Planned | Publish engine. Internal → external outbound payload builders. Mapping-based create/update/archive publish. |
+| **Phase 5** | 🔜 Planned | External change detection. Field-level external diff logs. |
+| **Phase 6** | 🔜 Planned | Conflict detection. Review center for field/structure conflicts. |
+| **Phase 7** | 🔜 Planned | Policy-based two-way sync. |
 
 ---
 

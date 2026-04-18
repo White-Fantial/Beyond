@@ -261,15 +261,15 @@ export async function resolveExternalId(
   entityType: "CATEGORY" | "PRODUCT" | "MODIFIER_GROUP" | "MODIFIER_OPTION",
   internalEntityId: string
 ): Promise<string | null> {
-  const mapping = await prisma.channelEntityMapping.findUnique({
+  // Phase 3: query by internalEntityType + internalEntityId (no longer a unique index).
+  const mapping = await prisma.channelEntityMapping.findFirst({
     where: {
-      connectionId_entityType_internalEntityId: {
-        connectionId,
-        entityType,
-        internalEntityId,
-      },
+      connectionId,
+      internalEntityType: entityType,
+      internalEntityId,
+      status: "ACTIVE",
     },
   });
-  if (!mapping || mapping.mappingStatus !== "ACTIVE") return null;
+  if (!mapping) return null;
   return mapping.externalEntityId;
 }
