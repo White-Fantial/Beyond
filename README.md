@@ -119,11 +119,12 @@ Beyond is organised into four separate portals, each with its own URL namespace,
 - **One-way Publish Layer (Phase 4)** — Internal catalog changes are pushed outbound to external channels via `CatalogPublishJob`. Publish is strictly one-way: internal → external.
 - **External Change Detection (Phase 5)** — After each successful import, successive import runs are compared and differences are logged as `ExternalCatalogChange` records with field-level diffs. Detected changes are review-only and do not automatically update the internal catalog. Operators can Acknowledge or Ignore changes via the UI. This layer is the precursor to conflict detection (Phase 6) and two-way sync (Phase 7).
 - **Conflict Detection & Resolution Foundation (Phase 6)** — Conflicts are derived from comparing internal catalog state against external detected changes. A conflict requires both sides to have changed the same field or structural area differently since the last known baseline. Not every external change becomes a conflict. Conflicts are stored with field-level and structure-level details. Resolution decisions (KEEP_INTERNAL, ACCEPT_EXTERNAL, MERGE_MANUALLY, DEFER, IGNORE) are recorded but not automatically applied. Actual data sync execution is deferred to Phase 7. Phase 6 uses current internal state plus lightweight change cues; richer internal field history will be extended later.
+- **Policy-based Controlled Two-way Sync (Phase 7)** — Closes the loop on conflict resolution by actually executing sync decisions via `CatalogSyncPlan` + `CatalogSyncPlanItem` records. Operators define per-field sync policies (`CatalogSyncPolicy`) specifying direction, conflict strategy, and auto-apply mode (NEVER / SAFE_ONLY / ALWAYS). The planner builds sync plans by evaluating open external changes and resolved conflicts against policies. The executor applies READY items by routing each action to the inbound-apply service (external → internal) or the publish service (internal → external). Field-level whitelists prevent external changes from overwriting internal-only fields. Loop guard prevents echo conflicts. All executions are logged in `CatalogSyncExecutionLog`.
 - **Customer Order UI** — the public ordering portal reads only the internal catalog tables. No provider-specific fields, external sync metadata, or source-lock logic are ever exposed to customer-facing code.
 
 ---
 
-## Catalog Architecture (Phases 1–6)
+## Catalog Architecture (Phases 1–7)
 
 Beyond internal catalog is the **only canonical operational model**. External channel data flows through a seven-layer architecture:
 

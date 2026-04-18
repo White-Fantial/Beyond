@@ -393,7 +393,7 @@ Located at: `/owner/stores/[storeId]/integrations/[connectionId]/mapping`
 | **Phase 4** | ✅ Complete | Publish engine. Internal → external outbound payload builders. Mapping-based create/update/archive publish. |
 | **Phase 5** | ✅ Complete | External change detection. Import-to-import diff. Field-level and structure-level change logs. Acknowledge/Ignore UI. |
 | **Phase 6** | ✅ Complete | Conflict detection & resolution foundation. `CatalogConflict` + `CatalogConflictField` + `CatalogConflictResolutionLog` + `InternalCatalogChange` models. Field-level and structure-level conflict detection. Conflict center UI. Resolution decision recording (no data applied yet). |
-| **Phase 7** | 🔜 Planned | Policy-based two-way sync. |
+| **Phase 7** | ✅ Complete | Policy-based two-way sync. `CatalogSyncPolicy` + `CatalogSyncPlan` + `CatalogSyncPlanItem` + `CatalogSyncExecutionLog` models. Planner builds sync plans from open external changes and resolved conflicts. Executor applies READY items via inbound-apply (external→internal) or publish service (internal→external). Field whitelist enforced. Loop guard prevents echo conflicts. |
 
 ---
 
@@ -484,6 +484,69 @@ Located at: `/owner/stores/[storeId]/integrations/[connectionId]/conflicts`
 | `POST` | `/api/catalog/conflicts/[conflictId]/start-review` | Move to IN_REVIEW |
 | `POST` | `/api/catalog/conflicts/[conflictId]/ignore` | Move to IGNORED |
 | `POST` | `/api/catalog/conflicts/[conflictId]/resolve` | Record resolution strategy |
+
+---
+
+## Policy-based Two-way Sync Layer (Phase 7)
+
+### Design Principles
+
+- Sync decisions recorded in Phase 6 are **executed** via `CatalogSyncPlan` + `CatalogSyncPlanItem`.
+- Operators define **per-field sync policies** (`CatalogSyncPolicy`) specifying direction, conflict strategy, and auto-apply mode (NEVER / SAFE_ONLY / ALWAYS).
+- The **planner** (`catalog-sync-planner.service.ts`) builds plans by evaluating open external changes and resolved conflicts against policies.
+- The **executor** (`catalog-sync-executor.service.ts`) applies READY items by routing to the appropriate service.
+- **Field whitelists** prevent external changes from overwriting internal-only fields (featured, notes, source metadata).
+- **Loop guard** detects echo conflicts (changes caused by our own publish) and skips them.
+- All executions are logged in `CatalogSyncExecutionLog` for audit.
+
+### Sync Plan States
+
+```
+DRAFT → READY / PARTIALLY_BLOCKED / BLOCKED
+READY → APPLIED / FAILED
+PARTIALLY_BLOCKED → APPLIED / FAILED (ready items applied, blocked remain)
+CANCELLED (manual)
+```
+
+### Item Action Routing
+
+| Action | Executed Via |
+|--------|-------------|
+| `APPLY_INTERNAL_PATCH` | `catalog-inbound-apply.service.ts` |
+| `APPLY_EXTERNAL_PATCH` | `catalog-publish.service.ts` |
+| `ARCHIVE_*` | Limited support — logged only |
+| `LINK_MAPPING / UNLINK_MAPPING` | `ChannelEntityMapping` update |
+| `CREATE_*` | Stub — requires manual review |
+| `SKIP` | No-op |
+
+### Default Policies
+
+| Scope + Field | Direction | Conflict Strategy | Auto-Apply |
+|---|---|---|---|
+| `product.name` | BIDIRECTIONAL | MANUAL_REVIEW | SAFE_ONLY |
+| `product.priceAmount` | BIDIRECTIONAL | MANUAL_REVIEW | NEVER |
+| `product.isActive` | BIDIRECTIONAL | MANUAL_REVIEW | SAFE_ONLY |
+| `category.sortOrder` | BIDIRECTIONAL | PREFER_INTERNAL | NEVER |
+| `modifierGroup.minSelect/maxSelect` | BIDIRECTIONAL | MANUAL_REVIEW | NEVER |
+| `modifierOption.priceAmount` | BIDIRECTIONAL | MANUAL_REVIEW | NEVER |
+| Structure links | BIDIRECTIONAL | MANUAL_REVIEW | NEVER |
+
+### API Endpoints (Phase 7)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/catalog/sync/policies?connectionId=` | List sync policies |
+| `POST` | `/api/catalog/sync/policies` | Create sync policy |
+| `PATCH` | `/api/catalog/sync/policies/[policyId]` | Update sync policy |
+| `POST` | `/api/catalog/sync/plans/build` | Build sync plan |
+| `GET` | `/api/catalog/sync/plans?connectionId=` | List sync plans |
+| `GET` | `/api/catalog/sync/plans/[planId]` | Get plan with items |
+| `GET` | `/api/catalog/sync/plans/[planId]/preview` | Preview plan summary |
+| `POST` | `/api/catalog/sync/plans/[planId]/apply` | Apply READY items |
+| `POST` | `/api/catalog/sync/plans/[planId]/cancel` | Cancel plan |
+| `POST` | `/api/catalog/sync/plan-items/[planItemId]/retry` | Retry FAILED item |
+| `GET` | `/api/catalog/sync/inbox?connectionId=` | Inbox summary + open changes |
+| `GET` | `/api/catalog/sync/summary?connectionId=` | Sync summary counts |
 
 ---
 
