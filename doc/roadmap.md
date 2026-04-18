@@ -32,15 +32,25 @@
 - [x] Product availability control — `isSoldOut` per product, inventory management page, operations overview
 - [x] **Catalog Phase 1 — Internal Catalog Ownership** — Beyond internal catalog is now the canonical operational model. Added provenance fields (`originType`, `originConnectionId`, `originExternalRef`, `importedAt`). `CatalogOriginType` enum (`BEYOND_CREATED`, `IMPORTED_FROM_POS`, `IMPORTED_FROM_DELIVERY`, `IMPORTED_FROM_OTHER`). Removed all source-lock logic from backoffice and owner catalog services. All catalog entities are now fully editable regardless of origin. UI updated to remove POS-lock messages; origin shown as informational badge only. `types/owner.ts` updated with `originType`. Migration `20260417000000_catalog_phase1_provenance`. 61 tests in `__tests__/backoffice-catalog.service.test.ts` + `__tests__/catalog-internal-ownership.test.ts`.
 
-#### Catalog Phase 2 (Planned)
-- [ ] External catalog import UI (map external entities to internal catalog rows)
-- [ ] Conflict-resolution policy for sync vs. local edits
-- [ ] Import preview and diff view
+- [x] **Catalog Phase 2 — Import Foundation** — `runFullCatalogImport` service; `CatalogImportRun` + `ExternalCatalogSnapshot` models; per-provider adapters (Loyverse, Uber Eats, DoorDash); external normalized catalog tables (`ExternalCatalogCategory` / `ExternalCatalogProduct` / `ExternalCatalogModifierGroup` / `ExternalCatalogModifierOption`); `entityHash` + `importRunId` on all external tables; 3 API routes; 17 tests. Migration: `20260417100000_catalog_phase2_import_foundation`.
 
-#### Catalog Phase 3 (Planned)
-- [ ] Channel publish — push internal catalog changes to POS/delivery channels
-- [ ] Two-way sync with conflict-resolution
-- [ ] Outbound change log
+- [x] **Catalog Phase 3 — Channel Mapping Layer** — `ChannelEntityMapping` model with `CatalogMappingStatus` / `CatalogMappingSource` enums; auto-matching by name similarity; 9 API routes under `/api/catalog/mappings/`; mapping review UI at `/owner/stores/[storeId]/integrations/[connectionId]/mapping`; 34 tests. Migration: `20260418000000_catalog_phase3_mapping`.
+
+- [x] **Catalog Phase 4 — One-way Publish from Beyond** — Outbound publish layer: `CatalogPublishJob` model; `CatalogPublishAction` / `CatalogPublishStatus` / `CatalogPublishScope` enums; publish summary fields on `ChannelEntityMapping` (`lastPublishedAt`, `lastPublishStatus`, `lastPublishAction`, `lastPublishHash`, `lastPublishError`). Services: `services/catalog-publish.service.ts` (publishEntityToConnection, publishEntitiesBulk, publishCatalogForConnection, retryPublishJob). Publish hash for changed-only detection. Prerequisite validation (connection state, mapping rules, parent dependency checks). Provider publish adapters (Loyverse implemented; Uber Eats / DoorDash stubs). Payload builders under `services/catalog-publish/payload-builders/`. 6 API routes under `/api/catalog/publish/`. Publish UI at `/owner/stores/[storeId]/integrations/[connectionId]/publish`. 37 tests. Migration: `20260418100000_catalog_phase4_publish`.
+
+#### Catalog Phase 5 (Planned)
+- [ ] External change detection after import
+- [ ] Flag ACTIVE mappings whose externalEntityId disappears from the next import run
+- [ ] Per-entity external diff log
+
+#### Catalog Phase 6 (Planned)
+- [ ] Field-level conflict detection between internal changes and external changes
+- [ ] Conflict model and conflict center
+
+#### Catalog Phase 7 (Planned)
+- [ ] Policy-based two-way sync (auto-merge vs manual review)
+- [ ] Sync inbox / conflict resolution UI
+- [ ] Channel-to-channel sync routing
 
 ### Platform Infrastructure
 
