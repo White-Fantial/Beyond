@@ -14,6 +14,7 @@ const costItems = [
   { href: "/owner/recipes", label: "Recipes", icon: "📋" },
   { href: "/owner/ingredients", label: "Ingredients", icon: "🥕" },
   { href: "/owner/suppliers", label: "Suppliers", icon: "🚚" },
+  { href: "/owner/supplier-credentials", label: "Supplier Accounts", icon: "🔑" },
 ];
 
 const giftsItems = [

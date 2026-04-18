@@ -41,6 +41,9 @@ type RawSupplierProduct = {
   name: string;
   externalUrl: string | null;
   currentPrice: number;
+  basePrice: number;
+  basePriceUpdatedAt: Date | null;
+  basePriceScrapedUserCount: number;
   unit: string;
   lastScrapedAt: Date | null;
   metadata: unknown;
@@ -71,6 +74,9 @@ function toSupplierProduct(row: RawSupplierProduct): SupplierProduct {
     name: row.name,
     externalUrl: row.externalUrl,
     currentPrice: row.currentPrice,
+    basePrice: row.basePrice,
+    basePriceUpdatedAt: row.basePriceUpdatedAt?.toISOString() ?? null,
+    basePriceScrapedUserCount: row.basePriceScrapedUserCount,
     unit: row.unit as IngredientUnit,
     lastScrapedAt: row.lastScrapedAt?.toISOString() ?? null,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,

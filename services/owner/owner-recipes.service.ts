@@ -263,3 +263,114 @@ export async function deleteRecipe(
     data: { deletedAt: new Date() },
   });
 }
+
+/**
+ * Get a recipe with cost calculation personalised for a specific user.
+ *
+ * Unit-cost priority per ingredient:
+ *   1. User's own observed price (from SupplierPriceObservation) — most accurate
+ *   2. Global base price (max across all users) — conservative safe default
+ *   3. Ingredient's stored unitCost — legacy fallback
+ */
+export async function getRecipeForUser(
+  tenantId: string,
+  recipeId: string,
+  userId: string
+): Promise<RecipeDetail> {
+  const row = await prisma.recipe.findFirst({
+    where: { id: recipeId, tenantId, deletedAt: null },
+    include: {
+      catalogProduct: { select: { name: true, basePriceAmount: true } },
+      ingredients: {
+        include: {
+          ingredient: {
+            select: {
+              name: true,
+              unit: true,
+              unitCost: true,
+              supplierLinks: {
+                where: { isPreferred: true },
+                take: 1,
+                include: {
+                  supplierProduct: {
+                    select: {
+                      id: true,
+                      basePrice: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+  if (!row) throw new Error(`Recipe ${recipeId} not found`);
+
+  // Collect supplier product IDs to fetch per-user observations in bulk
+  const productIds: string[] = [];
+  for (const ri of row.ingredients) {
+    const ing = ri.ingredient as {
+      supplierLinks: { supplierProduct: { id: string } }[];
+    };
+    if (ing.supplierLinks.length > 0) {
+      productIds.push(ing.supplierLinks[0].supplierProduct.id);
+    }
+  }
+
+  // Fetch user's observations for these products
+  const observations = await prisma.supplierPriceObservation.findMany({
+    where: { supplierProductId: { in: productIds }, userId },
+    select: { supplierProductId: true, observedPrice: true },
+  });
+  const obsByProductId = new Map(observations.map((o) => [o.supplierProductId, o.observedPrice]));
+
+  const recipe = toRecipe(row as RawRecipe);
+
+  // Build personalised ingredients list
+  const ingredients: RecipeIngredient[] = (
+    row.ingredients as (RawRecipeIngredient & {
+      ingredient: {
+        supplierLinks: {
+          supplierProduct: { id: string; basePrice: number };
+        }[];
+      };
+    })[]
+  ).map((ri) => {
+    const qty = typeof ri.quantity === "object" ? ri.quantity.toNumber() : ri.quantity;
+
+    // Determine effective unit cost using priority order
+    let effectiveCost = ri.ingredient.unitCost; // fallback
+
+    const preferredLink = ri.ingredient.supplierLinks?.[0];
+    if (preferredLink) {
+      const productId = preferredLink.supplierProduct.id;
+      const basePrice = preferredLink.supplierProduct.basePrice;
+
+      const userObserved = obsByProductId.get(productId);
+      if (userObserved !== undefined && userObserved > 0) {
+        effectiveCost = userObserved; // priority 1: user's own price
+      } else if (basePrice > 0) {
+        effectiveCost = basePrice; // priority 2: global base price
+      }
+    }
+
+    const lineCost = Math.round(qty * effectiveCost);
+
+    return {
+      id: ri.id,
+      recipeId: ri.recipeId,
+      ingredientId: ri.ingredientId,
+      ingredientName: ri.ingredient.name,
+      ingredientUnit: ri.ingredient.unit as IngredientUnit,
+      ingredientUnitCost: effectiveCost,
+      quantity: qty,
+      unit: ri.unit as IngredientUnit,
+      lineCost,
+    };
+  });
+
+  return computeCosts(recipe, ingredients);
+}
