@@ -392,8 +392,98 @@ Located at: `/owner/stores/[storeId]/integrations/[connectionId]/mapping`
 | **Phase 3** | ✅ Complete | Channel mapping layer. Auto-match engine. Manual link/relink/unlink. NEEDS_REVIEW / UNMATCHED / BROKEN states. Mapping review UI. |
 | **Phase 4** | ✅ Complete | Publish engine. Internal → external outbound payload builders. Mapping-based create/update/archive publish. |
 | **Phase 5** | ✅ Complete | External change detection. Import-to-import diff. Field-level and structure-level change logs. Acknowledge/Ignore UI. |
-| **Phase 6** | 🔜 Planned | Conflict detection. Review center for field/structure conflicts. |
+| **Phase 6** | ✅ Complete | Conflict detection & resolution foundation. `CatalogConflict` + `CatalogConflictField` + `CatalogConflictResolutionLog` + `InternalCatalogChange` models. Field-level and structure-level conflict detection. Conflict center UI. Resolution decision recording (no data applied yet). |
 | **Phase 7** | 🔜 Planned | Policy-based two-way sync. |
+
+---
+
+## Conflict Detection & Resolution Layer (Phase 6)
+
+### Design Principles
+
+- Conflicts are **derived** from comparing internal catalog state against external detected changes.
+- Not every external change becomes a conflict. A conflict requires **both sides to have changed the same area differently** since the last known common baseline.
+- Conflicts are stored with **field-level and structure-level details**.
+- **Resolution decisions are recorded but not automatically applied.** Actual data sync execution is deferred to Phase 7.
+- Phase 6 uses **current internal state plus lightweight change cues** (`InternalCatalogChange` log + entity `updatedAt`). Richer internal field history will be extended in Phase 7.
+
+### Conflict Detection Flow
+
+```
+External change detected (Phase 5)
+  │
+  ▼
+detectConflictsForExternalChange(externalChangeId)
+  │
+  ├── Resolve baseline (lastPublishedAt → detectedAt → updatedAt)
+  │
+  ├── Check MISSING_ON_EXTERNAL / MISSING_ON_INTERNAL
+  │
+  ├── detectFieldConflicts()
+  │   └── For each external field diff:
+  │       ├── Policy check (is this field tracked?)
+  │       ├── hasInternalChangedAfterBaseline()?
+  │       │   ├── Check InternalCatalogChange log
+  │       │   └── Fallback: entity updatedAt > baselineAt
+  │       └── internal value ≠ external value → FIELD_VALUE_CONFLICT
+  │
+  └── detectStructureConflicts()
+      └── For STRUCTURE_UPDATED / RELINKED changes:
+          ├── Compare internal links vs external links vs baseline links
+          ├── hasInternalChangedAfterBaseline()?
+          └── Links diverged → STRUCTURE_CONFLICT
+```
+
+### Conflict Types
+
+| Type | Meaning |
+|------|---------|
+| `FIELD_VALUE_CONFLICT` | Same field changed differently on both sides |
+| `STRUCTURE_CONFLICT` | Category/modifier-group link sets diverged on both sides |
+| `MISSING_ON_EXTERNAL` | Mapping exists but external entity missing from latest import |
+| `MISSING_ON_INTERNAL` | External change exists but internal entity deleted/missing |
+| `PARENT_RELATION_CONFLICT` | Modifier option parent group changed on both sides |
+
+### Database Tables
+
+| Table | Purpose |
+|-------|---------|
+| `catalog_conflicts` | One record per detected conflict |
+| `catalog_conflict_fields` | Field-level details (baseline / internal / external values) |
+| `catalog_conflict_resolution_logs` | Audit trail of resolution decisions |
+| `internal_catalog_changes` | Lightweight log of internal field changes (used for baseline comparison) |
+
+### Resolution Strategies (Phase 6 — Decision Only)
+
+| Strategy | Meaning |
+|----------|---------|
+| `KEEP_INTERNAL` | Internal value wins (no data change yet) |
+| `ACCEPT_EXTERNAL` | External value wins (no data change yet) |
+| `MERGE_MANUALLY` | Operator will merge manually (deferred) |
+| `DEFER` | Defer to later review |
+| `IGNORE` | Mark as not a real conflict |
+
+### Conflict Center UI
+
+Located at: `/owner/stores/[storeId]/integrations/[connectionId]/conflicts`
+
+- Summary cards: Open / In Review / Resolved / Ignored / Field Conflicts / Structure / Missing
+- Filterable list by status, entity type, conflict type
+- Per-conflict actions: Start Review / Keep Internal / Accept External / Ignore
+- Field-level diff viewer (baseline → internal, baseline → external)
+- Resolution history log
+
+### API Endpoints (Phase 6)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/catalog/conflicts/detect` | Trigger conflict detection (body: `{connectionId}` or `{externalChangeId}`) |
+| `GET` | `/api/catalog/conflicts?connectionId=` | List conflicts with filters |
+| `GET` | `/api/catalog/conflicts/summary?connectionId=` | Aggregate conflict counts |
+| `GET` | `/api/catalog/conflicts/[conflictId]` | Full conflict details |
+| `POST` | `/api/catalog/conflicts/[conflictId]/start-review` | Move to IN_REVIEW |
+| `POST` | `/api/catalog/conflicts/[conflictId]/ignore` | Move to IGNORED |
+| `POST` | `/api/catalog/conflicts/[conflictId]/resolve` | Record resolution strategy |
 
 ---
 
