@@ -58,3 +58,13 @@ export const STATUSES_EXEMPT_FROM_UNIQUE: CatalogMappingStatus[] = ["ARCHIVED", 
 export function isExemptFromUnique(status: CatalogMappingStatus): boolean {
   return STATUSES_EXEMPT_FROM_UNIQUE.includes(status);
 }
+
+/**
+ * Sentinel value used as `internalEntityId` for UNMATCHED mapping rows.
+ *
+ * UNMATCHED rows have no internal entity to link to, but the DB column is
+ * non-nullable.  This empty string distinguishes them from real entity IDs
+ * (which are always non-empty UUIDs).  The partial unique index excludes
+ * UNMATCHED rows so this sentinel never violates uniqueness constraints.
+ */
+export const UNMATCHED_INTERNAL_ENTITY_ID = "" as const;

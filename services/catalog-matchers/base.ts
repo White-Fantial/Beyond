@@ -13,6 +13,9 @@ import type { MatchCandidate } from "@/types/catalog-mapping";
  * Normalise a display name for comparison:
  * lowercase, trim whitespace, collapse multiple spaces, strip punctuation
  * that varies by provider (hyphens, apostrophes, etc.).
+ *
+ * Returns an empty string for `null` or `undefined` inputs — callers should
+ * treat an empty return value as "no name available" and skip the match.
  */
 export function normalizeName(name: string | null | undefined): string {
   if (!name) return "";

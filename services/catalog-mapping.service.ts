@@ -30,6 +30,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { ACTIVE_CONFIDENCE_THRESHOLD } from "./catalog-matchers/base";
+import { UNMATCHED_INTERNAL_ENTITY_ID } from "@/lib/catalog/mapping-status";
 import { matchCategory } from "./catalog-matchers/category.matcher";
 import { matchProduct } from "./catalog-matchers/product.matcher";
 import { matchModifierGroup } from "./catalog-matchers/modifier-group.matcher";
@@ -641,7 +642,7 @@ async function upsertAutoMatchRow(opts: {
         storeId,
         connectionId,
         internalEntityType: entityType,
-        internalEntityId: "", // No match — empty string sentinel for UNMATCHED rows.
+        internalEntityId: UNMATCHED_INTERNAL_ENTITY_ID, // No match — see lib/catalog/mapping-status.ts for sentinel docs.
         externalEntityType: entityType,
         externalEntityId,
         status: "UNMATCHED",
