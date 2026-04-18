@@ -254,12 +254,12 @@ export async function applySyncPlanItem(planItemId: string): Promise<{ success: 
 // ─── Retry ────────────────────────────────────────────────────────────────────
 
 export async function retrySyncPlanItem(planItemId: string): Promise<{ success: boolean; error?: string }> {
-  const item = await prisma.catalogSyncPlanItem.findUniqueOrThrow({
+  const item = await prisma.catalogSyncPlanItem.findUnique({
     where: { id: planItemId },
     select: { status: true },
   });
 
-  if (item.status !== "FAILED") {
+  if (!item || item.status !== "FAILED") {
     return { success: false, error: `Item status is ${item.status} — only FAILED items can be retried` };
   }
 

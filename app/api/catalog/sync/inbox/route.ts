@@ -10,7 +10,8 @@ import { previewSyncPlan } from "@/services/catalog-sync-planner.service";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
-  const connectionId = req.nextUrl.searchParams.get("connectionId");
+  const { searchParams } = new URL(req.url);
+  const connectionId = searchParams.get("connectionId");
   if (!connectionId) {
     return NextResponse.json({ error: "connectionId is required" }, { status: 400 });
   }

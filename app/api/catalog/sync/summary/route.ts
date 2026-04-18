@@ -8,7 +8,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSyncInboxSummary } from "@/services/catalog-sync-executor.service";
 
 export async function GET(req: NextRequest) {
-  const connectionId = req.nextUrl.searchParams.get("connectionId");
+  const { searchParams } = new URL(req.url);
+  const connectionId = searchParams.get("connectionId");
   if (!connectionId) {
     return NextResponse.json({ error: "connectionId is required" }, { status: 400 });
   }
