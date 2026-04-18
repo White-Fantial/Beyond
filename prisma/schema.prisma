@@ -3380,7 +3380,8 @@ model Supplier {
   updatedAt    DateTime @updatedAt
   deletedAt    DateTime?
 
-  products SupplierProduct[]
+  products    SupplierProduct[]
+  credentials SupplierCredential[]
 
   @@index([tenantId, storeId])
   @@index([storeId, name])
@@ -3388,20 +3389,24 @@ model Supplier {
 }
 
 model SupplierProduct {
-  id            String         @id @default(uuid())
-  supplierId    String
-  name          String
-  externalUrl   String?
-  currentPrice  Int            @default(0) // minor currency units per unit
-  unit          IngredientUnit @default(EACH)
-  lastScrapedAt DateTime?
-  metadata      Json           @default("{}")
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  deletedAt     DateTime?
+  id                        String         @id @default(uuid())
+  supplierId                String
+  name                      String
+  externalUrl               String?
+  currentPrice              Int            @default(0) // minor currency units per unit (per-session scrape)
+  basePrice                 Int            @default(0) // max across all user observations
+  basePriceUpdatedAt        DateTime?
+  basePriceScrapedUserCount Int            @default(0)
+  unit                      IngredientUnit @default(EACH)
+  lastScrapedAt             DateTime?
+  metadata                  Json           @default("{}")
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
+  deletedAt                 DateTime?
 
-  supplier          Supplier                 @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplier          Supplier                       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   ingredientLinks   IngredientSupplierLink[]
+  priceObservations SupplierPriceObservation[]
 
   @@index([supplierId])
   @@map("supplier_products")

@@ -286,7 +286,15 @@ export default function SupplierDetailView({ supplier }: Props) {
                     )}
                   </td>
                   <td className="px-5 py-3 text-right font-medium text-gray-900">
-                    {formatPrice(product.currentPrice)}
+                    <div>{formatPrice(product.currentPrice)}</div>
+                    {product.basePrice > 0 && product.basePrice !== product.currentPrice && (
+                      <div className="text-xs text-gray-400 font-normal">
+                        Base: {formatPrice(product.basePrice)}
+                      </div>
+                    )}
+                    {product.basePrice > 0 && product.basePrice === product.currentPrice && (
+                      <div className="text-xs text-gray-400 font-normal">= Base price</div>
+                    )}
                   </td>
                   <td className="px-5 py-3 text-gray-600">
                     {INGREDIENT_UNIT_LABELS[product.unit] ?? product.unit}
