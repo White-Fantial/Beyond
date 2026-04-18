@@ -20,6 +20,9 @@ export interface SupplierProduct {
   name: string;
   externalUrl: string | null;
   currentPrice: number; // minor currency units
+  basePrice: number; // max across all user observations
+  basePriceUpdatedAt: string | null;
+  basePriceScrapedUserCount: number;
   unit: IngredientUnit;
   lastScrapedAt: string | null;
   metadata: Record<string, unknown>;

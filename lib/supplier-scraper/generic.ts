@@ -103,6 +103,15 @@ export class GenericScraper implements SupplierScraper {
     return true; // handles any URL as a best-effort fallback
   }
 
+  /** Parses already-fetched HTML into a ScrapedProduct. Exposed for reuse. */
+  parseHtml(html: string): ScrapedProduct {
+    const result = extractJsonLd(html) ?? extractOpenGraph(html);
+    if (!result) {
+      return { name: null, price: null, currency: null, unit: null };
+    }
+    return result;
+  }
+
   async scrape(url: string): Promise<ScrapedProduct> {
     let html: string;
     try {
@@ -123,10 +132,6 @@ export class GenericScraper implements SupplierScraper {
       );
     }
 
-    const result = extractJsonLd(html) ?? extractOpenGraph(html);
-    if (!result) {
-      return { name: null, price: null, currency: null, unit: null };
-    }
-    return result;
+    return this.parseHtml(html);
   }
 }

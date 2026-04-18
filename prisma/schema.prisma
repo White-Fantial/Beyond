@@ -3371,7 +3371,8 @@ model Supplier {
   updatedAt    DateTime @updatedAt
   deletedAt    DateTime?
 
-  products SupplierProduct[]
+  products    SupplierProduct[]
+  credentials SupplierCredential[]
 
   @@index([tenantId, storeId])
   @@index([storeId, name])
@@ -3379,20 +3380,24 @@ model Supplier {
 }
 
 model SupplierProduct {
-  id            String         @id @default(uuid())
-  supplierId    String
-  name          String
-  externalUrl   String?
-  currentPrice  Int            @default(0) // minor currency units per unit
-  unit          IngredientUnit @default(EACH)
-  lastScrapedAt DateTime?
-  metadata      Json           @default("{}")
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  deletedAt     DateTime?
+  id                        String         @id @default(uuid())
+  supplierId                String
+  name                      String
+  externalUrl               String?
+  currentPrice              Int            @default(0) // minor currency units per unit (per-session scrape)
+  basePrice                 Int            @default(0) // max across all user observations
+  basePriceUpdatedAt        DateTime?
+  basePriceScrapedUserCount Int            @default(0)
+  unit                      IngredientUnit @default(EACH)
+  lastScrapedAt             DateTime?
+  metadata                  Json           @default("{}")
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
+  deletedAt                 DateTime?
 
-  supplier          Supplier                 @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplier          Supplier                       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   ingredientLinks   IngredientSupplierLink[]
+  priceObservations SupplierPriceObservation[]
 
   @@index([supplierId])
   @@map("supplier_products")
@@ -3412,4 +3417,44 @@ model IngredientSupplierLink {
   @@index([ingredientId])
   @@index([supplierProductId])
   @@map("ingredient_supplier_links")
+}
+
+model SupplierCredential {
+  id           String    @id @default(uuid())
+  tenantId     String
+  userId       String
+  supplierId   String
+  loginUrl     String?
+  username     String
+  passwordEnc  String    // AES-256-GCM encrypted, stored as iv:tag:ciphertext
+  lastVerified DateTime?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  supplier     Supplier                   @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  observations SupplierPriceObservation[]
+
+  @@unique([tenantId, userId, supplierId])
+  @@index([tenantId, userId])
+  @@index([supplierId])
+  @@map("supplier_credentials")
+}
+
+model SupplierPriceObservation {
+  id                String   @id @default(uuid())
+  supplierProductId String
+  userId            String
+  credentialId      String
+  observedPrice     Int      // minor currency units
+  scrapedAt         DateTime
+
+  supplierProduct SupplierProduct    @relation(fields: [supplierProductId], references: [id], onDelete: Cascade)
+  credential      SupplierCredential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierProductId, userId])
+  @@index([supplierProductId])
+  @@index([credentialId])
+  @@map("supplier_price_observations")
 }
