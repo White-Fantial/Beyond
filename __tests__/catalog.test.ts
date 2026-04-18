@@ -41,6 +41,7 @@ vi.mock("@/lib/prisma", () => ({
     },
     channelEntityMapping: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
     },
@@ -236,9 +237,9 @@ describe("setModifierOptionSoldOut", () => {
 
 describe("resolveExternalId", () => {
   it("returns external id for active mapping", async () => {
-    (mockPrisma.channelEntityMapping.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (mockPrisma.channelEntityMapping.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue({
       externalEntityId: "ext-123",
-      mappingStatus: "ACTIVE",
+      status: "ACTIVE",
     });
 
     const result = await resolveExternalId("conn-1", "PRODUCT", "internal-1");
@@ -246,16 +247,15 @@ describe("resolveExternalId", () => {
   });
 
   it("returns null for missing mapping", async () => {
-    (mockPrisma.channelEntityMapping.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    (mockPrisma.channelEntityMapping.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     const result = await resolveExternalId("conn-1", "PRODUCT", "internal-1");
     expect(result).toBeNull();
   });
 
   it("returns null for BROKEN mapping", async () => {
-    (mockPrisma.channelEntityMapping.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
-      externalEntityId: "ext-123",
-      mappingStatus: "BROKEN",
-    });
+    // Phase 3: resolveExternalId filters by status="ACTIVE" at the DB level, so
+    // this test verifies that when findFirst returns null (no ACTIVE mapping), we get null.
+    (mockPrisma.channelEntityMapping.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     const result = await resolveExternalId("conn-1", "PRODUCT", "internal-1");
     expect(result).toBeNull();
   });
@@ -301,7 +301,7 @@ describe("runLoyverseFullCatalogSync", () => {
       id: "internal-cat-1",
     });
     (mockPrisma.catalogModifierOption.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (mockPrisma.channelEntityMapping.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    (mockPrisma.channelEntityMapping.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     (mockPrisma.channelEntityMapping.create as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
     const result = await runLoyverseFullCatalogSync({
@@ -334,10 +334,10 @@ describe("runLoyverseFullCatalogSync", () => {
       id: "existing-cat-1",
     });
     (mockPrisma.catalogModifierOption.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (mockPrisma.channelEntityMapping.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (mockPrisma.channelEntityMapping.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: "map-1",
       externalEntityId: "lv-cat-1",
-      mappingStatus: "ACTIVE",
+      status: "ACTIVE",
     });
     (mockPrisma.channelEntityMapping.update as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
@@ -375,7 +375,7 @@ describe("runLoyverseFullCatalogSync", () => {
       id: "internal-cat-1",
     });
     (mockPrisma.catalogModifierOption.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (mockPrisma.channelEntityMapping.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    (mockPrisma.channelEntityMapping.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     (mockPrisma.channelEntityMapping.create as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
     const result = await runLoyverseFullCatalogSync({
@@ -389,10 +389,10 @@ describe("runLoyverseFullCatalogSync", () => {
     expect(mockPrisma.channelEntityMapping.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          entityType: "CATEGORY",
+          internalEntityType: "CATEGORY",
           externalEntityId: "lv-cat-1",
           internalEntityId: "internal-cat-1",
-          channelType: "LOYVERSE",
+          source: "IMPORT_SEEDED",
         }),
       })
     );
@@ -412,7 +412,7 @@ describe("runLoyverseFullCatalogSync", () => {
     (mockPrisma.catalogCategory.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     (mockPrisma.catalogCategory.create as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "x" });
     (mockPrisma.catalogModifierOption.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (mockPrisma.channelEntityMapping.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    (mockPrisma.channelEntityMapping.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     (mockPrisma.channelEntityMapping.create as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
     await runLoyverseFullCatalogSync({

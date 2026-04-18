@@ -598,13 +598,13 @@ async function upsertMapping(args: {
   const { tenantId, storeId, connectionId, entityType, internalEntityId, externalEntityId, now } =
     args;
 
-  const existing = await prisma.channelEntityMapping.findUnique({
+  // Phase 3: look up by connectionId + internalEntityType + internalEntityId.
+  const existing = await prisma.channelEntityMapping.findFirst({
     where: {
-      connectionId_entityType_internalEntityId: {
-        connectionId,
-        entityType,
-        internalEntityId,
-      },
+      connectionId,
+      internalEntityType: entityType,
+      internalEntityId,
+      status: { notIn: ["ARCHIVED"] },
     },
   });
 
@@ -613,8 +613,8 @@ async function upsertMapping(args: {
       where: { id: existing.id },
       data: {
         externalEntityId,
-        mappingStatus: "ACTIVE",
-        lastVerifiedAt: now,
+        status: "ACTIVE",
+        lastValidatedAt: now,
         updatedAt: now,
       },
     });
@@ -625,13 +625,15 @@ async function upsertMapping(args: {
     data: {
       tenantId,
       storeId,
-      entityType,
+      internalEntityType: entityType,
       internalEntityId,
+      externalEntityType: entityType,
       connectionId,
-      channelType: "LOYVERSE",
       externalEntityId,
-      mappingStatus: "ACTIVE",
-      lastVerifiedAt: now,
+      status: "ACTIVE",
+      source: "IMPORT_SEEDED",
+      lastValidatedAt: now,
+      linkedAt: now,
       updatedAt: now,
     },
   });

@@ -53,6 +53,22 @@ enum MappingStatus {
   DISCONNECTED
 }
 
+// Phase 3: Catalog mapping layer enums.
+
+enum CatalogMappingStatus {
+  ACTIVE
+  NEEDS_REVIEW
+  UNMATCHED
+  BROKEN
+  ARCHIVED
+}
+
+enum CatalogMappingSource {
+  AUTO
+  MANUAL
+  IMPORT_SEEDED
+}
+
 enum TenantStatus {
   ACTIVE
   TRIAL
@@ -1556,27 +1572,54 @@ model ExternalCatalogProductModifierGroupLink {
   @@map("external_catalog_product_modifier_group_links")
 }
 
-// ─── Channel Entity Mappings ──────────────────────────────────────────────────
+// ─── Channel Entity Mappings (Phase 3) ───────────────────────────────────────
+//
+// Links internal canonical catalog entities to their counterparts in an
+// external channel (Loyverse, Uber Eats, DoorDash, …).
+//
+// Key invariants:
+//   • One internal entity may map to at most ONE active external entity per
+//     connection/entityType combination.
+//   • One external entity may be linked to at most ONE active internal entity
+//     per connection/entityType combination.
+//   • These uniqueness constraints are enforced via partial unique indexes in
+//     the migration SQL (WHERE status NOT IN ('ARCHIVED','UNMATCHED')) because
+//     Prisma does not support partial unique indexes natively.
+//
+// TODO Phase 4: publish engine — reads ACTIVE mappings to build outbound payloads.
+// TODO Phase 5: external change detection — flags ACTIVE mappings whose externalEntityId
+//               disappears from the next import run.
+// TODO Phase 6: conflict detection — compares field-level diffs between internal and external.
+// TODO Phase 7: policy-based two-way sync — uses mappings as the routing table.
 
 model ChannelEntityMapping {
-  id               String            @id @default(uuid())
-  tenantId         String
-  storeId          String
-  entityType       CatalogEntityType
-  internalEntityId String
-  connectionId     String
-  channelType      CatalogChannelType
-  externalEntityId String
-  externalParentId String?
-  mappingStatus    MappingStatus     @default(ACTIVE)
-  lastVerifiedAt   DateTime?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id           String @id @default(uuid())
+  tenantId     String
+  storeId      String
+  connectionId String
 
-  @@unique([connectionId, entityType, externalEntityId])
-  @@unique([connectionId, entityType, internalEntityId])
-  @@index([storeId, entityType, internalEntityId])
-  @@index([storeId, connectionId, entityType])
+  internalEntityType CatalogEntityType
+  internalEntityId   String
+
+  externalEntityType CatalogEntityType
+  externalEntityId   String
+
+  status CatalogMappingStatus @default(NEEDS_REVIEW)
+  source CatalogMappingSource @default(AUTO)
+
+  confidenceScore Float?
+  matchReason     String?
+  notes           String?
+
+  lastValidatedAt DateTime?
+  linkedAt        DateTime  @default(now())
+  unlinkedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([tenantId, storeId, connectionId, internalEntityType, internalEntityId])
+  @@index([tenantId, storeId, connectionId, externalEntityType, externalEntityId])
+  @@index([tenantId, storeId, connectionId, status])
   @@map("channel_entity_mappings")
 }
 
