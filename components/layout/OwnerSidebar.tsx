@@ -10,6 +10,12 @@ const navItems = [
   { href: "/owner/promotions", label: "Promotions", icon: "🏷️" },
 ];
 
+const costItems = [
+  { href: "/owner/recipes", label: "Recipes", icon: "📋" },
+  { href: "/owner/ingredients", label: "Ingredients", icon: "🥕" },
+  { href: "/owner/suppliers", label: "Suppliers", icon: "🚚" },
+];
+
 const giftsItems = [
   { href: "/owner/gift-cards", label: "Gift Cards", icon: "🎁" },
   { href: "/owner/webhooks", label: "Webhooks", icon: "🔗" },
@@ -68,6 +74,30 @@ export default function OwnerSidebar() {
           </span>
         </div>
         {giftsItems.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive
+                  ? "bg-brand-50 text-brand-700"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+              }`}
+            >
+              <span>{item.icon}</span>
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+
+        {/* Cost Management section */}
+        <div className="pt-3 pb-1 px-3">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+            Cost Management
+          </span>
+        </div>
+        {costItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
