@@ -123,13 +123,13 @@ describe("GET /api/catalog/external-changes/summary", () => {
 describe("GET /api/catalog/external-changes/[changeId]", () => {
   it("returns 404 when change not found", async () => {
     (mockGetOne as ReturnType<typeof vi.fn>).mockResolvedValue(null);
-    const res = await getOneRoute(makeReq("GET", "http://localhost/api/catalog/external-changes/missing") as never, { params: { changeId: "missing" } });
+    const res = await getOneRoute(makeReq("GET", "http://localhost/api/catalog/external-changes/missing") as never, { params: Promise.resolve({ changeId: "missing" }) });
     expect(res.status).toBe(404);
   });
 
   it("returns change with field diffs", async () => {
     (mockGetOne as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "c1", changeKind: "UPDATED", fieldDiffs: [{ fieldPath: "name" }] });
-    const res = await getOneRoute(makeReq("GET", "http://localhost/api/catalog/external-changes/c1") as never, { params: { changeId: "c1" } });
+    const res = await getOneRoute(makeReq("GET", "http://localhost/api/catalog/external-changes/c1") as never, { params: Promise.resolve({ changeId: "c1" }) });
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.id).toBe("c1");
@@ -140,7 +140,7 @@ describe("GET /api/catalog/external-changes/[changeId]", () => {
 describe("POST /api/catalog/external-changes/[changeId]/acknowledge", () => {
   it("acknowledges and returns change", async () => {
     (mockAck as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "c1", status: "ACKNOWLEDGED" });
-    const res = await ackRoute(makeReq("POST", "http://localhost/api/catalog/external-changes/c1/acknowledge") as never, { params: { changeId: "c1" } });
+    const res = await ackRoute(makeReq("POST", "http://localhost/api/catalog/external-changes/c1/acknowledge") as never, { params: Promise.resolve({ changeId: "c1" }) });
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.status).toBe("ACKNOWLEDGED");
@@ -148,7 +148,7 @@ describe("POST /api/catalog/external-changes/[changeId]/acknowledge", () => {
 
   it("returns 404 when service throws", async () => {
     (mockAck as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("not found"));
-    const res = await ackRoute(makeReq("POST", "http://localhost/api/catalog/external-changes/missing/acknowledge") as never, { params: { changeId: "missing" } });
+    const res = await ackRoute(makeReq("POST", "http://localhost/api/catalog/external-changes/missing/acknowledge") as never, { params: Promise.resolve({ changeId: "missing" }) });
     expect(res.status).toBe(404);
   });
 });
@@ -156,7 +156,7 @@ describe("POST /api/catalog/external-changes/[changeId]/acknowledge", () => {
 describe("POST /api/catalog/external-changes/[changeId]/ignore", () => {
   it("ignores and returns change", async () => {
     (mockIgnore as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "c1", status: "IGNORED" });
-    const res = await ignoreRoute(makeReq("POST", "http://localhost/api/catalog/external-changes/c1/ignore") as never, { params: { changeId: "c1" } });
+    const res = await ignoreRoute(makeReq("POST", "http://localhost/api/catalog/external-changes/c1/ignore") as never, { params: Promise.resolve({ changeId: "c1" }) });
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.status).toBe("IGNORED");
@@ -164,7 +164,7 @@ describe("POST /api/catalog/external-changes/[changeId]/ignore", () => {
 
   it("returns 404 when service throws", async () => {
     (mockIgnore as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("not found"));
-    const res = await ignoreRoute(makeReq("POST", "http://localhost/api/catalog/external-changes/missing/ignore") as never, { params: { changeId: "missing" } });
+    const res = await ignoreRoute(makeReq("POST", "http://localhost/api/catalog/external-changes/missing/ignore") as never, { params: Promise.resolve({ changeId: "missing" }) });
     expect(res.status).toBe(404);
   });
 });
