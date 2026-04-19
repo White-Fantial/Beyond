@@ -78,6 +78,7 @@ export async function listOwnerProducts(
       productCategories: {
         include: { category: { select: { name: true } } },
       },
+      _count: { select: { recipes: { where: { deletedAt: null } } } },
     },
     orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
   });
@@ -102,7 +103,46 @@ export async function listOwnerProducts(
     isVisibleOnSubscription: p.isVisibleOnSubscription,
     internalNote: p.internalNote,
     categories: p.productCategories.map((pc) => pc.category.name),
+    recipeCount: p._count.recipes,
   }));
+}
+
+export async function getOwnerProduct(
+  storeId: string,
+  productId: string
+): Promise<OwnerProductRow | null> {
+  const p = await prisma.catalogProduct.findFirst({
+    where: { id: productId, storeId, deletedAt: null },
+    include: {
+      productCategories: {
+        include: { category: { select: { name: true } } },
+      },
+      _count: { select: { recipes: { where: { deletedAt: null } } } },
+    },
+  });
+  if (!p) return null;
+  return {
+    id: p.id,
+    name: p.name,
+    originType: p.originType,
+    // @deprecated: use originType instead
+    sourceType: p.sourceType,
+    onlineName: p.onlineName,
+    subscriptionName: p.subscriptionName,
+    shortDescription: p.shortDescription,
+    basePriceAmount: p.basePriceAmount,
+    currency: p.currency,
+    imageUrl: p.imageUrl,
+    displayOrder: p.displayOrder,
+    isActive: p.isActive,
+    isFeatured: p.isFeatured,
+    isSoldOut: p.isSoldOut,
+    isVisibleOnOnlineOrder: p.isVisibleOnOnlineOrder,
+    isVisibleOnSubscription: p.isVisibleOnSubscription,
+    internalNote: p.internalNote,
+    categories: p.productCategories.map((pc) => pc.category.name),
+    recipeCount: p._count.recipes,
+  };
 }
 
 export async function listOwnerModifierGroups(storeId: string): Promise<OwnerModifierGroupRow[]> {

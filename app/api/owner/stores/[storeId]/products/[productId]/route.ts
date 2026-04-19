@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireOwnerStoreAccess, resolveActorTenantId } from "@/services/owner/owner-authz.service";
-import { updateOwnerProduct } from "@/services/owner/owner-catalog.service";
+import { getOwnerProduct, updateOwnerProduct } from "@/services/owner/owner-catalog.service";
+import { getProductRecipes } from "@/services/owner/owner-recipes.service";
 
 interface Params {
   params: Promise<{ storeId: string; productId: string }>;
+}
+
+export async function GET(_req: NextRequest, { params }: Params) {
+  const { storeId, productId } = await params;
+  try {
+    await requireOwnerStoreAccess(storeId);
+    const product = await getOwnerProduct(storeId, productId);
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+    const recipes = await getProductRecipes(storeId, productId);
+    return NextResponse.json({ data: { product, recipes } });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {

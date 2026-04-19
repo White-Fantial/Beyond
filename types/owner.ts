@@ -211,6 +211,7 @@ export interface OwnerProductRow {
   isVisibleOnSubscription: boolean;
   internalNote: string | null;
   categories: string[];
+  recipeCount: number;
 }
 
 export interface OwnerModifierGroupRow {

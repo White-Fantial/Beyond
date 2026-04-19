@@ -360,6 +360,35 @@ export async function copyMarketplaceRecipeToOwner(
  *   2. Global base price (max across all users) — conservative safe default
  *   3. Ingredient's stored unitCost — legacy fallback
  */
+/**
+ * List all recipes linked to a specific CatalogProduct within a store.
+ * Used by the product detail page to show the product's recipe(s).
+ */
+export async function getProductRecipes(
+  storeId: string,
+  catalogProductId: string
+): Promise<RecipeDetail[]> {
+  const rows = await prisma.recipe.findMany({
+    where: { storeId, catalogProductId, deletedAt: null },
+    include: {
+      catalogProduct: { select: { name: true, basePriceAmount: true } },
+      ingredients: {
+        include: {
+          ingredient: { select: { name: true, unit: true, unitCost: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  return rows.map((row) => {
+    const recipe = toRecipe(row as RawRecipe);
+    const ingredients = (row.ingredients as RawRecipeIngredient[]).map(toRecipeIngredient);
+    return computeCosts(recipe, ingredients);
+  });
+}
+
 export async function getRecipeForUser(
   tenantId: string,
   recipeId: string,

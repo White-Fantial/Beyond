@@ -1,5 +1,6 @@
 import { requireOwnerStoreAccess } from "@/services/owner/owner-authz.service";
 import { listOwnerProducts } from "@/services/owner/owner-catalog.service";
+import Link from "next/link";
 
 interface Props {
   params: Promise<{ storeId: string }>;
@@ -51,7 +52,7 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
         <div>
           <h2 className="text-base font-semibold text-gray-800">Products</h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            Menu data is managed in Beyond. All fields can be edited here.
+            상품을 클릭하면 레시피 및 원가 정보를 확인할 수 있습니다.
           </p>
         </div>
         <div className="flex gap-2 text-xs">
@@ -75,6 +76,7 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
                   <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Online Name</th>
                   <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Origin</th>
                   <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500">Price</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Recipe</th>
                   <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Visible</th>
                   <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Subscription</th>
                   <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Featured</th>
@@ -87,7 +89,12 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
                   return (
                     <tr key={p.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900">{p.name}</div>
+                        <Link
+                          href={`/owner/stores/${storeId}/products/${p.id}`}
+                          className="font-medium text-brand-700 hover:text-brand-900 hover:underline"
+                        >
+                          {p.name}
+                        </Link>
                         {p.shortDescription && (
                           <div className="text-xs text-gray-400 mt-0.5 line-clamp-1">{p.shortDescription}</div>
                         )}
@@ -100,6 +107,23 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
                       </td>
                       <td className="px-4 py-3 text-right text-gray-500">
                         {formatPrice(p.basePriceAmount, p.currency)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {p.recipeCount > 0 ? (
+                          <Link
+                            href={`/owner/stores/${storeId}/products/${p.id}`}
+                            className="text-xs font-medium px-1.5 py-0.5 rounded bg-green-100 text-green-700 hover:bg-green-200"
+                          >
+                            있음 ({p.recipeCount})
+                          </Link>
+                        ) : (
+                          <Link
+                            href={`/owner/stores/${storeId}/products/${p.id}`}
+                            className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 hover:bg-amber-100"
+                          >
+                            없음
+                          </Link>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className={`text-xs px-1.5 py-0.5 rounded ${p.isVisibleOnOnlineOrder ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"}`}>
@@ -129,9 +153,7 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
           </div>
         )}
       </div>
-      <p className="text-xs text-gray-400">
-        상품 Edit API: PATCH /api/owner/stores/{storeId}/products/[productId]
-      </p>
     </div>
   );
 }
+
