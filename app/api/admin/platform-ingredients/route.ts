@@ -5,10 +5,7 @@ import {
   listPlatformIngredients,
   createPlatformIngredient,
 } from "@/services/marketplace/platform-ingredients.service";
-import type {
-  CreatePlatformIngredientInput,
-  PlatformIngredientFilters,
-} from "@/types/marketplace";
+import type { CreateIngredientInput, IngredientFilters } from "@/types/owner-ingredients";
 
 export async function GET(req: NextRequest) {
   // Admins, moderators, and providers can list ingredients
@@ -25,7 +22,7 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
-  const filters: PlatformIngredientFilters = {
+  const filters: Pick<IngredientFilters, "category" | "isActive" | "page" | "pageSize"> = {
     category: searchParams.get("category") ?? undefined,
     isActive:
       searchParams.has("isActive")
@@ -48,7 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = (await req.json()) as CreatePlatformIngredientInput;
+  const body = (await req.json()) as Pick<CreateIngredientInput, "name" | "description" | "category" | "unit" | "unitCost" | "currency">;
 
   if (!body.name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
@@ -56,9 +53,9 @@ export async function POST(req: NextRequest) {
   if (!body.unit) {
     return NextResponse.json({ error: "unit is required" }, { status: 400 });
   }
-  if (body.referenceUnitCost === undefined || body.referenceUnitCost < 0) {
+  if (body.unitCost === undefined || body.unitCost < 0) {
     return NextResponse.json(
-      { error: "referenceUnitCost must be a non-negative integer" },
+      { error: "unitCost must be a non-negative integer" },
       { status: 400 }
     );
   }

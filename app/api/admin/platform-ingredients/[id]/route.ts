@@ -5,7 +5,7 @@ import {
   updatePlatformIngredient,
   deletePlatformIngredient,
 } from "@/services/marketplace/platform-ingredients.service";
-import type { UpdatePlatformIngredientInput } from "@/types/marketplace";
+import type { UpdateIngredientInput } from "@/types/owner-ingredients";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -46,7 +46,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
   }
 
   const { id } = await params;
-  const body = (await req.json()) as UpdatePlatformIngredientInput;
+  const body = (await req.json()) as UpdateIngredientInput;
   const ingredient = await updatePlatformIngredient(id, body);
   return NextResponse.json({ data: ingredient });
 }

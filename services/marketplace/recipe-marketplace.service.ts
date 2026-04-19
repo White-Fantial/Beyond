@@ -61,12 +61,12 @@ type RawStep = {
 type RawIngredient = {
   id: string;
   recipeId: string;
-  platformIngredientId: string;
+  ingredientId: string;
   quantity: { toNumber: () => number } | number;
   unit: string;
   notes: string | null;
   unitCostSnapshot: number;
-  platformIngredient: { name: string };
+  ingredient: { name: string };
 };
 
 function toRecipe(row: RawRecipe): MarketplaceRecipe {
@@ -114,8 +114,8 @@ function toIngredientItem(row: RawIngredient): MarketplaceRecipeIngredientItem {
   return {
     id: row.id,
     recipeId: row.recipeId,
-    platformIngredientId: row.platformIngredientId,
-    platformIngredientName: row.platformIngredient.name,
+    ingredientId: row.ingredientId,
+    ingredientName: row.ingredient.name,
     quantity: qty,
     unit: row.unit as IngredientUnit,
     notes: row.notes,
@@ -189,7 +189,7 @@ export async function getMarketplaceRecipe(
       steps: { orderBy: { stepNumber: "asc" } },
       ingredients: {
         include: {
-          platformIngredient: { select: { name: true } },
+          ingredient: { select: { name: true } },
         },
         orderBy: { createdAt: "asc" },
       },
@@ -222,20 +222,18 @@ export async function createMarketplaceRecipe(
 
   // Snapshot ingredient costs at creation time
   const ingredientInputs = input.ingredients ?? [];
-  const platformIngredientIds = ingredientInputs.map(
-    (i) => i.platformIngredientId
-  );
+  const ingredientIds = ingredientInputs.map((i) => i.ingredientId);
 
-  const platformIngredients =
-    platformIngredientIds.length > 0
-      ? await prisma.platformIngredient.findMany({
-          where: { id: { in: platformIngredientIds }, deletedAt: null },
-          select: { id: true, referenceUnitCost: true },
+  const ingredientCosts =
+    ingredientIds.length > 0
+      ? await prisma.ingredient.findMany({
+          where: { id: { in: ingredientIds }, scope: "PLATFORM", deletedAt: null },
+          select: { id: true, unitCost: true },
         })
       : [];
 
   const costMap = new Map(
-    platformIngredients.map((pi) => [pi.id, pi.referenceUnitCost])
+    ingredientCosts.map((pi) => [pi.id, pi.unitCost])
   );
 
   const row = await prisma.marketplaceRecipe.create({
@@ -268,11 +266,11 @@ export async function createMarketplaceRecipe(
       },
       ingredients: {
         create: ingredientInputs.map((i) => ({
-          platformIngredientId: i.platformIngredientId,
+          ingredientId: i.ingredientId,
           quantity: i.quantity,
           unit: i.unit,
           notes: i.notes ?? null,
-          unitCostSnapshot: costMap.get(i.platformIngredientId) ?? 0,
+          unitCostSnapshot: costMap.get(i.ingredientId) ?? 0,
         })),
       },
     },
@@ -280,7 +278,7 @@ export async function createMarketplaceRecipe(
       provider: { select: { name: true } },
       steps: { orderBy: { stepNumber: "asc" } },
       ingredients: {
-        include: { platformIngredient: { select: { name: true } } },
+        include: { ingredient: { select: { name: true } } },
         orderBy: { createdAt: "asc" },
       },
     },
@@ -315,25 +313,23 @@ export async function updateMarketplaceRecipe(
   let ingredientCreate: any[] | undefined;
 
   if (input.ingredients !== undefined) {
-    const platformIngredientIds = input.ingredients.map(
-      (i) => i.platformIngredientId
-    );
-    const platformIngredients =
-      platformIngredientIds.length > 0
-        ? await prisma.platformIngredient.findMany({
-            where: { id: { in: platformIngredientIds }, deletedAt: null },
-            select: { id: true, referenceUnitCost: true },
+    const ingredientIds = input.ingredients.map((i) => i.ingredientId);
+    const ingredients =
+      ingredientIds.length > 0
+        ? await prisma.ingredient.findMany({
+            where: { id: { in: ingredientIds }, scope: "PLATFORM", deletedAt: null },
+            select: { id: true, unitCost: true },
           })
         : [];
     const costMap = new Map(
-      platformIngredients.map((pi) => [pi.id, pi.referenceUnitCost])
+      ingredients.map((pi) => [pi.id, pi.unitCost])
     );
     ingredientCreate = input.ingredients.map((i) => ({
-      platformIngredient: { connect: { id: i.platformIngredientId } },
+      ingredient: { connect: { id: i.ingredientId } },
       quantity: i.quantity,
       unit: i.unit,
       notes: i.notes ?? null,
-      unitCostSnapshot: costMap.get(i.platformIngredientId) ?? 0,
+      unitCostSnapshot: costMap.get(i.ingredientId) ?? 0,
     }));
   }
 
@@ -393,7 +389,7 @@ export async function updateMarketplaceRecipe(
       provider: { select: { name: true } },
       steps: { orderBy: { stepNumber: "asc" } },
       ingredients: {
-        include: { platformIngredient: { select: { name: true } } },
+        include: { ingredient: { select: { name: true } } },
         orderBy: { createdAt: "asc" },
       },
     },

@@ -30,7 +30,7 @@ export default function IngredientRequestReviewPanel({
       status,
       reviewNotes: reviewNotes || undefined,
       ...(status === "APPROVED" || status === "DUPLICATE"
-        ? { resolvedPlatformIngredientId: resolvedId || undefined }
+        ? { resolvedIngredientId: resolvedId || undefined }
         : {}),
     };
 
@@ -104,7 +104,7 @@ export default function IngredientRequestReviewPanel({
             type="text"
             value={resolvedId}
             onChange={(e) => setResolvedId(e.target.value)}
-            placeholder="PlatformIngredient UUID"
+            placeholder="Ingredient UUID (scope=PLATFORM)"
             required
             className="w-full border border-gray-300 rounded px-2 py-1 text-xs font-mono"
           />

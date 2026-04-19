@@ -132,7 +132,7 @@ export default function RecipeDetailView({
               >
                 <div>
                   <span className="text-sm font-medium text-gray-800">
-                    {ing.platformIngredientName}
+                    {ing.ingredientName}
                   </span>
                   {ing.notes && (
                     <span className="text-xs text-gray-400 ml-2">
