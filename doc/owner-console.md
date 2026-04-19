@@ -4,6 +4,57 @@ The **Owner Console** (`/owner`) is the business management portal for store own
 
 > **Key separation**: Admin (`/admin`) manages the platform. Owner (`/owner`) manages the store business. These roles never overlap.
 
+## Navigation Structure
+
+Owner Portal navigation is split into two distinct layers, both rendered in the left sidebar:
+
+### 1. Global Owner Navigation (always visible)
+
+The `OwnerSidebar` component renders the following sections for all owner pages:
+
+| Section | Items |
+|---------|-------|
+| Store Management | Home, My Stores, Team |
+| Customers | Customers, Promotions, Gift Cards |
+| Cost Management | Recipe Library, Ingredients, Suppliers, Supplier Accounts |
+| Data & Insights | Reports, Advanced Analytics |
+| Developer Tools | Webhooks, Alert Rules, Notifications, Integration Logs |
+| Settings | Billing, Catalog Settings, Activity & Audit |
+
+### 2. Store-scoped Secondary Navigation (shown when inside a specific store)
+
+When the URL is `/owner/stores/[storeId]/*`, the sidebar appends a **Current Store** section with three groups:
+
+| Group | Items | Route |
+|-------|-------|-------|
+| **Store** | Overview | `/owner/stores/[storeId]` (exact) |
+| | Store Settings | `/owner/stores/[storeId]/settings` |
+| | Staff | `/owner/stores/[storeId]/staff` |
+| | Reports | `/owner/stores/[storeId]/reports` |
+| **Catalog** | Products | `/owner/stores/[storeId]/products` |
+| | Categories | `/owner/stores/[storeId]/categories` |
+| | Modifiers | `/owner/stores/[storeId]/modifiers` |
+| **Operations** | Integrations | `/owner/stores/[storeId]/integrations` |
+| | Subscriptions | `/owner/stores/[storeId]/subscriptions` |
+
+**Active state rules:**
+- Overview uses exact path matching (`/owner/stores/[storeId]` only).
+- All other items use prefix matching — `/owner/stores/[storeId]/products/[productId]` keeps Products active.
+- Group titles are visually highlighted when any child item is active.
+
+**Why this structure:**
+- Prevents the wide horizontal tab overflow that occurred when store menus were rendered as a top nav bar.
+- Clarifies hierarchy: global owner navigation vs. store-specific operations.
+- Scales naturally as new store-scoped pages are added (just add to the group definition).
+- Reduces visual clutter — only the relevant store menu is surfaced in context.
+
+### Store Header Bar
+
+Store detail pages no longer display a wide horizontal tab menu. The header now shows:
+
+- **Left:** Breadcrumb (`Stores / {Store Name}`) + store name as page title + status badge (if not ACTIVE)
+- **Right:** Quick actions — `← Switch Store`, `Back Office ↗`, `Customer App ↗`
+
 ## Portal Structure
 
 ```
@@ -13,8 +64,8 @@ app/owner/
 ├── stores/
 │   ├── page.tsx                  # Store picker; single-store owners auto-redirect
 │   └── [storeId]/
-│       ├── layout.tsx            # Store context header + sub-nav
-│       ├── page.tsx              # Store dashboard — summary cards, channel breakdown, sold-out, upcoming subs
+│       ├── layout.tsx            # Store header bar (breadcrumb + title + quick actions); no horizontal tabs
+│       ├── page.tsx              # Store dashboard — Today / Store Status sections, channel breakdown, sold-out, upcoming subs
 │       ├── settings/page.tsx     # Store info, operation settings, subscription policy, store hours
 │       ├── staff/page.tsx        # Staff list with tenant/store roles and status
 │       ├── products/page.tsx     # Product list — owner-local fields + source-lock badges
