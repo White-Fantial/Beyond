@@ -10,10 +10,10 @@ import type { UpdateModifierOptionInput } from "@/services/backoffice/backoffice
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { storeId: string; groupId: string; optionId: string } }
+  { params }: { params: Promise<{ storeId: string; groupId: string; optionId: string }> }
 ) {
   try {
-    const { storeId, optionId } = params;
+    const { storeId, optionId } = await params;
     const ctx = await requireStorePermission(storeId, PERMISSIONS.MODIFIER_MANAGE);
 
     const body = (await req.json()) as UpdateModifierOptionInput;
@@ -40,10 +40,10 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { storeId: string; groupId: string; optionId: string } }
+  { params }: { params: Promise<{ storeId: string; groupId: string; optionId: string }> }
 ) {
   try {
-    const { storeId, optionId } = params;
+    const { storeId, optionId } = await params;
     const ctx = await requireStorePermission(storeId, PERMISSIONS.MODIFIER_MANAGE);
 
     const tenantId = await getStoreTenantId(storeId);

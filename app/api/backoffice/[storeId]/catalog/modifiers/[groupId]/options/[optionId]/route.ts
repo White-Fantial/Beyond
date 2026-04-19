@@ -9,10 +9,10 @@ import type { UpdateModifierOptionInput } from "@/services/backoffice/backoffice
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { storeId: string; groupId: string; optionId: string } }
+  { params }: { params: Promise<{ storeId: string; groupId: string; optionId: string }> }
 ) {
   try {
-    const { storeId, optionId } = params;
+    const { storeId, optionId } = await params;
     const ctx = await requireStorePermission(storeId, PERMISSIONS.INVENTORY);
 
     const body = (await req.json()) as UpdateModifierOptionInput;

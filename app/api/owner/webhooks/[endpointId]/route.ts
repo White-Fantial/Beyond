@@ -7,9 +7,9 @@ import {
 
 export async function GET(
   _req: Request,
-  { params }: { params: { endpointId: string } }
+  { params }: { params: Promise<{ endpointId: string }> }
 ) {
-  const { endpointId } = params;
+  const { endpointId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
@@ -23,9 +23,9 @@ export async function GET(
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { endpointId: string } }
+  { params }: { params: Promise<{ endpointId: string }> }
 ) {
-  const { endpointId } = params;
+  const { endpointId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {

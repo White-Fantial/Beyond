@@ -9,12 +9,12 @@ import AdminLogContextLinks from "@/components/admin/logs/AdminLogContextLinks";
 import AdminKeyValueList from "@/components/admin/AdminKeyValueList";
 
 interface PageProps {
-  params: { logType: string; logId: string };
+  params: Promise<{ logType: string; logId: string }>;
 }
 
 export default async function AdminLogDetailPage({ params }: PageProps) {
   await requirePlatformAdmin();
-  const { logType, logId } = params;
+  const { logType, logId } = await params;
 
   const log = await getAdminLogDetail(logType, logId);
   if (!log) notFound();

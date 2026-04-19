@@ -11,10 +11,10 @@ import { PROVIDER_APPLICATION_STATUS_LABELS } from "@/types/provider-onboarding"
 export default async function ProviderOnboardingPage({
   searchParams,
 }: {
-  searchParams: { step?: string };
+  searchParams: Promise<{ step?: string }>;
 }) {
   const ctx = await requireAuth();
-  const { step } = searchParams;
+  const { step } = await searchParams;
 
   // Already a provider — show Stripe connect panel
   if (ctx.isRecipeProvider || ctx.isPlatformAdmin) {

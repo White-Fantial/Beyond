@@ -4,12 +4,12 @@ import { reviewApplication } from "@/services/provider/provider-onboarding.servi
 import type { ReviewProviderApplicationInput } from "@/types/provider-onboarding";
 
 interface RouteContext {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function PUT(req: NextRequest, { params }: RouteContext) {
   const ctx = await requirePlatformAdminNotImpersonating();
-  const { id } = params;
+  const { id } = await params;
 
   const body = (await req.json().catch(() => ({}))) as ReviewProviderApplicationInput;
   if (!body.status || !["APPROVED", "REJECTED"].includes(body.status)) {

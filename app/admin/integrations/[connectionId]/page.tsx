@@ -10,12 +10,12 @@ import ConnectionStatusChangeForm from "@/components/admin/ConnectionStatusChang
 import RotateCredentialButton from "@/components/admin/RotateCredentialButton";
 
 interface PageProps {
-  params: { connectionId: string };
+  params: Promise<{ connectionId: string }>;
 }
 
 export default async function AdminConnectionDetailPage({ params }: PageProps) {
   await requirePlatformAdmin();
-  const { connectionId } = params;
+  const { connectionId } = await params;
   const conn = await getAdminConnectionDetail(connectionId);
 
   return (

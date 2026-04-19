@@ -5,9 +5,9 @@ import { toCsv, csvResponseHeaders } from "@/lib/export/csv";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
-  const { userId } = params;
+  const { userId } = await params;
   await requirePlatformAdmin();
 
   try {

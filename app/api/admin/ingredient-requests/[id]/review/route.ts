@@ -4,7 +4,7 @@ import { reviewIngredientRequest } from "@/services/marketplace/ingredient-reque
 import type { ReviewIngredientRequestInput } from "@/types/marketplace";
 
 interface RouteContext {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function PUT(req: NextRequest, { params }: RouteContext) {
@@ -16,7 +16,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
   const body = (await req.json()) as ReviewIngredientRequestInput;
 
   if (!body.status || !["APPROVED", "REJECTED", "DUPLICATE"].includes(body.status)) {

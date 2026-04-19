@@ -6,9 +6,9 @@ import InventoryClient from "./InventoryClient";
 export default async function BackofficeInventoryPage({
   params,
 }: {
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }) {
-  const { storeId } = params;
+  const { storeId } = await params;
   await requireStorePermission(storeId, PERMISSIONS.INVENTORY);
 
   const groups = await listProductsGroupedByCategory(storeId);

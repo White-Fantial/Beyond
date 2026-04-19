@@ -6,11 +6,11 @@ import {
 } from "@/services/owner/owner-suppliers.service";
 
 interface Params {
-  params: { ingredientId: string };
+  params: Promise<{ ingredientId: string }>;
 }
 
 export async function GET(_req: Request, { params }: Params) {
-  const { ingredientId } = params;
+  const { ingredientId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
@@ -23,7 +23,7 @@ export async function GET(_req: Request, { params }: Params) {
 }
 
 export async function POST(req: Request, { params }: Params) {
-  const { ingredientId } = params;
+  const { ingredientId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   const body = (await req.json()) as {

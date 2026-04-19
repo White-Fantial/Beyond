@@ -4,9 +4,9 @@ import { listWebhookDeliveries } from "@/services/owner/owner-webhooks.service";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { endpointId: string } }
+  { params }: { params: Promise<{ endpointId: string }> }
 ) {
-  const { endpointId } = params;
+  const { endpointId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {

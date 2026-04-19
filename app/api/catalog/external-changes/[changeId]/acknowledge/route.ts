@@ -9,9 +9,9 @@ import { acknowledgeExternalChange } from "@/services/external-change-detection.
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { changeId: string } }
+  { params }: { params: Promise<{ changeId: string }> }
 ) {
-  const { changeId } = params;
+  const { changeId } = await params;
   try {
     const change = await acknowledgeExternalChange(changeId);
     return NextResponse.json(change);

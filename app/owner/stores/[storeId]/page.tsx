@@ -2,7 +2,7 @@ import { requireOwnerStoreAccess, resolveActorTenantId } from "@/services/owner/
 import { getOwnerStoreDashboard } from "@/services/owner/owner-dashboard.service";
 
 interface Props {
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }
 
 function SummaryCard({
@@ -50,7 +50,7 @@ function formatCurrency(minorUnit: number, currency: string) {
 }
 
 export default async function StoreDashboardPage({ params }: Props) {
-  const { storeId } = params;
+  const { storeId } = await params;
   const ctx = await requireOwnerStoreAccess(storeId);
   const tenantId = resolveActorTenantId(ctx, storeId);
   const dashboard = await getOwnerStoreDashboard(storeId, tenantId);

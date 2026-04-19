@@ -6,9 +6,9 @@ import { getCurrentUserAuthContext } from "@/lib/auth/context";
 
 export async function POST(
   _req: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
-  const { userId } = params;
+  const { userId } = await params;
   await requirePlatformAdmin();
   const ctx = await getCurrentUserAuthContext();
   const performedBy = ctx?.userId ?? "system";

@@ -9,10 +9,10 @@ import type { CreateCategoryInput } from "@/services/backoffice/backoffice-catal
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { storeId: string } }
+  { params }: { params: Promise<{ storeId: string }> }
 ) {
   try {
-    const { storeId } = params;
+    const { storeId } = await params;
     const ctx = await requireStorePermission(storeId, PERMISSIONS.CATEGORY_MANAGE);
 
     const body = (await req.json()) as CreateCategoryInput;

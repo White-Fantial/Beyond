@@ -4,11 +4,11 @@ import { retryPaymentAttempt } from "@/services/admin/admin-subscription.service
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { tenantId: string; invoiceId: string } }
+  { params }: { params: Promise<{ tenantId: string; invoiceId: string }> }
 ) {
   try {
     await requirePlatformAdmin();
-    const { tenantId, invoiceId } = params;
+    const { tenantId, invoiceId } = await params;
     const success = await retryPaymentAttempt(tenantId, invoiceId);
     if (!success) {
       return NextResponse.json(

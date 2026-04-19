@@ -51,7 +51,7 @@ export async function verifyImpersonationToken(
 }
 
 export async function getImpersonationState(): Promise<ImpersonationPayload | null> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get(IMPERSONATION_COOKIE_NAME)?.value;
   if (!token) return null;
   return verifyImpersonationToken(token);

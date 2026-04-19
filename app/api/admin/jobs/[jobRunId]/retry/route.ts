@@ -9,7 +9,7 @@ import { requirePlatformAdminNotImpersonating } from "@/lib/admin/auth-guard";
 import { retryAdminJobRun } from "@/services/admin/admin-job.service";
 
 interface RouteParams {
-  params: { jobRunId: string };
+  params: Promise<{ jobRunId: string }>;
 }
 
 export async function POST(_req: NextRequest, { params }: RouteParams) {
@@ -27,7 +27,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { jobRunId } = params;
+  const { jobRunId } = await params;
 
   if (!jobRunId) {
     return NextResponse.json({ error: "jobRunId is required." }, { status: 400 });

@@ -16,12 +16,12 @@ const USER_STATUS_OPTIONS = [
 ];
 
 interface PageProps {
-  searchParams: { q?: string; status?: string; page?: string };
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
   await requirePlatformAdmin();
-  const params = searchParams;
+  const params = await searchParams;
 
   const { items, pagination } = await listAdminUsers({
     q: params.q,

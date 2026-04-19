@@ -9,9 +9,9 @@ import { setConflictStatus } from "@/services/catalog-conflict.service";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { conflictId: string } }
+  { params }: { params: Promise<{ conflictId: string }> }
 ) {
-  const { conflictId } = params;
+  const { conflictId } = await params;
   let body: Record<string, string> = {};
   try { body = await req.json(); } catch { /* ignore */ }
 

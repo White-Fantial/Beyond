@@ -3,8 +3,8 @@ import { PERMISSIONS } from "@/lib/auth/constants";
 import { prisma } from "@/lib/prisma";
 import BackofficeCatalogClient from "./BackofficeCatalogClient";
 
-export default async function CatalogPage({ params }: { params: { storeId: string } }) {
-  const { storeId } = params;
+export default async function CatalogPage({ params }: { params: Promise<{ storeId: string }> }) {
+  const { storeId } = await params;
   await requireStorePermission(storeId, PERMISSIONS.INVENTORY);
 
   const rawCategories = await prisma.catalogCategory.findMany({

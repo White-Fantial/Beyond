@@ -10,12 +10,12 @@ import ExportButton from "@/components/ExportButton";
 import type { AdminLogFilterParams } from "@/types/admin-logs";
 
 interface PageProps {
-  searchParams: AdminLogFilterParams;
+  searchParams: Promise<AdminLogFilterParams>;
 }
 
 export default async function AdminLogsPage({ searchParams }: PageProps) {
   await requirePlatformAdmin();
-  const rawParams = searchParams;
+  const rawParams = await searchParams;
   const filters = parseAdminLogFilters(rawParams);
 
   const { items, pagination } = await listAdminLogs(filters);

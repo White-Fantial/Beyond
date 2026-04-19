@@ -7,9 +7,9 @@ import { previewSyncPlan } from "@/services/catalog-sync-planner.service";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { planId: string } }
+  { params }: { params: Promise<{ planId: string }> }
 ) {
-  const { planId } = params;
+  const { planId } = await params;
   const preview = await previewSyncPlan(planId);
   return NextResponse.json({ preview });
 }

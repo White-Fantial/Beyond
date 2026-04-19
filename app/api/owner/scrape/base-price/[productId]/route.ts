@@ -3,11 +3,11 @@ import { requireAuth } from "@/lib/auth/permissions";
 import { scrapeAllUsersForProduct } from "@/services/owner/owner-supplier-scraper.service";
 
 interface Params {
-  params: { productId: string };
+  params: Promise<{ productId: string }>;
 }
 
 export async function POST(_req: NextRequest, { params }: Params) {
-  const { productId } = params;
+  const { productId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
 

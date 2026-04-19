@@ -5,7 +5,7 @@ import { listCustomerOrders } from "@/services/customer.service";
 import { OrderListTable } from "@/components/customer/orders/OrderListTable";
 
 interface Props {
-  searchParams: { status?: string; offset?: string };
+  searchParams: Promise<{ status?: string; offset?: string }>;
 }
 
 const LIMIT = 20;
@@ -20,7 +20,7 @@ const STATUS_OPTIONS = [
 
 export default async function CustomerOrdersPage({ searchParams }: Props) {
   const ctx = await requirePermission(PERMISSIONS.CUSTOMER_APP);
-  const params = searchParams;
+  const params = await searchParams;
   const status = params.status ?? undefined;
   const offset = parseInt(params.offset ?? "0", 10);
 

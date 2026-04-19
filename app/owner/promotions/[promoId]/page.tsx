@@ -6,9 +6,9 @@ import Link from "next/link";
 export default async function OwnerPromoDetailPage({
   params,
 }: {
-  params: { promoId: string };
+  params: Promise<{ promoId: string }>;
 }) {
-  const { promoId } = params;
+  const { promoId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   const promo = await getPromoCodeDetail(tenantId, promoId);

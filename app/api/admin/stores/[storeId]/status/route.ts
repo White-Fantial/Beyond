@@ -3,13 +3,13 @@ import { requirePlatformAdminNotImpersonating } from "@/lib/admin/auth-guard";
 import { setAdminStoreStatus } from "@/services/admin/admin-store.service";
 
 interface Params {
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
-    const { storeId } = params;
+    const { storeId } = await params;
     const body = await req.json();
     const { status } = body;
     if (!status || typeof status !== "string") {

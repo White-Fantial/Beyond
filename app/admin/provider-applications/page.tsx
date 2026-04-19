@@ -9,11 +9,11 @@ import ProviderApplicationReviewPanel from "@/components/admin/ProviderApplicati
 export default async function AdminProviderApplicationsPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
   await requirePlatformAdmin();
 
-  const { status: statusParam } = searchParams;
+  const { status: statusParam } = await searchParams;
   const status = (statusParam ?? "PENDING") as ProviderApplicationStatus;
 
   const result = await listApplications({ status, pageSize: 100 });

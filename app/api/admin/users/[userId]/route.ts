@@ -3,13 +3,13 @@ import { requirePlatformAdminNotImpersonating } from "@/lib/admin/auth-guard";
 import { updateAdminUser } from "@/services/admin/admin-user.service";
 
 interface Params {
-  params: { userId: string };
+  params: Promise<{ userId: string }>;
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
-    const { userId } = params;
+    const { userId } = await params;
     const body = await req.json();
     const { name, email, phone } = body;
     await updateAdminUser(userId, { name, email, phone }, ctx.userId);

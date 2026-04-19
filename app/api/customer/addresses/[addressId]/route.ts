@@ -8,14 +8,14 @@ import {
 } from "@/services/customer.service";
 
 interface Params {
-  params: { addressId: string };
+  params: Promise<{ addressId: string }>;
 }
 
 /**
  * PATCH /api/customer/addresses/[addressId]
  */
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const { addressId } = params;
+  const { addressId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -39,7 +39,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
  * DELETE /api/customer/addresses/[addressId]
  */
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { addressId } = params;
+  const { addressId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

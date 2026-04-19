@@ -7,11 +7,11 @@ import {
 import type { UpsertSupplierProductInput } from "@/types/owner-suppliers";
 
 interface Params {
-  params: { supplierId: string };
+  params: Promise<{ supplierId: string }>;
 }
 
 export async function GET(_req: Request, { params }: Params) {
-  const { supplierId } = params;
+  const { supplierId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
@@ -24,7 +24,7 @@ export async function GET(_req: Request, { params }: Params) {
 }
 
 export async function POST(req: Request, { params }: Params) {
-  const { supplierId } = params;
+  const { supplierId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   const body = (await req.json()) as UpsertSupplierProductInput;

@@ -7,9 +7,9 @@ import Link from "next/link";
 export default async function CustomerTicketDetailPage({
   params,
 }: {
-  params: { ticketId: string };
+  params: Promise<{ ticketId: string }>;
 }) {
-  const { ticketId } = params;
+  const { ticketId } = await params;
   const ctx = await requirePermission(PERMISSIONS.CUSTOMER_APP);
   const ticket = await getCustomerTicketDetail(ctx.userId, ticketId);
 

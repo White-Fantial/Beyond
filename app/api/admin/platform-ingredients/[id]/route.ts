@@ -8,7 +8,7 @@ import {
 import type { UpdateIngredientInput } from "@/types/owner-ingredients";
 
 interface RouteContext {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 async function requireModOrAdmin() {
@@ -31,7 +31,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
   const ingredient = await getPlatformIngredient(id);
   return NextResponse.json({ data: ingredient });
 }
@@ -45,7 +45,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
     );
   }
 
-  const { id } = params;
+  const { id } = await params;
   const body = (await req.json()) as UpdateIngredientInput;
   const ingredient = await updatePlatformIngredient(id, body);
   return NextResponse.json({ data: ingredient });
@@ -60,7 +60,7 @@ export async function DELETE(_req: NextRequest, { params }: RouteContext) {
     );
   }
 
-  const { id } = params;
+  const { id } = await params;
   await deletePlatformIngredient(id);
   return NextResponse.json({ success: true });
 }

@@ -3,11 +3,11 @@ import { requireOwnerStoreAccess, resolveActorTenantId } from "@/services/owner/
 import { updateOwnerCategory } from "@/services/owner/owner-catalog.service";
 
 interface Params {
-  params: { storeId: string; categoryId: string };
+  params: Promise<{ storeId: string; categoryId: string }>;
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const { storeId, categoryId } = params;
+  const { storeId, categoryId } = await params;
   try {
     const ctx = await requireOwnerStoreAccess(storeId);
     const tenantId = resolveActorTenantId(ctx, storeId);

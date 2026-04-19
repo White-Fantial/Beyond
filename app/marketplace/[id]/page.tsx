@@ -5,12 +5,12 @@ import RecipeDetailView from "@/components/marketplace/RecipeDetailView";
 import Link from "next/link";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function MarketplaceRecipeDetailPage({ params }: PageProps) {
   const ctx = await requireAuth();
-  const { id } = params;
+  const { id } = await params;
 
   const [recipe, access] = await Promise.all([
     getMarketplaceRecipe(id),

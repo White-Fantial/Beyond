@@ -30,7 +30,7 @@ import type { CatalogEntityType } from "@/types/catalog-publish";
 import type { CatalogMappingStatus } from "@/types/catalog-mapping";
 
 interface PageProps {
-  params: { storeId: string; connectionId: string };
+  params: Promise<{ storeId: string; connectionId: string }>;
 }
 
 const ENTITY_TYPES: CatalogEntityType[] = ["CATEGORY", "PRODUCT", "MODIFIER_GROUP", "MODIFIER_OPTION"];
@@ -89,7 +89,7 @@ async function buildPublishRows(storeId: string, connectionId: string): Promise<
 }
 
 export default async function PublishPage({ params }: PageProps) {
-  const { storeId, connectionId } = params;
+  const { storeId, connectionId } = await params;
 
   const connection = await prisma.connection.findUnique({
     where: { id: connectionId },

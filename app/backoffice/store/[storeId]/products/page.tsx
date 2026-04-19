@@ -6,9 +6,9 @@ import CatalogProductsClient from "./CatalogProductsClient";
 export default async function BackofficeProductsPage({
   params,
 }: {
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }) {
-  const { storeId } = params;
+  const { storeId } = await params;
   await requireStorePermission(storeId, PERMISSIONS.MENU_MANAGE);
 
   const products = await listCatalogProducts(storeId);

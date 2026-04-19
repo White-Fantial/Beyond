@@ -95,6 +95,6 @@ export async function loginUser(credentials: LoginCredentials): Promise<LoginRes
 }
 
 export async function logoutUser(): Promise<void> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
 }

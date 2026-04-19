@@ -4,11 +4,11 @@ import { notFound } from "next/navigation";
 import WebhookEndpointDetailView from "@/components/owner/webhooks/WebhookEndpointDetailView";
 
 interface Props {
-  params: { endpointId: string };
+  params: Promise<{ endpointId: string }>;
 }
 
 export default async function WebhookEndpointDetailPage({ params }: Props) {
-  const { endpointId } = params;
+  const { endpointId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {

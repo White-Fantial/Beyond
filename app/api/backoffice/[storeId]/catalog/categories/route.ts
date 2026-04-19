@@ -9,10 +9,10 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { storeId: string } }
+  { params }: { params: Promise<{ storeId: string }> }
 ) {
   try {
-    const { storeId } = params;
+    const { storeId } = await params;
     await requireStorePermission(storeId, PERMISSIONS.INVENTORY);
 
     const categories = await prisma.catalogCategory.findMany({
@@ -30,10 +30,10 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { storeId: string } }
+  { params }: { params: Promise<{ storeId: string }> }
 ) {
   try {
-    const { storeId } = params;
+    const { storeId } = await params;
     const ctx = await requireStorePermission(storeId, PERMISSIONS.INVENTORY);
 
     const body = (await req.json()) as { items: { id: string; displayOrder: number }[] };

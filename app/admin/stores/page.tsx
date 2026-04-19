@@ -15,12 +15,12 @@ const STORE_STATUS_OPTIONS = [
 ];
 
 interface PageProps {
-  searchParams: { q?: string; status?: string; page?: string };
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }
 
 export default async function AdminStoresPage({ searchParams }: PageProps) {
   await requirePlatformAdmin();
-  const params = searchParams;
+  const params = await searchParams;
 
   const { items, pagination } = await listAdminStores({
     q: params.q,

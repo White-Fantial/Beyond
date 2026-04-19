@@ -4,7 +4,7 @@ import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
 import { updateOwnerCustomerNote } from "@/services/owner/customer-service";
 
 interface Params {
-  params: { customerId: string };
+  params: Promise<{ customerId: string }>;
 }
 
 /**
@@ -12,7 +12,7 @@ interface Params {
  * Body: { note: string }
  */
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const { customerId } = params;
+  const { customerId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

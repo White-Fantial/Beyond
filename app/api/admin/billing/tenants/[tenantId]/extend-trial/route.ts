@@ -3,13 +3,13 @@ import { requirePlatformAdminNotImpersonating } from "@/lib/admin/auth-guard";
 import { extendTenantTrial } from "@/services/admin/admin-subscription.service";
 
 interface Params {
-  params: { tenantId: string };
+  params: Promise<{ tenantId: string }>;
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
-    const { tenantId } = params;
+    const { tenantId } = await params;
     const body = await req.json();
     const { subscriptionId, extensionDays, note } = body;
     if (!subscriptionId || !extensionDays) {

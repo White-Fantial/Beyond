@@ -12,9 +12,9 @@ import {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { flagKey: string; assignmentId: string } }
+  { params }: { params: Promise<{ flagKey: string; assignmentId: string }> }
 ) {
-  const { flagKey, assignmentId } = params;
+  const { flagKey, assignmentId } = await params;
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
     const flag = await getAdminFeatureFlagByKey(flagKey);
@@ -35,9 +35,9 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { flagKey: string; assignmentId: string } }
+  { params }: { params: Promise<{ flagKey: string; assignmentId: string }> }
 ) {
-  const { flagKey, assignmentId } = params;
+  const { flagKey, assignmentId } = await params;
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
     const flag = await getAdminFeatureFlagByKey(flagKey);

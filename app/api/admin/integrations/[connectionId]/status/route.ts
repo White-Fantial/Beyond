@@ -5,13 +5,13 @@ import { updateAdminConnectionStatus } from "@/services/admin/admin-integration.
 const ALLOWED_STATUSES = ["CONNECTED", "DISCONNECTED", "REAUTH_REQUIRED", "ERROR", "NOT_CONNECTED"];
 
 interface Params {
-  params: { connectionId: string };
+  params: Promise<{ connectionId: string }>;
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
-    const { connectionId } = params;
+    const { connectionId } = await params;
     const body = await req.json();
     const { status } = body as { status?: string };
 

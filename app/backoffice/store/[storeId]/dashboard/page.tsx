@@ -7,9 +7,9 @@ import DashboardActiveOrdersList from "@/components/backoffice/dashboard/Dashboa
 export default async function BackofficeDashboardPage({
   params,
 }: {
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }) {
-  const { storeId } = params;
+  const { storeId } = await params;
   await requireStoreAccess(storeId);
 
   const data = await getDashboardData(storeId);

@@ -5,9 +5,9 @@ import BackofficeOrdersClient from "./BackofficeOrdersClient";
 export default async function BackofficeOrdersPage({
   params,
 }: {
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }) {
-  const { storeId } = params;
+  const { storeId } = await params;
   await requireStorePermission(storeId, PERMISSIONS.ORDERS);
 
   return (

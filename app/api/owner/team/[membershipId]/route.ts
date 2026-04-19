@@ -16,7 +16,7 @@ function getOwnerTenantId(ctx: Awaited<ReturnType<typeof getCurrentUserAuthConte
 }
 
 interface Params {
-  params: { membershipId: string };
+  params: Promise<{ membershipId: string }>;
 }
 
 /**
@@ -24,7 +24,7 @@ interface Params {
  * Returns a single team member with store assignments.
  */
 export async function GET(_req: NextRequest, { params }: Params) {
-  const { membershipId } = params;
+  const { membershipId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -55,7 +55,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
  * Body: { role?, status? }
  */
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const { membershipId } = params;
+  const { membershipId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -106,7 +106,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
  * Soft-remove a team member (sets status = REMOVED).
  */
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { membershipId } = params;
+  const { membershipId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

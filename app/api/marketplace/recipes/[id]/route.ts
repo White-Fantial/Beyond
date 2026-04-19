@@ -8,19 +8,19 @@ import {
 import type { UpdateMarketplaceRecipeInput } from "@/types/marketplace";
 
 interface RouteContext {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function GET(_req: NextRequest, { params }: RouteContext) {
   await requireAuth();
-  const { id } = params;
+  const { id } = await params;
   const recipe = await getMarketplaceRecipe(id);
   return NextResponse.json({ data: recipe });
 }
 
 export async function PUT(req: NextRequest, { params }: RouteContext) {
   const ctx = await requireAuth();
-  const { id } = params;
+  const { id } = await params;
 
   const recipe = await getMarketplaceRecipe(id);
 
@@ -53,7 +53,7 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
 
 export async function DELETE(_req: NextRequest, { params }: RouteContext) {
   const ctx = await requireAuth();
-  const { id } = params;
+  const { id } = await params;
 
   if (!ctx.isPlatformAdmin && !ctx.isPlatformModerator) {
     return NextResponse.json(

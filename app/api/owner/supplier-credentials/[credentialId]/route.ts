@@ -7,11 +7,11 @@ import {
 import type { UpdateCredentialInput } from "@/types/owner-supplier-credentials";
 
 interface Params {
-  params: { credentialId: string };
+  params: Promise<{ credentialId: string }>;
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const { credentialId } = params;
+  const { credentialId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   const userId = ctx.userId;
@@ -28,7 +28,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { credentialId } = params;
+  const { credentialId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   const userId = ctx.userId;

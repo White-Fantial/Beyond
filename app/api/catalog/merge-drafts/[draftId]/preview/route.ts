@@ -9,9 +9,9 @@ import { previewMergeDraft } from "@/services/catalog-merge.service";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { draftId: string } }
+  { params }: { params: Promise<{ draftId: string }> }
 ) {
-  const { draftId } = params;
+  const { draftId } = await params;
   try {
     const preview = await previewMergeDraft(draftId);
     return NextResponse.json({ preview });

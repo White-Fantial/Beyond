@@ -13,9 +13,9 @@ import { retryPublishJob } from "@/services/catalog-publish.service";
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
-  const { jobId } = params;
+  const { jobId } = await params;
   const result = await retryPublishJob(jobId);
   const statusCode = result.status === "FAILED" ? 422 : 200;
   return NextResponse.json({ result }, { status: statusCode });

@@ -10,10 +10,10 @@ import type { UpdateCategoryInput } from "@/services/backoffice/backoffice-catal
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { storeId: string; categoryId: string } }
+  { params }: { params: Promise<{ storeId: string; categoryId: string }> }
 ) {
   try {
-    const { storeId, categoryId } = params;
+    const { storeId, categoryId } = await params;
     const ctx = await requireStorePermission(storeId, PERMISSIONS.CATEGORY_MANAGE);
 
     const body = (await req.json()) as UpdateCategoryInput;
@@ -34,10 +34,10 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { storeId: string; categoryId: string } }
+  { params }: { params: Promise<{ storeId: string; categoryId: string }> }
 ) {
   try {
-    const { storeId, categoryId } = params;
+    const { storeId, categoryId } = await params;
     const ctx = await requireStorePermission(storeId, PERMISSIONS.CATEGORY_MANAGE);
 
     const tenantId = await getStoreTenantId(storeId);

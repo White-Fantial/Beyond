@@ -27,7 +27,7 @@ export async function loginAction(
       return { error: result.error ?? "Login failed." };
     }
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.set(getSessionCookieOptions(result.token!));
 
     redirectTo = result.redirectTo ?? "/";

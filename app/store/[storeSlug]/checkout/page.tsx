@@ -4,11 +4,11 @@ import { getAvailablePickupSlots } from "@/lib/order/pickup-time";
 import CheckoutClient from "./CheckoutClient";
 
 interface CheckoutPageProps {
-  params: { storeSlug: string };
+  params: Promise<{ storeSlug: string }>;
 }
 
 export default async function CheckoutPage({ params }: CheckoutPageProps) {
-  const { storeSlug } = params;
+  const { storeSlug } = await params;
   const store = await getStoreBySlugForCustomer(storeSlug);
   if (!store) notFound();
 

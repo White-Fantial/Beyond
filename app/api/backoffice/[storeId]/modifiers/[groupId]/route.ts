@@ -10,10 +10,10 @@ import type { UpdateModifierGroupInput } from "@/services/backoffice/backoffice-
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { storeId: string; groupId: string } }
+  { params }: { params: Promise<{ storeId: string; groupId: string }> }
 ) {
   try {
-    const { storeId, groupId } = params;
+    const { storeId, groupId } = await params;
     const ctx = await requireStorePermission(storeId, PERMISSIONS.MODIFIER_MANAGE);
 
     const body = (await req.json()) as UpdateModifierGroupInput;
@@ -34,10 +34,10 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { storeId: string; groupId: string } }
+  { params }: { params: Promise<{ storeId: string; groupId: string }> }
 ) {
   try {
-    const { storeId, groupId } = params;
+    const { storeId, groupId } = await params;
     const ctx = await requireStorePermission(storeId, PERMISSIONS.MODIFIER_MANAGE);
 
     const tenantId = await getStoreTenantId(storeId);

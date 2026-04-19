@@ -3,13 +3,13 @@ import { requirePlatformAdminNotImpersonating } from "@/lib/admin/auth-guard";
 import { runConnectionValidation } from "@/services/admin/admin-integration-recovery.service";
 
 interface Params {
-  params: { connectionId: string };
+  params: Promise<{ connectionId: string }>;
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
-    const { connectionId } = params;
+    const { connectionId } = await params;
     const body = await req.json().catch(() => ({}));
     const { reason } = body as { reason?: string };
 

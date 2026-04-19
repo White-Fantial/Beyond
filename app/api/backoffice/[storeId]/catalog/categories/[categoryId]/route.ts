@@ -9,10 +9,10 @@ import type { UpdateCategoryInput } from "@/services/backoffice/backoffice-catal
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { storeId: string; categoryId: string } }
+  { params }: { params: Promise<{ storeId: string; categoryId: string }> }
 ) {
   try {
-    const { storeId, categoryId } = params;
+    const { storeId, categoryId } = await params;
     const ctx = await requireStorePermission(storeId, PERMISSIONS.INVENTORY);
 
     const body = (await req.json()) as UpdateCategoryInput;

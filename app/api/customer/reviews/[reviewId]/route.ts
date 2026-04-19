@@ -5,10 +5,10 @@ import { deleteCustomerReview } from "@/services/customer-reviews.service";
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { reviewId: string } }
+  { params }: { params: Promise<{ reviewId: string }> }
 ) {
   try {
-    const { reviewId } = params;
+    const { reviewId } = await params;
     const ctx = await requirePermission(PERMISSIONS.CUSTOMER_APP);
     await deleteCustomerReview(ctx.userId, reviewId);
     return NextResponse.json({ data: null });

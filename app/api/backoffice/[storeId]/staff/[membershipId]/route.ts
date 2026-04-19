@@ -4,10 +4,10 @@ import { updateStaffMember } from "@/services/backoffice/backoffice-staff.servic
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { storeId: string; membershipId: string } }
+  { params }: { params: Promise<{ storeId: string; membershipId: string }> }
 ) {
   try {
-    const { storeId, membershipId } = params;
+    const { storeId, membershipId } = await params;
     await requireStoreAccess(storeId);
     const body = await req.json();
     const updated = await updateStaffMember(storeId, membershipId, body);

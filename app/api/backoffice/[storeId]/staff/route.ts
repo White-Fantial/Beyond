@@ -4,10 +4,10 @@ import { listStaffMembers } from "@/services/backoffice/backoffice-staff.service
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { storeId: string } }
+  { params }: { params: Promise<{ storeId: string }> }
 ) {
   try {
-    const { storeId } = params;
+    const { storeId } = await params;
     await requireStoreAccess(storeId);
     const data = await listStaffMembers(storeId);
     return NextResponse.json({ data });

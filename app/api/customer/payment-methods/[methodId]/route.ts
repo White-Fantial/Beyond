@@ -10,9 +10,9 @@ import {
  */
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { methodId: string } }
+  { params }: { params: Promise<{ methodId: string }> }
 ) {
-  const { methodId } = params;
+  const { methodId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

@@ -12,10 +12,10 @@ import { getReportData } from "@/services/backoffice/backoffice-reports.service"
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { storeId: string } }
+  { params }: { params: Promise<{ storeId: string }> }
 ) {
   try {
-    const { storeId } = params;
+    const { storeId } = await params;
     await requireStorePermission(storeId, PERMISSIONS.REPORTS);
 
     const { searchParams } = new URL(req.url);

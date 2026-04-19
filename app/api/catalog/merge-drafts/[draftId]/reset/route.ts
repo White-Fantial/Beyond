@@ -9,9 +9,9 @@ import { resetMergeDraft } from "@/services/catalog-merge.service";
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { draftId: string } }
+  { params }: { params: Promise<{ draftId: string }> }
 ) {
-  const { draftId } = params;
+  const { draftId } = await params;
   try {
     const draft = await resetMergeDraft(draftId);
     return NextResponse.json({ draft });

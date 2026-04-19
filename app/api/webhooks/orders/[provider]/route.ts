@@ -220,9 +220,9 @@ function normalizeDoorDashItems(items: DoorDashOrderItem[] = []): NormalizedOrde
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { provider: string } }
+  { params }: { params: Promise<{ provider: string }> }
 ) {
-  const { provider: providerSlug } = params;
+  const { provider: providerSlug } = await params;
   const channelType = PROVIDER_CHANNEL_MAP[providerSlug];
 
   if (!channelType) {

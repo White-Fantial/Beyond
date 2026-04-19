@@ -17,9 +17,9 @@ import {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
-  const { orderId } = params;
+  const { orderId } = await params;
 
   const order = await getOrderById(orderId);
   if (!order) {

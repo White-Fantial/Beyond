@@ -3,11 +3,11 @@ import { requireOwnerStoreAccess, resolveActorTenantId } from "@/services/owner/
 import { updateOwnerStoreHours } from "@/services/owner/owner-settings.service";
 
 interface Params {
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }
 
 export async function PUT(req: NextRequest, { params }: Params) {
-  const { storeId } = params;
+  const { storeId } = await params;
   try {
     const ctx = await requireOwnerStoreAccess(storeId);
     const tenantId = resolveActorTenantId(ctx, storeId);

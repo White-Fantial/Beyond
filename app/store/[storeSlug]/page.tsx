@@ -5,7 +5,7 @@ import { CartProvider } from "@/lib/cart/cart-context";
 import OrderPageClient from "./OrderPageClient";
 
 interface StoreOrderPageProps {
-  params: { storeSlug: string };
+  params: Promise<{ storeSlug: string }>;
 }
 
 /**
@@ -15,7 +15,7 @@ interface StoreOrderPageProps {
  * No authentication required (public ordering page).
  */
 export default async function StoreOrderPage({ params }: StoreOrderPageProps) {
-  const { storeSlug } = params;
+  const { storeSlug } = await params;
 
   const store = await getStoreBySlugForCustomer(storeSlug);
   if (!store) notFound();
@@ -38,7 +38,7 @@ export default async function StoreOrderPage({ params }: StoreOrderPageProps) {
 }
 
 export async function generateMetadata({ params }: StoreOrderPageProps) {
-  const { storeSlug } = params;
+  const { storeSlug } = await params;
   const store = await getStoreBySlugForCustomer(storeSlug);
   if (!store) return { title: "Store not found" };
   return {

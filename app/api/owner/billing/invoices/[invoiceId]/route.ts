@@ -4,9 +4,9 @@ import { getBillingInvoiceDetail } from "@/services/owner/owner-billing.service"
 
 export async function GET(
   _request: Request,
-  { params }: { params: { invoiceId: string } }
+  { params }: { params: Promise<{ invoiceId: string }> }
 ) {
-  const { invoiceId } = params;
+  const { invoiceId } = await params;
   const ctx = await requireOwnerAdminAccess();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   if (!tenantId) return NextResponse.json({ error: "No tenant" }, { status: 403 });

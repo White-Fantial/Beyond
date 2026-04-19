@@ -11,10 +11,10 @@ import { stripeBillingAdapter } from "@/adapters/billing/stripe.adapter";
  */
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { paymentMethodId: string } }
+  { params }: { params: Promise<{ paymentMethodId: string }> }
 ) {
   try {
-    const { paymentMethodId } = params;
+    const { paymentMethodId } = await params;
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 

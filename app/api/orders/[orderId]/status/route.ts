@@ -28,9 +28,9 @@ const VALID_STATUSES: OrderStatus[] = [
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
-  const { orderId } = params;
+  const { orderId } = await params;
 
   // Fetch order first to verify store membership
   const order = await getOrderById(orderId);

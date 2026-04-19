@@ -4,9 +4,9 @@ import { getGiftCardDetail } from "@/services/owner/owner-gift-cards.service";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { giftCardId: string } }
+  { params }: { params: Promise<{ giftCardId: string }> }
 ) {
-  const { giftCardId } = params;
+  const { giftCardId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {

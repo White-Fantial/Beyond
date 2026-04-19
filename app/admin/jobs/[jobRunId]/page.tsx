@@ -10,12 +10,12 @@ import AdminKeyValueList from "@/components/admin/AdminKeyValueList";
 import { AdminJobStatusBadge } from "@/components/admin/jobs/AdminJobBadges";
 
 interface PageProps {
-  params: { jobRunId: string };
+  params: Promise<{ jobRunId: string }>;
 }
 
 export default async function AdminJobRunDetailPage({ params }: PageProps) {
   await requirePlatformAdmin();
-  const { jobRunId } = params;
+  const { jobRunId } = await params;
 
   const run = await getAdminJobRunDetail(jobRunId);
   if (!run) notFound();

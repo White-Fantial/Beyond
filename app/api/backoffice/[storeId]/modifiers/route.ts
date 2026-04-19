@@ -9,10 +9,10 @@ import type { CreateModifierGroupInput } from "@/services/backoffice/backoffice-
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { storeId: string } }
+  { params }: { params: Promise<{ storeId: string }> }
 ) {
   try {
-    const { storeId } = params;
+    const { storeId } = await params;
     const ctx = await requireStorePermission(storeId, PERMISSIONS.MODIFIER_MANAGE);
 
     const body = (await req.json()) as CreateModifierGroupInput;

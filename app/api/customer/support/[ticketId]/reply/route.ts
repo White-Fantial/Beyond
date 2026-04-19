@@ -5,10 +5,10 @@ import { replyToCustomerTicket } from "@/services/customer-support.service";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { ticketId: string } }
+  { params }: { params: Promise<{ ticketId: string }> }
 ) {
   try {
-    const { ticketId } = params;
+    const { ticketId } = await params;
     const ctx = await requirePermission(PERMISSIONS.CUSTOMER_APP);
     const { body } = await req.json();
     if (!body?.trim()) {

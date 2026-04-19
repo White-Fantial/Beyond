@@ -9,10 +9,10 @@ import type { UpdateProductInput } from "@/services/backoffice/backoffice-catalo
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { storeId: string; productId: string } }
+  { params }: { params: Promise<{ storeId: string; productId: string }> }
 ) {
   try {
-    const { storeId, productId } = params;
+    const { storeId, productId } = await params;
     const ctx = await requireStorePermission(storeId, PERMISSIONS.INVENTORY);
 
     const body = (await req.json()) as UpdateProductInput;

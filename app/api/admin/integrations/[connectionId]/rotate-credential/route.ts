@@ -3,13 +3,13 @@ import { requirePlatformAdminNotImpersonating } from "@/lib/admin/auth-guard";
 import { adminRotateCredential } from "@/services/admin/admin-integration.service";
 
 interface Params {
-  params: { connectionId: string };
+  params: Promise<{ connectionId: string }>;
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
-    const { connectionId } = params;
+    const { connectionId } = await params;
     await adminRotateCredential(connectionId, ctx.userId);
     return NextResponse.json({ ok: true });
   } catch (err) {

@@ -20,12 +20,12 @@ import AdminProblemStoresTable from "@/components/admin/analytics/AdminProblemSt
 import AdminAttentionSummaryCards from "@/components/admin/analytics/AdminAttentionSummaryCards";
 
 interface PageProps {
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
   const ctx = await requirePlatformAdmin();
-  const rawParams = searchParams;
+  const rawParams = await searchParams;
   const filters = parseAdminAnalyticsFilters(rawParams);
 
   // Fire-and-forget audit log

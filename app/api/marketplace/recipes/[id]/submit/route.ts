@@ -3,12 +3,12 @@ import { requireAuth } from "@/lib/auth/permissions";
 import { submitRecipeForReview } from "@/services/marketplace/recipe-moderation.service";
 
 interface RouteContext {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function POST(_req: NextRequest, { params }: RouteContext) {
   const ctx = await requireAuth();
-  const { id } = params;
+  const { id } = await params;
 
   if (!ctx.isRecipeProvider) {
     return NextResponse.json(

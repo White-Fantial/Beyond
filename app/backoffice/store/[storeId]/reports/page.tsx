@@ -12,13 +12,13 @@ export default async function BackofficeReportsPage({
   params,
   searchParams,
 }: {
-  params: { storeId: string };
-  searchParams: { days?: string };
+  params: Promise<{ storeId: string }>;
+  searchParams: Promise<{ days?: string }>;
 }) {
-  const { storeId } = params;
+  const { storeId } = await params;
   await requireStorePermission(storeId, PERMISSIONS.REPORTS);
 
-  const { days: daysParam } = searchParams;
+  const { days: daysParam } = await searchParams;
   const days = daysParam ? parseInt(daysParam, 10) : 30;
 
   const data = await getReportData(storeId, days);
