@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { RecipeDetail } from "@/types/owner-recipes";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
 import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
@@ -5,6 +8,8 @@ import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
 interface Props {
   detail: RecipeDetail;
 }
+
+const GST_RATE = 0.1;
 
 function formatCost(minor: number) {
   return `$${(minor / 100).toFixed(4)}`;
@@ -15,6 +20,23 @@ function formatCostRounded(minor: number) {
 }
 
 export default function RecipeCostBreakdown({ detail }: Props) {
+  const [sellingPriceGstIncluded, setSellingPriceGstIncluded] = useState(true);
+
+  const rawPrice = detail.catalogProductPrice;
+  const effectivePrice =
+    rawPrice !== null
+      ? sellingPriceGstIncluded
+        ? Math.round(rawPrice / (1 + GST_RATE))
+        : rawPrice
+      : null;
+
+  const marginAmount =
+    effectivePrice !== null ? effectivePrice - detail.costPerUnit : null;
+  const marginPercent =
+    effectivePrice !== null && effectivePrice > 0 && marginAmount !== null
+      ? Math.round((marginAmount / effectivePrice) * 10000) / 100
+      : null;
+
   return (
     <div className="space-y-6">
       {/* Summary */}
@@ -37,24 +59,48 @@ export default function RecipeCostBreakdown({ detail }: Props) {
             {formatCost(detail.costPerUnit)}
           </div>
         </div>
-        {detail.marginPercent !== null && (
+        {marginPercent !== null && (
           <div className="bg-white rounded-xl border border-gray-200 p-4">
             <div className="text-xs text-gray-500 mb-1">Margin</div>
             <div
               className={`text-lg font-bold ${
-                detail.marginPercent >= 0 ? "text-green-700" : "text-red-600"
+                marginPercent >= 0 ? "text-green-700" : "text-red-600"
               }`}
             >
-              {detail.marginPercent.toFixed(1)}%
+              {marginPercent.toFixed(1)}%
             </div>
-            {detail.marginAmount !== null && (
+            {marginAmount !== null && (
               <div className="text-xs text-gray-400 mt-0.5">
-                {formatCostRounded(Math.abs(detail.marginAmount))} per unit
+                {formatCostRounded(Math.abs(marginAmount))} per unit
               </div>
             )}
           </div>
         )}
       </div>
+
+      {/* Selling price GST toggle */}
+      {rawPrice !== null && (
+        <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+          <span className="text-xs text-gray-500 font-medium">판매가격:</span>
+          <span className="text-sm font-semibold text-gray-800">
+            {formatCostRounded(rawPrice)}
+          </span>
+          {sellingPriceGstIncluded && (
+            <span className="text-xs text-gray-500">
+              (ex-GST: {formatCostRounded(Math.round(rawPrice / (1 + GST_RATE)))})
+            </span>
+          )}
+          <label className="flex items-center gap-1.5 ml-auto cursor-pointer">
+            <input
+              type="checkbox"
+              checked={sellingPriceGstIncluded}
+              onChange={(e) => setSellingPriceGstIncluded(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+            />
+            <span className="text-xs text-gray-600 select-none">GST 포함 가격</span>
+          </label>
+        </div>
+      )}
 
       {/* Ingredient breakdown */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -74,7 +120,7 @@ export default function RecipeCostBreakdown({ detail }: Props) {
                 <th className="px-5 py-3 text-left font-medium">Ingredient</th>
                 <th className="px-5 py-3 text-right font-medium">Qty</th>
                 <th className="px-5 py-3 text-left font-medium">Unit</th>
-                <th className="px-5 py-3 text-right font-medium">Unit Cost</th>
+                <th className="px-5 py-3 text-right font-medium">Unit Cost (ex-GST)</th>
                 <th className="px-5 py-3 text-right font-medium">Line Cost</th>
               </tr>
             </thead>
