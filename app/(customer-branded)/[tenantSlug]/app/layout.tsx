@@ -16,7 +16,6 @@ import CustomerNotificationBell from "@/components/customer/notifications/Custom
 interface Props {
   children: React.ReactNode;
   params: Promise<{ tenantSlug: string }>;
-  searchParams: Promise<{ s?: string }>;
 }
 
 const navItems = [
@@ -27,10 +26,12 @@ const navItems = [
   { href: "/account", label: "계정", icon: "👤" },
 ];
 
-export default async function BrandedCustomerLayout({ children, params, searchParams }: Props) {
+export default async function BrandedCustomerLayout({ children, params }: Props) {
   const ctx = await requirePermission(PERMISSIONS.CUSTOMER_APP);
   const { tenantSlug } = await params;
-  const { s: storeCode } = await searchParams;
+  const headerStore = await headers();
+  const fullPath = headerStore.get("x-invoke-path") ?? `/${tenantSlug}/app`;
+  const storeCode = new URLSearchParams(fullPath.split("?")[1] ?? "").get("s") ?? undefined;
 
   const cookieStore = await cookies();
   const cookieStoreId = cookieStore.get(CUSTOMER_STORE_COOKIE)?.value;
@@ -53,8 +54,6 @@ export default async function BrandedCustomerLayout({ children, params, searchPa
   // without the ?s= query param to keep URLs clean.
   if (storeCode) {
     // Derive the current pathname to redirect back to (without ?s=)
-    const headerStore = await headers();
-    const fullPath = headerStore.get("x-invoke-path") ?? `/${tenantSlug}/app`;
     const pathWithoutQuery = fullPath.split("?")[0];
 
     cookieStore.set(CUSTOMER_STORE_COOKIE, storeCtx.storeId, {

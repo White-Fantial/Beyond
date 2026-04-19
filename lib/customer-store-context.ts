@@ -89,7 +89,6 @@ async function inferStoreFromRecentOrder(
     where: {
       tenantId,
       customerEmail: userEmail,
-      store: { isCustomerFacing: true, status: { not: "ARCHIVED" } },
     },
     select: { storeId: true },
     orderBy: { orderedAt: "desc" },

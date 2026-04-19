@@ -16,7 +16,7 @@ interface Props {
  * On selection it calls POST /api/customer/store-context to persist the
  * choice, then navigates to the return path.
  */
-export function StoreSelector({ tenantSlug, tenantName, stores, returnPath }: Props) {
+export function StoreSelector({ tenantName, stores, returnPath }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
 

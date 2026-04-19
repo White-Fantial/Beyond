@@ -37,7 +37,7 @@ interface Props {
  * and whenever the store changes.
  */
 export function StoreContextProvider({ initialContext, children }: Props) {
-  const [ctx, setCtx] = useState<StoreContext>(initialContext);
+  const [ctx] = useState<StoreContext>(initialContext);
 
   // Persist the resolved storeId on first render (e.g. after ?s= query resolved server-side)
   useEffect(() => {
