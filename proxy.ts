@@ -45,7 +45,7 @@ async function getImpersonationFromRequest(request: NextRequest): Promise<Impers
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const session = await getSessionFromRequest(request);
   const impersonation = await getImpersonationFromRequest(request);
