@@ -117,6 +117,7 @@ export async function getOwnerProduct(
       productCategories: {
         include: { category: { select: { name: true } } },
       },
+      _count: { select: { recipes: { where: { deletedAt: null } } } },
     },
   });
   if (!p) return null;
@@ -140,6 +141,7 @@ export async function getOwnerProduct(
     isVisibleOnSubscription: p.isVisibleOnSubscription,
     internalNote: p.internalNote,
     categories: p.productCategories.map((pc) => pc.category.name),
+    recipeCount: p._count.recipes,
   };
 }
 
