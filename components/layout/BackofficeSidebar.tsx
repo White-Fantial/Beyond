@@ -13,18 +13,15 @@ interface BackofficeSidebarProps {
 function getNavItems(storeId: string, storeRole: StoreRoleKey) {
   const base = `/backoffice/store/${storeId}`;
 
+  // Back Office is focused on real-time store operations only.
+  // Catalog editing and operations settings are managed in the Owner Console.
   const allItems = [
-    { href: `${base}/dashboard`, label: "Dashboard", icon: "📊", roles: ["MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/dashboard`, label: "Dashboard", icon: "📊", roles: ["SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
     { href: `${base}/orders`, label: "Orders", icon: "📦", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
     { href: `${base}/orders/kitchen`, label: "Kitchen Display", icon: "🍳", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/operations`, label: "Operations", icon: "🔧", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/staff`, label: "Staff", icon: "👥", roles: ["SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
     { href: `${base}/inventory`, label: "Inventory", icon: "📋", roles: ["STAFF", "SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/catalog`, label: "Catalog", icon: "📖", roles: ["MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/products`, label: "Products", icon: "🍽️", roles: ["MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/categories`, label: "Categories", icon: "🗂️", roles: ["SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/modifiers`, label: "Modifiers", icon: "⚙️", roles: ["MANAGER", "OWNER", "ADMIN"] },
-    { href: `${base}/reports`, label: "Reports", icon: "📈", roles: ["SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/staff`, label: "Staff Schedule", icon: "👥", roles: ["SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
+    { href: `${base}/reports`, label: "Daily Reports", icon: "📈", roles: ["SUPERVISOR", "MANAGER", "OWNER", "ADMIN"] },
   ];
 
   return allItems.filter((item) => item.roles.includes(storeRole));

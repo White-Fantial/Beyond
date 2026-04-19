@@ -3,19 +3,42 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const navItems = [
-  { href: "/admin", label: "Dashboard", icon: "🏠", exact: true },
-  { href: "/admin/system", label: "System Monitoring", icon: "🖥️" },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: string;
+  exact?: boolean;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+const tenantManagementItems: NavItem[] = [
   { href: "/admin/tenants", label: "Tenants", icon: "🏢" },
   { href: "/admin/users", label: "Users", icon: "👥" },
   { href: "/admin/stores", label: "Stores", icon: "🏪" },
+];
+
+const marketplaceItems: NavItem[] = [
+  { href: "/admin/marketplace/recipes", label: "Recipe Moderation", icon: "🍳" },
+  { href: "/admin/provider-applications", label: "Provider Applications", icon: "📝" },
+  { href: "/admin/platform-ingredients", label: "Platform Ingredients", icon: "🥬" },
+  { href: "/admin/ingredient-requests", label: "Ingredient Requests", icon: "📋" },
+];
+
+const platformHealthItems: NavItem[] = [
+  { href: "/admin/system", label: "System Monitoring", icon: "🖥️" },
+  { href: "/admin/analytics", label: "Platform Analytics", icon: "📊" },
   { href: "/admin/integrations", label: "Integrations", icon: "🔌" },
   { href: "/admin/jobs", label: "Jobs Console", icon: "⚙️" },
-  { href: "/admin/logs", label: "Logs", icon: "📋" },
+  { href: "/admin/logs", label: "System Logs", icon: "📋" },
+];
+
+const governanceItems: NavItem[] = [
   { href: "/admin/feature-flags", label: "Feature Flags", icon: "🚩" },
   { href: "/admin/compliance", label: "Compliance", icon: "🛡️" },
-  { href: "/admin/ingredient-requests", label: "재료 요청", icon: "🥬" },
-  { href: "/admin/provider-applications", label: "프로바이더 신청", icon: "🍳" },
 ];
 
 const billingSubItems = [
@@ -23,6 +46,32 @@ const billingSubItems = [
   { href: "/admin/billing/plans", label: "Plans" },
   { href: "/admin/billing/tenants", label: "Tenant Billing" },
 ];
+
+const sections: NavSection[] = [
+  { title: "Tenant Management", items: tenantManagementItems },
+  { title: "Marketplace", items: marketplaceItems },
+  { title: "Platform Health", items: platformHealthItems },
+  { title: "Governance", items: governanceItems },
+];
+
+function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
+  const isActive = item.exact
+    ? pathname === item.href
+    : pathname === item.href || pathname.startsWith(item.href + "/");
+  return (
+    <Link
+      href={item.href}
+      className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+        isActive
+          ? "bg-gray-700 text-white"
+          : "text-gray-400 hover:bg-gray-800 hover:text-white"
+      }`}
+    >
+      <span className="text-base">{item.icon}</span>
+      <span>{item.label}</span>
+    </Link>
+  );
+}
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -38,28 +87,39 @@ export default function AdminSidebar() {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = item.exact
-            ? pathname === item.href
-            : pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-gray-700 text-white"
-                  : "text-gray-400 hover:bg-gray-800 hover:text-white"
-              }`}
-            >
-              <span className="text-base">{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+        {/* Dashboard */}
+        <Link
+          href="/admin"
+          className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            pathname === "/admin"
+              ? "bg-gray-700 text-white"
+              : "text-gray-400 hover:bg-gray-800 hover:text-white"
+          }`}
+        >
+          <span className="text-base">🏠</span>
+          <span>Dashboard</span>
+        </Link>
 
-        {/* Billing section */}
+        {sections.map((section) => (
+          <div key={section.title}>
+            <div className="pt-3 pb-1 px-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                {section.title}
+              </span>
+            </div>
+            {section.items.map((item) => (
+              <NavLink key={item.href} item={item} pathname={pathname} />
+            ))}
+          </div>
+        ))}
+
+        {/* Billing section with sub-items */}
         <div>
+          <div className="pt-3 pb-1 px-3">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+              Billing
+            </span>
+          </div>
           <Link
             href="/admin/billing"
             className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -110,4 +170,3 @@ export default function AdminSidebar() {
     </aside>
   );
 }
-
