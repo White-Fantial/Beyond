@@ -183,7 +183,7 @@ describe("PATCH /api/catalog/sync/policies/[policyId]", () => {
 
     const res = await patchPolicyRoute(
       makeReq("PATCH", "http://localhost/api/catalog/sync/policies/missing", { isEnabled: false }) as never,
-      { params: { policyId: "missing" } }
+      { params: Promise.resolve({ policyId: "missing" }) }
     );
     expect(res.status).toBe(404);
   });
@@ -197,7 +197,7 @@ describe("PATCH /api/catalog/sync/policies/[policyId]", () => {
 
     const res = await patchPolicyRoute(
       makeReq("PATCH", "http://localhost/api/catalog/sync/policies/pol-1", { isEnabled: false }) as never,
-      { params: { policyId: "pol-1" } }
+      { params: Promise.resolve({ policyId: "pol-1" }) }
     );
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -262,7 +262,7 @@ describe("GET /api/catalog/sync/plans/[planId]", () => {
 
     const res = await getPlanRoute(
       makeReq("GET", "http://localhost/api/catalog/sync/plans/missing") as never,
-      { params: { planId: "missing" } }
+      { params: Promise.resolve({ planId: "missing" }) }
     );
     expect(res.status).toBe(404);
   });
@@ -272,7 +272,7 @@ describe("GET /api/catalog/sync/plans/[planId]", () => {
 
     const res = await getPlanRoute(
       makeReq("GET", "http://localhost/api/catalog/sync/plans/plan-1") as never,
-      { params: { planId: "plan-1" } }
+      { params: Promise.resolve({ planId: "plan-1" }) }
     );
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -296,7 +296,7 @@ describe("GET /api/catalog/sync/plans/[planId]/preview", () => {
 
     const res = await previewRoute(
       makeReq("GET", "http://localhost/api/catalog/sync/plans/plan-1/preview") as never,
-      { params: { planId: "plan-1" } }
+      { params: Promise.resolve({ planId: "plan-1" }) }
     );
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -312,7 +312,7 @@ describe("POST /api/catalog/sync/plans/[planId]/apply", () => {
 
     const res = await applyRoute(
       makeReq("POST", "http://localhost/api/catalog/sync/plans/plan-1/apply") as never,
-      { params: { planId: "plan-1" } }
+      { params: Promise.resolve({ planId: "plan-1" }) }
     );
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -329,7 +329,7 @@ describe("POST /api/catalog/sync/plans/[planId]/cancel", () => {
 
     const res = await cancelRoute(
       makeReq("POST", "http://localhost/api/catalog/sync/plans/plan-1/cancel") as never,
-      { params: { planId: "plan-1" } }
+      { params: Promise.resolve({ planId: "plan-1" }) }
     );
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -346,7 +346,7 @@ describe("POST /api/catalog/sync/plan-items/[planItemId]/retry", () => {
 
     const res = await retryRoute(
       makeReq("POST", "http://localhost/api/catalog/sync/plan-items/item-1/retry") as never,
-      { params: { planItemId: "item-1" } }
+      { params: Promise.resolve({ planItemId: "item-1" }) }
     );
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -358,7 +358,7 @@ describe("POST /api/catalog/sync/plan-items/[planItemId]/retry", () => {
 
     const res = await retryRoute(
       makeReq("POST", "http://localhost/api/catalog/sync/plan-items/item-bad/retry") as never,
-      { params: { planItemId: "item-bad" } }
+      { params: Promise.resolve({ planItemId: "item-bad" }) }
     );
     expect(res.status).toBe(422);
   });
@@ -466,7 +466,7 @@ describe("PATCH /api/catalog/sync/policies/[policyId] — invalid JSON", () => {
       headers: { "content-type": "application/json" },
       body: "not-json",
     });
-    const res = await patchPolicyRoute(req as never, { params: { policyId: "pol-1" } });
+    const res = await patchPolicyRoute(req as never, { params: Promise.resolve({ policyId: "pol-1" }) });
     expect(res.status).toBe(400);
   });
 });

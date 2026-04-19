@@ -60,7 +60,7 @@ function makeReq(method: string, url: string, body?: unknown): Request {
   });
 }
 
-const DRAFT_PARAMS = { params: { draftId: "draft-1" } };
+const DRAFT_PARAMS = { params: Promise.resolve({ draftId: "draft-1" }) };
 
 const MOCK_DRAFT = {
   id: "draft-1",
@@ -159,7 +159,7 @@ describe("GET /api/catalog/merge-drafts/[draftId]", () => {
 
     const res = await getRoute(
       makeReq("GET", "http://localhost/api/catalog/merge-drafts/bad-id") as never,
-      { params: { draftId: "bad-id" } }
+      { params: Promise.resolve({ draftId: "bad-id" }) }
     );
     expect(res.status).toBe(404);
   });
@@ -426,7 +426,7 @@ describe("GET /api/catalog/merge-drafts/[draftId]/preview", () => {
 
     const res = await previewRoute(
       makeReq("GET", "http://localhost/.../preview") as never,
-      { params: { draftId: "bad-id" } }
+      { params: Promise.resolve({ draftId: "bad-id" }) }
     );
     expect(res.status).toBe(404);
   });
