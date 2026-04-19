@@ -9,6 +9,16 @@ export default async function CustomerAppPage() {
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome, {ctx.name} 👋</h1>
       <p className="text-gray-500 mb-6">View your orders and subscription details.</p>
+
+      {/* Legacy notice — encourage use of branded store-scoped URL */}
+      <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+        <strong>스토어를 선택하세요</strong>
+        <p className="mt-1 text-amber-700">
+          주문 및 구독 정보는 스토어별로 관리됩니다. QR 코드 또는 스토어 링크를 통해 접속하시면
+          자동으로 스토어가 선택됩니다.
+        </p>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <Link href="/app/orders" className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition">
           <div className="text-2xl mb-2">📦</div>

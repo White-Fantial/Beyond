@@ -111,6 +111,22 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // --- /:tenantSlug/app/** (branded customer app) ---
+  // Matches any path of the form /<slug>/app/<rest>
+  const brandedAppMatch = /^\/([^/]+)\/app(?:\/|$)/.exec(pathname);
+  if (brandedAppMatch) {
+    if (!session) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("returnTo", pathname + request.nextUrl.search);
+      return NextResponse.redirect(loginUrl);
+    }
+    // PLATFORM_ADMIN cannot use the customer app unless impersonating
+    if (!impersonation && session.platformRole === "PLATFORM_ADMIN") {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+    return NextResponse.next();
+  }
+
   // --- /login redirect if already authenticated ---
   if (pathname === "/login" && session) {
     if (session.platformRole === "PLATFORM_ADMIN") return NextResponse.redirect(new URL("/admin", request.url));
@@ -139,6 +155,9 @@ export const config = {
     "/owner/:path*",
     "/backoffice/:path*",
     "/app/:path*",
+    // Branded customer app: /:tenantSlug/app and /:tenantSlug/app/*
+    "/:slug/app",
+    "/:slug/app/:path*",
     "/login",
   ],
 };
