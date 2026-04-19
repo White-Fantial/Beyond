@@ -439,26 +439,28 @@ model Membership {
 }
 
 model Store {
-  id           String      @id @default(uuid())
-  tenantId     String
-  code         String
-  name         String
-  displayName  String
-  status       StoreStatus @default(ACTIVE)
-  phone        String?
-  email        String?
-  addressLine1 String?
-  addressLine2 String?
-  city         String?
-  region       String?
-  postalCode   String?
-  countryCode  String
-  timezone     String
-  currency     String
-  openingDate  DateTime?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  archivedAt   DateTime?
+  id                String      @id @default(uuid())
+  tenantId          String
+  code              String
+  name              String
+  displayName       String
+  status            StoreStatus @default(ACTIVE)
+  /// When false, this store is hidden from the customer-facing app (e.g. internal warehouse stores).
+  isCustomerFacing  Boolean     @default(true)
+  phone             String?
+  email             String?
+  addressLine1      String?
+  addressLine2      String?
+  city              String?
+  region            String?
+  postalCode        String?
+  countryCode       String
+  timezone          String
+  currency          String
+  openingDate       DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  archivedAt        DateTime?
 
   tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   storeMemberships StoreMembership[]
@@ -479,6 +481,7 @@ model Store {
   alertRules             AlertRule[]
   promoCodes             PromoCode[]
   giftCards              GiftCard[]
+  customersPreferring    Customer[]              @relation("CustomerPreferredStore")
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -1157,6 +1160,9 @@ model Customer {
   email    String?
   phone    String?
 
+  /// Last store the customer interacted with — used to restore store context across devices.
+  preferredStoreId String?
+
   // Owner-only internal note (never exposed to customer-facing surfaces)
   internalNote        String?
   noteUpdatedAt       DateTime?
@@ -1165,10 +1171,12 @@ model Customer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenant         Tenant  @relation(fields: [tenantId], references: [id])
+  preferredStore Store?  @relation("CustomerPreferredStore", fields: [preferredStoreId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
   @@index([tenantId, email])
+  @@index([preferredStoreId])
   @@map("customers")
 }
 

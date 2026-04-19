@@ -6,6 +6,8 @@
  * - Subscriptions are looked up via Customer records that share the user's email.
  * - All queries are scoped so that a customer can never see data belonging to
  *   other users.
+ * - When `scope` is provided (tenantId + storeId), queries are additionally
+ *   scoped to that specific store to support the multi-tenant branded app.
  * - Password changes use bcrypt; plain-text passwords are never logged or stored.
  */
 
@@ -84,15 +86,18 @@ export class CustomerPasswordError extends Error {
 
 /**
  * Returns a paginated list of orders placed by the given user (matched by email).
+ * When `scope` is supplied the results are further restricted to that store.
  */
 export async function listCustomerOrders(
   userEmail: string,
-  opts: CustomerOrderListOptions = {}
+  opts: CustomerOrderListOptions = {},
+  scope?: { tenantId: string; storeId: string }
 ): Promise<CustomerOrderListResult> {
   const { limit = 20, offset = 0, status } = opts;
 
   const where = {
     customerEmail: userEmail,
+    ...(scope ? { tenantId: scope.tenantId, storeId: scope.storeId } : {}),
     ...(status
       ? {
           status: Array.isArray(status)
@@ -221,13 +226,18 @@ export async function getCustomerOrderDetail(
 /**
  * Returns all subscriptions belonging to the customer (matched by email across
  * all Customer records that share this user's email).
+ * When `scope` is supplied the results are further restricted to that store.
  */
 export async function listCustomerSubscriptions(
-  userEmail: string
+  userEmail: string,
+  scope?: { tenantId: string; storeId: string }
 ): Promise<CustomerSubscriptionSummary[]> {
-  // Find all Customer records linked to this email
+  // Find all Customer records linked to this email (optionally scoped to tenant)
   const customers = await prisma.customer.findMany({
-    where: { email: userEmail },
+    where: {
+      email: userEmail,
+      ...(scope ? { tenantId: scope.tenantId } : {}),
+    },
     select: { id: true },
   });
 
@@ -236,7 +246,10 @@ export async function listCustomerSubscriptions(
   const customerIds = customers.map((c) => c.id);
 
   const subscriptions = await prisma.subscription.findMany({
-    where: { customerId: { in: customerIds } },
+    where: {
+      customerId: { in: customerIds },
+      ...(scope ? { storeId: scope.storeId } : {}),
+    },
     include: {
       plan: {
         include: {
