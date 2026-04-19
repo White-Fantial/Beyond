@@ -15,12 +15,12 @@ import {
 } from "@/lib/billing/labels";
 
 interface PageProps {
-  params: Promise<{ planId: string }>;
+  params: { planId: string };
 }
 
 export default async function AdminPlanDetailPage({ params }: PageProps) {
   await requirePlatformAdmin();
-  const { planId } = await params;
+  const { planId } = params;
 
   let plan;
   try {

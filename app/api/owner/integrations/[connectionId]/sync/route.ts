@@ -4,11 +4,11 @@ import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
 import { requestOwnerCatalogSync } from "@/services/owner/owner-integrations.service";
 
 interface Params {
-  params: Promise<{ connectionId: string }>;
+  params: { connectionId: string };
 }
 
 export async function POST(_req: NextRequest, { params }: Params) {
-  const { connectionId } = await params;
+  const { connectionId } = params;
   try {
     const ctx = await requireOwnerPortalAccess();
 

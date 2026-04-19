@@ -7,14 +7,14 @@ import {
 } from "@/services/owner/subscription-management-service";
 
 interface Params {
-  params: Promise<{ subscriptionId: string }>;
+  params: { subscriptionId: string };
 }
 
 /**
  * POST /api/owner/subscriptions/[subscriptionId]/resume
  */
 export async function POST(_req: NextRequest, { params }: Params) {
-  const { subscriptionId } = await params;
+  const { subscriptionId } = params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

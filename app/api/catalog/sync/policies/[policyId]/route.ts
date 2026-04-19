@@ -8,9 +8,9 @@ import type { UpdateSyncPolicyInput } from "@/types/catalog-sync";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ policyId: string }> }
+  { params }: { params: { policyId: string } }
 ) {
-  const { policyId } = await params;
+  const { policyId } = params;
 
   let body: UpdateSyncPolicyInput;
   try {

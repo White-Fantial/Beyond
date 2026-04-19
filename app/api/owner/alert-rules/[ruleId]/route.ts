@@ -13,9 +13,9 @@ import type { UpdateAlertRuleInput } from "@/types/owner-notifications";
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ ruleId: string }> }
+  { params }: { params: { ruleId: string } }
 ) {
-  const { ruleId } = await params;
+  const { ruleId } = params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -52,9 +52,9 @@ export async function PATCH(
  */
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ ruleId: string }> }
+  { params }: { params: { ruleId: string } }
 ) {
-  const { ruleId } = await params;
+  const { ruleId } = params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

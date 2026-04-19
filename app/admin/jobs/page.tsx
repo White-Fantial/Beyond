@@ -10,12 +10,12 @@ import AdminManualJobActions from "@/components/admin/jobs/AdminManualJobActions
 import type { AdminJobFilterParams } from "@/types/admin-jobs";
 
 interface PageProps {
-  searchParams: Promise<AdminJobFilterParams>;
+  searchParams: AdminJobFilterParams;
 }
 
 export default async function AdminJobsPage({ searchParams }: PageProps) {
   await requirePlatformAdmin();
-  const rawParams = await searchParams;
+  const rawParams = searchParams;
   const filters = parseAdminJobFilters(rawParams);
 
   const { items, pagination } = await listAdminJobRuns(filters);

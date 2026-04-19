@@ -3,12 +3,12 @@ import { requireAuth } from "@/lib/auth/permissions";
 import { createPurchaseIntent } from "@/services/marketplace/recipe-purchase.service";
 
 interface RouteContext {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 export async function POST(req: NextRequest, { params }: RouteContext) {
   const ctx = await requireAuth();
-  const { id } = await params;
+  const { id } = params;
 
   try {
     const result = await createPurchaseIntent(id, ctx.userId);

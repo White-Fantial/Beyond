@@ -8,9 +8,9 @@ import { getGuestSubscriptionStatus } from "@/services/customer-menu.service";
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ subscriptionId: string }> }
+  { params }: { params: { subscriptionId: string } }
 ) {
-  const { subscriptionId } = await params;
+  const { subscriptionId } = params;
   const status = await getGuestSubscriptionStatus(subscriptionId);
   if (!status) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(status);

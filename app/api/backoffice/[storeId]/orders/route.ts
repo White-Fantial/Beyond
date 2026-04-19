@@ -10,10 +10,10 @@ import { listLiveOrders } from "@/services/backoffice/backoffice-orders.service"
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ storeId: string }> }
+  { params }: { params: { storeId: string } }
 ) {
   try {
-    const { storeId } = await params;
+    const { storeId } = params;
     await requireStoreAccess(storeId);
     const data = await listLiveOrders(storeId);
     return NextResponse.json({ data });

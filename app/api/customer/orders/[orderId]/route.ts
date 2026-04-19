@@ -6,14 +6,14 @@ import {
 } from "@/services/customer.service";
 
 interface Params {
-  params: Promise<{ orderId: string }>;
+  params: { orderId: string };
 }
 
 /**
  * GET /api/customer/orders/[orderId]
  */
 export async function GET(_req: NextRequest, { params }: Params) {
-  const { orderId } = await params;
+  const { orderId } = params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

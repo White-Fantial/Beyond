@@ -9,9 +9,9 @@ import { getConflictById } from "@/services/catalog-conflict.service";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ conflictId: string }> }
+  { params }: { params: { conflictId: string } }
 ) {
-  const { conflictId } = await params;
+  const { conflictId } = params;
   const conflict = await getConflictById(conflictId);
   if (!conflict) {
     return NextResponse.json({ error: "Conflict not found" }, { status: 404 });

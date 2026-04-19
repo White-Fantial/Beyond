@@ -21,9 +21,9 @@ export const runtime = "nodejs";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ storeId: string }> }
+  { params }: { params: { storeId: string } }
 ) {
-  const { storeId } = await params;
+  const { storeId } = params;
   const ctx = await getCurrentUserAuthContext();
   if (!ctx) {
     return new Response("Unauthorized", { status: 401 });

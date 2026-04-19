@@ -7,9 +7,9 @@ import ScheduleGrid from "@/components/backoffice/staff/ScheduleGrid";
 export default async function BackofficeStaffPage({
   params,
 }: {
-  params: Promise<{ storeId: string }>;
+  params: { storeId: string };
 }) {
-  const { storeId } = await params;
+  const { storeId } = params;
   await requireStorePermission(storeId, PERMISSIONS.STAFF_MANAGE);
 
   const [staffResult, scheduleData] = await Promise.all([

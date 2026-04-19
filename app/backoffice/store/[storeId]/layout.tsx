@@ -7,9 +7,9 @@ export default async function BackofficeLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ storeId: string }>;
+  params: { storeId: string };
 }) {
-  const { storeId } = await params;
+  const { storeId } = params;
   const ctx = await requireStoreAccess(storeId);
   const membership = ctx.storeMemberships.find((m) => m.storeId === storeId);
   const storeRole = membership?.storeRole ?? "STAFF";

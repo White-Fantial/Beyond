@@ -8,13 +8,13 @@ import AdminPagination from "@/components/admin/AdminPagination";
 import AdminSearchInput from "@/components/admin/AdminSearchInput";
 
 interface PageProps {
-  searchParams: Promise<{
+  searchParams: {
     q?: string;
     status?: string;
     trialOnly?: string;
     pastDueOnly?: string;
     page?: string;
-  }>;
+  };
 }
 
 const STATUS_OPTIONS = [
@@ -28,7 +28,7 @@ const STATUS_OPTIONS = [
 
 export default async function AdminBillingTenantsPage({ searchParams }: PageProps) {
   await requirePlatformAdmin();
-  const params = await searchParams;
+  const params = searchParams;
 
   const result = await listAdminTenantBillings({
     q: params.q,

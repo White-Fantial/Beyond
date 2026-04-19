@@ -6,9 +6,9 @@ import CatalogCategoriesClient from "./CatalogCategoriesClient";
 export default async function BackofficeCategoriesPage({
   params,
 }: {
-  params: Promise<{ storeId: string }>;
+  params: { storeId: string };
 }) {
-  const { storeId } = await params;
+  const { storeId } = params;
   await requireStorePermission(storeId, PERMISSIONS.CATEGORY_MANAGE);
 
   const categories = await listCatalogCategories(storeId);

@@ -9,10 +9,10 @@ import { getBackofficeOrderDetail } from "@/services/backoffice/backoffice-order
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ storeId: string; orderId: string }> }
+  { params }: { params: { storeId: string; orderId: string } }
 ) {
   try {
-    const { storeId, orderId } = await params;
+    const { storeId, orderId } = params;
     await requireStoreAccess(storeId);
     const data = await getBackofficeOrderDetail(storeId, orderId);
     if (!data) {

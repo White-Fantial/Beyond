@@ -3,11 +3,11 @@ import { requireOwnerStoreAccess, resolveActorTenantId } from "@/services/owner/
 import { listOwnerStoreStaff, inviteOwnerStoreStaff } from "@/services/owner/owner-staff.service";
 
 interface Params {
-  params: Promise<{ storeId: string }>;
+  params: { storeId: string };
 }
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const { storeId } = await params;
+  const { storeId } = params;
   try {
     const ctx = await requireOwnerStoreAccess(storeId);
     const tenantId = resolveActorTenantId(ctx, storeId);
@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const { storeId } = await params;
+  const { storeId } = params;
   try {
     const ctx = await requireOwnerStoreAccess(storeId);
     const tenantId = resolveActorTenantId(ctx, storeId);

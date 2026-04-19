@@ -4,7 +4,7 @@ import { copyMarketplaceRecipeToOwner } from "@/services/owner/owner-recipes.ser
 import type { CopyMarketplaceRecipeInput } from "@/types/owner-recipes";
 
 interface RouteContext {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 /**
@@ -18,7 +18,7 @@ interface RouteContext {
  */
 export async function POST(req: NextRequest, { params }: RouteContext) {
   const ctx = await requireAuth();
-  const { id } = await params;
+  const { id } = params;
 
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   if (!tenantId) {

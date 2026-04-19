@@ -19,7 +19,7 @@ import Link from "next/link";
 import type { CatalogEntityType, ExternalCatalogChangeKind, ExternalCatalogChangeStatus } from "@/types/catalog-external-changes";
 
 interface PageProps {
-  params: Promise<{ storeId: string; connectionId: string }>;
+  params: { storeId: string; connectionId: string };
   searchParams: {
     status?: string;
     entityType?: string;
@@ -31,7 +31,7 @@ interface PageProps {
 }
 
 export default async function ExternalChangesPage({ params, searchParams }: PageProps) {
-  const { storeId, connectionId } = await params;
+  const { storeId, connectionId } = params;
 
   const [connection, summary] = await Promise.all([
     prisma.connection.findUnique({ where: { id: connectionId }, select: { id: true, provider: true, displayName: true } }),

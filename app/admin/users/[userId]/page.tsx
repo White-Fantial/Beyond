@@ -19,12 +19,12 @@ const USER_STATUS_OPTIONS = [
 ];
 
 interface PageProps {
-  params: Promise<{ userId: string }>;
+  params: { userId: string };
 }
 
 export default async function AdminUserDetailPage({ params }: PageProps) {
   await requirePlatformAdmin();
-  const { userId } = await params;
+  const { userId } = params;
   const user = await getAdminUserDetail(userId);
 
   // Impersonation is allowed for non-admin active users

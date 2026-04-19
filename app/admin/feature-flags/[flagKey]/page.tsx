@@ -11,11 +11,11 @@ import AdminFeatureFlagStatusChangeForm from "@/components/admin/feature-flags/A
 import AdminFeatureFlagAuditList from "@/components/admin/feature-flags/AdminFeatureFlagAuditList";
 
 interface Props {
-  params: Promise<{ flagKey: string }>;
+  params: { flagKey: string };
 }
 
 export default async function AdminFeatureFlagDetailPage({ params }: Props) {
-  const { flagKey } = await params;
+  const { flagKey } = params;
   await requirePlatformAdmin();
   const flag = await getAdminFeatureFlagByKey(flagKey);
   if (!flag) notFound();

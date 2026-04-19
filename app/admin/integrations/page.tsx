@@ -24,12 +24,12 @@ const PROVIDER_OPTIONS = [
 ];
 
 interface PageProps {
-  searchParams: Promise<{ status?: string; provider?: string; page?: string }>;
+  searchParams: { status?: string; provider?: string; page?: string };
 }
 
 export default async function AdminIntegrationsPage({ searchParams }: PageProps) {
   await requirePlatformAdmin();
-  const params = await searchParams;
+  const params = searchParams;
 
   const { items, pagination } = await listAdminConnections({
     status: params.status,

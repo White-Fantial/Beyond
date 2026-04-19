@@ -8,10 +8,10 @@ import {
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ promoId: string }> }
+  { params }: { params: { promoId: string } }
 ) {
   try {
-    const { promoId } = await params;
+    const { promoId } = params;
     const ctx = await requireAuth();
     const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
     const data = await getPromoCodeDetail(tenantId, promoId);
@@ -24,10 +24,10 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ promoId: string }> }
+  { params }: { params: { promoId: string } }
 ) {
   try {
-    const { promoId } = await params;
+    const { promoId } = params;
     const ctx = await requireAuth();
     const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
     const body = await req.json();
@@ -41,10 +41,10 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: Promise<{ promoId: string }> }
+  { params }: { params: { promoId: string } }
 ) {
   try {
-    const { promoId } = await params;
+    const { promoId } = params;
     const ctx = await requireAuth();
     const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
     await deletePromoCode(tenantId, promoId);

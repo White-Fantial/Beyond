@@ -18,12 +18,12 @@ const TENANT_STATUS_OPTIONS = [
 ];
 
 interface PageProps {
-  params: Promise<{ tenantId: string }>;
+  params: { tenantId: string };
 }
 
 export default async function AdminTenantDetailPage({ params }: PageProps) {
   await requirePlatformAdmin();
-  const { tenantId } = await params;
+  const { tenantId } = params;
   const tenant = await getAdminTenantDetail(tenantId);
 
   return (

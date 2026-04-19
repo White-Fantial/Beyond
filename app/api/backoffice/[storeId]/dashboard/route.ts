@@ -10,10 +10,10 @@ import { getDashboardData } from "@/services/backoffice/backoffice-dashboard.ser
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ storeId: string }> }
+  { params }: { params: { storeId: string } }
 ) {
   try {
-    const { storeId } = await params;
+    const { storeId } = params;
     await requireStoreAccess(storeId);
 
     const data = await getDashboardData(storeId);

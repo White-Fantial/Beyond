@@ -14,9 +14,9 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ storeSlug: string }> }
+  { params }: { params: { storeSlug: string } }
 ) {
-  const { storeSlug } = await params;
+  const { storeSlug } = params;
   try {
     const store = await getStoreBySlugForCustomer(storeSlug);
     if (!store) return NextResponse.json({ error: "Store not found" }, { status: 404 });

@@ -9,9 +9,9 @@ import { getExternalChange } from "@/services/external-change-detection.service"
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ changeId: string }> }
+  { params }: { params: { changeId: string } }
 ) {
-  const { changeId } = await params;
+  const { changeId } = params;
   const change = await getExternalChange(changeId);
   if (!change) {
     return NextResponse.json({ error: "Change not found" }, { status: 404 });

@@ -8,14 +8,14 @@ import {
 } from "@/services/customer.service";
 
 interface Params {
-  params: Promise<{ subscriptionId: string }>;
+  params: { subscriptionId: string };
 }
 
 /**
  * PATCH /api/customer/subscriptions/[subscriptionId]/resume
  */
 export async function PATCH(_req: NextRequest, { params }: Params) {
-  const { subscriptionId } = await params;
+  const { subscriptionId } = params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

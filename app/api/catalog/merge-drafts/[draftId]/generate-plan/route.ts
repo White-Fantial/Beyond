@@ -9,9 +9,9 @@ import { generateSyncPlanFromMergeDraft } from "@/services/catalog-merge.service
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ draftId: string }> }
+  { params }: { params: { draftId: string } }
 ) {
-  const { draftId } = await params;
+  const { draftId } = params;
   let userId: string | undefined;
   try {
     const body = await req.json().catch(() => ({}));

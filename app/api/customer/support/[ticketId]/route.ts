@@ -5,10 +5,10 @@ import { getCustomerTicketDetail } from "@/services/customer-support.service";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ ticketId: string }> }
+  { params }: { params: { ticketId: string } }
 ) {
   try {
-    const { ticketId } = await params;
+    const { ticketId } = params;
     const ctx = await requirePermission(PERMISSIONS.CUSTOMER_APP);
     const data = await getCustomerTicketDetail(ctx.userId, ticketId);
     return NextResponse.json({ data });

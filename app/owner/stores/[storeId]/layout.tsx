@@ -4,7 +4,7 @@ import Link from "next/link";
 
 interface Props {
   children: React.ReactNode;
-  params: Promise<{ storeId: string }>;
+  params: { storeId: string };
 }
 
 const storeNavItems = [
@@ -20,7 +20,7 @@ const storeNavItems = [
 ];
 
 export default async function StoreLayout({ children, params }: Props) {
-  const { storeId } = await params;
+  const { storeId } = params;
   await requireOwnerStoreAccess(storeId);
 
   const store = await prisma.store.findUnique({

@@ -8,11 +8,11 @@ import {
 import type { UpdateIngredientInput } from "@/types/owner-ingredients";
 
 interface Params {
-  params: Promise<{ ingredientId: string }>;
+  params: { ingredientId: string };
 }
 
 export async function GET(_req: Request, { params }: Params) {
-  const { ingredientId } = await params;
+  const { ingredientId } = params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
@@ -25,7 +25,7 @@ export async function GET(_req: Request, { params }: Params) {
 }
 
 export async function PATCH(req: Request, { params }: Params) {
-  const { ingredientId } = await params;
+  const { ingredientId } = params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   const body = (await req.json()) as UpdateIngredientInput;
@@ -39,7 +39,7 @@ export async function PATCH(req: Request, { params }: Params) {
 }
 
 export async function DELETE(_req: Request, { params }: Params) {
-  const { ingredientId } = await params;
+  const { ingredientId } = params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {

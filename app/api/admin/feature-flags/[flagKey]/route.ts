@@ -13,9 +13,9 @@ import type { FlagStatus } from "@/types/feature-flags";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ flagKey: string }> }
+  { params }: { params: { flagKey: string } }
 ) {
-  const { flagKey } = await params;
+  const { flagKey } = params;
   try {
     await requirePlatformAdminNotImpersonating();
     const flag = await getAdminFeatureFlagByKey(flagKey);
@@ -28,9 +28,9 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ flagKey: string }> }
+  { params }: { params: { flagKey: string } }
 ) {
-  const { flagKey } = await params;
+  const { flagKey } = params;
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
     const flag = await getAdminFeatureFlagByKey(flagKey);

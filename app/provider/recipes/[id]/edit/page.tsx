@@ -8,12 +8,12 @@ import RecipeForm from "@/components/provider/RecipeForm";
 import Link from "next/link";
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 export default async function EditProviderRecipePage({ params }: PageProps) {
   const ctx = await requireAuth();
-  const { id } = await params;
+  const { id } = params;
 
   if (!ctx.isRecipeProvider && !ctx.isPlatformAdmin && !ctx.isPlatformModerator) {
     redirect("/unauthorized");

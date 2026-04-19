@@ -10,10 +10,10 @@ import type { PlaceGuestOrderInput } from "@/types/storefront";
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ storeSlug: string }> }
+  { params }: { params: { storeSlug: string } }
 ) {
   try {
-    const { storeSlug } = await params;
+    const { storeSlug } = params;
 
     const store = await getStoreBySlugForCustomer(storeSlug);
     if (!store) {

@@ -4,10 +4,10 @@ import { getScheduleData } from "@/services/backoffice/backoffice-staff.service"
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ storeId: string }> }
+  { params }: { params: { storeId: string } }
 ) {
   try {
-    const { storeId } = await params;
+    const { storeId } = params;
     await requireStoreAccess(storeId);
     const data = await getScheduleData(storeId);
     return NextResponse.json({ data });

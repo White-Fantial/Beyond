@@ -16,12 +16,12 @@ const TENANT_STATUS_OPTIONS = [
 ];
 
 interface PageProps {
-  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+  searchParams: { q?: string; status?: string; page?: string };
 }
 
 export default async function AdminTenantsPage({ searchParams }: PageProps) {
   await requirePlatformAdmin();
-  const params = await searchParams;
+  const params = searchParams;
 
   const { items, pagination } = await listAdminTenants({
     q: params.q,

@@ -9,10 +9,10 @@ import type { CreateProductInput } from "@/services/backoffice/backoffice-catalo
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ storeId: string }> }
+  { params }: { params: { storeId: string } }
 ) {
   try {
-    const { storeId } = await params;
+    const { storeId } = params;
     const ctx = await requireStorePermission(storeId, PERMISSIONS.MENU_MANAGE);
 
     const body = (await req.json()) as CreateProductInput;

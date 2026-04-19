@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStoreBySlugForCustomer, getProductDetailForOrdering } from "@/services/customer-menu.service";
 
 interface RouteParams {
-  params: Promise<{ storeSlug: string; productId: string }>;
+  params: { storeSlug: string; productId: string };
 }
 
 /**
@@ -15,7 +15,7 @@ export async function GET(
   _request: NextRequest,
   { params }: RouteParams
 ): Promise<NextResponse> {
-  const { storeSlug, productId } = await params;
+  const { storeSlug, productId } = params;
 
   const store = await getStoreBySlugForCustomer(storeSlug);
   if (!store) {

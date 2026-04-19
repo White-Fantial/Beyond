@@ -23,7 +23,7 @@ import Link from "next/link";
 import type { CatalogEntityType, CatalogMappingStatus } from "@/types/catalog-mapping";
 
 interface PageProps {
-  params: Promise<{ storeId: string; connectionId: string }>;
+  params: { storeId: string; connectionId: string };
   searchParams: { status?: string; entityType?: string };
 }
 
@@ -44,7 +44,7 @@ const STATUS_FILTERS: { label: string; value: CatalogMappingStatus | "" }[] = [
 ];
 
 export default async function MappingReviewPage({ params, searchParams }: PageProps) {
-  const { storeId, connectionId } = await params;
+  const { storeId, connectionId } = params;
   const selectedEntityType = (searchParams.entityType as CatalogEntityType) || undefined;
   const selectedStatus = (searchParams.status as CatalogMappingStatus) || undefined;
 

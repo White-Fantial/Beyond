@@ -2,11 +2,11 @@ import { requireOwnerStoreAccess } from "@/services/owner/owner-authz.service";
 import { listOwnerCategories } from "@/services/owner/owner-catalog.service";
 
 interface Props {
-  params: Promise<{ storeId: string }>;
+  params: { storeId: string };
 }
 
 export default async function StoreCategoriesPage({ params }: Props) {
-  const { storeId } = await params;
+  const { storeId } = params;
   await requireOwnerStoreAccess(storeId);
   const categories = await listOwnerCategories(storeId);
 

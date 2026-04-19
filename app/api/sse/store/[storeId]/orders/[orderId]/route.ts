@@ -20,9 +20,9 @@ export const runtime = "nodejs";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ storeId: string; orderId: string }> }
+  { params }: { params: { storeId: string; orderId: string } }
 ) {
-  const { storeId, orderId } = await params;
+  const { storeId, orderId } = params;
 
   const store = await getStoreBySlugForCustomer(storeId);
   if (!store) {

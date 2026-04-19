@@ -26,12 +26,12 @@ import Link from "next/link";
 import type { CatalogSyncPlanItemDto } from "@/types/catalog-sync";
 
 interface PageProps {
-  params: Promise<{ storeId: string; connectionId: string }>;
+  params: { storeId: string; connectionId: string };
   searchParams: { tab?: string };
 }
 
 export default async function SyncPage({ params, searchParams }: PageProps) {
-  const { storeId, connectionId } = await params;
+  const { storeId, connectionId } = params;
   const tab = searchParams.tab ?? "preview";
 
   const [connection, summary, policies, plans] = await Promise.all([

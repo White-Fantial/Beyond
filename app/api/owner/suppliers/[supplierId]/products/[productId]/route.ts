@@ -7,11 +7,11 @@ import {
 import type { UpdateSupplierProductInput } from "@/types/owner-suppliers";
 
 interface Params {
-  params: Promise<{ supplierId: string; productId: string }>;
+  params: { supplierId: string; productId: string };
 }
 
 export async function PATCH(req: Request, { params }: Params) {
-  const { supplierId, productId } = await params;
+  const { supplierId, productId } = params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   const body = (await req.json()) as UpdateSupplierProductInput;
@@ -30,7 +30,7 @@ export async function PATCH(req: Request, { params }: Params) {
 }
 
 export async function DELETE(_req: Request, { params }: Params) {
-  const { supplierId, productId } = await params;
+  const { supplierId, productId } = params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {

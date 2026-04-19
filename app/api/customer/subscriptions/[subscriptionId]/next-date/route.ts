@@ -8,7 +8,7 @@ import {
 } from "@/services/customer.service";
 
 interface Params {
-  params: Promise<{ subscriptionId: string }>;
+  params: { subscriptionId: string };
 }
 
 /**
@@ -16,7 +16,7 @@ interface Params {
  * Body: { nextOrderAt: string } — ISO 8601 date string
  */
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const { subscriptionId } = await params;
+  const { subscriptionId } = params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

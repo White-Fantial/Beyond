@@ -10,7 +10,7 @@ import IngredientRequestReviewPanel from "@/components/admin/IngredientRequestRe
 export default async function AdminIngredientRequestsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: { status?: string };
 }) {
   await requirePlatformAdmin();
   const ctx = await getCurrentUserAuthContext();
@@ -20,7 +20,7 @@ export default async function AdminIngredientRequestsPage({
     return <div>접근 권한이 없습니다.</div>;
   }
 
-  const { status: statusParam } = await searchParams;
+  const { status: statusParam } = searchParams;
   const status = (statusParam ?? "PENDING") as IngredientRequestStatus;
 
   const result = await listIngredientRequests({ status, pageSize: 100 });

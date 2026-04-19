@@ -7,7 +7,7 @@ import AdminPlanTable from "@/components/admin/billing/AdminPlanTable";
 import AdminPagination from "@/components/admin/AdminPagination";
 
 interface PageProps {
-  searchParams: Promise<{ status?: string; page?: string }>;
+  searchParams: { status?: string; page?: string };
 }
 
 const PLAN_STATUS_OPTIONS = [
@@ -19,7 +19,7 @@ const PLAN_STATUS_OPTIONS = [
 
 export default async function AdminBillingPlansPage({ searchParams }: PageProps) {
   await requirePlatformAdmin();
-  const params = await searchParams;
+  const params = searchParams;
 
   const result = await listAdminPlans({
     status: params.status,

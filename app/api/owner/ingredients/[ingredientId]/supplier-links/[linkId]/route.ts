@@ -3,11 +3,11 @@ import { requireAuth } from "@/lib/auth/permissions";
 import { unlinkIngredientFromSupplierProduct } from "@/services/owner/owner-suppliers.service";
 
 interface Params {
-  params: Promise<{ ingredientId: string; linkId: string }>;
+  params: { ingredientId: string; linkId: string };
 }
 
 export async function DELETE(_req: Request, { params }: Params) {
-  const { linkId } = await params;
+  const { linkId } = params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {

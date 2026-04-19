@@ -11,9 +11,9 @@ import type { ApplySyncPlanOptions } from "@/types/catalog-sync";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ planId: string }> }
+  { params }: { params: { planId: string } }
 ) {
-  const { planId } = await params;
+  const { planId } = params;
   let opts: ApplySyncPlanOptions = {};
   try {
     const body = await req.json();

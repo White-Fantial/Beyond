@@ -6,9 +6,9 @@ import CatalogModifiersClient from "./CatalogModifiersClient";
 export default async function BackofficeModifiersPage({
   params,
 }: {
-  params: Promise<{ storeId: string }>;
+  params: { storeId: string };
 }) {
-  const { storeId } = await params;
+  const { storeId } = params;
   await requireStorePermission(storeId, PERMISSIONS.MODIFIER_MANAGE);
 
   const modifierGroups = await listModifierGroups(storeId);

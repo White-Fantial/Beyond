@@ -11,10 +11,10 @@ import { updateBackofficeOrderStatus, VALID_TRANSITIONS } from "@/services/backo
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ storeId: string; orderId: string }> }
+  { params }: { params: { storeId: string; orderId: string } }
 ) {
   try {
-    const { storeId, orderId } = await params;
+    const { storeId, orderId } = params;
     await requireStoreAccess(storeId);
 
     const body = await req.json() as { status?: unknown };

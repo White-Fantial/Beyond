@@ -5,10 +5,10 @@ import { resolveActorTenantId, requireOwnerStoreAccess } from "@/services/owner/
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ storeId: string }> }
+  { params }: { params: { storeId: string } }
 ) {
   try {
-    const { storeId } = await params;
+    const { storeId } = params;
 
     const ctx = await requireOwnerStoreAccess(storeId);
 

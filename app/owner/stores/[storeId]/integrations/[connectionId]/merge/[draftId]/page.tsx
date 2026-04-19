@@ -21,11 +21,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 interface PageProps {
-  params: Promise<{ storeId: string; connectionId: string; draftId: string }>;
+  params: { storeId: string; connectionId: string; draftId: string };
 }
 
 export default async function MergeEditorPage({ params }: PageProps) {
-  const { storeId, connectionId, draftId } = await params;
+  const { storeId, connectionId, draftId } = params;
 
   const draft = await getMergeDraft(draftId);
   if (!draft) notFound();

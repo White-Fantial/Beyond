@@ -7,9 +7,9 @@ import { cancelSyncPlan } from "@/services/catalog-sync-executor.service";
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: Promise<{ planId: string }> }
+  { params }: { params: { planId: string } }
 ) {
-  const { planId } = await params;
+  const { planId } = params;
   await cancelSyncPlan(planId);
   return NextResponse.json({ success: true });
 }

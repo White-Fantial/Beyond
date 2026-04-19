@@ -3,11 +3,11 @@ import { requireAuth } from "@/lib/auth/permissions";
 import { getBasePriceInfo } from "@/services/owner/owner-supplier-scraper.service";
 
 interface Params {
-  params: Promise<{ productId: string }>;
+  params: { productId: string };
 }
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const { productId } = await params;
+  const { productId } = params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
 

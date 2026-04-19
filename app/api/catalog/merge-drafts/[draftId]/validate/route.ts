@@ -9,9 +9,9 @@ import { validateMergeDraft } from "@/services/catalog-merge.service";
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: Promise<{ draftId: string }> }
+  { params }: { params: { draftId: string } }
 ) {
-  const { draftId } = await params;
+  const { draftId } = params;
   try {
     const result = await validateMergeDraft(draftId);
     return NextResponse.json({ validation: result });

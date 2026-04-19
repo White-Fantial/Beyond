@@ -9,7 +9,7 @@ import DisconnectButton from "./DisconnectButton";
 import type { ConnectionSummary } from "@/domains/integration/types";
 
 interface PageProps {
-  params: Promise<{ storeId: string }>;
+  params: { storeId: string };
   searchParams: { connected?: string; error?: string; provider?: string };
 }
 
@@ -158,7 +158,7 @@ function ConnectionCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function StoreIntegrationsPage({ params, searchParams }: PageProps) {
-  const { storeId } = await params;
+  const { storeId } = params;
 
   const ctx = await requireStorePermission(storeId, PERMISSIONS.INTEGRATIONS);
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";

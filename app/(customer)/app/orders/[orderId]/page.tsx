@@ -8,12 +8,12 @@ import { OrderItemsTable } from "@/components/customer/orders/OrderItemsTable";
 import { OrderEventTimeline } from "@/components/customer/orders/OrderEventTimeline";
 
 interface Props {
-  params: Promise<{ orderId: string }>;
+  params: { orderId: string };
 }
 
 export default async function CustomerOrderDetailPage({ params }: Props) {
   const ctx = await requirePermission(PERMISSIONS.CUSTOMER_APP);
-  const { orderId } = await params;
+  const { orderId } = params;
 
   let order;
   try {

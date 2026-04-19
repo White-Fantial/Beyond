@@ -8,9 +8,9 @@ import { auditAdminFeatureFlagAssignmentCreated } from "@/lib/audit";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ flagKey: string }> }
+  { params }: { params: { flagKey: string } }
 ) {
-  const { flagKey } = await params;
+  const { flagKey } = params;
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
     const flag = await getAdminFeatureFlagByKey(flagKey);

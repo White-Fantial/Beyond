@@ -13,9 +13,9 @@ import type { CatalogMergeApplyTarget } from "@/types/catalog-merge";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ draftId: string }> }
+  { params }: { params: { draftId: string } }
 ) {
-  const { draftId } = await params;
+  const { draftId } = params;
   const draft = await getMergeDraft(draftId);
   if (!draft) {
     return NextResponse.json({ error: "Draft not found" }, { status: 404 });
@@ -25,7 +25,7 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ draftId: string }> }
+  { params }: { params: { draftId: string } }
 ) {
   let body: {
     title?: string;
@@ -39,7 +39,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { draftId } = await params;
+  const { draftId } = params;
 
   try {
     if (body.applyTarget !== undefined) {

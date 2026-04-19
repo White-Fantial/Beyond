@@ -6,11 +6,11 @@ import {
 } from "@/services/owner/owner-settings.service";
 
 interface Params {
-  params: Promise<{ storeId: string }>;
+  params: { storeId: string };
 }
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const { storeId } = await params;
+  const { storeId } = params;
   try {
     await requireOwnerStoreAccess(storeId);
     const settings = await getOwnerStoreSettings(storeId);
@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const { storeId } = await params;
+  const { storeId } = params;
   try {
     const ctx = await requireOwnerStoreAccess(storeId);
     const tenantId = resolveActorTenantId(ctx, storeId);

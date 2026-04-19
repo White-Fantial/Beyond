@@ -10,10 +10,10 @@ import { validatePromoCode } from "@/services/customer-menu.service";
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ storeSlug: string }> }
+  { params }: { params: { storeSlug: string } }
 ) {
   try {
-    const { storeSlug } = await params;
+    const { storeSlug } = params;
 
     const store = await prisma.store.findFirst({
       where: { code: storeSlug, status: "ACTIVE" },

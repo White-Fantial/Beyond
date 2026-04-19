@@ -5,7 +5,7 @@ import { CartProvider } from "@/lib/cart/cart-context";
 import CartPageInner from "./CartPageInner";
 
 interface CartPageProps {
-  params: Promise<{ storeSlug: string }>;
+  params: { storeSlug: string };
 }
 
 /**
@@ -17,7 +17,7 @@ interface CartPageProps {
  * TODO: Persist cart across navigations.
  */
 export default async function CartPage({ params }: CartPageProps) {
-  const { storeSlug } = await params;
+  const { storeSlug } = params;
   const store = await getStoreBySlugForCustomer(storeSlug);
   if (!store) notFound();
 

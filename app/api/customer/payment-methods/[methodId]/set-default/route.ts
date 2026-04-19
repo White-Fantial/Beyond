@@ -10,9 +10,9 @@ import {
  */
 export async function PATCH(
   _req: NextRequest,
-  { params }: { params: Promise<{ methodId: string }> }
+  { params }: { params: { methodId: string } }
 ) {
-  const { methodId } = await params;
+  const { methodId } = params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

@@ -4,14 +4,14 @@ import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
 import { getOwnerCustomerSubscriptions } from "@/services/owner/customer-service";
 
 interface Params {
-  params: Promise<{ customerId: string }>;
+  params: { customerId: string };
 }
 
 /**
  * GET /api/owner/customers/[customerId]/subscriptions
  */
 export async function GET(_req: NextRequest, { params }: Params) {
-  const { customerId } = await params;
+  const { customerId } = params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

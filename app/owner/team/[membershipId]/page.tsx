@@ -4,7 +4,7 @@ import { requireOwnerPortalAccess } from "@/lib/owner/auth-guard";
 import { getOwnerTeamMember } from "@/services/owner/owner-team.service";
 
 interface Props {
-  params: Promise<{ membershipId: string }>;
+  params: { membershipId: string };
 }
 
 const ROLE_BADGE: Record<string, { label: string; className: string }> = {
@@ -33,7 +33,7 @@ function formatDate(iso: string | null): string {
 }
 
 export default async function TeamMemberDetailPage({ params }: Props) {
-  const { membershipId } = await params;
+  const { membershipId } = params;
   const ctx = await requireOwnerPortalAccess();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
 

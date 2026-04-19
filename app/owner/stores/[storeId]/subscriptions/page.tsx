@@ -3,11 +3,11 @@ import { getOwnerSubscriptionSummary } from "@/services/owner/owner-subscription
 import Link from "next/link";
 
 interface Props {
-  params: Promise<{ storeId: string }>;
+  params: { storeId: string };
 }
 
 export default async function StoreSubscriptionsPage({ params }: Props) {
-  const { storeId } = await params;
+  const { storeId } = params;
   await requireOwnerStoreAccess(storeId);
   const summary = await getOwnerSubscriptionSummary(storeId);
 

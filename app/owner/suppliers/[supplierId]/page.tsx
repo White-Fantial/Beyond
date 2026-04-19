@@ -5,11 +5,11 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 
 interface Props {
-  params: Promise<{ supplierId: string }>;
+  params: { supplierId: string };
 }
 
 export default async function SupplierDetailPage({ params }: Props) {
-  const { supplierId } = await params;
+  const { supplierId } = params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {

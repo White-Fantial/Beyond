@@ -7,11 +7,11 @@ import {
 } from "@/services/owner/owner-staff.service";
 
 interface Params {
-  params: Promise<{ storeId: string; membershipId: string }>;
+  params: { storeId: string; membershipId: string };
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const { storeId, membershipId } = await params;
+  const { storeId, membershipId } = params;
   try {
     const ctx = await requireOwnerStoreAccess(storeId);
     const tenantId = resolveActorTenantId(ctx, storeId);
@@ -44,7 +44,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { storeId, membershipId } = await params;
+  const { storeId, membershipId } = params;
   try {
     const ctx = await requireOwnerStoreAccess(storeId);
     const tenantId = resolveActorTenantId(ctx, storeId);

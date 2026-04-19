@@ -6,9 +6,9 @@ import Link from "next/link";
 export default async function BackofficeOperationsPage({
   params,
 }: {
-  params: Promise<{ storeId: string }>;
+  params: { storeId: string };
 }) {
-  const { storeId } = await params;
+  const { storeId } = params;
   await requireStorePermission(storeId, PERMISSIONS.OPERATIONS);
 
   const groups = await listProductsGroupedByCategory(storeId);

@@ -18,12 +18,12 @@ const STORE_STATUS_OPTIONS = [
 ];
 
 interface PageProps {
-  params: Promise<{ storeId: string }>;
+  params: { storeId: string };
 }
 
 export default async function AdminStoreDetailPage({ params }: PageProps) {
   await requirePlatformAdmin();
-  const { storeId } = await params;
+  const { storeId } = params;
   const store = await getAdminStoreDetail(storeId);
   const tenantMemberships = await listActiveTenantMembershipsForDropdown(store.tenantId);
 

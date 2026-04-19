@@ -6,14 +6,14 @@ import {
 } from "@/services/customer.service";
 
 interface Params {
-  params: Promise<{ addressId: string }>;
+  params: { addressId: string };
 }
 
 /**
  * PATCH /api/customer/addresses/[addressId]/set-default
  */
 export async function PATCH(_req: NextRequest, { params }: Params) {
-  const { addressId } = await params;
+  const { addressId } = params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

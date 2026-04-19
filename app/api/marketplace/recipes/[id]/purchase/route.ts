@@ -4,12 +4,12 @@ import { purchaseRecipe } from "@/services/marketplace/recipe-purchase.service";
 import type { PurchaseRecipeInput } from "@/types/marketplace";
 
 interface RouteContext {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 export async function POST(req: NextRequest, { params }: RouteContext) {
   const ctx = await requireAuth();
-  const { id } = await params;
+  const { id } = params;
 
   const body = (await req.json().catch(() => ({}))) as PurchaseRecipeInput;
   const purchase = await purchaseRecipe(id, ctx.userId, body);

@@ -13,12 +13,12 @@ import OwnerSoldOutImpactCard from "@/components/owner/reports/OwnerSoldOutImpac
 import OwnerInsightsPanel from "@/components/owner/reports/OwnerInsightsPanel";
 
 interface Props {
-  params: Promise<{ storeId: string }>;
+  params: { storeId: string };
   searchParams?: Record<string, string | string[] | undefined>;
 }
 
 export default async function StoreReportsPage({ params, searchParams }: Props) {
-  const { storeId } = await params;
+  const { storeId } = params;
 
   const ctx = await requireOwnerStoreAccess(storeId);
   const tenantId = resolveActorTenantId(ctx, storeId);

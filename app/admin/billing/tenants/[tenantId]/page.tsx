@@ -16,12 +16,12 @@ import AdminBillingNoteForm from "@/components/admin/billing/AdminBillingNoteFor
 import AdminPaymentAttemptTable from "@/components/admin/billing/AdminPaymentAttemptTable";
 
 interface PageProps {
-  params: Promise<{ tenantId: string }>;
+  params: { tenantId: string };
 }
 
 export default async function AdminTenantBillingDetailPage({ params }: PageProps) {
   await requirePlatformAdmin();
-  const { tenantId } = await params;
+  const { tenantId } = params;
 
   let detail;
   let paymentAttempts;
