@@ -57,44 +57,54 @@ export default async function StoreDashboardPage({ params }: Props) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 pb-10 space-y-6">
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <SummaryCard
-          label="Today's Revenue"
-          value={formatCurrency(dashboard.todaySalesMinorUnit, "NZD")}
-          sub="Today Sales"
-        />
-        <SummaryCard label="Today's Orders" value={dashboard.todayOrderCount} sub="Today Orders" />
-        <SummaryCard
-          label="Completed Orders"
-          value={dashboard.completedOrderCount}
-          sub="Completed"
-        />
-        <SummaryCard
-          label="Cancelled Orders"
-          value={dashboard.cancelledOrderCount}
-          sub="Cancelled"
-        />
-        <SummaryCard
-          label="Sold Out Products"
-          value={dashboard.soldOutProductCount}
-          sub="Sold Out"
-        />
-        <SummaryCard
-          label="Active Subscriptions"
-          value={dashboard.activeSubscriptionCount}
-          sub="Active Subscriptions"
-        />
-        <SummaryCard
-          label="Connected Channels"
-          value={`${dashboard.connectedChannelCount} / ${dashboard.totalChannelCount}`}
-          sub="Connected Channels"
-        />
-        <SummaryCard
-          label="Upcoming Subscription Orders"
-          value={dashboard.upcomingSubscriptionOrderCount}
-          sub="Next 7 Days"
-        />
+      {/* Today section */}
+      <div>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Today</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <SummaryCard
+            label="Today's Revenue"
+            value={formatCurrency(dashboard.todaySalesMinorUnit, "NZD")}
+            sub="Today Sales"
+          />
+          <SummaryCard label="Today's Orders" value={dashboard.todayOrderCount} sub="Today Orders" />
+          <SummaryCard
+            label="Completed Orders"
+            value={dashboard.completedOrderCount}
+            sub="Completed"
+          />
+          <SummaryCard
+            label="Cancelled Orders"
+            value={dashboard.cancelledOrderCount}
+            sub="Cancelled"
+          />
+        </div>
+      </div>
+
+      {/* Store Status section */}
+      <div>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Store Status</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <SummaryCard
+            label="Sold Out Products"
+            value={dashboard.soldOutProductCount}
+            sub="Sold Out"
+          />
+          <SummaryCard
+            label="Active Subscriptions"
+            value={dashboard.activeSubscriptionCount}
+            sub="Active Subscriptions"
+          />
+          <SummaryCard
+            label="Connected Channels"
+            value={`${dashboard.connectedChannelCount} / ${dashboard.totalChannelCount}`}
+            sub="Connected Channels"
+          />
+          <SummaryCard
+            label="Upcoming Subscription Orders"
+            value={dashboard.upcomingSubscriptionOrderCount}
+            sub="Next 7 Days"
+          />
+        </div>
       </div>
 
       {/* Channel breakdown */}
@@ -182,9 +192,7 @@ export default async function StoreDashboardPage({ params }: Props) {
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">Recent Orders</h2>
         {dashboard.recentOrders.length === 0 ? (
-          <p className="text-sm text-gray-400">
-            Recent Orders이 없습니다. Order analytics 연동 후 여기에 표시됩니다.
-          </p>
+          <p className="text-sm text-gray-400">No recent orders yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

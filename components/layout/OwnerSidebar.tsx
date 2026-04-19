@@ -15,8 +15,13 @@ interface NavSection {
   items: NavItem[];
 }
 
+interface StoreNavGroup {
+  group: string;
+  items: Array<{ suffix: string; label: string; icon: string; exact?: boolean }>;
+}
+
 const storeManagementItems: NavItem[] = [
-  { href: "/owner/stores", label: "My Stores", icon: "🏬" },
+  { href: "/owner/stores", label: "My Stores", icon: "🏬", exact: true },
   { href: "/owner/team", label: "Team", icon: "👥" },
 ];
 
@@ -60,6 +65,34 @@ const sections: NavSection[] = [
   { title: "Settings", items: settingsItems },
 ];
 
+/** Secondary navigation groups shown inside the sidebar when viewing a specific store. */
+const storeNavGroups: StoreNavGroup[] = [
+  {
+    group: "Store",
+    items: [
+      { suffix: "", label: "Overview", icon: "📊", exact: true },
+      { suffix: "/settings", label: "Store Settings", icon: "⚙️" },
+      { suffix: "/staff", label: "Staff", icon: "👥" },
+      { suffix: "/reports", label: "Reports", icon: "📈" },
+    ],
+  },
+  {
+    group: "Catalog",
+    items: [
+      { suffix: "/products", label: "Products", icon: "📦" },
+      { suffix: "/categories", label: "Categories", icon: "🗂️" },
+      { suffix: "/modifiers", label: "Modifiers", icon: "🔧" },
+    ],
+  },
+  {
+    group: "Operations",
+    items: [
+      { suffix: "/integrations", label: "Integrations", icon: "🔌" },
+      { suffix: "/subscriptions", label: "Subscriptions", icon: "🔄" },
+    ],
+  },
+];
+
 function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const isActive = item.exact
     ? pathname === item.href
@@ -67,6 +100,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   return (
     <Link
       href={item.href}
+      aria-current={isActive ? "page" : undefined}
       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
         isActive
           ? "bg-brand-50 text-brand-700"
@@ -79,10 +113,90 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   );
 }
 
+function StoreSubnavItem({
+  href,
+  label,
+  icon,
+  exact,
+  pathname,
+}: {
+  href: string;
+  label: string;
+  icon: string;
+  exact?: boolean;
+  pathname: string;
+}) {
+  const isActive = exact
+    ? pathname === href
+    : pathname === href || pathname.startsWith(href + "/");
+  return (
+    <Link
+      href={href}
+      aria-current={isActive ? "page" : undefined}
+      className={`flex items-center gap-2.5 pl-4 pr-3 py-2 rounded-md text-sm transition-colors ${
+        isActive
+          ? "bg-brand-50 text-brand-700 font-medium border-l-2 border-brand-500"
+          : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+      }`}
+    >
+      <span className="text-[13px]">{icon}</span>
+      <span>{label}</span>
+    </Link>
+  );
+}
+
+function StoreSubnav({ storeId, pathname }: { storeId: string; pathname: string }) {
+  const base = `/owner/stores/${storeId}`;
+  return (
+    <div className="mt-2 border-t border-gray-100 pt-3">
+      <div className="px-3 pb-1">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-600">
+          Current Store
+        </span>
+      </div>
+      {storeNavGroups.map((group) => {
+        const hasActive = group.items.some((item) => {
+          const href = `${base}${item.suffix}`;
+          return item.exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
+        });
+        return (
+          <nav key={group.group} aria-label={`Store ${group.group}`}>
+            <div className="px-3 pt-2 pb-0.5">
+              <span
+                className={`text-[10px] font-semibold uppercase tracking-wider ${
+                  hasActive ? "text-gray-600" : "text-gray-400"
+                }`}
+              >
+                {group.group}
+              </span>
+            </div>
+            <div className="space-y-0.5 px-1">
+              {group.items.map((item) => (
+                <StoreSubnavItem
+                  key={item.suffix}
+                  href={`${base}${item.suffix}`}
+                  label={item.label}
+                  icon={item.icon}
+                  exact={item.exact}
+                  pathname={pathname}
+                />
+              ))}
+            </div>
+          </nav>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function OwnerSidebar() {
   const pathname = usePathname();
 
   const isDashboardActive = pathname === "/owner" || pathname === "/owner/dashboard";
+
+  // Detect store context: /owner/stores/[storeId] or /owner/stores/[storeId]/*
+  const storeMatch = pathname.match(/^\/owner\/stores\/([^/]+)/);
+  const activeStoreId = storeMatch?.[1] ?? null;
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
@@ -93,10 +207,11 @@ export default function OwnerSidebar() {
         <div className="text-xs text-gray-400 mt-0.5">Owner Portal</div>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto" aria-label="Owner navigation">
         {/* Home — Business Dashboard */}
         <Link
           href="/owner"
+          aria-current={isDashboardActive ? "page" : undefined}
           className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
             isDashboardActive
               ? "bg-brand-50 text-brand-700"
@@ -119,6 +234,11 @@ export default function OwnerSidebar() {
             ))}
           </div>
         ))}
+
+        {/* Store-scoped secondary navigation — shown when inside a specific store */}
+        {activeStoreId && (
+          <StoreSubnav storeId={activeStoreId} pathname={pathname} />
+        )}
       </nav>
 
       <div className="px-3 py-4 border-t border-gray-100">
