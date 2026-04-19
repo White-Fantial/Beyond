@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
 import { listPlatformIngredients } from "@/services/marketplace/platform-ingredients.service";
 
@@ -15,12 +16,12 @@ export default async function AdminPlatformIngredientsPage() {
             마켓플레이스 레시피에 사용되는 공용 재료 목록입니다.
           </p>
         </div>
-        <a
+        <Link
           href="/api/admin/platform-ingredients"
           className="text-xs text-gray-400 hidden"
         >
           {/* API link for reference */}
-        </a>
+        </Link>
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm text-blue-800">
