@@ -6,18 +6,19 @@ import {
 } from "@/services/customer.service";
 
 interface Params {
-  params: { addressId: string };
+  params: Promise<{ addressId: string }>;
 }
 
 /**
  * PATCH /api/customer/addresses/[addressId]/set-default
  */
 export async function PATCH(_req: NextRequest, { params }: Params) {
+  const { addressId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
-    await setDefaultCustomerAddress(ctx.userId, params.addressId);
+    await setDefaultCustomerAddress(ctx.userId, addressId);
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof CustomerAddressNotFoundError) {

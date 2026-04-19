@@ -28,9 +28,9 @@ const PROVIDER_SLUG_MAP: Record<string, ConnectionProvider> = {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { provider: string } }
+  { params }: { params: Promise<{ provider: string }> }
 ) {
-  const providerSlug = params.provider;
+  const { provider: providerSlug } = await params;
   const provider = PROVIDER_SLUG_MAP[providerSlug];
 
   if (!provider) {

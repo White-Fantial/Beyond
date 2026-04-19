@@ -13,8 +13,9 @@ import type { UpdateAlertRuleInput } from "@/types/owner-notifications";
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { ruleId: string } }
+  { params }: { params: Promise<{ ruleId: string }> }
 ) {
+  const { ruleId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -31,7 +32,7 @@ export async function PATCH(
     const body = await req.json();
     const input = body as UpdateAlertRuleInput;
 
-    const rule = await updateAlertRule(tenantId, params.ruleId, input);
+    const rule = await updateAlertRule(tenantId, ruleId, input);
     if (!rule) {
       return NextResponse.json({ error: "Alert rule not found" }, { status: 404 });
     }
@@ -51,8 +52,9 @@ export async function PATCH(
  */
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { ruleId: string } }
+  { params }: { params: Promise<{ ruleId: string }> }
 ) {
+  const { ruleId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -66,7 +68,7 @@ export async function DELETE(
     const tenantId = ownerMembership?.tenantId ?? ctx.tenantMemberships[0]?.tenantId;
     if (!tenantId) return NextResponse.json({ error: "No tenant context" }, { status: 403 });
 
-    const deleted = await deleteAlertRule(tenantId, params.ruleId);
+    const deleted = await deleteAlertRule(tenantId, ruleId);
     if (!deleted) {
       return NextResponse.json({ error: "Alert rule not found" }, { status: 404 });
     }

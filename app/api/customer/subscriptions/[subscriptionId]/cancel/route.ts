@@ -8,18 +8,19 @@ import {
 } from "@/services/customer.service";
 
 interface Params {
-  params: { subscriptionId: string };
+  params: Promise<{ subscriptionId: string }>;
 }
 
 /**
  * PATCH /api/customer/subscriptions/[subscriptionId]/cancel
  */
 export async function PATCH(_req: NextRequest, { params }: Params) {
+  const { subscriptionId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
-    await cancelCustomerSubscription(params.subscriptionId, ctx.email);
+    await cancelCustomerSubscription(subscriptionId, ctx.email);
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof CustomerSubscriptionNotFoundError) {

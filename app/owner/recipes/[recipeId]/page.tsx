@@ -5,14 +5,15 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 
 interface Props {
-  params: { recipeId: string };
+  params: Promise<{ recipeId: string }>;
 }
 
 export default async function RecipeDetailPage({ params }: Props) {
+  const { recipeId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    const detail = await getRecipe(tenantId, params.recipeId);
+    const detail = await getRecipe(tenantId, recipeId);
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">

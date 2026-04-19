@@ -9,8 +9,9 @@ import { applyMergeDraft } from "@/services/catalog-merge.service";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { draftId: string } }
+  { params }: { params: Promise<{ draftId: string }> }
 ) {
+  const { draftId } = await params;
   let userId: string | undefined;
   try {
     const body = await req.json().catch(() => ({}));
@@ -20,7 +21,7 @@ export async function POST(
   }
 
   try {
-    const result = await applyMergeDraft(params.draftId, { userId });
+    const result = await applyMergeDraft(draftId, { userId });
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

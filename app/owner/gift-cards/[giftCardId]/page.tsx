@@ -4,14 +4,15 @@ import { notFound } from "next/navigation";
 import GiftCardDetailView from "@/components/owner/gift-cards/GiftCardDetailView";
 
 interface Props {
-  params: { giftCardId: string };
+  params: Promise<{ giftCardId: string }>;
 }
 
 export default async function GiftCardDetailPage({ params }: Props) {
+  const { giftCardId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    const detail = await getGiftCardDetail(tenantId, params.giftCardId);
+    const detail = await getGiftCardDetail(tenantId, giftCardId);
     return (
       <div className="space-y-6">
         <div>

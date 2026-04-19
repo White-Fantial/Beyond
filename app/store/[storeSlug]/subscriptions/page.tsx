@@ -7,11 +7,11 @@ import {
 import SubscriptionEnrollmentFlow from "./SubscriptionEnrollmentFlow";
 
 interface SubscriptionsPageProps {
-  params: { storeSlug: string };
+  params: Promise<{ storeSlug: string }>;
 }
 
 export default async function SubscriptionsPage({ params }: SubscriptionsPageProps) {
-  const { storeSlug } = params;
+  const { storeSlug } = await params;
   const store = await getStoreBySlugForCustomer(storeSlug);
   if (!store) notFound();
 
@@ -68,7 +68,8 @@ export default async function SubscriptionsPage({ params }: SubscriptionsPagePro
 }
 
 export async function generateMetadata({ params }: SubscriptionsPageProps) {
-  const store = await getStoreBySlugForCustomer(params.storeSlug);
+  const { storeSlug } = await params;
+  const store = await getStoreBySlugForCustomer(storeSlug);
   if (!store) return { title: "Store not found" };
   return {
     title: `Subscriptions — ${store.displayName || store.name}`,

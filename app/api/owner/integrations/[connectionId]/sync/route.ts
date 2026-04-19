@@ -4,10 +4,11 @@ import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
 import { requestOwnerCatalogSync } from "@/services/owner/owner-integrations.service";
 
 interface Params {
-  params: { connectionId: string };
+  params: Promise<{ connectionId: string }>;
 }
 
 export async function POST(_req: NextRequest, { params }: Params) {
+  const { connectionId } = await params;
   try {
     const ctx = await requireOwnerPortalAccess();
 
@@ -21,7 +22,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
     // Verify the connection belongs to this tenant before triggering sync
     const { prisma } = await import("@/lib/prisma");
     const connection = await prisma.connection.findFirst({
-      where: { id: params.connectionId, tenantId },
+      where: { id: connectionId, tenantId },
       select: { storeId: true },
     });
     if (!connection) {

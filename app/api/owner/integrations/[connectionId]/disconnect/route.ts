@@ -4,10 +4,11 @@ import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
 import { disconnectOwnerConnection } from "@/services/owner/owner-integrations.service";
 
 interface Params {
-  params: { connectionId: string };
+  params: Promise<{ connectionId: string }>;
 }
 
 export async function POST(_req: NextRequest, { params }: Params) {
+  const { connectionId } = await params;
   try {
     const ctx = await requireOwnerAdminAccess();
 
@@ -18,7 +19,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
     const tenantId = ownerMembership?.tenantId ?? "";
     if (!tenantId) return NextResponse.json({ error: "No tenant context" }, { status: 403 });
 
-    await disconnectOwnerConnection(params.connectionId, tenantId, ctx.userId);
+    await disconnectOwnerConnection(connectionId, tenantId, ctx.userId);
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {

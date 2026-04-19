@@ -11,9 +11,10 @@ import { getPublishJob } from "@/services/catalog-publish.service";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
-  const job = await getPublishJob(params.jobId);
+  const { jobId } = await params;
+  const job = await getPublishJob(jobId);
   if (!job) {
     return NextResponse.json({ error: "Publish job not found." }, { status: 404 });
   }

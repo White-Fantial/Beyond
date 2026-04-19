@@ -7,10 +7,11 @@ import {
 import type { UpdateCredentialInput } from "@/types/owner-supplier-credentials";
 
 interface Params {
-  params: { credentialId: string };
+  params: Promise<{ credentialId: string }>;
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const { credentialId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   const userId = ctx.userId;
@@ -18,7 +19,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const body = (await req.json()) as UpdateCredentialInput;
 
   try {
-    const credential = await updateCredential(tenantId, userId, params.credentialId, body);
+    const credential = await updateCredential(tenantId, userId, credentialId, body);
     return NextResponse.json({ data: credential });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to update credential";
@@ -27,12 +28,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
+  const { credentialId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   const userId = ctx.userId;
 
   try {
-    await deleteCredential(tenantId, userId, params.credentialId);
+    await deleteCredential(tenantId, userId, credentialId);
     return NextResponse.json({ data: { deleted: true } });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to delete credential";

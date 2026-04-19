@@ -9,11 +9,11 @@ import {
 import CustomerDetailTabs from "@/components/owner/customers/CustomerDetailTabs";
 
 interface Props {
-  params: { customerId: string };
+  params: Promise<{ customerId: string }>;
 }
 
 export default async function CustomerDetailPage({ params }: Props) {
-  const { customerId } = params;
+  const { customerId } = await params;
   const ctx = await requireOwnerPortalAccess();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
 

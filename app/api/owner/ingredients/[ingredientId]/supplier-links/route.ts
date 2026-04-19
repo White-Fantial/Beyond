@@ -6,14 +6,15 @@ import {
 } from "@/services/owner/owner-suppliers.service";
 
 interface Params {
-  params: { ingredientId: string };
+  params: Promise<{ ingredientId: string }>;
 }
 
 export async function GET(_req: Request, { params }: Params) {
+  const { ingredientId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    const links = await getIngredientLinks(tenantId, params.ingredientId);
+    const links = await getIngredientLinks(tenantId, ingredientId);
     return NextResponse.json({ data: links });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Not found";
@@ -22,6 +23,7 @@ export async function GET(_req: Request, { params }: Params) {
 }
 
 export async function POST(req: Request, { params }: Params) {
+  const { ingredientId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   const body = (await req.json()) as {
@@ -39,7 +41,7 @@ export async function POST(req: Request, { params }: Params) {
   try {
     const link = await linkIngredientToSupplierProduct(
       tenantId,
-      params.ingredientId,
+      ingredientId,
       body.supplierProductId,
       body.isPreferred ?? false
     );

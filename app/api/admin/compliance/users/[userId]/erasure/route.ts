@@ -6,8 +6,9 @@ import { getCurrentUserAuthContext } from "@/lib/auth/context";
 
 export async function POST(
   _req: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
+  const { userId } = await params;
   await requirePlatformAdmin();
   const ctx = await getCurrentUserAuthContext();
   const performedBy = ctx?.userId ?? "system";
@@ -15,14 +16,14 @@ export async function POST(
   // Record erasure request before processing
   await prisma.complianceEvent.create({
     data: {
-      userId: params.userId,
+      userId: userId,
       type: "ERASURE_REQUEST",
       performedBy,
     },
   });
 
   try {
-    const result = await anonymiseUser(params.userId, performedBy);
+    const result = await anonymiseUser(userId, performedBy);
     return NextResponse.json({ data: result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Erasure failed";

@@ -3,13 +3,14 @@ import { requireOwnerStoreAccess, resolveActorTenantId } from "@/services/owner/
 import { updateOwnerStoreHours } from "@/services/owner/owner-settings.service";
 
 interface Params {
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }
 
 export async function PUT(req: NextRequest, { params }: Params) {
+  const { storeId } = await params;
   try {
-    const ctx = await requireOwnerStoreAccess(params.storeId);
-    const tenantId = resolveActorTenantId(ctx, params.storeId);
+    const ctx = await requireOwnerStoreAccess(storeId);
+    const tenantId = resolveActorTenantId(ctx, storeId);
     const body = await req.json();
 
     if (!Array.isArray(body.hours)) {
@@ -17,7 +18,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     }
 
     await updateOwnerStoreHours({
-      storeId: params.storeId,
+      storeId: storeId,
       tenantId,
       actorUserId: ctx.userId,
       hours: body.hours,

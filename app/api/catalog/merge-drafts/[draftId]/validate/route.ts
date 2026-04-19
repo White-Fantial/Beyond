@@ -9,10 +9,11 @@ import { validateMergeDraft } from "@/services/catalog-merge.service";
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { draftId: string } }
+  { params }: { params: Promise<{ draftId: string }> }
 ) {
+  const { draftId } = await params;
   try {
-    const result = await validateMergeDraft(params.draftId);
+    const result = await validateMergeDraft(draftId);
     return NextResponse.json({ validation: result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

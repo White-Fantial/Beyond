@@ -10,13 +10,14 @@ import {
  */
 export async function PATCH(
   _req: NextRequest,
-  { params }: { params: { methodId: string } }
+  { params }: { params: Promise<{ methodId: string }> }
 ) {
+  const { methodId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
-    const method = await setDefaultPaymentMethod(ctx.userId, params.methodId);
+    const method = await setDefaultPaymentMethod(ctx.userId, methodId);
     return NextResponse.json({ data: method });
   } catch (err) {
     if (err instanceof SavedPaymentMethodNotFoundError) {

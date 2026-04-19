@@ -14,7 +14,7 @@ import Link from "next/link";
 import type { CatalogMergeDraftStatus } from "@/types/catalog-merge";
 
 interface PageProps {
-  params: { storeId: string; connectionId: string };
+  params: Promise<{ storeId: string; connectionId: string }>;
   searchParams: {
     status?: string;
     limit?: string;
@@ -23,7 +23,7 @@ interface PageProps {
 }
 
 export default async function MergeQueuePage({ params, searchParams }: PageProps) {
-  const { storeId, connectionId } = params;
+  const { storeId, connectionId } = await params;
 
   const [connection, drafts] = await Promise.all([
     prisma.connection.findUnique({

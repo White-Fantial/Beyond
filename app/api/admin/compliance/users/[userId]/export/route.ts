@@ -5,12 +5,13 @@ import { toCsv, csvResponseHeaders } from "@/lib/export/csv";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
+  const { userId } = await params;
   await requirePlatformAdmin();
 
   try {
-    const data = await exportUserData(params.userId);
+    const data = await exportUserData(userId);
 
     // Build a flat summary for CSV; include full JSON as well
     const csvRows = [
@@ -28,7 +29,7 @@ export async function GET(
     ]);
 
     return new Response(csv, {
-      headers: csvResponseHeaders(`user-data-${params.userId}.csv`) as HeadersInit,
+      headers: csvResponseHeaders(`user-data-${userId}.csv`) as HeadersInit,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Not found";

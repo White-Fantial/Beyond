@@ -5,14 +5,15 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 
 interface Props {
-  params: { supplierId: string };
+  params: Promise<{ supplierId: string }>;
 }
 
 export default async function SupplierDetailPage({ params }: Props) {
+  const { supplierId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    const supplier = await getSupplierDetail(tenantId, params.supplierId);
+    const supplier = await getSupplierDetail(tenantId, supplierId);
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-3">

@@ -9,8 +9,9 @@ import { upsertMergeStructureChoice } from "@/services/catalog-merge.service";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { draftId: string } }
+  { params }: { params: Promise<{ draftId: string }> }
 ) {
+  const { draftId } = await params;
   let body: {
     fieldPath?: string;
     choice?: string;
@@ -30,7 +31,7 @@ export async function POST(
 
   try {
     const structure = await upsertMergeStructureChoice({
-      draftId: params.draftId,
+      draftId: draftId,
       fieldPath,
       choice,
       customValue,
