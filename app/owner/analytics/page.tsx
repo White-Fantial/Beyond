@@ -17,7 +17,7 @@ import type { ForecastHorizon } from "@/types/owner-analytics";
 import { formatMinorCompact } from "@/lib/owner/reports/labels";
 
 interface Props {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 function getString(v: string | string[] | undefined): string | undefined {
@@ -27,6 +27,7 @@ function getString(v: string | string[] | undefined): string | undefined {
 
 export default async function OwnerAnalyticsPage({ searchParams }: Props) {
   const ctx = await requireOwnerPortalAccess();
+  const params = await searchParams;
 
   const ownerMembership =
     ctx.tenantMemberships.find((tm) =>
@@ -45,11 +46,11 @@ export default async function OwnerAnalyticsPage({ searchParams }: Props) {
     );
   }
 
-  const storeId = getString(searchParams?.storeId);
-  const from = getString(searchParams?.from);
-  const to = getString(searchParams?.to);
-  const weekStartDate = getString(searchParams?.weekStartDate);
-  const rawHorizon = parseInt(getString(searchParams?.horizon) ?? "7", 10);
+  const storeId = getString(params?.storeId);
+  const from = getString(params?.from);
+  const to = getString(params?.to);
+  const weekStartDate = getString(params?.weekStartDate);
+  const rawHorizon = parseInt(getString(params?.horizon) ?? "7", 10);
   const horizon: ForecastHorizon = [7, 14, 30].includes(rawHorizon)
     ? (rawHorizon as ForecastHorizon)
     : 7;

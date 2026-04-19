@@ -14,18 +14,19 @@ import OwnerInsightsPanel from "@/components/owner/reports/OwnerInsightsPanel";
 
 interface Props {
   params: Promise<{ storeId: string }>;
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export default async function StoreReportsPage({ params, searchParams }: Props) {
   const { storeId } = await params;
+  const paramsInput = await searchParams;
 
   const ctx = await requireOwnerStoreAccess(storeId);
   const tenantId = resolveActorTenantId(ctx, storeId);
 
   const urlParams = new URLSearchParams();
-  if (searchParams) {
-    for (const [key, value] of Object.entries(searchParams)) {
+  if (paramsInput) {
+    for (const [key, value] of Object.entries(paramsInput)) {
       if (typeof value === "string") urlParams.set(key, value);
     }
   }

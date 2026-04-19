@@ -24,7 +24,12 @@ import type { CatalogEntityType, CatalogMappingStatus } from "@/types/catalog-ma
 
 interface PageProps {
   params: Promise<{ storeId: string; connectionId: string }>;
-  searchParams: { status?: string; entityType?: string };
+  searchParams: Promise<{ status?: string | string[]; entityType?: string | string[] }>;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
 }
 
 const ENTITY_TYPE_TABS: { label: string; value: CatalogEntityType | "" }[] = [
@@ -45,8 +50,9 @@ const STATUS_FILTERS: { label: string; value: CatalogMappingStatus | "" }[] = [
 
 export default async function MappingReviewPage({ params, searchParams }: PageProps) {
   const { storeId, connectionId } = await params;
-  const selectedEntityType = (searchParams.entityType as CatalogEntityType) || undefined;
-  const selectedStatus = (searchParams.status as CatalogMappingStatus) || undefined;
+  const query = await searchParams;
+  const selectedEntityType = (firstParam(query.entityType) as CatalogEntityType) || undefined;
+  const selectedStatus = (firstParam(query.status) as CatalogMappingStatus) || undefined;
 
   // Load connection info.
   const connection = await prisma.connection.findUnique({

@@ -3,7 +3,12 @@ import { listOwnerProducts } from "@/services/owner/owner-catalog.service";
 
 interface Props {
   params: Promise<{ storeId: string }>;
-  searchParams: { search?: string; filter?: string };
+  searchParams: Promise<{ search?: string | string[]; filter?: string | string[] }>;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
 }
 
 // Phase 1: originType replaces sourceType as the provenance badge.
@@ -28,13 +33,16 @@ function formatPrice(amount: number, currency: string) {
 
 export default async function StoreProductsPage({ params, searchParams }: Props) {
   const { storeId } = await params;
+  const query = await searchParams;
+  const filter = firstParam(query.filter);
+  const search = firstParam(query.search);
   await requireOwnerStoreAccess(storeId);
 
   const products = await listOwnerProducts(storeId, {
-    onlySoldOut: searchParams.filter === "sold_out",
-    onlyFeatured: searchParams.filter === "featured",
-    onlyVisible: searchParams.filter === "visible",
-    search: searchParams.search,
+    onlySoldOut: filter === "sold_out",
+    onlyFeatured: filter === "featured",
+    onlyVisible: filter === "visible",
+    search,
   });
 
   return (

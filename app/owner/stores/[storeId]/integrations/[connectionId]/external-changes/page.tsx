@@ -20,18 +20,24 @@ import type { CatalogEntityType, ExternalCatalogChangeKind, ExternalCatalogChang
 
 interface PageProps {
   params: Promise<{ storeId: string; connectionId: string }>;
-  searchParams: {
-    status?: string;
-    entityType?: string;
-    changeKind?: string;
-    mappedOnly?: string;
-    limit?: string;
-    offset?: string;
-  };
+  searchParams: Promise<{
+    status?: string | string[];
+    entityType?: string | string[];
+    changeKind?: string | string[];
+    mappedOnly?: string | string[];
+    limit?: string | string[];
+    offset?: string | string[];
+  }>;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
 }
 
 export default async function ExternalChangesPage({ params, searchParams }: PageProps) {
   const { storeId, connectionId } = await params;
+  const query = await searchParams;
 
   const [connection, summary] = await Promise.all([
     prisma.connection.findUnique({ where: { id: connectionId }, select: { id: true, provider: true, displayName: true } }),
@@ -47,12 +53,12 @@ export default async function ExternalChangesPage({ params, searchParams }: Page
 
   const changes = await listExternalChanges({
     connectionId,
-    status: searchParams.status as ExternalCatalogChangeStatus | undefined,
-    entityType: searchParams.entityType as CatalogEntityType | undefined,
-    changeKind: searchParams.changeKind as ExternalCatalogChangeKind | undefined,
-    mappedOnly: searchParams.mappedOnly === "true",
-    limit: parseInt(searchParams.limit ?? "50", 10),
-    offset: parseInt(searchParams.offset ?? "0", 10),
+    status: firstParam(query.status) as ExternalCatalogChangeStatus | undefined,
+    entityType: firstParam(query.entityType) as CatalogEntityType | undefined,
+    changeKind: firstParam(query.changeKind) as ExternalCatalogChangeKind | undefined,
+    mappedOnly: firstParam(query.mappedOnly) === "true",
+    limit: parseInt(firstParam(query.limit) ?? "50", 10),
+    offset: parseInt(firstParam(query.offset) ?? "0", 10),
   });
 
   return (

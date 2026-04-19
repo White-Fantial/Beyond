@@ -27,12 +27,18 @@ import type { CatalogSyncPlanItemDto } from "@/types/catalog-sync";
 
 interface PageProps {
   params: Promise<{ storeId: string; connectionId: string }>;
-  searchParams: { tab?: string };
+  searchParams: Promise<{ tab?: string | string[] }>;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
 }
 
 export default async function SyncPage({ params, searchParams }: PageProps) {
   const { storeId, connectionId } = await params;
-  const tab = searchParams.tab ?? "preview";
+  const query = await searchParams;
+  const tab = firstParam(query.tab) ?? "preview";
 
   const [connection, summary, policies, plans] = await Promise.all([
     prisma.connection.findUnique({

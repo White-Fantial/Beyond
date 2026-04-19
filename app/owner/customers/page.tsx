@@ -41,38 +41,50 @@ function KpiCard({
 }
 
 interface Props {
-  searchParams: {
-    q?: string;
-    storeId?: string;
-    subscriptionStatus?: string;
-    sort?: string;
-    page?: string;
-  };
+  searchParams: Promise<{
+    q?: string | string[];
+    storeId?: string | string[];
+    subscriptionStatus?: string | string[];
+    sort?: string | string[];
+    page?: string | string[];
+  }>;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
 }
 
 export default async function CustomersPage({ searchParams }: Props) {
   const ctx = await requireOwnerPortalAccess();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
+  const params = await searchParams;
 
-  const page = Math.max(1, parseInt(searchParams.page ?? "1", 10));
+  const q = firstParam(params.q);
+  const storeId = firstParam(params.storeId);
+  const sortParam = firstParam(params.sort);
+  const subscriptionStatusParam = firstParam(params.subscriptionStatus);
+  const pageParam = firstParam(params.page);
+
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10));
   const pageSize = 25;
 
   const validSort = ["recent_activity", "lifetime_revenue", "total_orders", "newest_customer"];
   const validSubStatus = ["ACTIVE", "PAUSED", "CANCELLED", "NONE"];
 
-  const sort = validSort.includes(searchParams.sort ?? "")
-    ? (searchParams.sort as "recent_activity" | "lifetime_revenue" | "total_orders" | "newest_customer")
+  const sort = validSort.includes(sortParam ?? "")
+    ? (sortParam as "recent_activity" | "lifetime_revenue" | "total_orders" | "newest_customer")
     : "recent_activity";
 
-  const subscriptionStatus = validSubStatus.includes(searchParams.subscriptionStatus ?? "")
-    ? (searchParams.subscriptionStatus as "ACTIVE" | "PAUSED" | "CANCELLED" | "NONE")
+  const subscriptionStatus = validSubStatus.includes(subscriptionStatusParam ?? "")
+    ? (subscriptionStatusParam as "ACTIVE" | "PAUSED" | "CANCELLED" | "NONE")
     : undefined;
 
   const [result, kpi, stores] = await Promise.all([
     getOwnerCustomers({
       tenantId,
-      q: searchParams.q,
-      storeId: searchParams.storeId,
+      q,
+      storeId,
       subscriptionStatus,
       sort,
       page,
@@ -87,7 +99,7 @@ export default async function CustomersPage({ searchParams }: Props) {
   ]);
 
   const totalPages = Math.ceil(result.total / pageSize);
-  const hasFilters = !!(searchParams.q || searchParams.storeId || searchParams.subscriptionStatus);
+  const hasFilters = !!(q || storeId || subscriptionStatusParam);
 
 
   return (
@@ -216,7 +228,7 @@ export default async function CustomersPage({ searchParams }: Props) {
               <div className="flex items-center gap-2">
                 {page > 1 && (
                   <Link
-                    href={buildPageUrl(searchParams, page - 1)}
+                    href={buildPageUrl(params, page - 1)}
                     className="px-3 py-1.5 text-xs border border-gray-200 rounded hover:bg-white text-gray-700"
                   >
                     ← Prev
@@ -227,7 +239,7 @@ export default async function CustomersPage({ searchParams }: Props) {
                 </span>
                 {page < totalPages && (
                   <Link
-                    href={buildPageUrl(searchParams, page + 1)}
+                    href={buildPageUrl(params, page + 1)}
                     className="px-3 py-1.5 text-xs border border-gray-200 rounded hover:bg-white text-gray-700"
                   >
                     Next →
@@ -243,14 +255,24 @@ export default async function CustomersPage({ searchParams }: Props) {
 }
 
 function buildPageUrl(
-  searchParams: Record<string, string | undefined>,
+  searchParams: {
+    q?: string | string[];
+    storeId?: string | string[];
+    subscriptionStatus?: string | string[];
+    sort?: string | string[];
+  },
   page: number
 ): string {
+  const q = firstParam(searchParams.q);
+  const storeId = firstParam(searchParams.storeId);
+  const subscriptionStatus = firstParam(searchParams.subscriptionStatus);
+  const sort = firstParam(searchParams.sort);
+
   const params = new URLSearchParams();
-  if (searchParams.q) params.set("q", searchParams.q);
-  if (searchParams.storeId) params.set("storeId", searchParams.storeId);
-  if (searchParams.subscriptionStatus) params.set("subscriptionStatus", searchParams.subscriptionStatus);
-  if (searchParams.sort) params.set("sort", searchParams.sort);
+  if (q) params.set("q", q);
+  if (storeId) params.set("storeId", storeId);
+  if (subscriptionStatus) params.set("subscriptionStatus", subscriptionStatus);
+  if (sort) params.set("sort", sort);
   params.set("page", String(page));
   return `/owner/customers?${params.toString()}`;
 }

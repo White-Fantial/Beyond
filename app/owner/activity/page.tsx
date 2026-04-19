@@ -22,24 +22,41 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]["key"];
 
-interface Props {
-  searchParams: {
-    tab?: string;
-    storeId?: string;
-    actorUserId?: string;
-    startDate?: string;
-    endDate?: string;
-    page?: string;
-  };
+type QueryParam = string | string[] | undefined;
+
+interface QueryParams {
+  tab?: QueryParam;
+  storeId?: QueryParam;
+  actorUserId?: QueryParam;
+  startDate?: QueryParam;
+  endDate?: QueryParam;
+  page?: QueryParam;
 }
 
-function buildUrl(searchParams: Props["searchParams"], tab: string, page: number): string {
+interface Props {
+  searchParams: Promise<QueryParams>;
+}
+
+function firstParam(value: QueryParam): string | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
+}
+
+function buildUrl(searchParams: QueryParams, tab: string, page: number): string {
+  const storeId = firstParam(searchParams.storeId);
+  const actorUserId = firstParam(searchParams.actorUserId);
+  const startDate = firstParam(searchParams.startDate);
+  const endDate = firstParam(searchParams.endDate);
+
   const params = new URLSearchParams();
   params.set("tab", tab);
-  if (searchParams.storeId) params.set("storeId", searchParams.storeId);
-  if (searchParams.actorUserId) params.set("actorUserId", searchParams.actorUserId);
-  if (searchParams.startDate) params.set("startDate", searchParams.startDate);
-  if (searchParams.endDate) params.set("endDate", searchParams.endDate);
+  if (storeId) params.set("storeId", storeId);
+  if (actorUserId) params.set("actorUserId", actorUserId);
+  if (startDate) params.set("startDate", startDate);
+  if (endDate) params.set("endDate", endDate);
   if (page > 1) params.set("page", String(page));
   return `/owner/activity?${params.toString()}`;
 }
@@ -47,20 +64,28 @@ function buildUrl(searchParams: Props["searchParams"], tab: string, page: number
 export default async function ActivityPage({ searchParams }: Props) {
   const ctx = await requireOwnerPortalAccess();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
+  const params = await searchParams;
+
+  const tabParam = firstParam(params.tab);
+  const pageParam = firstParam(params.page);
+  const storeId = firstParam(params.storeId);
+  const actorUserId = firstParam(params.actorUserId);
+  const startDate = firstParam(params.startDate);
+  const endDate = firstParam(params.endDate);
 
   const tab: TabKey =
-    TABS.some((t) => t.key === searchParams.tab)
-      ? (searchParams.tab as TabKey)
+    TABS.some((t) => t.key === tabParam)
+      ? (tabParam as TabKey)
       : "feed";
 
-  const page = Math.max(1, parseInt(searchParams.page ?? "1", 10));
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10));
   const pageSize = 50;
 
   const filters = {
-    storeId: searchParams.storeId,
-    actorUserId: searchParams.actorUserId,
-    startDate: searchParams.startDate,
-    endDate: searchParams.endDate,
+    storeId,
+    actorUserId,
+    startDate,
+    endDate,
     page,
     pageSize,
   };
@@ -94,7 +119,7 @@ export default async function ActivityPage({ searchParams }: Props) {
           return (
             <Link
               key={t.key}
-              href={buildUrl(searchParams, t.key, 1)}
+              href={buildUrl(params, t.key, 1)}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
                 isActive
                   ? "border-brand-600 text-brand-700"
@@ -119,7 +144,7 @@ export default async function ActivityPage({ searchParams }: Props) {
           total={feedResult.total}
           page={feedResult.page}
           pageSize={feedResult.pageSize}
-          buildUrl={(p) => buildUrl(searchParams, "feed", p)}
+          buildUrl={(p) => buildUrl(params, "feed", p)}
         />
       )}
       {tab === "roles" && rolesResult && (
@@ -128,7 +153,7 @@ export default async function ActivityPage({ searchParams }: Props) {
           total={rolesResult.total}
           page={rolesResult.page}
           pageSize={rolesResult.pageSize}
-          buildUrl={(p) => buildUrl(searchParams, "roles", p)}
+          buildUrl={(p) => buildUrl(params, "roles", p)}
         />
       )}
       {tab === "settings" && settingsResult && (
@@ -137,7 +162,7 @@ export default async function ActivityPage({ searchParams }: Props) {
           total={settingsResult.total}
           page={settingsResult.page}
           pageSize={settingsResult.pageSize}
-          buildUrl={(p) => buildUrl(searchParams, "settings", p)}
+          buildUrl={(p) => buildUrl(params, "settings", p)}
         />
       )}
       {tab === "integrations" && integrationsResult && (
@@ -146,7 +171,7 @@ export default async function ActivityPage({ searchParams }: Props) {
           total={integrationsResult.total}
           page={integrationsResult.page}
           pageSize={integrationsResult.pageSize}
-          buildUrl={(p) => buildUrl(searchParams, "integrations", p)}
+          buildUrl={(p) => buildUrl(params, "integrations", p)}
         />
       )}
     </div>

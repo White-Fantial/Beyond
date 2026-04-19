@@ -45,13 +45,22 @@ function typeIcon(type: NotificationType): string {
 }
 
 interface Props {
-  searchParams: {
-    tab?: string;
-    page?: string;
-  };
+  searchParams: Promise<{
+    tab?: string | string[];
+    page?: string | string[];
+  }>;
 }
 
-function buildUrl(searchParams: Props["searchParams"], tab: string, page: number): string {
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
+
+function buildUrl(
+  searchParams: { tab?: string | string[]; page?: string | string[] },
+  tab: string,
+  page: number
+): string {
   const params = new URLSearchParams();
   params.set("tab", tab);
   if (page > 1) params.set("page", String(page));
@@ -61,13 +70,16 @@ function buildUrl(searchParams: Props["searchParams"], tab: string, page: number
 export default async function NotificationsPage({ searchParams }: Props) {
   const ctx = await requireOwnerPortalAccess();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
+  const params = await searchParams;
+  const tabParam = firstParam(params.tab);
+  const pageParam = firstParam(params.page);
 
   const tab: TabKey =
-    TABS.some((t) => t.key === searchParams.tab)
-      ? (searchParams.tab as TabKey)
+    TABS.some((t) => t.key === tabParam)
+      ? (tabParam as TabKey)
       : "all";
 
-  const page = Math.max(1, parseInt(searchParams.page ?? "1", 10));
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10));
   const pageSize = 50;
 
   const result = await listNotifications(tenantId, ctx.userId, {
@@ -112,7 +124,7 @@ export default async function NotificationsPage({ searchParams }: Props) {
           return (
             <Link
               key={t.key}
-              href={buildUrl(searchParams, t.key, 1)}
+              href={buildUrl(params, t.key, 1)}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
                 isActive
                   ? "border-brand-600 text-brand-700"
@@ -174,7 +186,7 @@ export default async function NotificationsPage({ searchParams }: Props) {
             page={result.page}
             total={result.total}
             pageSize={result.pageSize}
-            buildUrl={(p) => buildUrl(searchParams, tab, p)}
+            buildUrl={(p) => buildUrl(params, tab, p)}
           />
         </div>
       )}

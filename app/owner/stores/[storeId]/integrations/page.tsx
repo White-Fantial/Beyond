@@ -10,7 +10,12 @@ import type { ConnectionSummary } from "@/domains/integration/types";
 
 interface PageProps {
   params: Promise<{ storeId: string }>;
-  searchParams: { connected?: string; error?: string; provider?: string };
+  searchParams: Promise<{ connected?: string | string[]; error?: string | string[]; provider?: string | string[] }>;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
 }
 
 // ─── Provider definitions displayed in the UI ─────────────────────────────────
@@ -159,6 +164,10 @@ function ConnectionCard({
 
 export default async function StoreIntegrationsPage({ params, searchParams }: PageProps) {
   const { storeId } = await params;
+  const query = await searchParams;
+  const connected = firstParam(query.connected);
+  const error = firstParam(query.error);
+  const provider = firstParam(query.provider);
 
   const ctx = await requireStorePermission(storeId, PERMISSIONS.INTEGRATIONS);
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
@@ -183,14 +192,14 @@ export default async function StoreIntegrationsPage({ params, searchParams }: Pa
       </div>
 
       {/* Success / error banner */}
-      {searchParams.connected === "1" && (
+      {connected === "1" && (
         <div className="rounded-md bg-green-50 border border-green-200 p-4 text-sm text-green-800">
-          ✅ {searchParams.provider ? `${searchParams.provider} ` : ""}연동이 Completed되었습니다.
+          ✅ {provider ? `${provider} ` : ""}연동이 Completed되었습니다.
         </div>
       )}
-      {searchParams.error && (
+      {error && (
         <div className="rounded-md bg-red-50 border border-red-200 p-4 text-sm text-red-800">
-          ❌ 연동 실패: {searchParams.error}
+          ❌ 연동 실패: {error}
         </div>
       )}
 

@@ -10,16 +10,28 @@ interface SearchParams {
   search?: string;
 }
 
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
+}
+
 export default async function AdminFeatureFlagsPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
   await requirePlatformAdmin();
 
+  const params = await searchParams;
+  const status = firstParam(params.status) as FlagStatus | undefined;
+  const search = firstParam(params.search);
+
   const flags = await listAdminFeatureFlags({
-    status: searchParams.status as FlagStatus | undefined,
-    search: searchParams.search,
+    status,
+    search,
   });
 
   const counts = {

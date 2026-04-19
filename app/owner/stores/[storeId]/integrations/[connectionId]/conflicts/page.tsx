@@ -28,18 +28,24 @@ import type {
 
 interface PageProps {
   params: Promise<{ storeId: string; connectionId: string }>;
-  searchParams: {
-    status?: string;
-    entityType?: string;
-    conflictType?: string;
-    mappedOnly?: string;
-    limit?: string;
-    offset?: string;
-  };
+  searchParams: Promise<{
+    status?: string | string[];
+    entityType?: string | string[];
+    conflictType?: string | string[];
+    mappedOnly?: string | string[];
+    limit?: string | string[];
+    offset?: string | string[];
+  }>;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
 }
 
 export default async function ConflictsPage({ params, searchParams }: PageProps) {
   const { storeId, connectionId } = await params;
+  const query = await searchParams;
 
   const [connection, summary] = await Promise.all([
     prisma.connection.findUnique({
@@ -58,12 +64,12 @@ export default async function ConflictsPage({ params, searchParams }: PageProps)
 
   const conflicts = await listConflicts({
     connectionId,
-    status:       searchParams.status       as CatalogConflictStatus | undefined,
-    entityType:   searchParams.entityType   as CatalogEntityType     | undefined,
-    conflictType: searchParams.conflictType as CatalogConflictType   | undefined,
-    mappedOnly:   searchParams.mappedOnly === "true",
-    limit:  parseInt(searchParams.limit  ?? "50", 10),
-    offset: parseInt(searchParams.offset ?? "0",  10),
+    status:       firstParam(query.status)       as CatalogConflictStatus | undefined,
+    entityType:   firstParam(query.entityType)   as CatalogEntityType     | undefined,
+    conflictType: firstParam(query.conflictType) as CatalogConflictType   | undefined,
+    mappedOnly:   firstParam(query.mappedOnly) === "true",
+    limit:  parseInt(firstParam(query.limit)  ?? "50", 10),
+    offset: parseInt(firstParam(query.offset) ?? "0",  10),
   });
 
   return (

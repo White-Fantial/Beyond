@@ -14,11 +14,12 @@ import OwnerEmptyReportState from "@/components/owner/reports/OwnerEmptyReportSt
 import ExportButton from "@/components/ExportButton";
 
 interface Props {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export default async function OwnerReportsPage({ searchParams }: Props) {
   const ctx = await requireOwnerPortalAccess();
+  const paramsInput = await searchParams;
 
   const ownerMembership = ctx.tenantMemberships.find((tm) =>
     OWNER_PORTAL_MEMBERSHIP_ROLES.includes(tm.membershipRole)
@@ -27,8 +28,8 @@ export default async function OwnerReportsPage({ searchParams }: Props) {
   const tenantId = ownerMembership?.tenantId ?? "";
 
   const params = new URLSearchParams();
-  if (searchParams) {
-    for (const [key, value] of Object.entries(searchParams)) {
+  if (paramsInput) {
+    for (const [key, value] of Object.entries(paramsInput)) {
       if (typeof value === "string") params.set(key, value);
     }
   }

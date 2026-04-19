@@ -27,15 +27,21 @@ const STATUS_TABS = [
 ];
 
 interface Props {
-  searchParams: { status?: string; page?: string };
+  searchParams: Promise<{ status?: string | string[]; page?: string | string[] }>;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
 }
 
 export default async function InvoiceListPage({ searchParams }: Props) {
   const ctx = await requireOwnerAdminAccess();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
+  const params = await searchParams;
 
-  const page = Math.max(1, parseInt(searchParams.page ?? "1", 10));
-  const status = searchParams.status ?? "";
+  const page = Math.max(1, parseInt(firstParam(params.page) ?? "1", 10));
+  const status = firstParam(params.status) ?? "";
 
   const result = await listBillingInvoices(tenantId, {
     status: status || undefined,

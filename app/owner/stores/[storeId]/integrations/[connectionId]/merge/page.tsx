@@ -15,15 +15,21 @@ import type { CatalogMergeDraftStatus } from "@/types/catalog-merge";
 
 interface PageProps {
   params: Promise<{ storeId: string; connectionId: string }>;
-  searchParams: {
-    status?: string;
-    limit?: string;
-    offset?: string;
-  };
+  searchParams: Promise<{
+    status?: string | string[];
+    limit?: string | string[];
+    offset?: string | string[];
+  }>;
+}
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
 }
 
 export default async function MergeQueuePage({ params, searchParams }: PageProps) {
   const { storeId, connectionId } = await params;
+  const query = await searchParams;
 
   const [connection, drafts] = await Promise.all([
     prisma.connection.findUnique({
@@ -32,9 +38,9 @@ export default async function MergeQueuePage({ params, searchParams }: PageProps
     }),
     listMergeDrafts({
       connectionId,
-      status: searchParams.status as CatalogMergeDraftStatus | undefined,
-      limit: parseInt(searchParams.limit ?? "50", 10),
-      offset: parseInt(searchParams.offset ?? "0", 10),
+      status: firstParam(query.status) as CatalogMergeDraftStatus | undefined,
+      limit: parseInt(firstParam(query.limit) ?? "50", 10),
+      offset: parseInt(firstParam(query.offset) ?? "0", 10),
     }),
   ]);
 
