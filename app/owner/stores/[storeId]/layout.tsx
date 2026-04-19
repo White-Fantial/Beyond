@@ -1,9 +1,6 @@
 import { requireOwnerStoreAccess } from "@/services/owner/owner-authz.service";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { getSession } from "@/lib/auth/session";
-import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
-import type { MembershipRoleKey } from "@/lib/auth/constants";
 
 interface Props {
   children: React.ReactNode;
@@ -14,30 +11,13 @@ export default async function StoreLayout({ children, params }: Props) {
   const { storeId } = await params;
   await requireOwnerStoreAccess(storeId);
 
-  const [store, session] = await Promise.all([
-    prisma.store.findUnique({
-      where: { id: storeId },
-      select: { name: true, status: true },
-    }),
-    getSession(),
-  ]);
+  const store = await prisma.store.findUnique({
+    where: { id: storeId },
+    select: { name: true, status: true },
+  });
 
   const storeName = store?.name ?? storeId;
-
-  // Resolve back-office href (use session primaryStoreId as fallback)
-  const effectiveStoreId =
-    storeId ??
-    session?.primaryStoreId;
-  const backofficeHref = effectiveStoreId
-    ? `/backoffice/store/${effectiveStoreId}/orders`
-    : "/backoffice/select-store";
-
-  // Determine if customer app / back office links should be shown
-  const isOwnerMember =
-    session?.primaryMembershipRole !== null &&
-    OWNER_PORTAL_MEMBERSHIP_ROLES.includes(
-      session?.primaryMembershipRole as MembershipRoleKey
-    );
+  const backofficeHref = `/backoffice/store/${storeId}/orders`;
 
   return (
     <div className="flex flex-col gap-0">
@@ -71,14 +51,12 @@ export default async function StoreLayout({ children, params }: Props) {
             >
               ← Switch Store
             </Link>
-            {(isOwnerMember || session?.primaryStoreId) && (
-              <Link
-                href={backofficeHref}
-                className="text-xs text-gray-600 hover:text-gray-800 px-2.5 py-1.5 rounded-md border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
-              >
-                Back Office ↗
-              </Link>
-            )}
+            <Link
+              href={backofficeHref}
+              className="text-xs text-gray-600 hover:text-gray-800 px-2.5 py-1.5 rounded-md border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+            >
+              Back Office ↗
+            </Link>
             <Link
               href="/app"
               className="text-xs text-gray-600 hover:text-gray-800 px-2.5 py-1.5 rounded-md border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
