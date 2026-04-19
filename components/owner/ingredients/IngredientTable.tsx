@@ -27,7 +27,7 @@ export default function IngredientTable({ items }: Props) {
             <tr className="text-xs text-gray-500 bg-gray-50 border-b border-gray-100">
               <th className="px-5 py-3 text-left font-medium">Name</th>
               <th className="px-5 py-3 text-left font-medium">Unit</th>
-              <th className="px-5 py-3 text-right font-medium">Unit Cost</th>
+              <th className="px-5 py-3 text-right font-medium">Unit Cost (ex-GST)</th>
               <th className="px-5 py-3 text-left font-medium">Notes</th>
               <th className="px-5 py-3" />
             </tr>
