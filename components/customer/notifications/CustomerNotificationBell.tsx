@@ -1,7 +1,8 @@
+/* eslint-disable @next/next/no-html-link-for-pages */
+
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import type { CustomerNotification } from "@/types/customer";
 
 function typeIcon(type: string): string {
@@ -96,9 +97,9 @@ export default function CustomerNotificationBell({ initialUnreadCount = 0 }: { i
               )}
             </div>
             <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50">
-              <Link href="/app/notifications" className="text-xs font-medium text-brand-600 hover:text-brand-800" onClick={() => setOpen(false)}>
+              <a href="/app/notifications" className="text-xs font-medium text-brand-600 hover:text-brand-800" onClick={() => setOpen(false)}>
                 View all notifications →
-              </Link>
+              </a>
             </div>
           </div>
         </>

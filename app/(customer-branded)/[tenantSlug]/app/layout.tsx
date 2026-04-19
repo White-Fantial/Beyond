@@ -10,7 +10,6 @@ import {
 } from "@/lib/customer-store-context";
 import { StoreContextProvider } from "@/components/customer/StoreContextProvider";
 import { StoreSwitcher } from "@/components/customer/StoreSwitcher";
-import Link from "next/link";
 import CustomerNotificationBell from "@/components/customer/notifications/CustomerNotificationBell";
 
 interface Props {
@@ -80,21 +79,21 @@ export default async function BrandedCustomerLayout({ children, params }: Props)
         <nav className="bg-white border-b border-gray-200">
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Link href={base} className="text-lg font-bold text-brand-700">
+              <a href={base} className="text-lg font-bold text-brand-700">
                 {storeCtx.tenantName}
-              </Link>
+              </a>
               <StoreSwitcher stores={stores} />
             </div>
             <div className="flex items-center gap-1">
               {navItems.map((item) => (
-                <Link
+                <a
                   key={item.href}
                   href={`${base}${item.href}`}
                   className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
                 >
                   <span>{item.icon}</span>
                   <span>{item.label}</span>
-                </Link>
+                </a>
               ))}
               <CustomerNotificationBell />
             </div>

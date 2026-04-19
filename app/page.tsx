@@ -1,4 +1,4 @@
-import Link from "next/link";
+/* eslint-disable @next/next/no-html-link-for-pages */
 
 export default function LandingPage() {
   return (
@@ -17,12 +17,12 @@ export default function LandingPage() {
             <a href="#marketplace" className="hover:text-white transition-colors">Marketplace</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm text-gray-300 hover:text-white transition-colors font-medium px-3 py-1.5">
+            <a href="/login" className="text-sm text-gray-300 hover:text-white transition-colors font-medium px-3 py-1.5">
               Sign In
-            </Link>
-            <Link href="/login" className="bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-all shadow-lg shadow-sky-500/25">
+            </a>
+            <a href="/login" className="bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-all shadow-lg shadow-sky-500/25">
               Get Started Free
-            </Link>
+            </a>
           </div>
         </div>
       </nav>
@@ -54,12 +54,12 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link
+            <a
               href="/login"
               className="bg-sky-500 hover:bg-sky-400 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all shadow-xl shadow-sky-500/30 hover:shadow-sky-400/40 hover:-translate-y-0.5"
             >
               Start for Free →
-            </Link>
+            </a>
             <a
               href="#features"
               className="border border-white/20 text-gray-300 hover:text-white hover:border-white/40 px-8 py-4 rounded-xl text-lg font-semibold transition-all hover:-translate-y-0.5"
@@ -296,12 +296,12 @@ export default function LandingPage() {
                 Join food businesses that run smarter operations, know their true costs, and grow faster with Beyond.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-4">
-                <Link
+                <a
                   href="/login"
                   className="bg-sky-500 hover:bg-sky-400 text-white px-10 py-4 rounded-xl text-lg font-semibold transition-all shadow-xl shadow-sky-500/30 hover:-translate-y-0.5"
                 >
                   Get Started Free
-                </Link>
+                </a>
               </div>
               <p className="mt-6 text-gray-500 text-sm">No credit card required · Free plan available</p>
             </div>
@@ -320,7 +320,7 @@ export default function LandingPage() {
             <a href="#features" className="hover:text-gray-300 transition-colors">Features</a>
             <a href="#portals" className="hover:text-gray-300 transition-colors">Portals</a>
             <a href="#integrations" className="hover:text-gray-300 transition-colors">Integrations</a>
-            <Link href="/login" className="hover:text-gray-300 transition-colors">Sign In</Link>
+            <a href="/login" className="hover:text-gray-300 transition-colors">Sign In</a>
           </div>
           <div className="text-sm text-gray-600">© {new Date().getFullYear()} Beyond. All rights reserved.</div>
         </div>
