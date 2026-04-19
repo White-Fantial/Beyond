@@ -13,6 +13,7 @@ import type {
   UpdateRecipeInput,
   RecipeFilters,
   RecipeYieldUnit,
+  CopyMarketplaceRecipeInput,
 } from "@/types/owner-recipes";
 import type { IngredientUnit } from "@/types/owner-ingredients";
 
@@ -27,6 +28,7 @@ type RawRecipe = {
   yieldQty: number;
   yieldUnit: string;
   notes: string | null;
+  marketplaceSourceId: string | null;
   createdAt: Date;
   updatedAt: Date;
   catalogProduct?: {
@@ -47,6 +49,7 @@ function toRecipe(row: RawRecipe): Recipe {
     yieldQty: row.yieldQty,
     yieldUnit: row.yieldUnit as RecipeYieldUnit,
     notes: row.notes,
+    marketplaceSourceId: row.marketplaceSourceId ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -262,6 +265,91 @@ export async function deleteRecipe(
     where: { id: recipeId },
     data: { deletedAt: new Date() },
   });
+}
+
+/**
+ * Copy a marketplace recipe into an owner's recipe list.
+ *
+ * Access rules:
+ *   - BASIC marketplace recipe: any authenticated tenant user may copy.
+ *   - PREMIUM marketplace recipe: user must have a valid purchase record.
+ *
+ * The resulting Recipe has `marketplaceSourceId` set to preserve the link to the
+ * original marketplace recipe. The owner may freely edit their copy afterwards.
+ *
+ * Ingredients are referenced by the same PLATFORM-scope Ingredient IDs used in the
+ * marketplace recipe, so cost data is still available from the start.
+ */
+export async function copyMarketplaceRecipeToOwner(
+  tenantId: string,
+  userId: string,
+  marketplaceRecipeId: string,
+  input: CopyMarketplaceRecipeInput
+): Promise<RecipeDetail> {
+  // 1. Fetch the marketplace recipe with its steps and ingredients
+  const source = await prisma.marketplaceRecipe.findFirst({
+    where: { id: marketplaceRecipeId, deletedAt: null },
+    include: {
+      ingredients: {
+        include: { ingredient: { select: { name: true, unit: true, unitCost: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+  if (!source) throw new Error(`MarketplaceRecipe ${marketplaceRecipeId} not found`);
+
+  // 2. Verify access
+  if (source.type === "PREMIUM") {
+    const purchase = await prisma.marketplaceRecipePurchase.findFirst({
+      where: { recipeId: marketplaceRecipeId, buyerUserId: userId, refundedAt: null },
+    });
+    if (!purchase) {
+      throw new Error("Recipe not purchased — purchase the recipe before copying it");
+    }
+  }
+
+  // 3. Create the owner recipe, preserving the link to the source
+  type RawMarketplaceIngredient = {
+    ingredientId: string;
+    quantity: { toNumber: () => number } | number;
+    unit: string;
+  };
+  const ingredientsToCreate = (source.ingredients as RawMarketplaceIngredient[]).map(
+    (i) => ({
+      ingredientId: i.ingredientId,
+      quantity: typeof i.quantity === "object" ? i.quantity.toNumber() : i.quantity,
+      unit: i.unit as IngredientUnit,
+    })
+  );
+
+  const row = await prisma.recipe.create({
+    data: {
+      tenantId,
+      storeId: input.storeId,
+      name: input.name?.trim() || source.title,
+      yieldQty: source.yieldQty,
+      yieldUnit: source.yieldUnit as RecipeYieldUnit,
+      notes: source.description ?? null,
+      marketplaceSourceId: source.id,
+      ingredients: {
+        create: ingredientsToCreate,
+      },
+    },
+    include: {
+      catalogProduct: { select: { name: true, basePriceAmount: true } },
+      ingredients: {
+        include: {
+          ingredient: { select: { name: true, unit: true, unitCost: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  const recipe = toRecipe(row as RawRecipe);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ingredients = ((row as any).ingredients as RawRecipeIngredient[]).map(toRecipeIngredient);
+  return computeCosts(recipe, ingredients);
 }
 
 /**

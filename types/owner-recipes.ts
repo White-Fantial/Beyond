@@ -42,6 +42,7 @@ export interface Recipe {
   yieldQty: number;
   yieldUnit: RecipeYieldUnit;
   notes: string | null;
+  marketplaceSourceId: string | null; // links to the original MarketplaceRecipe if copied
   createdAt: string;
   updatedAt: string;
 }
@@ -90,4 +91,11 @@ export interface RecipeFilters {
   storeId?: string;
   page?: number;
   pageSize?: number;
+}
+
+export interface CopyMarketplaceRecipeInput {
+  /** The store this copied recipe belongs to. */
+  storeId: string;
+  /** Optional override for the recipe name; defaults to the marketplace recipe's title. */
+  name?: string;
 }
