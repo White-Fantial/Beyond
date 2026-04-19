@@ -2,7 +2,7 @@ import { requireOwnerStoreAccess, resolveActorTenantId } from "@/services/owner/
 import { listOwnerStoreStaff } from "@/services/owner/owner-staff.service";
 
 interface Props {
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }
 
 const ROLE_BADGE: Record<string, { label: string; className: string }> = {
@@ -20,7 +20,7 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 };
 
 export default async function StoreStaffPage({ params }: Props) {
-  const { storeId } = params;
+  const { storeId } = await params;
   const ctx = await requireOwnerStoreAccess(storeId);
   const tenantId = resolveActorTenantId(ctx, storeId);
   const staff = await listOwnerStoreStaff(storeId, tenantId);

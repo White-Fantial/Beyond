@@ -7,7 +7,7 @@ import {
 } from "@/services/owner/subscription-management-service";
 
 interface Params {
-  params: { subscriptionId: string };
+  params: Promise<{ subscriptionId: string }>;
 }
 
 /**
@@ -15,6 +15,7 @@ interface Params {
  * Body: { reason?: string }
  */
 export async function POST(req: NextRequest, { params }: Params) {
+  const { subscriptionId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     if (!tenantId) return NextResponse.json({ error: "No tenant context" }, { status: 403 });
 
     const body = await req.json().catch(() => ({}));
-    await pauseOwnerSubscription(params.subscriptionId, tenantId, { userId: ctx.userId }, body.reason);
+    await pauseOwnerSubscription(subscriptionId, tenantId, { userId: ctx.userId }, body.reason);
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {

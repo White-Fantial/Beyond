@@ -6,18 +6,19 @@ import {
 } from "@/services/customer.service";
 
 interface Params {
-  params: { orderId: string };
+  params: Promise<{ orderId: string }>;
 }
 
 /**
  * GET /api/customer/orders/[orderId]
  */
 export async function GET(_req: NextRequest, { params }: Params) {
+  const { orderId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
-    const order = await getCustomerOrderDetail(params.orderId, ctx.email);
+    const order = await getCustomerOrderDetail(orderId, ctx.email);
     return NextResponse.json(order);
   } catch (err) {
     if (err instanceof CustomerOrderNotFoundError) {

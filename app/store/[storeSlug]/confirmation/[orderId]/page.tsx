@@ -3,11 +3,11 @@ import { getStoreBySlugForCustomer, getGuestOrderStatus } from "@/services/custo
 import ConfirmationClient from "./ConfirmationClient";
 
 interface ConfirmationPageProps {
-  params: { storeSlug: string; orderId: string };
+  params: Promise<{ storeSlug: string; orderId: string }>;
 }
 
 export default async function ConfirmationPage({ params }: ConfirmationPageProps) {
-  const { storeSlug, orderId } = params;
+  const { storeSlug, orderId } = await params;
   const store = await getStoreBySlugForCustomer(storeSlug);
   if (!store) notFound();
 

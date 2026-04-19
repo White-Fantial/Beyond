@@ -12,16 +12,17 @@ import {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { flagKey: string; assignmentId: string } }
+  { params }: { params: Promise<{ flagKey: string; assignmentId: string }> }
 ) {
+  const { flagKey, assignmentId } = await params;
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
-    const flag = await getAdminFeatureFlagByKey(params.flagKey);
+    const flag = await getAdminFeatureFlagByKey(flagKey);
     if (!flag) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const body = await req.json();
-    await toggleFlagAssignment(params.assignmentId, body.isActive);
+    await toggleFlagAssignment(assignmentId, body.isActive);
     await auditAdminFeatureFlagAssignmentToggled(
-      params.assignmentId,
+      assignmentId,
       flag.id,
       ctx.userId,
       { flagKey: flag.key, isActive: body.isActive }
@@ -34,15 +35,16 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { flagKey: string; assignmentId: string } }
+  { params }: { params: Promise<{ flagKey: string; assignmentId: string }> }
 ) {
+  const { flagKey, assignmentId } = await params;
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
-    const flag = await getAdminFeatureFlagByKey(params.flagKey);
+    const flag = await getAdminFeatureFlagByKey(flagKey);
     if (!flag) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    await deleteFlagAssignment(params.assignmentId);
+    await deleteFlagAssignment(assignmentId);
     await auditAdminFeatureFlagAssignmentDeleted(
-      params.assignmentId,
+      assignmentId,
       flag.id,
       ctx.userId,
       { flagKey: flag.key }

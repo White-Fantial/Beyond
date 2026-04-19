@@ -3,13 +3,14 @@ import { requireOwnerStoreAccess, resolveActorTenantId } from "@/services/owner/
 import { updateOwnerModifierOption } from "@/services/owner/owner-catalog.service";
 
 interface Params {
-  params: { storeId: string; optionId: string };
+  params: Promise<{ storeId: string; optionId: string }>;
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const { storeId, optionId } = await params;
   try {
-    const ctx = await requireOwnerStoreAccess(params.storeId);
-    const tenantId = resolveActorTenantId(ctx, params.storeId);
+    const ctx = await requireOwnerStoreAccess(storeId);
+    const tenantId = resolveActorTenantId(ctx, storeId);
     const body = await req.json();
 
     // Phase 1: name and priceDeltaAmount are now editable in Beyond.
@@ -18,8 +19,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const { sourceType: _sourceType, sourceModifierOptionRef: _sourceModifierOptionRef, sourceOfTruthConnectionId: _sourceOfTruthConnectionId, originConnectionId: _originConnectionId, originExternalRef: _originExternalRef, originType: _originType, ...safeData } = body;
 
     await updateOwnerModifierOption({
-      optionId: params.optionId,
-      storeId: params.storeId,
+      optionId: optionId,
+      storeId: storeId,
       tenantId,
       actorUserId: ctx.userId,
       data: safeData,

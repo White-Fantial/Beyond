@@ -4,7 +4,7 @@ import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
 import { getOwnerCustomerDetail } from "@/services/owner/customer-service";
 
 interface Params {
-  params: { customerId: string };
+  params: Promise<{ customerId: string }>;
 }
 
 /**
@@ -12,6 +12,7 @@ interface Params {
  * Returns customer overview/detail (KPIs, breakdowns, note).
  */
 export async function GET(_req: NextRequest, { params }: Params) {
+  const { customerId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -25,7 +26,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const tenantId = ownerMembership?.tenantId ?? ctx.tenantMemberships[0]?.tenantId;
     if (!tenantId) return NextResponse.json({ error: "No tenant context" }, { status: 403 });
 
-    const detail = await getOwnerCustomerDetail(params.customerId, tenantId);
+    const detail = await getOwnerCustomerDetail(customerId, tenantId);
     if (!detail) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     return NextResponse.json({ data: detail });

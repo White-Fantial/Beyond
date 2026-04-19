@@ -6,15 +6,16 @@ import {
 } from "@/services/owner/owner-settings.service";
 
 interface Params {
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }
 
 export async function GET(_req: NextRequest, { params }: Params) {
+  const { storeId } = await params;
   try {
-    const ctx = await requireOwnerStoreAccess(params.storeId);
-    const tenantId = resolveActorTenantId(ctx, params.storeId);
+    const ctx = await requireOwnerStoreAccess(storeId);
+    const tenantId = resolveActorTenantId(ctx, storeId);
     const settings = await getCatalogSettingsForTenant(tenantId);
-    const storeSettings = settings.find((s) => s.storeId === params.storeId) ?? null;
+    const storeSettings = settings.find((s) => s.storeId === storeId) ?? null;
     return NextResponse.json(storeSettings);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
@@ -23,13 +24,14 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const { storeId } = await params;
   try {
-    const ctx = await requireOwnerStoreAccess(params.storeId);
-    const tenantId = resolveActorTenantId(ctx, params.storeId);
+    const ctx = await requireOwnerStoreAccess(storeId);
+    const tenantId = resolveActorTenantId(ctx, storeId);
     const body = await req.json();
 
     await updateOwnerCatalogSettings({
-      storeId: params.storeId,
+      storeId: storeId,
       tenantId,
       actorUserId: ctx.userId,
       data: body,

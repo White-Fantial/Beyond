@@ -6,18 +6,19 @@ import {
 } from "@/services/customer.service";
 
 interface Params {
-  params: { notificationId: string };
+  params: Promise<{ notificationId: string }>;
 }
 
 /**
  * PATCH /api/customer/notifications/[notificationId]/read
  */
 export async function PATCH(_req: NextRequest, { params }: Params) {
+  const { notificationId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
-    await markCustomerNotificationRead(ctx.userId, params.notificationId);
+    await markCustomerNotificationRead(ctx.userId, notificationId);
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof CustomerNotificationNotFoundError) {

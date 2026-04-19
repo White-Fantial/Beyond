@@ -37,14 +37,15 @@ const attemptStatusLabel: Record<OwnerPaymentAttemptStatus, string> = {
 };
 
 interface Props {
-  params: { invoiceId: string };
+  params: Promise<{ invoiceId: string }>;
 }
 
 export default async function InvoiceDetailPage({ params }: Props) {
+  const { invoiceId } = await params;
   const ctx = await requireOwnerAdminAccess();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
 
-  const invoice = await getBillingInvoiceDetail(tenantId, params.invoiceId);
+  const invoice = await getBillingInvoiceDetail(tenantId, invoiceId);
 
   if (!invoice) {
     return (

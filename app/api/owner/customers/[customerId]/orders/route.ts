@@ -4,13 +4,14 @@ import { OWNER_PORTAL_MEMBERSHIP_ROLES } from "@/lib/auth/constants";
 import { getOwnerCustomerOrders } from "@/services/owner/customer-service";
 
 interface Params {
-  params: { customerId: string };
+  params: Promise<{ customerId: string }>;
 }
 
 /**
  * GET /api/owner/customers/[customerId]/orders
  */
 export async function GET(req: NextRequest, { params }: Params) {
+  const { customerId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     const page = parseInt(searchParams.get("page") ?? "1", 10);
     const pageSize = Math.min(parseInt(searchParams.get("pageSize") ?? "20", 10), 100);
 
-    const result = await getOwnerCustomerOrders(params.customerId, tenantId, { page, pageSize });
+    const result = await getOwnerCustomerOrders(customerId, tenantId, { page, pageSize });
     return NextResponse.json({ data: result });
   } catch (err) {
     console.error("[owner/customers/orders] Unexpected error:", err);

@@ -9,8 +9,9 @@ import { markNotificationRead } from "@/services/owner/owner-notification.servic
  */
 export async function PATCH(
   _req: NextRequest,
-  { params }: { params: { notificationId: string } }
+  { params }: { params: Promise<{ notificationId: string }> }
 ) {
+  const { notificationId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -27,7 +28,7 @@ export async function PATCH(
     const notification = await markNotificationRead(
       tenantId,
       ctx.userId,
-      params.notificationId
+      notificationId
     );
     if (!notification) {
       return NextResponse.json({ error: "Notification not found" }, { status: 404 });

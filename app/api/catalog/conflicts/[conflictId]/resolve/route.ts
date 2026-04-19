@@ -28,8 +28,9 @@ const VALID_STRATEGIES: CatalogConflictResolutionStrategy[] = [
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { conflictId: string } }
+  { params }: { params: Promise<{ conflictId: string }> }
 ) {
+  const { conflictId } = await params;
   let body: Record<string, string>;
   try {
     body = await req.json();
@@ -50,7 +51,7 @@ export async function POST(
 
   try {
     await resolveConflict({
-      conflictId: params.conflictId,
+      conflictId: conflictId,
       resolutionStrategy: resolutionStrategy as CatalogConflictResolutionStrategy,
       note,
       resolvedByUserId: userId,

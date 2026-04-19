@@ -10,13 +10,14 @@ import {
  */
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { methodId: string } }
+  { params }: { params: Promise<{ methodId: string }> }
 ) {
+  const { methodId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
-    await removeSavedPaymentMethod(ctx.userId, params.methodId);
+    await removeSavedPaymentMethod(ctx.userId, methodId);
     return new NextResponse(null, { status: 204 });
   } catch (err) {
     if (err instanceof SavedPaymentMethodNotFoundError) {

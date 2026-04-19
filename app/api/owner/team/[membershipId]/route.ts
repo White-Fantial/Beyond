@@ -16,7 +16,7 @@ function getOwnerTenantId(ctx: Awaited<ReturnType<typeof getCurrentUserAuthConte
 }
 
 interface Params {
-  params: { membershipId: string };
+  params: Promise<{ membershipId: string }>;
 }
 
 /**
@@ -24,6 +24,7 @@ interface Params {
  * Returns a single team member with store assignments.
  */
 export async function GET(_req: NextRequest, { params }: Params) {
+  const { membershipId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -38,7 +39,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
       if (!hasAccess) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const member = await getOwnerTeamMember(params.membershipId, tenantId);
+    const member = await getOwnerTeamMember(membershipId, tenantId);
     if (!member) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     return NextResponse.json({ data: member });
@@ -54,6 +55,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
  * Body: { role?, status? }
  */
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const { membershipId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -76,7 +78,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     const member = await updateOwnerTeamMember({
-      membershipId: params.membershipId,
+      membershipId: membershipId,
       tenantId,
       actorUserId: ctx.userId,
       role: role || undefined,
@@ -104,6 +106,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
  * Soft-remove a team member (sets status = REMOVED).
  */
 export async function DELETE(_req: NextRequest, { params }: Params) {
+  const { membershipId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -119,7 +122,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     }
 
     await removeOwnerTeamMember({
-      membershipId: params.membershipId,
+      membershipId: membershipId,
       tenantId,
       actorUserId: ctx.userId,
     });

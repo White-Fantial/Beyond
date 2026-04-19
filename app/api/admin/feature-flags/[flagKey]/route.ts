@@ -13,11 +13,12 @@ import type { FlagStatus } from "@/types/feature-flags";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { flagKey: string } }
+  { params }: { params: Promise<{ flagKey: string }> }
 ) {
+  const { flagKey } = await params;
   try {
     await requirePlatformAdminNotImpersonating();
-    const flag = await getAdminFeatureFlagByKey(params.flagKey);
+    const flag = await getAdminFeatureFlagByKey(flagKey);
     if (!flag) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ flag });
   } catch (err) {
@@ -27,11 +28,12 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { flagKey: string } }
+  { params }: { params: Promise<{ flagKey: string }> }
 ) {
+  const { flagKey } = await params;
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
-    const flag = await getAdminFeatureFlagByKey(params.flagKey);
+    const flag = await getAdminFeatureFlagByKey(flagKey);
     if (!flag) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const body = await req.json();
 

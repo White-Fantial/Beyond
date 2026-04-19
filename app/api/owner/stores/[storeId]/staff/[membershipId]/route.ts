@@ -7,27 +7,28 @@ import {
 } from "@/services/owner/owner-staff.service";
 
 interface Params {
-  params: { storeId: string; membershipId: string };
+  params: Promise<{ storeId: string; membershipId: string }>;
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const { storeId, membershipId } = await params;
   try {
-    const ctx = await requireOwnerStoreAccess(params.storeId);
-    const tenantId = resolveActorTenantId(ctx, params.storeId);
+    const ctx = await requireOwnerStoreAccess(storeId);
+    const tenantId = resolveActorTenantId(ctx, storeId);
     const body = await req.json();
 
     if (body.newRole !== undefined) {
       await updateOwnerStoreStaffRole({
-        storeMembershipId: params.membershipId,
-        storeId: params.storeId,
+        storeMembershipId: membershipId,
+        storeId: storeId,
         tenantId,
         actorUserId: ctx.userId,
         newRole: body.newRole,
       });
     } else if (body.activate !== undefined) {
       await toggleOwnerStoreStaffStatus({
-        storeMembershipId: params.membershipId,
-        storeId: params.storeId,
+        storeMembershipId: membershipId,
+        storeId: storeId,
         tenantId,
         actorUserId: ctx.userId,
         activate: body.activate,
@@ -43,13 +44,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
+  const { storeId, membershipId } = await params;
   try {
-    const ctx = await requireOwnerStoreAccess(params.storeId);
-    const tenantId = resolveActorTenantId(ctx, params.storeId);
+    const ctx = await requireOwnerStoreAccess(storeId);
+    const tenantId = resolveActorTenantId(ctx, storeId);
 
     await removeOwnerStoreStaff({
-      storeMembershipId: params.membershipId,
-      storeId: params.storeId,
+      storeMembershipId: membershipId,
+      storeId: storeId,
       tenantId,
       actorUserId: ctx.userId,
     });

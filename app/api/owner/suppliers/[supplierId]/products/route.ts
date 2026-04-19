@@ -7,14 +7,15 @@ import {
 import type { UpsertSupplierProductInput } from "@/types/owner-suppliers";
 
 interface Params {
-  params: { supplierId: string };
+  params: Promise<{ supplierId: string }>;
 }
 
 export async function GET(_req: Request, { params }: Params) {
+  const { supplierId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    const products = await listSupplierProducts(tenantId, params.supplierId);
+    const products = await listSupplierProducts(tenantId, supplierId);
     return NextResponse.json({ data: products });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Not found";
@@ -23,6 +24,7 @@ export async function GET(_req: Request, { params }: Params) {
 }
 
 export async function POST(req: Request, { params }: Params) {
+  const { supplierId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   const body = (await req.json()) as UpsertSupplierProductInput;
@@ -38,7 +40,7 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   try {
-    const product = await createSupplierProduct(tenantId, params.supplierId, body);
+    const product = await createSupplierProduct(tenantId, supplierId, body);
     return NextResponse.json({ data: product }, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Create failed";

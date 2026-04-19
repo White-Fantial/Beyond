@@ -8,7 +8,7 @@ import {
 } from "@/services/customer.service";
 
 interface Params {
-  params: { subscriptionId: string };
+  params: Promise<{ subscriptionId: string }>;
 }
 
 /**
@@ -16,6 +16,7 @@ interface Params {
  * Body: { nextOrderAt: string } — ISO 8601 date string
  */
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const { subscriptionId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -30,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
     }
 
-    await updateNextOrderDate(params.subscriptionId, ctx.email, nextOrderAt);
+    await updateNextOrderDate(subscriptionId, ctx.email, nextOrderAt);
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof CustomerSubscriptionNotFoundError) {

@@ -1,14 +1,15 @@
 import SubscriptionConfirmationClient from "./SubscriptionConfirmationClient";
 
 interface Props {
-  params: { storeSlug: string; subscriptionId: string };
+  params: Promise<{ storeSlug: string; subscriptionId: string }>;
 }
 
-export default function SubscriptionConfirmationPage({ params }: Props) {
+export default async function SubscriptionConfirmationPage({ params }: Props) {
+  const { storeSlug, subscriptionId } = await params;
   return (
     <SubscriptionConfirmationClient
-      storeSlug={params.storeSlug}
-      subscriptionId={params.subscriptionId}
+      storeSlug={storeSlug}
+      subscriptionId={subscriptionId}
     />
   );
 }

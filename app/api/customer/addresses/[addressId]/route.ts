@@ -8,19 +8,20 @@ import {
 } from "@/services/customer.service";
 
 interface Params {
-  params: { addressId: string };
+  params: Promise<{ addressId: string }>;
 }
 
 /**
  * PATCH /api/customer/addresses/[addressId]
  */
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const { addressId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
     const body = await req.json().catch(() => ({}));
-    await updateCustomerAddress(ctx.userId, params.addressId, body);
+    await updateCustomerAddress(ctx.userId, addressId, body);
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof CustomerAddressNotFoundError) {
@@ -38,11 +39,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
  * DELETE /api/customer/addresses/[addressId]
  */
 export async function DELETE(_req: NextRequest, { params }: Params) {
+  const { addressId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
 
-    await deleteCustomerAddress(ctx.userId, params.addressId);
+    await deleteCustomerAddress(ctx.userId, addressId);
     return NextResponse.json({ success: true });
   } catch (err) {
     if (err instanceof CustomerAddressNotFoundError) {

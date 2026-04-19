@@ -9,10 +9,11 @@ import { ignoreExternalChange } from "@/services/external-change-detection.servi
 
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { changeId: string } }
+  { params }: { params: Promise<{ changeId: string }> }
 ) {
+  const { changeId } = await params;
   try {
-    const change = await ignoreExternalChange(params.changeId);
+    const change = await ignoreExternalChange(changeId);
     return NextResponse.json(change);
   } catch {
     return NextResponse.json({ error: "Change not found or could not be updated" }, { status: 404 });

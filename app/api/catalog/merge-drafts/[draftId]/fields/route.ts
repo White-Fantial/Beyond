@@ -10,8 +10,9 @@ import type { CatalogMergeFieldChoice } from "@/types/catalog-merge";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { draftId: string } }
+  { params }: { params: Promise<{ draftId: string }> }
 ) {
+  const { draftId } = await params;
   let body: {
     fieldPath?: string;
     choice?: CatalogMergeFieldChoice;
@@ -31,7 +32,7 @@ export async function POST(
 
   try {
     const field = await upsertMergeFieldChoice({
-      draftId: params.draftId,
+      draftId: draftId,
       fieldPath,
       choice,
       customValue,

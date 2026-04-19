@@ -4,14 +4,15 @@ import { notFound } from "next/navigation";
 import WebhookEndpointDetailView from "@/components/owner/webhooks/WebhookEndpointDetailView";
 
 interface Props {
-  params: { endpointId: string };
+  params: Promise<{ endpointId: string }>;
 }
 
 export default async function WebhookEndpointDetailPage({ params }: Props) {
+  const { endpointId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   try {
-    const detail = await getWebhookEndpointDetail(tenantId, params.endpointId);
+    const detail = await getWebhookEndpointDetail(tenantId, endpointId);
     return (
       <div className="space-y-6">
         <div>

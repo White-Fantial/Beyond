@@ -27,7 +27,7 @@ import type {
 } from "@/types/catalog-conflicts";
 
 interface PageProps {
-  params: { storeId: string; connectionId: string };
+  params: Promise<{ storeId: string; connectionId: string }>;
   searchParams: {
     status?: string;
     entityType?: string;
@@ -39,7 +39,7 @@ interface PageProps {
 }
 
 export default async function ConflictsPage({ params, searchParams }: PageProps) {
-  const { storeId, connectionId } = params;
+  const { storeId, connectionId } = await params;
 
   const [connection, summary] = await Promise.all([
     prisma.connection.findUnique({

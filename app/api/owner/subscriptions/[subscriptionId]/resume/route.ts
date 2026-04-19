@@ -7,13 +7,14 @@ import {
 } from "@/services/owner/subscription-management-service";
 
 interface Params {
-  params: { subscriptionId: string };
+  params: Promise<{ subscriptionId: string }>;
 }
 
 /**
  * POST /api/owner/subscriptions/[subscriptionId]/resume
  */
 export async function POST(_req: NextRequest, { params }: Params) {
+  const { subscriptionId } = await params;
   try {
     const ctx = await getCurrentUserAuthContext();
     if (!ctx) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
@@ -27,7 +28,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
     const tenantId = ownerMembership?.tenantId ?? ctx.tenantMemberships[0]?.tenantId;
     if (!tenantId) return NextResponse.json({ error: "No tenant context" }, { status: 403 });
 
-    await resumeOwnerSubscription(params.subscriptionId, tenantId, { userId: ctx.userId });
+    await resumeOwnerSubscription(subscriptionId, tenantId, { userId: ctx.userId });
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {

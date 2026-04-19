@@ -10,10 +10,10 @@ import { getStoreBySlugForCustomer, getGuestOrderStatus } from "@/services/custo
  */
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { storeSlug: string; orderId: string } }
+  { params }: { params: Promise<{ storeSlug: string; orderId: string }> }
 ) {
   try {
-    const { storeSlug, orderId } = params;
+    const { storeSlug, orderId } = await params;
 
     const store = await getStoreBySlugForCustomer(storeSlug);
     if (!store) {

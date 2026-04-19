@@ -2,13 +2,13 @@ import { requireOwnerStoreAccess } from "@/services/owner/owner-authz.service";
 import { getOwnerStoreSettings } from "@/services/owner/owner-settings.service";
 
 interface Props {
-  params: { storeId: string };
+  params: Promise<{ storeId: string }>;
 }
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
 export default async function StoreSettingsPage({ params }: Props) {
-  const { storeId } = params;
+  const { storeId } = await params;
   await requireOwnerStoreAccess(storeId);
   const settings = await getOwnerStoreSettings(storeId);
 
