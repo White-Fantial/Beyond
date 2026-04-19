@@ -173,13 +173,13 @@ cp .env.example .env
 # Edit .env and set DATABASE_URL, SESSION_SECRET, INTEGRATIONS_ENCRYPTION_KEY
 
 # 3. Generate Prisma client
-npm run prisma:generate
+npm run db:generate
 
 # 4. Run database migrations
-npm run prisma:migrate
+npm run db:migrate
 
 # 5. Seed initial roles, permissions, and demo users
-npm run prisma:seed
+npm run db:seed
 
 # 6. Start development server
 npm run dev
@@ -197,10 +197,10 @@ Open [http://localhost:3000](http://localhost:3000) to view the landing page.
 | `npm run build` | Production build |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
-| `npm run prisma:generate` | Generate Prisma client |
-| `npm run prisma:migrate` | Run database migrations |
-| `npm run prisma:seed` | Seed roles, permissions, and demo data |
-| `npm run prisma:studio` | Open Prisma Studio |
+| `npm run db:generate` | Generate Prisma client |
+| `npm run db:migrate` | Run database migrations |
+| `npm run db:seed` | Seed roles, permissions, and demo data |
+| `npm run db:studio` | Open Prisma Studio |
 | `npm run test` | Run Vitest test suite |
 
 ---

@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { disconnectPrisma, prisma } from "./client";
 
 const defaultFlags = [
   {
@@ -70,5 +68,5 @@ export async function seedFeatureFlags() {
 if (require.main === module) {
   seedFeatureFlags()
     .catch(console.error)
-    .finally(() => prisma.$disconnect());
+    .finally(() => disconnectPrisma());
 }

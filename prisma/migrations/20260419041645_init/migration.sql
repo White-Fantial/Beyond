@@ -2,6 +2,9 @@
 CREATE TYPE "CatalogSourceType" AS ENUM ('POS', 'DELIVERY', 'LOCAL', 'MERGED', 'IMPORTED');
 
 -- CreateEnum
+CREATE TYPE "CatalogOriginType" AS ENUM ('BEYOND_CREATED', 'IMPORTED_FROM_POS', 'IMPORTED_FROM_DELIVERY', 'IMPORTED_FROM_OTHER');
+
+-- CreateEnum
 CREATE TYPE "CatalogChannelType" AS ENUM ('LOYVERSE', 'UBER_EATS', 'DOORDASH', 'ONLINE_ORDER', 'SUBSCRIPTION', 'OTHER');
 
 -- CreateEnum
@@ -11,13 +14,25 @@ CREATE TYPE "CatalogEntityType" AS ENUM ('CATEGORY', 'PRODUCT', 'MODIFIER_GROUP'
 CREATE TYPE "MappingStatus" AS ENUM ('ACTIVE', 'BROKEN', 'PENDING', 'DISCONNECTED');
 
 -- CreateEnum
+CREATE TYPE "CatalogMappingStatus" AS ENUM ('ACTIVE', 'NEEDS_REVIEW', 'UNMATCHED', 'BROKEN', 'ARCHIVED');
+
+-- CreateEnum
+CREATE TYPE "CatalogMappingSource" AS ENUM ('AUTO', 'MANUAL', 'IMPORT_SEEDED');
+
+-- CreateEnum
 CREATE TYPE "TenantStatus" AS ENUM ('ACTIVE', 'TRIAL', 'SUSPENDED', 'ARCHIVED');
 
 -- CreateEnum
 CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INVITED', 'SUSPENDED', 'ARCHIVED');
 
 -- CreateEnum
-CREATE TYPE "PlatformRole" AS ENUM ('USER', 'PLATFORM_ADMIN', 'PLATFORM_SUPPORT');
+CREATE TYPE "PlatformRole" AS ENUM ('USER', 'PLATFORM_ADMIN', 'PLATFORM_SUPPORT', 'RECIPE_PROVIDER', 'PLATFORM_MODERATOR');
+
+-- CreateEnum
+CREATE TYPE "ProviderApplicationStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+
+-- CreateEnum
+CREATE TYPE "RecipePayoutStatus" AS ENUM ('PENDING', 'TRANSFERRED', 'FAILED');
 
 -- CreateEnum
 CREATE TYPE "MembershipRole" AS ENUM ('OWNER', 'ADMIN', 'MANAGER', 'STAFF', 'ANALYST');
@@ -125,6 +140,69 @@ CREATE TYPE "PosSubmissionStatus" AS ENUM ('NOT_REQUIRED', 'PENDING', 'SENT', 'A
 CREATE TYPE "OrderEventType" AS ENUM ('ORDER_RECEIVED', 'ORDER_CREATED', 'ORDER_UPDATED', 'ORDER_STATUS_CHANGED', 'POS_FORWARD_REQUESTED', 'POS_FORWARD_SENT', 'POS_FORWARD_ACCEPTED', 'POS_FORWARD_FAILED', 'POS_RECONCILED', 'ORDER_CANCELLED', 'RAW_WEBHOOK_RECEIVED', 'RAW_SYNC_RECEIVED');
 
 -- CreateEnum
+CREATE TYPE "CatalogPublishAction" AS ENUM ('CREATE', 'UPDATE', 'ARCHIVE', 'UNARCHIVE');
+
+-- CreateEnum
+CREATE TYPE "CatalogPublishStatus" AS ENUM ('PENDING', 'RUNNING', 'SUCCEEDED', 'FAILED', 'SKIPPED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "CatalogPublishScope" AS ENUM ('CATEGORY', 'PRODUCT', 'MODIFIER_GROUP', 'MODIFIER_OPTION', 'PRODUCT_CATEGORY_LINK', 'PRODUCT_MODIFIER_GROUP_LINK');
+
+-- CreateEnum
+CREATE TYPE "ExternalCatalogChangeKind" AS ENUM ('CREATED', 'UPDATED', 'DELETED', 'RELINKED', 'STRUCTURE_UPDATED');
+
+-- CreateEnum
+CREATE TYPE "ExternalCatalogChangeStatus" AS ENUM ('OPEN', 'ACKNOWLEDGED', 'IGNORED', 'SUPERSEDED');
+
+-- CreateEnum
+CREATE TYPE "CatalogConflictType" AS ENUM ('FIELD_VALUE_CONFLICT', 'STRUCTURE_CONFLICT', 'MISSING_ON_EXTERNAL', 'MISSING_ON_INTERNAL', 'PARENT_RELATION_CONFLICT', 'UNKNOWN_CONFLICT');
+
+-- CreateEnum
+CREATE TYPE "CatalogConflictStatus" AS ENUM ('OPEN', 'IN_REVIEW', 'RESOLVED', 'IGNORED', 'SUPERSEDED');
+
+-- CreateEnum
+CREATE TYPE "CatalogConflictResolutionStrategy" AS ENUM ('KEEP_INTERNAL', 'ACCEPT_EXTERNAL', 'MERGE_MANUALLY', 'DEFER', 'IGNORE');
+
+-- CreateEnum
+CREATE TYPE "CatalogConflictScope" AS ENUM ('CATEGORY', 'PRODUCT', 'MODIFIER_GROUP', 'MODIFIER_OPTION', 'PRODUCT_CATEGORY_LINK', 'PRODUCT_MODIFIER_GROUP_LINK');
+
+-- CreateEnum
+CREATE TYPE "CatalogSyncDirection" AS ENUM ('INTERNAL_TO_EXTERNAL', 'EXTERNAL_TO_INTERNAL', 'BIDIRECTIONAL', 'DISABLED');
+
+-- CreateEnum
+CREATE TYPE "CatalogSyncConflictStrategy" AS ENUM ('MANUAL_REVIEW', 'PREFER_INTERNAL', 'PREFER_EXTERNAL', 'LAST_WRITE_WINS');
+
+-- CreateEnum
+CREATE TYPE "CatalogSyncAutoApplyMode" AS ENUM ('NEVER', 'SAFE_ONLY', 'ALWAYS');
+
+-- CreateEnum
+CREATE TYPE "CatalogSyncPolicyScope" AS ENUM ('CATEGORY', 'PRODUCT', 'MODIFIER_GROUP', 'MODIFIER_OPTION', 'PRODUCT_CATEGORY_LINK', 'PRODUCT_MODIFIER_GROUP_LINK');
+
+-- CreateEnum
+CREATE TYPE "CatalogSyncPlanStatus" AS ENUM ('DRAFT', 'READY', 'PARTIALLY_BLOCKED', 'BLOCKED', 'APPLIED', 'FAILED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "CatalogSyncAction" AS ENUM ('APPLY_INTERNAL_PATCH', 'APPLY_EXTERNAL_PATCH', 'CREATE_INTERNAL_ENTITY', 'CREATE_EXTERNAL_ENTITY', 'ARCHIVE_INTERNAL_ENTITY', 'ARCHIVE_EXTERNAL_ENTITY', 'LINK_MAPPING', 'UNLINK_MAPPING', 'SKIP');
+
+-- CreateEnum
+CREATE TYPE "CatalogSyncItemStatus" AS ENUM ('PENDING', 'READY', 'BLOCKED', 'APPLIED', 'FAILED', 'SKIPPED');
+
+-- CreateEnum
+CREATE TYPE "CatalogMergeDraftStatus" AS ENUM ('DRAFT', 'VALIDATED', 'INVALID', 'PLAN_GENERATED', 'APPLIED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "CatalogMergeFieldChoice" AS ENUM ('TAKE_INTERNAL', 'TAKE_EXTERNAL', 'CUSTOM_VALUE');
+
+-- CreateEnum
+CREATE TYPE "CatalogMergeStructureChoice" AS ENUM ('KEEP_INTERNAL_SET', 'TAKE_EXTERNAL_SET', 'MERGE_SELECTED', 'CUSTOM_STRUCTURE');
+
+-- CreateEnum
+CREATE TYPE "CatalogMergeParentChoice" AS ENUM ('KEEP_INTERNAL_PARENT', 'TAKE_EXTERNAL_PARENT', 'SET_CUSTOM_PARENT');
+
+-- CreateEnum
+CREATE TYPE "CatalogMergeApplyTarget" AS ENUM ('INTERNAL_ONLY', 'EXTERNAL_ONLY', 'INTERNAL_THEN_EXTERNAL');
+
+-- CreateEnum
 CREATE TYPE "JobType" AS ENUM ('CATALOG_SYNC', 'CONNECTION_VALIDATE', 'CONNECTION_REFRESH_CHECK', 'ORDER_RECOVERY_RETRY', 'ORDER_RECONCILIATION_RETRY', 'ANALYTICS_REBUILD');
 
 -- CreateEnum
@@ -184,6 +262,30 @@ CREATE TYPE "ComplianceEventType" AS ENUM ('DATA_EXPORT', 'ERASURE_REQUEST', 'ER
 -- CreateEnum
 CREATE TYPE "WebhookDeliveryStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED');
 
+-- CreateEnum
+CREATE TYPE "IngredientScope" AS ENUM ('PLATFORM', 'STORE');
+
+-- CreateEnum
+CREATE TYPE "IngredientUnit" AS ENUM ('GRAM', 'KG', 'ML', 'LITER', 'EACH', 'TSP', 'TBSP', 'OZ', 'LB', 'CUP', 'PIECE');
+
+-- CreateEnum
+CREATE TYPE "RecipeYieldUnit" AS ENUM ('EACH', 'BATCH', 'SERVING', 'GRAM', 'KG', 'ML', 'LITER');
+
+-- CreateEnum
+CREATE TYPE "MarketplaceRecipeType" AS ENUM ('BASIC', 'PREMIUM');
+
+-- CreateEnum
+CREATE TYPE "MarketplaceRecipeStatus" AS ENUM ('DRAFT', 'PENDING_REVIEW', 'CHANGE_REQUESTED', 'APPROVED', 'PUBLISHED', 'REJECTED', 'ARCHIVED');
+
+-- CreateEnum
+CREATE TYPE "RecipeDifficulty" AS ENUM ('EASY', 'MEDIUM', 'HARD');
+
+-- CreateEnum
+CREATE TYPE "RecipeReviewAction" AS ENUM ('SUBMITTED', 'APPROVED', 'REJECTED', 'CHANGE_REQUESTED', 'REVISION_SUBMITTED', 'PUBLISHED', 'ARCHIVED');
+
+-- CreateEnum
+CREATE TYPE "IngredientRequestStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'DUPLICATE');
+
 -- CreateTable
 CREATE TABLE "tenants" (
     "id" TEXT NOT NULL,
@@ -216,6 +318,11 @@ CREATE TABLE "users" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "archivedAt" TIMESTAMP(3),
+    "stripeConnectAccountId" TEXT,
+    "stripeConnectOnboarded" BOOLEAN NOT NULL DEFAULT false,
+    "stripeConnectPayoutsEnabled" BOOLEAN NOT NULL DEFAULT false,
+    "providerAppliedAt" TIMESTAMP(3),
+    "providerApprovedAt" TIMESTAMP(3),
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
@@ -762,6 +869,10 @@ CREATE TABLE "catalog_categories" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
+    "originType" "CatalogOriginType" NOT NULL DEFAULT 'BEYOND_CREATED',
+    "originConnectionId" TEXT,
+    "originExternalRef" TEXT,
+    "importedAt" TIMESTAMP(3),
     "sourceType" "CatalogSourceType" NOT NULL,
     "sourceOfTruthConnectionId" TEXT,
     "sourceCategoryRef" TEXT,
@@ -789,6 +900,10 @@ CREATE TABLE "catalog_products" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
+    "originType" "CatalogOriginType" NOT NULL DEFAULT 'BEYOND_CREATED',
+    "originConnectionId" TEXT,
+    "originExternalRef" TEXT,
+    "importedAt" TIMESTAMP(3),
     "sourceType" "CatalogSourceType" NOT NULL,
     "sourceOfTruthConnectionId" TEXT,
     "sourceProductRef" TEXT,
@@ -838,6 +953,10 @@ CREATE TABLE "catalog_modifier_groups" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
+    "originType" "CatalogOriginType" NOT NULL DEFAULT 'BEYOND_CREATED',
+    "originConnectionId" TEXT,
+    "originExternalRef" TEXT,
+    "importedAt" TIMESTAMP(3),
     "sourceType" "CatalogSourceType" NOT NULL,
     "sourceOfTruthConnectionId" TEXT,
     "sourceModifierGroupRef" TEXT,
@@ -863,6 +982,10 @@ CREATE TABLE "catalog_modifier_options" (
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
     "modifierGroupId" TEXT NOT NULL,
+    "originType" "CatalogOriginType" NOT NULL DEFAULT 'BEYOND_CREATED',
+    "originConnectionId" TEXT,
+    "originExternalRef" TEXT,
+    "importedAt" TIMESTAMP(3),
     "sourceType" "CatalogSourceType" NOT NULL,
     "sourceOfTruthConnectionId" TEXT,
     "sourceModifierOptionRef" TEXT,
@@ -901,6 +1024,46 @@ CREATE TABLE "catalog_product_modifier_groups" (
 );
 
 -- CreateTable
+CREATE TABLE "catalog_import_runs" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "storeId" TEXT NOT NULL,
+    "connectionId" TEXT NOT NULL,
+    "provider" TEXT NOT NULL,
+    "status" TEXT NOT NULL,
+    "startedAt" TIMESTAMP(3) NOT NULL,
+    "completedAt" TIMESTAMP(3),
+    "importedCategoriesCount" INTEGER NOT NULL DEFAULT 0,
+    "importedProductsCount" INTEGER NOT NULL DEFAULT 0,
+    "importedModifierGroupsCount" INTEGER NOT NULL DEFAULT 0,
+    "importedModifierOptionsCount" INTEGER NOT NULL DEFAULT 0,
+    "errorMessage" TEXT,
+    "comparedToImportRunId" TEXT,
+    "diffStatus" TEXT,
+    "diffCompletedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "catalog_import_runs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "external_catalog_snapshots" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "storeId" TEXT NOT NULL,
+    "connectionId" TEXT NOT NULL,
+    "entityType" TEXT NOT NULL,
+    "externalEntityId" TEXT NOT NULL,
+    "payload" JSONB NOT NULL,
+    "payloadChecksum" TEXT NOT NULL,
+    "fetchedAt" TIMESTAMP(3) NOT NULL,
+    "importRunId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "external_catalog_snapshots_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "external_catalog_categories" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
@@ -913,6 +1076,8 @@ CREATE TABLE "external_catalog_categories" (
     "rawPayload" JSONB NOT NULL,
     "externalUpdatedAt" TIMESTAMP(3),
     "syncChecksum" TEXT,
+    "entityHash" TEXT,
+    "importRunId" TEXT,
     "lastSyncedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -934,6 +1099,8 @@ CREATE TABLE "external_catalog_products" (
     "rawPayload" JSONB NOT NULL,
     "externalUpdatedAt" TIMESTAMP(3),
     "syncChecksum" TEXT,
+    "entityHash" TEXT,
+    "importRunId" TEXT,
     "lastSyncedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -954,6 +1121,8 @@ CREATE TABLE "external_catalog_modifier_groups" (
     "rawPayload" JSONB NOT NULL,
     "externalUpdatedAt" TIMESTAMP(3),
     "syncChecksum" TEXT,
+    "entityHash" TEXT,
+    "importRunId" TEXT,
     "lastSyncedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -975,6 +1144,8 @@ CREATE TABLE "external_catalog_modifier_options" (
     "rawPayload" JSONB NOT NULL,
     "externalUpdatedAt" TIMESTAMP(3),
     "syncChecksum" TEXT,
+    "entityHash" TEXT,
+    "importRunId" TEXT,
     "lastSyncedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -992,6 +1163,7 @@ CREATE TABLE "external_catalog_product_modifier_group_links" (
     "externalProductId" TEXT NOT NULL,
     "externalModifierGroupId" TEXT NOT NULL,
     "rawPayload" JSONB,
+    "importRunId" TEXT,
     "lastSyncedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -1004,18 +1176,322 @@ CREATE TABLE "channel_entity_mappings" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
-    "entityType" "CatalogEntityType" NOT NULL,
-    "internalEntityId" TEXT NOT NULL,
     "connectionId" TEXT NOT NULL,
-    "channelType" "CatalogChannelType" NOT NULL,
+    "internalEntityType" "CatalogEntityType" NOT NULL,
+    "internalEntityId" TEXT NOT NULL,
+    "externalEntityType" "CatalogEntityType" NOT NULL,
     "externalEntityId" TEXT NOT NULL,
-    "externalParentId" TEXT,
-    "mappingStatus" "MappingStatus" NOT NULL DEFAULT 'ACTIVE',
-    "lastVerifiedAt" TIMESTAMP(3),
+    "status" "CatalogMappingStatus" NOT NULL DEFAULT 'NEEDS_REVIEW',
+    "source" "CatalogMappingSource" NOT NULL DEFAULT 'AUTO',
+    "confidenceScore" DOUBLE PRECISION,
+    "matchReason" TEXT,
+    "notes" TEXT,
+    "lastValidatedAt" TIMESTAMP(3),
+    "linkedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "unlinkedAt" TIMESTAMP(3),
+    "lastPublishedAt" TIMESTAMP(3),
+    "lastPublishStatus" "CatalogPublishStatus",
+    "lastPublishAction" "CatalogPublishAction",
+    "lastPublishHash" TEXT,
+    "lastPublishError" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "channel_entity_mappings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "catalog_publish_jobs" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "storeId" TEXT NOT NULL,
+    "connectionId" TEXT NOT NULL,
+    "internalEntityType" "CatalogEntityType",
+    "internalEntityId" TEXT,
+    "scope" "CatalogPublishScope" NOT NULL,
+    "action" "CatalogPublishAction" NOT NULL,
+    "status" "CatalogPublishStatus" NOT NULL DEFAULT 'PENDING',
+    "requestedByUserId" TEXT,
+    "triggerSource" TEXT,
+    "requestPayload" JSONB,
+    "responsePayload" JSONB,
+    "errorMessage" TEXT,
+    "errorCode" TEXT,
+    "startedAt" TIMESTAMP(3),
+    "completedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "catalog_publish_jobs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "external_catalog_changes" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "storeId" TEXT NOT NULL,
+    "connectionId" TEXT NOT NULL,
+    "entityType" "CatalogEntityType" NOT NULL,
+    "externalEntityId" TEXT NOT NULL,
+    "internalEntityId" TEXT,
+    "mappingId" TEXT,
+    "changeKind" "ExternalCatalogChangeKind" NOT NULL,
+    "status" "ExternalCatalogChangeStatus" NOT NULL DEFAULT 'OPEN',
+    "previousEntityHash" TEXT,
+    "currentEntityHash" TEXT,
+    "importRunId" TEXT NOT NULL,
+    "comparedImportRunId" TEXT,
+    "summary" TEXT,
+    "detectedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "acknowledgedAt" TIMESTAMP(3),
+    "ignoredAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "external_catalog_changes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "external_catalog_change_fields" (
+    "id" TEXT NOT NULL,
+    "changeId" TEXT NOT NULL,
+    "fieldPath" TEXT NOT NULL,
+    "previousValue" JSONB,
+    "currentValue" JSONB,
+    "changeType" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "external_catalog_change_fields_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "catalog_conflicts" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "storeId" TEXT NOT NULL,
+    "connectionId" TEXT NOT NULL,
+    "internalEntityType" "CatalogEntityType" NOT NULL,
+    "internalEntityId" TEXT NOT NULL,
+    "externalEntityType" "CatalogEntityType",
+    "externalEntityId" TEXT,
+    "mappingId" TEXT,
+    "externalChangeId" TEXT,
+    "scope" "CatalogConflictScope" NOT NULL,
+    "conflictType" "CatalogConflictType" NOT NULL,
+    "status" "CatalogConflictStatus" NOT NULL DEFAULT 'OPEN',
+    "summary" TEXT,
+    "detectedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "resolutionStrategy" "CatalogConflictResolutionStrategy",
+    "resolutionNote" TEXT,
+    "resolvedAt" TIMESTAMP(3),
+    "resolvedByUserId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "catalog_conflicts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "catalog_conflict_fields" (
+    "id" TEXT NOT NULL,
+    "conflictId" TEXT NOT NULL,
+    "fieldPath" TEXT NOT NULL,
+    "fieldConflictType" TEXT NOT NULL,
+    "baselineValue" JSONB,
+    "internalValue" JSONB,
+    "externalValue" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "catalog_conflict_fields_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "catalog_conflict_resolution_logs" (
+    "id" TEXT NOT NULL,
+    "conflictId" TEXT NOT NULL,
+    "previousStatus" "CatalogConflictStatus",
+    "newStatus" "CatalogConflictStatus" NOT NULL,
+    "strategy" "CatalogConflictResolutionStrategy",
+    "note" TEXT,
+    "changedByUserId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "catalog_conflict_resolution_logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "internal_catalog_changes" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "storeId" TEXT NOT NULL,
+    "entityType" "CatalogEntityType" NOT NULL,
+    "internalEntityId" TEXT NOT NULL,
+    "fieldPath" TEXT NOT NULL,
+    "previousValue" JSONB,
+    "currentValue" JSONB,
+    "changedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "changedByUserId" TEXT,
+    "changeSource" TEXT,
+
+    CONSTRAINT "internal_catalog_changes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "catalog_sync_policies" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "storeId" TEXT NOT NULL,
+    "connectionId" TEXT NOT NULL,
+    "scope" "CatalogSyncPolicyScope" NOT NULL,
+    "fieldPath" TEXT,
+    "direction" "CatalogSyncDirection" NOT NULL,
+    "conflictStrategy" "CatalogSyncConflictStrategy" NOT NULL,
+    "autoApplyMode" "CatalogSyncAutoApplyMode" NOT NULL,
+    "isEnabled" BOOLEAN NOT NULL DEFAULT true,
+    "priority" INTEGER NOT NULL DEFAULT 100,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "catalog_sync_policies_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "catalog_sync_plans" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "storeId" TEXT NOT NULL,
+    "connectionId" TEXT NOT NULL,
+    "source" TEXT,
+    "status" "CatalogSyncPlanStatus" NOT NULL DEFAULT 'DRAFT',
+    "basedOnImportRunId" TEXT,
+    "basedOnExternalChangeId" TEXT,
+    "basedOnConflictId" TEXT,
+    "summary" TEXT,
+    "createdByUserId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "catalog_sync_plans_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "catalog_sync_plan_items" (
+    "id" TEXT NOT NULL,
+    "planId" TEXT NOT NULL,
+    "internalEntityType" "CatalogEntityType",
+    "internalEntityId" TEXT,
+    "externalEntityType" "CatalogEntityType",
+    "externalEntityId" TEXT,
+    "scope" "CatalogSyncPolicyScope" NOT NULL,
+    "fieldPath" TEXT,
+    "action" "CatalogSyncAction" NOT NULL,
+    "direction" "CatalogSyncDirection",
+    "status" "CatalogSyncItemStatus" NOT NULL DEFAULT 'PENDING',
+    "blockedReason" TEXT,
+    "previewBeforeValue" JSONB,
+    "previewAfterValue" JSONB,
+    "mappingId" TEXT,
+    "externalChangeId" TEXT,
+    "conflictId" TEXT,
+    "publishJobId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "catalog_sync_plan_items_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "catalog_sync_execution_logs" (
+    "id" TEXT NOT NULL,
+    "planId" TEXT NOT NULL,
+    "planItemId" TEXT,
+    "status" TEXT NOT NULL,
+    "action" "CatalogSyncAction" NOT NULL,
+    "requestPayload" JSONB,
+    "responsePayload" JSONB,
+    "errorMessage" TEXT,
+    "errorCode" TEXT,
+    "startedAt" TIMESTAMP(3),
+    "completedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "catalog_sync_execution_logs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "catalog_merge_drafts" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "storeId" TEXT NOT NULL,
+    "connectionId" TEXT NOT NULL,
+    "conflictId" TEXT,
+    "internalEntityType" "CatalogEntityType" NOT NULL,
+    "internalEntityId" TEXT NOT NULL,
+    "externalEntityType" "CatalogEntityType",
+    "externalEntityId" TEXT,
+    "status" "CatalogMergeDraftStatus" NOT NULL DEFAULT 'DRAFT',
+    "applyTarget" "CatalogMergeApplyTarget" NOT NULL DEFAULT 'INTERNAL_THEN_EXTERNAL',
+    "title" TEXT,
+    "summary" TEXT,
+    "validationErrors" JSONB,
+    "generatedPlanId" TEXT,
+    "createdByUserId" TEXT,
+    "updatedByUserId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "catalog_merge_drafts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "catalog_merge_draft_fields" (
+    "id" TEXT NOT NULL,
+    "draftId" TEXT NOT NULL,
+    "fieldPath" TEXT NOT NULL,
+    "choice" "CatalogMergeFieldChoice" NOT NULL,
+    "baselineValue" JSONB,
+    "internalValue" JSONB,
+    "externalValue" JSONB,
+    "customValue" JSONB,
+    "resolvedValue" JSONB,
+    "note" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "catalog_merge_draft_fields_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "catalog_merge_draft_structures" (
+    "id" TEXT NOT NULL,
+    "draftId" TEXT NOT NULL,
+    "fieldPath" TEXT NOT NULL,
+    "choice" TEXT NOT NULL,
+    "baselineValue" JSONB,
+    "internalValue" JSONB,
+    "externalValue" JSONB,
+    "customValue" JSONB,
+    "resolvedValue" JSONB,
+    "note" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "catalog_merge_draft_structures_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "catalog_merge_execution_logs" (
+    "id" TEXT NOT NULL,
+    "draftId" TEXT NOT NULL,
+    "generatedPlanId" TEXT,
+    "status" TEXT NOT NULL,
+    "requestPayload" JSONB,
+    "responsePayload" JSONB,
+    "errorMessage" TEXT,
+    "changedByUserId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "catalog_merge_execution_logs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -1756,6 +2232,266 @@ CREATE TABLE "webhook_deliveries" (
     CONSTRAINT "webhook_deliveries_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "ingredients" (
+    "id" TEXT NOT NULL,
+    "scope" "IngredientScope" NOT NULL DEFAULT 'STORE',
+    "tenantId" TEXT,
+    "storeId" TEXT,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "category" TEXT,
+    "unit" "IngredientUnit" NOT NULL DEFAULT 'GRAM',
+    "unitCost" INTEGER NOT NULL DEFAULT 0,
+    "currency" TEXT NOT NULL DEFAULT 'KRW',
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdByUserId" TEXT,
+    "notes" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "ingredients_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "recipes" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "storeId" TEXT NOT NULL,
+    "catalogProductId" TEXT,
+    "name" TEXT NOT NULL,
+    "yieldQty" INTEGER NOT NULL DEFAULT 1,
+    "yieldUnit" "RecipeYieldUnit" NOT NULL DEFAULT 'EACH',
+    "notes" TEXT,
+    "marketplaceSourceId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "recipes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "recipe_ingredients" (
+    "id" TEXT NOT NULL,
+    "recipeId" TEXT NOT NULL,
+    "ingredientId" TEXT NOT NULL,
+    "quantity" DECIMAL(12,4) NOT NULL DEFAULT 1,
+    "unit" "IngredientUnit" NOT NULL DEFAULT 'GRAM',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "recipe_ingredients_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "suppliers" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "storeId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "websiteUrl" TEXT,
+    "contactEmail" TEXT,
+    "contactPhone" TEXT,
+    "notes" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "suppliers_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "supplier_products" (
+    "id" TEXT NOT NULL,
+    "supplierId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "externalUrl" TEXT,
+    "currentPrice" INTEGER NOT NULL DEFAULT 0,
+    "basePrice" INTEGER NOT NULL DEFAULT 0,
+    "basePriceUpdatedAt" TIMESTAMP(3),
+    "basePriceScrapedUserCount" INTEGER NOT NULL DEFAULT 0,
+    "unit" "IngredientUnit" NOT NULL DEFAULT 'EACH',
+    "lastScrapedAt" TIMESTAMP(3),
+    "metadata" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "supplier_products_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ingredient_supplier_links" (
+    "id" TEXT NOT NULL,
+    "ingredientId" TEXT NOT NULL,
+    "supplierProductId" TEXT NOT NULL,
+    "isPreferred" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ingredient_supplier_links_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "supplier_credentials" (
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "supplierId" TEXT NOT NULL,
+    "loginUrl" TEXT,
+    "username" TEXT NOT NULL,
+    "passwordEnc" TEXT NOT NULL,
+    "lastVerified" TIMESTAMP(3),
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "supplier_credentials_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "supplier_price_observations" (
+    "id" TEXT NOT NULL,
+    "supplierProductId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "credentialId" TEXT NOT NULL,
+    "observedPrice" INTEGER NOT NULL,
+    "scrapedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "supplier_price_observations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "marketplace_recipes" (
+    "id" TEXT NOT NULL,
+    "type" "MarketplaceRecipeType" NOT NULL DEFAULT 'PREMIUM',
+    "status" "MarketplaceRecipeStatus" NOT NULL DEFAULT 'DRAFT',
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "thumbnailUrl" TEXT,
+    "providerId" TEXT,
+    "createdByUserId" TEXT NOT NULL,
+    "yieldQty" INTEGER NOT NULL DEFAULT 1,
+    "yieldUnit" "RecipeYieldUnit" NOT NULL DEFAULT 'EACH',
+    "servings" INTEGER,
+    "cuisineTag" TEXT,
+    "difficulty" "RecipeDifficulty",
+    "prepTimeMinutes" INTEGER,
+    "cookTimeMinutes" INTEGER,
+    "currency" TEXT NOT NULL DEFAULT 'KRW',
+    "estimatedCostPrice" INTEGER NOT NULL DEFAULT 0,
+    "recommendedPrice" INTEGER NOT NULL DEFAULT 0,
+    "salePrice" INTEGER NOT NULL DEFAULT 0,
+    "publishedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "deletedAt" TIMESTAMP(3),
+
+    CONSTRAINT "marketplace_recipes_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "marketplace_recipe_steps" (
+    "id" TEXT NOT NULL,
+    "recipeId" TEXT NOT NULL,
+    "stepNumber" INTEGER NOT NULL,
+    "instruction" TEXT NOT NULL,
+    "imageUrl" TEXT,
+    "durationMinutes" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "marketplace_recipe_steps_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "marketplace_recipe_ingredients" (
+    "id" TEXT NOT NULL,
+    "recipeId" TEXT NOT NULL,
+    "ingredientId" TEXT NOT NULL,
+    "quantity" DECIMAL(12,4) NOT NULL DEFAULT 1,
+    "unit" "IngredientUnit" NOT NULL DEFAULT 'GRAM',
+    "notes" TEXT,
+    "unitCostSnapshot" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "marketplace_recipe_ingredients_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "marketplace_recipe_reviews" (
+    "id" TEXT NOT NULL,
+    "recipeId" TEXT NOT NULL,
+    "reviewerId" TEXT NOT NULL,
+    "action" "RecipeReviewAction" NOT NULL,
+    "notes" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "marketplace_recipe_reviews_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "marketplace_recipe_purchases" (
+    "id" TEXT NOT NULL,
+    "recipeId" TEXT NOT NULL,
+    "buyerUserId" TEXT NOT NULL,
+    "tenantId" TEXT,
+    "pricePaid" INTEGER NOT NULL DEFAULT 0,
+    "currency" TEXT NOT NULL DEFAULT 'KRW',
+    "paymentRef" TEXT,
+    "stripePaymentIntentId" TEXT,
+    "stripeTransferId" TEXT,
+    "platformFeeAmount" INTEGER NOT NULL DEFAULT 0,
+    "providerPayoutAmount" INTEGER NOT NULL DEFAULT 0,
+    "payoutStatus" "RecipePayoutStatus" NOT NULL DEFAULT 'PENDING',
+    "transferredAt" TIMESTAMP(3),
+    "purchasedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "refundedAt" TIMESTAMP(3),
+
+    CONSTRAINT "marketplace_recipe_purchases_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ingredient_requests" (
+    "id" TEXT NOT NULL,
+    "requestedByUserId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "category" TEXT,
+    "unit" "IngredientUnit" NOT NULL DEFAULT 'GRAM',
+    "notes" TEXT,
+    "status" "IngredientRequestStatus" NOT NULL DEFAULT 'PENDING',
+    "resolvedIngredientId" TEXT,
+    "reviewedByUserId" TEXT,
+    "reviewNotes" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ingredient_requests_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "provider_onboarding_applications" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "businessName" TEXT NOT NULL,
+    "businessType" TEXT NOT NULL DEFAULT 'INDIVIDUAL',
+    "taxId" TEXT,
+    "portfolioUrl" TEXT,
+    "introduction" TEXT,
+    "status" "ProviderApplicationStatus" NOT NULL DEFAULT 'PENDING',
+    "adminNotes" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "reviewedAt" TIMESTAMP(3),
+    "reviewedByUserId" TEXT,
+
+    CONSTRAINT "provider_onboarding_applications_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "tenants_slug_key" ON "tenants"("slug");
 
@@ -1934,6 +2670,9 @@ CREATE INDEX "catalog_categories_tenantId_storeId_idx" ON "catalog_categories"("
 CREATE INDEX "catalog_categories_storeId_isActive_isVisibleOnOnlineOrder__idx" ON "catalog_categories"("storeId", "isActive", "isVisibleOnOnlineOrder", "displayOrder");
 
 -- CreateIndex
+CREATE INDEX "catalog_categories_storeId_originConnectionId_originExterna_idx" ON "catalog_categories"("storeId", "originConnectionId", "originExternalRef");
+
+-- CreateIndex
 CREATE INDEX "catalog_categories_storeId_sourceOfTruthConnectionId_source_idx" ON "catalog_categories"("storeId", "sourceOfTruthConnectionId", "sourceCategoryRef");
 
 -- CreateIndex
@@ -1941,6 +2680,9 @@ CREATE INDEX "catalog_products_tenantId_storeId_idx" ON "catalog_products"("tena
 
 -- CreateIndex
 CREATE INDEX "catalog_products_storeId_isActive_isVisibleOnOnlineOrder_di_idx" ON "catalog_products"("storeId", "isActive", "isVisibleOnOnlineOrder", "displayOrder");
+
+-- CreateIndex
+CREATE INDEX "catalog_products_storeId_originConnectionId_originExternalR_idx" ON "catalog_products"("storeId", "originConnectionId", "originExternalRef");
 
 -- CreateIndex
 CREATE INDEX "catalog_products_storeId_sourceOfTruthConnectionId_sourcePr_idx" ON "catalog_products"("storeId", "sourceOfTruthConnectionId", "sourceProductRef");
@@ -1961,6 +2703,9 @@ CREATE UNIQUE INDEX "catalog_product_categories_productId_categoryId_key" ON "ca
 CREATE INDEX "catalog_modifier_groups_tenantId_storeId_idx" ON "catalog_modifier_groups"("tenantId", "storeId");
 
 -- CreateIndex
+CREATE INDEX "catalog_modifier_groups_storeId_originConnectionId_originEx_idx" ON "catalog_modifier_groups"("storeId", "originConnectionId", "originExternalRef");
+
+-- CreateIndex
 CREATE INDEX "catalog_modifier_groups_storeId_sourceOfTruthConnectionId_s_idx" ON "catalog_modifier_groups"("storeId", "sourceOfTruthConnectionId", "sourceModifierGroupRef");
 
 -- CreateIndex
@@ -1973,6 +2718,9 @@ CREATE INDEX "catalog_modifier_options_tenantId_storeId_idx" ON "catalog_modifie
 CREATE INDEX "catalog_modifier_options_modifierGroupId_isActive_isSoldOut_idx" ON "catalog_modifier_options"("modifierGroupId", "isActive", "isSoldOut", "displayOrder");
 
 -- CreateIndex
+CREATE INDEX "catalog_modifier_options_storeId_originConnectionId_originE_idx" ON "catalog_modifier_options"("storeId", "originConnectionId", "originExternalRef");
+
+-- CreateIndex
 CREATE INDEX "catalog_modifier_options_storeId_sourceOfTruthConnectionId__idx" ON "catalog_modifier_options"("storeId", "sourceOfTruthConnectionId", "sourceModifierOptionRef");
 
 -- CreateIndex
@@ -1983,6 +2731,18 @@ CREATE INDEX "catalog_product_modifier_groups_storeId_modifierGroupId_idx" ON "c
 
 -- CreateIndex
 CREATE UNIQUE INDEX "catalog_product_modifier_groups_productId_modifierGroupId_key" ON "catalog_product_modifier_groups"("productId", "modifierGroupId");
+
+-- CreateIndex
+CREATE INDEX "catalog_import_runs_tenantId_storeId_createdAt_idx" ON "catalog_import_runs"("tenantId", "storeId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "catalog_import_runs_connectionId_status_idx" ON "catalog_import_runs"("connectionId", "status");
+
+-- CreateIndex
+CREATE INDEX "external_catalog_snapshots_connectionId_entityType_external_idx" ON "external_catalog_snapshots"("connectionId", "entityType", "externalEntityId");
+
+-- CreateIndex
+CREATE INDEX "external_catalog_snapshots_importRunId_idx" ON "external_catalog_snapshots"("importRunId");
 
 -- CreateIndex
 CREATE INDEX "external_catalog_categories_storeId_connectionId_idx" ON "external_catalog_categories"("storeId", "connectionId");
@@ -2015,16 +2775,109 @@ CREATE INDEX "external_catalog_product_modifier_group_links_storeId_conne_idx" O
 CREATE UNIQUE INDEX "external_catalog_product_modifier_group_links_connectionId__key" ON "external_catalog_product_modifier_group_links"("connectionId", "externalProductId", "externalModifierGroupId");
 
 -- CreateIndex
-CREATE INDEX "channel_entity_mappings_storeId_entityType_internalEntityId_idx" ON "channel_entity_mappings"("storeId", "entityType", "internalEntityId");
+CREATE INDEX "channel_entity_mappings_tenantId_storeId_connectionId_inter_idx" ON "channel_entity_mappings"("tenantId", "storeId", "connectionId", "internalEntityType", "internalEntityId");
 
 -- CreateIndex
-CREATE INDEX "channel_entity_mappings_storeId_connectionId_entityType_idx" ON "channel_entity_mappings"("storeId", "connectionId", "entityType");
+CREATE INDEX "channel_entity_mappings_tenantId_storeId_connectionId_exter_idx" ON "channel_entity_mappings"("tenantId", "storeId", "connectionId", "externalEntityType", "externalEntityId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "channel_entity_mappings_connectionId_entityType_externalEnt_key" ON "channel_entity_mappings"("connectionId", "entityType", "externalEntityId");
+CREATE INDEX "channel_entity_mappings_tenantId_storeId_connectionId_statu_idx" ON "channel_entity_mappings"("tenantId", "storeId", "connectionId", "status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "channel_entity_mappings_connectionId_entityType_internalEnt_key" ON "channel_entity_mappings"("connectionId", "entityType", "internalEntityId");
+CREATE INDEX "catalog_publish_jobs_tenantId_storeId_connectionId_status_idx" ON "catalog_publish_jobs"("tenantId", "storeId", "connectionId", "status");
+
+-- CreateIndex
+CREATE INDEX "catalog_publish_jobs_tenantId_storeId_connectionId_internal_idx" ON "catalog_publish_jobs"("tenantId", "storeId", "connectionId", "internalEntityType", "internalEntityId");
+
+-- CreateIndex
+CREATE INDEX "external_catalog_changes_tenantId_storeId_connectionId_stat_idx" ON "external_catalog_changes"("tenantId", "storeId", "connectionId", "status");
+
+-- CreateIndex
+CREATE INDEX "external_catalog_changes_tenantId_storeId_connectionId_enti_idx" ON "external_catalog_changes"("tenantId", "storeId", "connectionId", "entityType");
+
+-- CreateIndex
+CREATE INDEX "external_catalog_changes_connectionId_externalEntityId_enti_idx" ON "external_catalog_changes"("connectionId", "externalEntityId", "entityType");
+
+-- CreateIndex
+CREATE INDEX "external_catalog_changes_importRunId_idx" ON "external_catalog_changes"("importRunId");
+
+-- CreateIndex
+CREATE INDEX "external_catalog_change_fields_changeId_idx" ON "external_catalog_change_fields"("changeId");
+
+-- CreateIndex
+CREATE INDEX "catalog_conflicts_tenantId_storeId_connectionId_status_idx" ON "catalog_conflicts"("tenantId", "storeId", "connectionId", "status");
+
+-- CreateIndex
+CREATE INDEX "catalog_conflicts_tenantId_storeId_connectionId_internalEnt_idx" ON "catalog_conflicts"("tenantId", "storeId", "connectionId", "internalEntityType", "internalEntityId");
+
+-- CreateIndex
+CREATE INDEX "catalog_conflicts_connectionId_externalEntityType_externalE_idx" ON "catalog_conflicts"("connectionId", "externalEntityType", "externalEntityId");
+
+-- CreateIndex
+CREATE INDEX "catalog_conflicts_externalChangeId_idx" ON "catalog_conflicts"("externalChangeId");
+
+-- CreateIndex
+CREATE INDEX "catalog_conflict_fields_conflictId_idx" ON "catalog_conflict_fields"("conflictId");
+
+-- CreateIndex
+CREATE INDEX "catalog_conflict_resolution_logs_conflictId_idx" ON "catalog_conflict_resolution_logs"("conflictId");
+
+-- CreateIndex
+CREATE INDEX "internal_catalog_changes_tenantId_storeId_entityType_intern_idx" ON "internal_catalog_changes"("tenantId", "storeId", "entityType", "internalEntityId", "changedAt");
+
+-- CreateIndex
+CREATE INDEX "internal_catalog_changes_tenantId_storeId_changedAt_idx" ON "internal_catalog_changes"("tenantId", "storeId", "changedAt");
+
+-- CreateIndex
+CREATE INDEX "catalog_sync_policies_tenantId_storeId_connectionId_scope_i_idx" ON "catalog_sync_policies"("tenantId", "storeId", "connectionId", "scope", "isEnabled");
+
+-- CreateIndex
+CREATE INDEX "catalog_sync_policies_tenantId_storeId_connectionId_fieldPa_idx" ON "catalog_sync_policies"("tenantId", "storeId", "connectionId", "fieldPath");
+
+-- CreateIndex
+CREATE INDEX "catalog_sync_plans_tenantId_storeId_connectionId_status_idx" ON "catalog_sync_plans"("tenantId", "storeId", "connectionId", "status");
+
+-- CreateIndex
+CREATE INDEX "catalog_sync_plan_items_planId_status_idx" ON "catalog_sync_plan_items"("planId", "status");
+
+-- CreateIndex
+CREATE INDEX "catalog_sync_plan_items_conflictId_idx" ON "catalog_sync_plan_items"("conflictId");
+
+-- CreateIndex
+CREATE INDEX "catalog_sync_plan_items_externalChangeId_idx" ON "catalog_sync_plan_items"("externalChangeId");
+
+-- CreateIndex
+CREATE INDEX "catalog_sync_execution_logs_planId_idx" ON "catalog_sync_execution_logs"("planId");
+
+-- CreateIndex
+CREATE INDEX "catalog_sync_execution_logs_planItemId_idx" ON "catalog_sync_execution_logs"("planItemId");
+
+-- CreateIndex
+CREATE INDEX "catalog_merge_drafts_tenantId_storeId_connectionId_status_idx" ON "catalog_merge_drafts"("tenantId", "storeId", "connectionId", "status");
+
+-- CreateIndex
+CREATE INDEX "catalog_merge_drafts_conflictId_idx" ON "catalog_merge_drafts"("conflictId");
+
+-- CreateIndex
+CREATE INDEX "catalog_merge_drafts_generatedPlanId_idx" ON "catalog_merge_drafts"("generatedPlanId");
+
+-- CreateIndex
+CREATE INDEX "catalog_merge_draft_fields_draftId_idx" ON "catalog_merge_draft_fields"("draftId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "catalog_merge_draft_fields_draftId_fieldPath_key" ON "catalog_merge_draft_fields"("draftId", "fieldPath");
+
+-- CreateIndex
+CREATE INDEX "catalog_merge_draft_structures_draftId_idx" ON "catalog_merge_draft_structures"("draftId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "catalog_merge_draft_structures_draftId_fieldPath_key" ON "catalog_merge_draft_structures"("draftId", "fieldPath");
+
+-- CreateIndex
+CREATE INDEX "catalog_merge_execution_logs_draftId_idx" ON "catalog_merge_execution_logs"("draftId");
+
+-- CreateIndex
+CREATE INDEX "catalog_merge_execution_logs_generatedPlanId_idx" ON "catalog_merge_execution_logs"("generatedPlanId");
 
 -- CreateIndex
 CREATE INDEX "job_runs_tenantId_storeId_idx" ON "job_runs"("tenantId", "storeId");
@@ -2254,6 +3107,126 @@ CREATE INDEX "webhook_deliveries_endpointId_idx" ON "webhook_deliveries"("endpoi
 -- CreateIndex
 CREATE INDEX "webhook_deliveries_event_idx" ON "webhook_deliveries"("event");
 
+-- CreateIndex
+CREATE INDEX "ingredients_scope_isActive_idx" ON "ingredients"("scope", "isActive");
+
+-- CreateIndex
+CREATE INDEX "ingredients_scope_category_idx" ON "ingredients"("scope", "category");
+
+-- CreateIndex
+CREATE INDEX "ingredients_tenantId_storeId_idx" ON "ingredients"("tenantId", "storeId");
+
+-- CreateIndex
+CREATE INDEX "ingredients_storeId_name_idx" ON "ingredients"("storeId", "name");
+
+-- CreateIndex
+CREATE INDEX "recipes_tenantId_storeId_idx" ON "recipes"("tenantId", "storeId");
+
+-- CreateIndex
+CREATE INDEX "recipes_storeId_catalogProductId_idx" ON "recipes"("storeId", "catalogProductId");
+
+-- CreateIndex
+CREATE INDEX "recipe_ingredients_recipeId_idx" ON "recipe_ingredients"("recipeId");
+
+-- CreateIndex
+CREATE INDEX "recipe_ingredients_ingredientId_idx" ON "recipe_ingredients"("ingredientId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "recipe_ingredients_recipeId_ingredientId_key" ON "recipe_ingredients"("recipeId", "ingredientId");
+
+-- CreateIndex
+CREATE INDEX "suppliers_tenantId_storeId_idx" ON "suppliers"("tenantId", "storeId");
+
+-- CreateIndex
+CREATE INDEX "suppliers_storeId_name_idx" ON "suppliers"("storeId", "name");
+
+-- CreateIndex
+CREATE INDEX "supplier_products_supplierId_idx" ON "supplier_products"("supplierId");
+
+-- CreateIndex
+CREATE INDEX "ingredient_supplier_links_ingredientId_idx" ON "ingredient_supplier_links"("ingredientId");
+
+-- CreateIndex
+CREATE INDEX "ingredient_supplier_links_supplierProductId_idx" ON "ingredient_supplier_links"("supplierProductId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ingredient_supplier_links_ingredientId_supplierProductId_key" ON "ingredient_supplier_links"("ingredientId", "supplierProductId");
+
+-- CreateIndex
+CREATE INDEX "supplier_credentials_tenantId_userId_idx" ON "supplier_credentials"("tenantId", "userId");
+
+-- CreateIndex
+CREATE INDEX "supplier_credentials_supplierId_idx" ON "supplier_credentials"("supplierId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "supplier_credentials_tenantId_userId_supplierId_key" ON "supplier_credentials"("tenantId", "userId", "supplierId");
+
+-- CreateIndex
+CREATE INDEX "supplier_price_observations_supplierProductId_idx" ON "supplier_price_observations"("supplierProductId");
+
+-- CreateIndex
+CREATE INDEX "supplier_price_observations_credentialId_idx" ON "supplier_price_observations"("credentialId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "supplier_price_observations_supplierProductId_userId_key" ON "supplier_price_observations"("supplierProductId", "userId");
+
+-- CreateIndex
+CREATE INDEX "marketplace_recipes_status_idx" ON "marketplace_recipes"("status");
+
+-- CreateIndex
+CREATE INDEX "marketplace_recipes_type_status_idx" ON "marketplace_recipes"("type", "status");
+
+-- CreateIndex
+CREATE INDEX "marketplace_recipes_providerId_idx" ON "marketplace_recipes"("providerId");
+
+-- CreateIndex
+CREATE INDEX "marketplace_recipe_steps_recipeId_idx" ON "marketplace_recipe_steps"("recipeId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "marketplace_recipe_steps_recipeId_stepNumber_key" ON "marketplace_recipe_steps"("recipeId", "stepNumber");
+
+-- CreateIndex
+CREATE INDEX "marketplace_recipe_ingredients_recipeId_idx" ON "marketplace_recipe_ingredients"("recipeId");
+
+-- CreateIndex
+CREATE INDEX "marketplace_recipe_ingredients_ingredientId_idx" ON "marketplace_recipe_ingredients"("ingredientId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "marketplace_recipe_ingredients_recipeId_ingredientId_key" ON "marketplace_recipe_ingredients"("recipeId", "ingredientId");
+
+-- CreateIndex
+CREATE INDEX "marketplace_recipe_reviews_recipeId_createdAt_idx" ON "marketplace_recipe_reviews"("recipeId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "marketplace_recipe_reviews_reviewerId_idx" ON "marketplace_recipe_reviews"("reviewerId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "marketplace_recipe_purchases_stripePaymentIntentId_key" ON "marketplace_recipe_purchases"("stripePaymentIntentId");
+
+-- CreateIndex
+CREATE INDEX "marketplace_recipe_purchases_buyerUserId_idx" ON "marketplace_recipe_purchases"("buyerUserId");
+
+-- CreateIndex
+CREATE INDEX "marketplace_recipe_purchases_recipeId_idx" ON "marketplace_recipe_purchases"("recipeId");
+
+-- CreateIndex
+CREATE INDEX "marketplace_recipe_purchases_tenantId_idx" ON "marketplace_recipe_purchases"("tenantId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "marketplace_recipe_purchases_recipeId_buyerUserId_key" ON "marketplace_recipe_purchases"("recipeId", "buyerUserId");
+
+-- CreateIndex
+CREATE INDEX "ingredient_requests_status_idx" ON "ingredient_requests"("status");
+
+-- CreateIndex
+CREATE INDEX "ingredient_requests_requestedByUserId_idx" ON "ingredient_requests"("requestedByUserId");
+
+-- CreateIndex
+CREATE INDEX "provider_onboarding_applications_userId_idx" ON "provider_onboarding_applications"("userId");
+
+-- CreateIndex
+CREATE INDEX "provider_onboarding_applications_status_idx" ON "provider_onboarding_applications"("status");
+
 -- AddForeignKey
 ALTER TABLE "memberships" ADD CONSTRAINT "memberships_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -2373,6 +3346,30 @@ ALTER TABLE "catalog_product_modifier_groups" ADD CONSTRAINT "catalog_product_mo
 
 -- AddForeignKey
 ALTER TABLE "catalog_product_modifier_groups" ADD CONSTRAINT "catalog_product_modifier_groups_modifierGroupId_fkey" FOREIGN KEY ("modifierGroupId") REFERENCES "catalog_modifier_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "external_catalog_snapshots" ADD CONSTRAINT "external_catalog_snapshots_importRunId_fkey" FOREIGN KEY ("importRunId") REFERENCES "catalog_import_runs"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "external_catalog_change_fields" ADD CONSTRAINT "external_catalog_change_fields_changeId_fkey" FOREIGN KEY ("changeId") REFERENCES "external_catalog_changes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "catalog_conflict_fields" ADD CONSTRAINT "catalog_conflict_fields_conflictId_fkey" FOREIGN KEY ("conflictId") REFERENCES "catalog_conflicts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "catalog_conflict_resolution_logs" ADD CONSTRAINT "catalog_conflict_resolution_logs_conflictId_fkey" FOREIGN KEY ("conflictId") REFERENCES "catalog_conflicts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "catalog_sync_plan_items" ADD CONSTRAINT "catalog_sync_plan_items_planId_fkey" FOREIGN KEY ("planId") REFERENCES "catalog_sync_plans"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "catalog_merge_draft_fields" ADD CONSTRAINT "catalog_merge_draft_fields_draftId_fkey" FOREIGN KEY ("draftId") REFERENCES "catalog_merge_drafts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "catalog_merge_draft_structures" ADD CONSTRAINT "catalog_merge_draft_structures_draftId_fkey" FOREIGN KEY ("draftId") REFERENCES "catalog_merge_drafts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "catalog_merge_execution_logs" ADD CONSTRAINT "catalog_merge_execution_logs_draftId_fkey" FOREIGN KEY ("draftId") REFERENCES "catalog_merge_drafts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "job_runs" ADD CONSTRAINT "job_runs_triggeredByUserId_fkey" FOREIGN KEY ("triggeredByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -2544,3 +3541,75 @@ ALTER TABLE "webhook_endpoints" ADD CONSTRAINT "webhook_endpoints_tenantId_fkey"
 
 -- AddForeignKey
 ALTER TABLE "webhook_deliveries" ADD CONSTRAINT "webhook_deliveries_endpointId_fkey" FOREIGN KEY ("endpointId") REFERENCES "webhook_endpoints"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ingredients" ADD CONSTRAINT "ingredients_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "recipes" ADD CONSTRAINT "recipes_catalogProductId_fkey" FOREIGN KEY ("catalogProductId") REFERENCES "catalog_products"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "recipe_ingredients" ADD CONSTRAINT "recipe_ingredients_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "recipe_ingredients" ADD CONSTRAINT "recipe_ingredients_ingredientId_fkey" FOREIGN KEY ("ingredientId") REFERENCES "ingredients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "supplier_products" ADD CONSTRAINT "supplier_products_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "suppliers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ingredient_supplier_links" ADD CONSTRAINT "ingredient_supplier_links_ingredientId_fkey" FOREIGN KEY ("ingredientId") REFERENCES "ingredients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ingredient_supplier_links" ADD CONSTRAINT "ingredient_supplier_links_supplierProductId_fkey" FOREIGN KEY ("supplierProductId") REFERENCES "supplier_products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "supplier_credentials" ADD CONSTRAINT "supplier_credentials_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "suppliers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "supplier_price_observations" ADD CONSTRAINT "supplier_price_observations_supplierProductId_fkey" FOREIGN KEY ("supplierProductId") REFERENCES "supplier_products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "supplier_price_observations" ADD CONSTRAINT "supplier_price_observations_credentialId_fkey" FOREIGN KEY ("credentialId") REFERENCES "supplier_credentials"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "marketplace_recipes" ADD CONSTRAINT "marketplace_recipes_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "marketplace_recipes" ADD CONSTRAINT "marketplace_recipes_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "marketplace_recipe_steps" ADD CONSTRAINT "marketplace_recipe_steps_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "marketplace_recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "marketplace_recipe_ingredients" ADD CONSTRAINT "marketplace_recipe_ingredients_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "marketplace_recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "marketplace_recipe_ingredients" ADD CONSTRAINT "marketplace_recipe_ingredients_ingredientId_fkey" FOREIGN KEY ("ingredientId") REFERENCES "ingredients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "marketplace_recipe_reviews" ADD CONSTRAINT "marketplace_recipe_reviews_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "marketplace_recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "marketplace_recipe_reviews" ADD CONSTRAINT "marketplace_recipe_reviews_reviewerId_fkey" FOREIGN KEY ("reviewerId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "marketplace_recipe_purchases" ADD CONSTRAINT "marketplace_recipe_purchases_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "marketplace_recipes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "marketplace_recipe_purchases" ADD CONSTRAINT "marketplace_recipe_purchases_buyerUserId_fkey" FOREIGN KEY ("buyerUserId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ingredient_requests" ADD CONSTRAINT "ingredient_requests_requestedByUserId_fkey" FOREIGN KEY ("requestedByUserId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ingredient_requests" ADD CONSTRAINT "ingredient_requests_reviewedByUserId_fkey" FOREIGN KEY ("reviewedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ingredient_requests" ADD CONSTRAINT "ingredient_requests_resolvedIngredientId_fkey" FOREIGN KEY ("resolvedIngredientId") REFERENCES "ingredients"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "provider_onboarding_applications" ADD CONSTRAINT "provider_onboarding_applications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "provider_onboarding_applications" ADD CONSTRAINT "provider_onboarding_applications_reviewedByUserId_fkey" FOREIGN KEY ("reviewedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;

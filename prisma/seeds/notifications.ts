@@ -3,9 +3,7 @@
  * Seeds sample alert rules and notifications for the default tenant.
  * Idempotent: skips if records already exist.
  */
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { disconnectPrisma, prisma } from "./client";
 
 const SAMPLE_ALERT_RULES = [
   {
@@ -131,5 +129,5 @@ export async function seedNotifications() {
 if (require.main === module) {
   seedNotifications()
     .catch(console.error)
-    .finally(() => prisma.$disconnect());
+    .finally(() => disconnectPrisma());
 }

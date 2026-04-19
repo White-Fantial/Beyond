@@ -3,9 +3,7 @@
  * Seeds plan catalog, tenant subscription, and sample invoices.
  * Idempotent: uses upsert by unique fields where available.
  */
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "./client";
 
 export async function seedBilling() {
   console.log("\n💳 Seeding billing...");

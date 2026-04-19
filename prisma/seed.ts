@@ -1,10 +1,8 @@
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { disconnectPrisma, prisma } from "./seeds/client";
 import { seedBilling } from "./seeds/billing";
 import { seedNotifications } from "./seeds/notifications";
 import { seedLoyalty } from "./seeds/loyalty";
-
-const prisma = new PrismaClient();
 
 async function main() {
   console.log("🌱 Starting seed...\n");
@@ -126,5 +124,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await disconnectPrisma();
   });

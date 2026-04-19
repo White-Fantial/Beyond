@@ -3,9 +3,7 @@
  * Seeds a sample loyalty account, transactions and referral code for the owner user.
  * Idempotent: skips if records already exist.
  */
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "./client";
 
 export async function seedLoyalty() {
   // Find the first USER-role user to seed loyalty data for
