@@ -8,14 +8,14 @@ import type {
   MarketplaceRecipeStepInput,
   MarketplaceRecipeIngredientInput,
   MarketplaceRecipeDetail,
-  PlatformIngredient,
 } from "@/types/marketplace";
+import type { Ingredient } from "@/types/owner-ingredients";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
 
 interface RecipeFormProps {
   mode: "create" | "edit";
   initial?: MarketplaceRecipeDetail;
-  platformIngredients: PlatformIngredient[];
+  platformIngredients: Ingredient[];
   recipeId?: string;
 }
 
@@ -61,7 +61,7 @@ export default function RecipeForm({
     MarketplaceRecipeIngredientInput[]
   >(
     initial?.ingredients.map((i) => ({
-      platformIngredientId: i.platformIngredientId,
+      ingredientId: i.ingredientId,
       quantity: i.quantity,
       unit: i.unit,
       notes: i.notes ?? undefined,
@@ -102,7 +102,7 @@ export default function RecipeForm({
     setIngredients((prev) => [
       ...prev,
       {
-        platformIngredientId: platformIngredients[0].id,
+        ingredientId: platformIngredients[0].id,
         quantity: 1,
         unit: platformIngredients[0].unit,
       },
@@ -360,9 +360,9 @@ export default function RecipeForm({
             <div className="flex-1">
               <label className="block text-xs text-gray-500 mb-1">재료</label>
               <select
-                value={ing.platformIngredientId}
+                value={ing.ingredientId}
                 onChange={(e) =>
-                  updateIngredient(idx, "platformIngredientId", e.target.value)
+                  updateIngredient(idx, "ingredientId", e.target.value)
                 }
                 className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
               >

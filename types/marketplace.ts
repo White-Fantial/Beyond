@@ -41,62 +41,13 @@ export const RECIPE_DIFFICULTY_LABELS: Record<RecipeDifficulty, string> = {
   HARD: "어려움",
 };
 
-// ─── PlatformIngredient ───────────────────────────────────────────────────────
-
-export interface PlatformIngredient {
-  id: string;
-  name: string;
-  description: string | null;
-  category: string | null;
-  unit: IngredientUnit;
-  referenceUnitCost: number;
-  currency: string;
-  isActive: boolean;
-  createdByUserId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface PlatformIngredientListResult {
-  items: PlatformIngredient[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
-export interface CreatePlatformIngredientInput {
-  name: string;
-  description?: string;
-  category?: string;
-  unit: IngredientUnit;
-  referenceUnitCost: number;
-  currency?: string;
-}
-
-export interface UpdatePlatformIngredientInput {
-  name?: string;
-  description?: string;
-  category?: string;
-  unit?: IngredientUnit;
-  referenceUnitCost?: number;
-  currency?: string;
-  isActive?: boolean;
-}
-
-export interface PlatformIngredientFilters {
-  category?: string;
-  isActive?: boolean;
-  page?: number;
-  pageSize?: number;
-}
-
 // ─── MarketplaceRecipe ────────────────────────────────────────────────────────
 
 export interface MarketplaceRecipeIngredientItem {
   id: string;
   recipeId: string;
-  platformIngredientId: string;
-  platformIngredientName: string;
+  ingredientId: string;
+  ingredientName: string;
   quantity: number;
   unit: IngredientUnit;
   notes: string | null;
@@ -153,7 +104,7 @@ export interface MarketplaceRecipeListResult {
 }
 
 export interface MarketplaceRecipeIngredientInput {
-  platformIngredientId: string;
+  ingredientId: string;
   quantity: number;
   unit: IngredientUnit;
   notes?: string;
@@ -282,7 +233,7 @@ export interface IngredientRequest {
   unit: string;
   notes: string | null;
   status: IngredientRequestStatus;
-  resolvedPlatformIngredientId: string | null;
+  resolvedIngredientId: string | null;
   reviewedByUserId: string | null;
   reviewNotes: string | null;
   createdAt: string;
@@ -306,8 +257,8 @@ export interface CreateIngredientRequestInput {
 
 export interface ReviewIngredientRequestInput {
   status: "APPROVED" | "REJECTED" | "DUPLICATE";
-  /** Required when status is APPROVED or DUPLICATE — the PlatformIngredient id to link. */
-  resolvedPlatformIngredientId?: string;
+  /** Required when status is APPROVED or DUPLICATE — the Ingredient id (scope=PLATFORM) to link. */
+  resolvedIngredientId?: string;
   reviewNotes?: string;
 }
 

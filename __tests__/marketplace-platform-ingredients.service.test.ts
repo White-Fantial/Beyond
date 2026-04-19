@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    platformIngredient: {
+    ingredient: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
       create: vi.fn(),
@@ -22,7 +22,7 @@ import {
 } from "@/services/marketplace/platform-ingredients.service";
 
 const mockPrisma = prisma as unknown as {
-  platformIngredient: {
+  ingredient: {
     findMany: ReturnType<typeof vi.fn>;
     findFirst: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
@@ -35,14 +35,18 @@ const CREATOR_ID = "user-mod-1";
 
 const mockIngredient = {
   id: "pi-1",
+  scope: "PLATFORM",
+  tenantId: null,
+  storeId: null,
   name: "소금",
   description: null,
   category: "조미료",
   unit: "GRAM",
-  referenceUnitCost: 2,
+  unitCost: 2,
   currency: "KRW",
   isActive: true,
   createdByUserId: CREATOR_ID,
+  notes: null,
   createdAt: new Date("2026-01-01"),
   updatedAt: new Date("2026-01-01"),
 };
@@ -55,8 +59,8 @@ beforeEach(() => {
 
 describe("listPlatformIngredients", () => {
   it("returns paginated ingredients", async () => {
-    mockPrisma.platformIngredient.findMany.mockResolvedValue([mockIngredient]);
-    mockPrisma.platformIngredient.count.mockResolvedValue(1);
+    mockPrisma.ingredient.findMany.mockResolvedValue([mockIngredient]);
+    mockPrisma.ingredient.count.mockResolvedValue(1);
 
     const result = await listPlatformIngredients();
 
@@ -67,8 +71,8 @@ describe("listPlatformIngredients", () => {
   });
 
   it("serialises dates to ISO strings", async () => {
-    mockPrisma.platformIngredient.findMany.mockResolvedValue([mockIngredient]);
-    mockPrisma.platformIngredient.count.mockResolvedValue(1);
+    mockPrisma.ingredient.findMany.mockResolvedValue([mockIngredient]);
+    mockPrisma.ingredient.count.mockResolvedValue(1);
 
     const result = await listPlatformIngredients();
     expect(typeof result.items[0].createdAt).toBe("string");
@@ -76,28 +80,28 @@ describe("listPlatformIngredients", () => {
   });
 
   it("filters by isActive", async () => {
-    mockPrisma.platformIngredient.findMany.mockResolvedValue([]);
-    mockPrisma.platformIngredient.count.mockResolvedValue(0);
+    mockPrisma.ingredient.findMany.mockResolvedValue([]);
+    mockPrisma.ingredient.count.mockResolvedValue(0);
 
     const result = await listPlatformIngredients({ isActive: false });
 
     expect(result.items).toHaveLength(0);
-    expect(mockPrisma.platformIngredient.findMany).toHaveBeenCalledWith(
+    expect(mockPrisma.ingredient.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ isActive: false }),
+        where: expect.objectContaining({ scope: "PLATFORM", isActive: false }),
       })
     );
   });
 
   it("filters by category", async () => {
-    mockPrisma.platformIngredient.findMany.mockResolvedValue([mockIngredient]);
-    mockPrisma.platformIngredient.count.mockResolvedValue(1);
+    mockPrisma.ingredient.findMany.mockResolvedValue([mockIngredient]);
+    mockPrisma.ingredient.count.mockResolvedValue(1);
 
     await listPlatformIngredients({ category: "조미료" });
 
-    expect(mockPrisma.platformIngredient.findMany).toHaveBeenCalledWith(
+    expect(mockPrisma.ingredient.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ category: "조미료" }),
+        where: expect.objectContaining({ scope: "PLATFORM", category: "조미료" }),
       })
     );
   });
@@ -107,15 +111,16 @@ describe("listPlatformIngredients", () => {
 
 describe("getPlatformIngredient", () => {
   it("returns ingredient by id", async () => {
-    mockPrisma.platformIngredient.findFirst.mockResolvedValue(mockIngredient);
+    mockPrisma.ingredient.findFirst.mockResolvedValue(mockIngredient);
 
     const result = await getPlatformIngredient("pi-1");
     expect(result.id).toBe("pi-1");
     expect(result.name).toBe("소금");
+    expect(result.scope).toBe("PLATFORM");
   });
 
   it("throws when not found", async () => {
-    mockPrisma.platformIngredient.findFirst.mockResolvedValue(null);
+    mockPrisma.ingredient.findFirst.mockResolvedValue(null);
 
     await expect(getPlatformIngredient("nonexistent")).rejects.toThrow(
       "PlatformIngredient nonexistent not found"
@@ -126,31 +131,34 @@ describe("getPlatformIngredient", () => {
 // ─── createPlatformIngredient ─────────────────────────────────────────────────
 
 describe("createPlatformIngredient", () => {
-  it("creates an ingredient and returns it", async () => {
-    mockPrisma.platformIngredient.create.mockResolvedValue(mockIngredient);
+  it("creates an ingredient with scope=PLATFORM and returns it", async () => {
+    mockPrisma.ingredient.create.mockResolvedValue(mockIngredient);
 
     const result = await createPlatformIngredient(CREATOR_ID, {
       name: "소금",
       unit: "GRAM",
-      referenceUnitCost: 2,
+      unitCost: 2,
       category: "조미료",
     });
 
     expect(result.name).toBe("소금");
-    expect(mockPrisma.platformIngredient.create).toHaveBeenCalledWith(
+    expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
+          scope: "PLATFORM",
           name: "소금",
           createdByUserId: CREATOR_ID,
           unit: "GRAM",
-          referenceUnitCost: 2,
+          unitCost: 2,
+          tenantId: null,
+          storeId: null,
         }),
       })
     );
   });
 
   it("defaults currency to KRW", async () => {
-    mockPrisma.platformIngredient.create.mockResolvedValue({
+    mockPrisma.ingredient.create.mockResolvedValue({
       ...mockIngredient,
       currency: "KRW",
     });
@@ -158,7 +166,7 @@ describe("createPlatformIngredient", () => {
     const result = await createPlatformIngredient(CREATOR_ID, {
       name: "설탕",
       unit: "GRAM",
-      referenceUnitCost: 3,
+      unitCost: 3,
     });
 
     expect(result.currency).toBe("KRW");
@@ -169,8 +177,8 @@ describe("createPlatformIngredient", () => {
 
 describe("updatePlatformIngredient", () => {
   it("updates and returns ingredient", async () => {
-    mockPrisma.platformIngredient.findFirst.mockResolvedValue(mockIngredient);
-    mockPrisma.platformIngredient.update.mockResolvedValue({
+    mockPrisma.ingredient.findFirst.mockResolvedValue(mockIngredient);
+    mockPrisma.ingredient.update.mockResolvedValue({
       ...mockIngredient,
       name: "굵은 소금",
     });
@@ -180,7 +188,7 @@ describe("updatePlatformIngredient", () => {
   });
 
   it("throws when not found", async () => {
-    mockPrisma.platformIngredient.findFirst.mockResolvedValue(null);
+    mockPrisma.ingredient.findFirst.mockResolvedValue(null);
 
     await expect(
       updatePlatformIngredient("nonexistent", { name: "X" })
@@ -192,15 +200,15 @@ describe("updatePlatformIngredient", () => {
 
 describe("deletePlatformIngredient", () => {
   it("soft-deletes the ingredient", async () => {
-    mockPrisma.platformIngredient.findFirst.mockResolvedValue(mockIngredient);
-    mockPrisma.platformIngredient.update.mockResolvedValue({
+    mockPrisma.ingredient.findFirst.mockResolvedValue(mockIngredient);
+    mockPrisma.ingredient.update.mockResolvedValue({
       ...mockIngredient,
       deletedAt: new Date(),
     });
 
     await deletePlatformIngredient("pi-1");
 
-    expect(mockPrisma.platformIngredient.update).toHaveBeenCalledWith(
+    expect(mockPrisma.ingredient.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "pi-1" },
         data: expect.objectContaining({ deletedAt: expect.any(Date) }),
@@ -209,7 +217,7 @@ describe("deletePlatformIngredient", () => {
   });
 
   it("throws when not found", async () => {
-    mockPrisma.platformIngredient.findFirst.mockResolvedValue(null);
+    mockPrisma.ingredient.findFirst.mockResolvedValue(null);
 
     await expect(deletePlatformIngredient("nonexistent")).rejects.toThrow(
       "PlatformIngredient nonexistent not found"

@@ -45,7 +45,7 @@ const mockRow = {
   unit: "ML",
   notes: "파스타에 마무리로 사용",
   status: "PENDING",
-  resolvedPlatformIngredientId: null,
+  resolvedIngredientId: null,
   reviewedByUserId: null,
   reviewNotes: null,
   createdAt: new Date("2026-01-01"),
@@ -197,24 +197,24 @@ describe("reviewIngredientRequest", () => {
     mockPrisma.ingredientRequest.update.mockResolvedValue({
       ...mockRow,
       status: "APPROVED",
-      resolvedPlatformIngredientId: PI_ID,
+      resolvedIngredientId: PI_ID,
       reviewedByUserId: MODERATOR_ID,
       reviewNotes: "등록 완료",
     });
 
     const result = await reviewIngredientRequest(REQUEST_ID, MODERATOR_ID, {
       status: "APPROVED",
-      resolvedPlatformIngredientId: PI_ID,
+      resolvedIngredientId: PI_ID,
       reviewNotes: "등록 완료",
     });
 
     expect(result.status).toBe("APPROVED");
-    expect(result.resolvedPlatformIngredientId).toBe(PI_ID);
+    expect(result.resolvedIngredientId).toBe(PI_ID);
     expect(mockPrisma.ingredientRequest.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           status: "APPROVED",
-          resolvedPlatformIngredientId: PI_ID,
+          resolvedIngredientId: PI_ID,
           reviewedByUserId: MODERATOR_ID,
         }),
       })
@@ -243,17 +243,17 @@ describe("reviewIngredientRequest", () => {
     mockPrisma.ingredientRequest.update.mockResolvedValue({
       ...mockRow,
       status: "DUPLICATE",
-      resolvedPlatformIngredientId: PI_ID,
+      resolvedIngredientId: PI_ID,
       reviewedByUserId: MODERATOR_ID,
     });
 
     const result = await reviewIngredientRequest(REQUEST_ID, MODERATOR_ID, {
       status: "DUPLICATE",
-      resolvedPlatformIngredientId: PI_ID,
+      resolvedIngredientId: PI_ID,
     });
 
     expect(result.status).toBe("DUPLICATE");
-    expect(result.resolvedPlatformIngredientId).toBe(PI_ID);
+    expect(result.resolvedIngredientId).toBe(PI_ID);
   });
 
   it("throws when request not found", async () => {
@@ -277,19 +277,19 @@ describe("reviewIngredientRequest", () => {
     ).rejects.toThrow("has already been reviewed");
   });
 
-  it("throws when APPROVED without resolvedPlatformIngredientId", async () => {
+  it("throws when APPROVED without resolvedIngredientId", async () => {
     mockPrisma.ingredientRequest.findUnique.mockResolvedValue(mockRow);
 
     await expect(
       reviewIngredientRequest(REQUEST_ID, MODERATOR_ID, { status: "APPROVED" })
-    ).rejects.toThrow("resolvedPlatformIngredientId is required");
+    ).rejects.toThrow("resolvedIngredientId is required");
   });
 
-  it("throws when DUPLICATE without resolvedPlatformIngredientId", async () => {
+  it("throws when DUPLICATE without resolvedIngredientId", async () => {
     mockPrisma.ingredientRequest.findUnique.mockResolvedValue(mockRow);
 
     await expect(
       reviewIngredientRequest(REQUEST_ID, MODERATOR_ID, { status: "DUPLICATE" })
-    ).rejects.toThrow("resolvedPlatformIngredientId is required");
+    ).rejects.toThrow("resolvedIngredientId is required");
   });
 });

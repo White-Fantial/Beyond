@@ -403,7 +403,7 @@ model User {
   pushSubscriptions        PushSubscription[]
   pushPreference           PushPreference?
 
-  platformIngredients      PlatformIngredient[]   @relation("PlatformIngredientCreatedBy")
+  createdIngredients       Ingredient[]           @relation("IngredientCreatedBy")
   marketplaceRecipes       MarketplaceRecipe[]    @relation("MarketplaceRecipeProvider")
   marketplaceRecipesCreated MarketplaceRecipe[]   @relation("MarketplaceRecipeCreatedBy")
   recipeReviews            MarketplaceRecipeReview[]
@@ -3306,6 +3306,11 @@ model WebhookDelivery {
 
 // ─── Cost Management ──────────────────────────────────────────────────────────
 
+enum IngredientScope {
+  PLATFORM // Admin / moderator created — shared across all tenants
+  STORE    // Owner created — scoped to a specific tenant + store
+}
+
 enum IngredientUnit {
   GRAM
   KG
@@ -3331,22 +3336,31 @@ enum RecipeYieldUnit {
 }
 
 model Ingredient {
-  id          String         @id @default(uuid())
-  tenantId    String
-  storeId     String
-  name        String
-  description String?
-  unit        IngredientUnit @default(GRAM)
-  unitCost    Int            @default(0) // minor currency units (e.g. cents)
-  currency    String         @default("NZD")
-  notes       String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  deletedAt   DateTime?
+  id               String          @id @default(uuid())
+  scope            IngredientScope @default(STORE)
+  tenantId         String?         // null for PLATFORM scope
+  storeId          String?         // null for PLATFORM scope
+  name             String
+  description      String?
+  category         String?         // e.g. "채소", "육류", "유제품" — mainly for PLATFORM scope
+  unit             IngredientUnit  @default(GRAM)
+  unitCost         Int             @default(0) // minor currency units (e.g. cents)
+  currency         String          @default("KRW")
+  isActive         Boolean         @default(true)
+  createdByUserId  String?         // set for PLATFORM scope (admin/moderator who created it)
+  notes            String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  deletedAt        DateTime?
 
-  recipeIngredients    RecipeIngredient[]
-  supplierLinks        IngredientSupplierLink[]
+  createdBy              User?                       @relation("IngredientCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  recipeIngredients      RecipeIngredient[]
+  supplierLinks          IngredientSupplierLink[]
+  marketplaceIngredients MarketplaceRecipeIngredient[]
+  ingredientRequests     IngredientRequest[]          @relation("IngredientRequestResolved")
 
+  @@index([scope, isActive])
+  @@index([scope, category])
   @@index([tenantId, storeId])
   @@index([storeId, name])
   @@map("ingredients")
@@ -3533,31 +3547,6 @@ enum RecipeReviewAction {
 
 // ─── Marketplace Models ───────────────────────────────────────────────────────
 
-/// Platform-global ingredient catalogue used by marketplace recipes.
-/// Managed by PLATFORM_ADMIN and PLATFORM_MODERATOR; read-only for RECIPE_PROVIDER.
-model PlatformIngredient {
-  id                String         @id @default(uuid())
-  name              String
-  description       String?
-  category          String?        // e.g. "채소", "육류", "유제품"
-  unit              IngredientUnit @default(GRAM)
-  referenceUnitCost Int            @default(0) // minor currency units per unit
-  currency          String         @default("KRW")
-  isActive          Boolean        @default(true)
-  createdByUserId   String
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  deletedAt         DateTime?
-
-  createdBy           User                          @relation("PlatformIngredientCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
-  marketplaceIngredients MarketplaceRecipeIngredient[]
-  ingredientRequests  IngredientRequest[]            @relation("IngredientRequestResolved")
-
-  @@index([isActive])
-  @@index([category])
-  @@map("platform_ingredients")
-}
-
 /// A recipe listed in the Beyond marketplace.
 model MarketplaceRecipe {
   id              String                  @id @default(uuid())
@@ -3623,25 +3612,25 @@ model MarketplaceRecipeStep {
   @@map("marketplace_recipe_steps")
 }
 
-/// Ingredient line item in a marketplace recipe (references PlatformIngredient).
+/// Ingredient line item in a marketplace recipe (references unified Ingredient with scope=PLATFORM).
 model MarketplaceRecipeIngredient {
-  id                   String         @id @default(uuid())
-  recipeId             String
-  platformIngredientId String
-  quantity             Decimal        @default(1) @db.Decimal(12, 4)
-  unit                 IngredientUnit @default(GRAM)
-  notes                String?
-  unitCostSnapshot     Int            @default(0) // snapshot of referenceUnitCost at time of save
+  id           String         @id @default(uuid())
+  recipeId     String
+  ingredientId String
+  quantity     Decimal        @default(1) @db.Decimal(12, 4)
+  unit         IngredientUnit @default(GRAM)
+  notes        String?
+  unitCostSnapshot Int        @default(0) // snapshot of ingredient.unitCost at time of save
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  recipe             MarketplaceRecipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  platformIngredient PlatformIngredient  @relation(fields: [platformIngredientId], references: [id], onDelete: Restrict)
+  recipe     MarketplaceRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient Ingredient        @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
 
-  @@unique([recipeId, platformIngredientId])
+  @@unique([recipeId, ingredientId])
   @@index([recipeId])
-  @@index([platformIngredientId])
+  @@index([ingredientId])
   @@map("marketplace_recipe_ingredients")
 }
 
@@ -3701,26 +3690,26 @@ model MarketplaceRecipePurchase {
 }
 
 /// A user's request to add a new ingredient to the platform catalogue.
-/// Moderators review these and can create a matching PlatformIngredient (APPROVED),
+/// Moderators review these and can create a matching Ingredient with scope=PLATFORM (APPROVED),
 /// point to an existing one (DUPLICATE), or decline (REJECTED).
 model IngredientRequest {
-  id                         String                  @id @default(uuid())
-  requestedByUserId          String
-  name                       String                  // requested ingredient name
-  description                String?
-  category                   String?
-  unit                       IngredientUnit          @default(GRAM)
-  notes                      String?                 // requester's usage context
-  status                     IngredientRequestStatus @default(PENDING)
-  resolvedPlatformIngredientId String?               // set on APPROVED or DUPLICATE
-  reviewedByUserId           String?
-  reviewNotes                String?
-  createdAt                  DateTime                @default(now())
-  updatedAt                  DateTime                @updatedAt
+  id                     String                  @id @default(uuid())
+  requestedByUserId      String
+  name                   String                  // requested ingredient name
+  description            String?
+  category               String?
+  unit                   IngredientUnit          @default(GRAM)
+  notes                  String?                 // requester's usage context
+  status                 IngredientRequestStatus @default(PENDING)
+  resolvedIngredientId   String?                 // set on APPROVED or DUPLICATE — points to Ingredient (scope=PLATFORM)
+  reviewedByUserId       String?
+  reviewNotes            String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
 
-  requestedBy       User               @relation("IngredientRequestedBy", fields: [requestedByUserId], references: [id], onDelete: Restrict)
-  reviewedBy        User?              @relation("IngredientRequestReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
-  resolvedIngredient PlatformIngredient? @relation("IngredientRequestResolved", fields: [resolvedPlatformIngredientId], references: [id], onDelete: SetNull)
+  requestedBy        User        @relation("IngredientRequestedBy", fields: [requestedByUserId], references: [id], onDelete: Restrict)
+  reviewedBy         User?       @relation("IngredientRequestReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  resolvedIngredient Ingredient? @relation("IngredientRequestResolved", fields: [resolvedIngredientId], references: [id], onDelete: SetNull)
 
   @@index([status])
   @@index([requestedByUserId])

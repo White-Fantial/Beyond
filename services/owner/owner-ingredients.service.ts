@@ -1,7 +1,8 @@
 /**
  * Owner Ingredients Service — Cost Management Phase 1.
  *
- * Manage ingredient master data. All functions scoped to tenantId.
+ * Manage ingredient master data for a tenant's store (scope = STORE).
+ * All functions scoped to tenantId.
  */
 import { prisma } from "@/lib/prisma";
 import type {
@@ -17,26 +18,34 @@ import type { IngredientUnit } from "@/types/owner-ingredients";
 
 function toIngredient(row: {
   id: string;
-  tenantId: string;
-  storeId: string;
+  scope: string;
+  tenantId: string | null;
+  storeId: string | null;
   name: string;
   description: string | null;
+  category: string | null;
   unit: string;
   unitCost: number;
   currency: string;
+  isActive: boolean;
+  createdByUserId: string | null;
   notes: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): Ingredient {
   return {
     id: row.id,
+    scope: row.scope as "PLATFORM" | "STORE",
     tenantId: row.tenantId,
     storeId: row.storeId,
     name: row.name,
     description: row.description,
+    category: row.category,
     unit: row.unit as IngredientUnit,
     unitCost: row.unitCost,
     currency: row.currency,
+    isActive: row.isActive,
+    createdByUserId: row.createdByUserId,
     notes: row.notes,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -52,6 +61,7 @@ export async function listIngredients(
   const { storeId, page = 1, pageSize = 50 } = filters;
 
   const where = {
+    scope: "STORE" as const,
     tenantId,
     deletedAt: null,
     ...(storeId ? { storeId } : {}),
@@ -75,7 +85,7 @@ export async function getIngredient(
   ingredientId: string
 ): Promise<Ingredient> {
   const row = await prisma.ingredient.findFirst({
-    where: { id: ingredientId, tenantId, deletedAt: null },
+    where: { id: ingredientId, scope: "STORE", tenantId, deletedAt: null },
   });
   if (!row) throw new Error(`Ingredient ${ingredientId} not found`);
   return toIngredient(row);
@@ -87,13 +97,15 @@ export async function createIngredient(
 ): Promise<Ingredient> {
   const row = await prisma.ingredient.create({
     data: {
+      scope: "STORE",
       tenantId,
-      storeId: input.storeId,
+      storeId: input.storeId ?? null,
       name: input.name,
       description: input.description ?? null,
+      category: input.category ?? null,
       unit: input.unit,
       unitCost: input.unitCost,
-      currency: input.currency ?? "NZD",
+      currency: input.currency ?? "KRW",
       notes: input.notes ?? null,
     },
   });
@@ -106,7 +118,7 @@ export async function updateIngredient(
   input: UpdateIngredientInput
 ): Promise<Ingredient> {
   const existing = await prisma.ingredient.findFirst({
-    where: { id: ingredientId, tenantId, deletedAt: null },
+    where: { id: ingredientId, scope: "STORE", tenantId, deletedAt: null },
   });
   if (!existing) throw new Error(`Ingredient ${ingredientId} not found`);
 
@@ -115,9 +127,11 @@ export async function updateIngredient(
     data: {
       ...(input.name !== undefined ? { name: input.name } : {}),
       ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.category !== undefined ? { category: input.category } : {}),
       ...(input.unit !== undefined ? { unit: input.unit } : {}),
       ...(input.unitCost !== undefined ? { unitCost: input.unitCost } : {}),
       ...(input.currency !== undefined ? { currency: input.currency } : {}),
+      ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
     },
   });
@@ -129,7 +143,7 @@ export async function deleteIngredient(
   ingredientId: string
 ): Promise<void> {
   const existing = await prisma.ingredient.findFirst({
-    where: { id: ingredientId, tenantId, deletedAt: null },
+    where: { id: ingredientId, scope: "STORE", tenantId, deletedAt: null },
   });
   if (!existing) throw new Error(`Ingredient ${ingredientId} not found`);
 

@@ -9,7 +9,7 @@ vi.mock("@/lib/prisma", () => ({
       update: vi.fn(),
       count: vi.fn(),
     },
-    platformIngredient: {
+    ingredient: {
       findMany: vi.fn(),
     },
   },
@@ -32,7 +32,7 @@ const mockPrisma = prisma as unknown as {
     update: ReturnType<typeof vi.fn>;
     count: ReturnType<typeof vi.fn>;
   };
-  platformIngredient: {
+  ingredient: {
     findMany: ReturnType<typeof vi.fn>;
   };
 };
@@ -78,12 +78,12 @@ const mockStep = {
 const mockIngredientRow = {
   id: "mri-1",
   recipeId: "recipe-1",
-  platformIngredientId: "pi-1",
+  ingredientId: "pi-1",
   quantity: { toNumber: () => 300 },
   unit: "GRAM",
   notes: null,
   unitCostSnapshot: 10,
-  platformIngredient: { name: "김치" },
+  ingredient: { name: "김치" },
 };
 
 beforeEach(() => {
@@ -144,7 +144,7 @@ describe("getMarketplaceRecipe", () => {
     expect(result.steps).toHaveLength(1);
     expect(result.steps[0].instruction).toBe("김치를 썬다");
     expect(result.ingredients).toHaveLength(1);
-    expect(result.ingredients[0].platformIngredientName).toBe("김치");
+    expect(result.ingredients[0].ingredientName).toBe("김치");
     expect(result.ingredients[0].lineCost).toBe(3000); // 300 * 10
     expect(result.ingredientCount).toBe(1);
   });
@@ -162,7 +162,7 @@ describe("getMarketplaceRecipe", () => {
 
 describe("createMarketplaceRecipe", () => {
   it("creates a PREMIUM recipe with DRAFT status", async () => {
-    mockPrisma.platformIngredient.findMany.mockResolvedValue([]);
+    mockPrisma.ingredient.findMany.mockResolvedValue([]);
     mockPrisma.marketplaceRecipe.create.mockResolvedValue({
       ...mockRecipeRow,
       steps: [],
@@ -193,7 +193,7 @@ describe("createMarketplaceRecipe", () => {
   });
 
   it("creates a BASIC recipe with PUBLISHED status", async () => {
-    mockPrisma.platformIngredient.findMany.mockResolvedValue([]);
+    mockPrisma.ingredient.findMany.mockResolvedValue([]);
     const basicRow = {
       ...mockRecipeRow,
       type: "BASIC",
@@ -228,8 +228,8 @@ describe("createMarketplaceRecipe", () => {
   });
 
   it("snapshots ingredient unit costs at creation time", async () => {
-    mockPrisma.platformIngredient.findMany.mockResolvedValue([
-      { id: "pi-1", referenceUnitCost: 15 },
+    mockPrisma.ingredient.findMany.mockResolvedValue([
+      { id: "pi-1", unitCost: 15 },
     ]);
     const withIngredient = {
       ...mockRecipeRow,
@@ -246,7 +246,7 @@ describe("createMarketplaceRecipe", () => {
       title: "테스트",
       yieldQty: 1,
       yieldUnit: "EACH",
-      ingredients: [{ platformIngredientId: "pi-1", quantity: 100, unit: "GRAM" }],
+      ingredients: [{ ingredientId: "pi-1", quantity: 100, unit: "GRAM" }],
     });
 
     expect(mockPrisma.marketplaceRecipe.create).toHaveBeenCalledWith(

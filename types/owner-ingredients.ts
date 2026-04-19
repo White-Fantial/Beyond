@@ -25,15 +25,27 @@ export const INGREDIENT_UNIT_LABELS: Record<IngredientUnit, string> = {
   PIECE: "pcs",
 };
 
+/** Scope distinguishes platform-global ingredients from store-specific ones. */
+export type IngredientScope = "PLATFORM" | "STORE";
+
 export interface Ingredient {
   id: string;
-  tenantId: string;
-  storeId: string;
+  scope: IngredientScope;
+  /** null for PLATFORM scope */
+  tenantId: string | null;
+  /** null for PLATFORM scope */
+  storeId: string | null;
   name: string;
   description: string | null;
+  /** Category classification, primarily used for PLATFORM scope */
+  category: string | null;
   unit: IngredientUnit;
   unitCost: number; // minor currency units
   currency: string;
+  /** Inactive ingredients are hidden from selection UIs */
+  isActive: boolean;
+  /** Set for PLATFORM scope — the admin/moderator who created it */
+  createdByUserId: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -47,9 +59,11 @@ export interface IngredientListResult {
 }
 
 export interface CreateIngredientInput {
-  storeId: string;
+  /** Required for STORE scope; omit for PLATFORM scope */
+  storeId?: string;
   name: string;
   description?: string;
+  category?: string;
   unit: IngredientUnit;
   unitCost: number;
   currency?: string;
@@ -59,14 +73,19 @@ export interface CreateIngredientInput {
 export interface UpdateIngredientInput {
   name?: string;
   description?: string;
+  category?: string;
   unit?: IngredientUnit;
   unitCost?: number;
   currency?: string;
+  isActive?: boolean;
   notes?: string;
 }
 
 export interface IngredientFilters {
+  scope?: IngredientScope;
   storeId?: string;
+  category?: string;
+  isActive?: boolean;
   page?: number;
   pageSize?: number;
 }

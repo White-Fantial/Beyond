@@ -36,13 +36,17 @@ const STORE = "store-1";
 
 const mockIngredient = {
   id: "ing-1",
+  scope: "STORE",
   tenantId: TENANT,
   storeId: STORE,
   name: "Bread Flour",
   description: null,
+  category: null,
   unit: "GRAM",
   unitCost: 5,
-  currency: "NZD",
+  currency: "KRW",
+  isActive: true,
+  createdByUserId: null,
   notes: null,
   createdAt: new Date("2026-01-01"),
   updatedAt: new Date("2026-01-01"),
@@ -157,7 +161,7 @@ describe("createIngredient", () => {
     );
   });
 
-  it("defaults currency to NZD", async () => {
+  it("defaults currency to KRW", async () => {
     mockPrisma.ingredient.create.mockResolvedValue(mockIngredient);
 
     await createIngredient(TENANT, {
@@ -169,7 +173,7 @@ describe("createIngredient", () => {
 
     expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ currency: "NZD" }),
+        data: expect.objectContaining({ currency: "KRW" }),
       })
     );
   });

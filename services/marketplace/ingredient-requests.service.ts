@@ -29,7 +29,7 @@ type RawRequest = {
   unit: string;
   notes: string | null;
   status: string;
-  resolvedPlatformIngredientId: string | null;
+  resolvedIngredientId: string | null;
   reviewedByUserId: string | null;
   reviewNotes: string | null;
   createdAt: Date;
@@ -48,7 +48,7 @@ function toRequest(row: RawRequest): IngredientRequest {
     unit: row.unit,
     notes: row.notes,
     status: row.status as IngredientRequestStatus,
-    resolvedPlatformIngredientId: row.resolvedPlatformIngredientId,
+    resolvedIngredientId: row.resolvedIngredientId,
     reviewedByUserId: row.reviewedByUserId,
     reviewNotes: row.reviewNotes,
     createdAt: row.createdAt.toISOString(),
@@ -151,10 +151,10 @@ export async function getIngredientRequest(
 /**
  * Review an ingredient request (moderator / admin action).
  *
- * - APPROVED: resolvedPlatformIngredientId must point to the newly created
- *   (or existing) PlatformIngredient that satisfies the request.
- * - DUPLICATE: resolvedPlatformIngredientId must point to the existing ingredient.
- * - REJECTED: no resolvedPlatformIngredientId required.
+ * - APPROVED: resolvedIngredientId must point to the newly created
+ *   (or existing) Ingredient (scope=PLATFORM) that satisfies the request.
+ * - DUPLICATE: resolvedIngredientId must point to the existing ingredient.
+ * - REJECTED: no resolvedIngredientId required.
  */
 export async function reviewIngredientRequest(
   id: string,
@@ -171,10 +171,10 @@ export async function reviewIngredientRequest(
 
   if (
     (input.status === "APPROVED" || input.status === "DUPLICATE") &&
-    !input.resolvedPlatformIngredientId
+    !input.resolvedIngredientId
   ) {
     throw new Error(
-      "resolvedPlatformIngredientId is required when approving or marking as duplicate"
+      "resolvedIngredientId is required when approving or marking as duplicate"
     );
   }
 
@@ -182,7 +182,7 @@ export async function reviewIngredientRequest(
     where: { id },
     data: {
       status: input.status,
-      resolvedPlatformIngredientId: input.resolvedPlatformIngredientId ?? null,
+      resolvedIngredientId: input.resolvedIngredientId ?? null,
       reviewedByUserId,
       reviewNotes: input.reviewNotes?.trim() ?? null,
     },
