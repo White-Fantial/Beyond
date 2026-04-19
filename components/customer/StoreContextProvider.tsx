@@ -72,7 +72,8 @@ async function persistStoreId(storeId: string): Promise<void> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ storeId }),
     });
-  } catch {
+  } catch (err) {
     // Non-critical — cookie will be set by server on next navigation
+    console.warn("[StoreContextProvider] Failed to persist store context:", err);
   }
 }

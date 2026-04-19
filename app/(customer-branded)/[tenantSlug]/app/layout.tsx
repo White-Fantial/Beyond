@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import { requirePermission } from "@/lib/auth/permissions";
 import { PERMISSIONS } from "@/lib/auth/constants";
@@ -6,6 +6,7 @@ import {
   resolveCustomerStoreContext,
   getSelectableStores,
   CUSTOMER_STORE_COOKIE,
+  CUSTOMER_STORE_COOKIE_MAX_AGE,
 } from "@/lib/customer-store-context";
 import { StoreContextProvider } from "@/components/customer/StoreContextProvider";
 import { StoreSwitcher } from "@/components/customer/StoreSwitcher";
@@ -48,17 +49,21 @@ export default async function BrandedCustomerLayout({ children, params, searchPa
     redirect(`/${tenantSlug}/app/select-store`);
   }
 
-  // When ?s= resolved a store, persist in cookie and redirect without the param
+  // When ?s= resolved a store, persist in cookie and redirect to the same path
+  // without the ?s= query param to keep URLs clean.
   if (storeCode) {
-    const cookieStore2 = await cookies();
-    cookieStore2.set(CUSTOMER_STORE_COOKIE, storeCtx.storeId, {
+    // Derive the current pathname to redirect back to (without ?s=)
+    const headerStore = await headers();
+    const fullPath = headerStore.get("x-invoke-path") ?? `/${tenantSlug}/app`;
+    const pathWithoutQuery = fullPath.split("?")[0];
+
+    cookieStore.set(CUSTOMER_STORE_COOKIE, storeCtx.storeId, {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
-      maxAge: 90 * 24 * 60 * 60,
+      maxAge: CUSTOMER_STORE_COOKIE_MAX_AGE,
     });
-    // Build current URL without ?s=
-    redirect(`/${tenantSlug}/app`);
+    redirect(pathWithoutQuery);
   }
 
   // Load store options for the switcher (only needed in multi-store tenants)

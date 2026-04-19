@@ -29,7 +29,7 @@ export function StoreSelector({ tenantSlug, tenantName, stores, returnPath }: Pr
         body: JSON.stringify({ storeId }),
       });
       if (!res.ok) throw new Error("Failed to set store context");
-      router.push(`/${tenantSlug}/app`);
+      router.push(returnPath);
       router.refresh();
     } catch {
       setLoading(null);
