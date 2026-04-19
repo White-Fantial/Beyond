@@ -33,8 +33,8 @@ export default function RecipeCostBreakdown({ detail }: Props) {
   const marginAmount =
     effectivePrice !== null ? effectivePrice - detail.costPerUnit : null;
   const marginPercent =
-    effectivePrice !== null && effectivePrice > 0
-      ? Math.round((marginAmount! / effectivePrice) * 10000) / 100
+    effectivePrice !== null && effectivePrice > 0 && marginAmount !== null
+      ? Math.round((marginAmount / effectivePrice) * 10000) / 100
       : null;
 
   return (
