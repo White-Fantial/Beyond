@@ -37,11 +37,11 @@ export default function AddIngredientForm({ storeId }: Props) {
       ? autoConversion
       : parseFloat(manualConversion) || null;
 
-  // unitCost = cost per 1 recipeUnit (in minor currency units ×100)
+  // unitCost = cost per 1 recipeUnit (in millicents: 1/100000 dollar)
   // totalQty purchaseUnits × conversionFactor = total recipeUnits
   const computedUnitCost =
     totalQty > 0 && totalPrice > 0 && conversionFactor !== null && conversionFactor > 0
-      ? Math.round((exGstPrice / (totalQty * conversionFactor)) * 100)
+      ? Math.round((exGstPrice / (totalQty * conversionFactor)) * 100000)
       : null;
 
   const needsManualConversion =
@@ -238,7 +238,7 @@ export default function AddIngredientForm({ storeId }: Props) {
         </div>
         <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-gray-700">
           {computedUnitCost !== null
-            ? `${(computedUnitCost / 100).toFixed(6)} / ${INGREDIENT_UNIT_LABELS[recipeUnit]}`
+            ? `${(computedUnitCost / 100000).toFixed(6)} / ${INGREDIENT_UNIT_LABELS[recipeUnit]}`
             : "—"}
         </div>
       </div>

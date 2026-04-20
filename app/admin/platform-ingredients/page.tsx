@@ -61,7 +61,7 @@ export default async function AdminPlatformIngredientsPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-500">{ing.unit}</td>
                   <td className="px-4 py-3 text-gray-700">
-                    {ing.unitCost.toLocaleString("ko-KR")}
+                    {(ing.unitCost / 100000).toFixed(6)}
                     {ing.currency}
                   </td>
                   <td className="px-4 py-3">

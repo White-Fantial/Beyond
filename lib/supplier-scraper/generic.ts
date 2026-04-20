@@ -15,13 +15,13 @@ const DEFAULT_USER_AGENT =
 
 const SCRAPE_TIMEOUT_MS = 15_000;
 
-/** Price normalised to minor units (cents). Returns null if unparseable. */
+/** Price normalised to millicents (1/100000 dollar). Returns null if unparseable. */
 function parsePrice(raw: unknown): number | null {
   if (raw === null || raw === undefined) return null;
   const str = String(raw).replace(/[^0-9.]/g, "");
   const num = parseFloat(str);
   if (isNaN(num)) return null;
-  return Math.round(num * 100);
+  return Math.round(num * 100000);
 }
 
 /** Extract text content of the first matching JSON-LD block. */

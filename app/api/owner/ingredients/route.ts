@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   }
   if (body.unitCost === undefined || body.unitCost < 0) {
     return NextResponse.json(
-      { error: "unitCost must be a non-negative integer (minor units)" },
+      { error: "unitCost must be a non-negative integer (millicents: 1/100000 dollar)" },
       { status: 400 }
     );
   }
