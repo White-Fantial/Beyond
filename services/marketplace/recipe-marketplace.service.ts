@@ -142,6 +142,7 @@ export async function listMarketplaceRecipes(
   filters: MarketplaceRecipeFilters = {}
 ): Promise<MarketplaceRecipeListResult> {
   const {
+    q,
     type,
     status,
     cuisineTag,
@@ -158,6 +159,14 @@ export async function listMarketplaceRecipes(
     ...(cuisineTag !== undefined ? { cuisineTag } : {}),
     ...(difficulty !== undefined ? { difficulty } : {}),
     ...(providerId !== undefined ? { providerId } : {}),
+    ...(q?.trim()
+      ? {
+          OR: [
+            { title: { contains: q.trim(), mode: "insensitive" as const } },
+            { description: { contains: q.trim(), mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
   };
 
   const [rows, total] = await Promise.all([

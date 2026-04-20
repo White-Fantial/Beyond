@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
 
   const filters: MarketplaceRecipeFilters = {
+    q: searchParams.get("q") ?? undefined,
     type:
       (searchParams.get("type") as MarketplaceRecipeFilters["type"]) ??
       undefined,

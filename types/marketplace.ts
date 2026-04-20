@@ -155,6 +155,8 @@ export interface UpdateMarketplaceRecipeInput {
 }
 
 export interface MarketplaceRecipeFilters {
+  /** Full-text keyword search on title and description. */
+  q?: string;
   type?: MarketplaceRecipeType;
   status?: MarketplaceRecipeStatus;
   cuisineTag?: string;

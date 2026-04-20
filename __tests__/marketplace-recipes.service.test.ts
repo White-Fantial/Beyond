@@ -319,3 +319,90 @@ describe("deleteMarketplaceRecipe", () => {
     );
   });
 });
+
+// ─── keyword search (q filter) ───────────────────────────────────────────────
+
+describe("listMarketplaceRecipes — keyword search", () => {
+  it("applies OR filter on title and description when q is provided", async () => {
+    mockPrisma.marketplaceRecipe.findMany.mockResolvedValue([mockRecipeRow]);
+    mockPrisma.marketplaceRecipe.count.mockResolvedValue(1);
+
+    await listMarketplaceRecipes({ q: "김치" });
+
+    expect(mockPrisma.marketplaceRecipe.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([
+            expect.objectContaining({
+              title: expect.objectContaining({
+                contains: "김치",
+                mode: "insensitive",
+              }),
+            }),
+            expect.objectContaining({
+              description: expect.objectContaining({
+                contains: "김치",
+                mode: "insensitive",
+              }),
+            }),
+          ]),
+        }),
+      })
+    );
+  });
+
+  it("does not apply OR filter when q is empty string", async () => {
+    mockPrisma.marketplaceRecipe.findMany.mockResolvedValue([]);
+    mockPrisma.marketplaceRecipe.count.mockResolvedValue(0);
+
+    await listMarketplaceRecipes({ q: "" });
+
+    const callArg = mockPrisma.marketplaceRecipe.findMany.mock.calls[0][0];
+    expect(callArg.where).not.toHaveProperty("OR");
+  });
+
+  it("does not apply OR filter when q is whitespace only", async () => {
+    mockPrisma.marketplaceRecipe.findMany.mockResolvedValue([]);
+    mockPrisma.marketplaceRecipe.count.mockResolvedValue(0);
+
+    await listMarketplaceRecipes({ q: "   " });
+
+    const callArg = mockPrisma.marketplaceRecipe.findMany.mock.calls[0][0];
+    expect(callArg.where).not.toHaveProperty("OR");
+  });
+
+  it("combines q with type and status filters", async () => {
+    mockPrisma.marketplaceRecipe.findMany.mockResolvedValue([]);
+    mockPrisma.marketplaceRecipe.count.mockResolvedValue(0);
+
+    await listMarketplaceRecipes({
+      q: "파스타",
+      type: "BASIC",
+      status: "PUBLISHED",
+    });
+
+    expect(mockPrisma.marketplaceRecipe.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          type: "BASIC",
+          status: "PUBLISHED",
+          OR: expect.arrayContaining([
+            expect.objectContaining({
+              title: expect.objectContaining({ contains: "파스타" }),
+            }),
+          ]),
+        }),
+      })
+    );
+  });
+
+  it("returns empty list when no recipes match the keyword", async () => {
+    mockPrisma.marketplaceRecipe.findMany.mockResolvedValue([]);
+    mockPrisma.marketplaceRecipe.count.mockResolvedValue(0);
+
+    const result = await listMarketplaceRecipes({ q: "존재하지않는키워드" });
+
+    expect(result.items).toHaveLength(0);
+    expect(result.total).toBe(0);
+  });
+});
