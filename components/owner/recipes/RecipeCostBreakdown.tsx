@@ -4,9 +4,12 @@ import { useState } from "react";
 import type { RecipeDetail } from "@/types/owner-recipes";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
 import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
+import AddRecipeIngredientForm from "./AddRecipeIngredientForm";
 
 interface Props {
   detail: RecipeDetail;
+  /** When provided, shows the "Add Ingredient" button. */
+  canEdit?: boolean;
 }
 
 const GST_RATE = 0.1;
@@ -19,8 +22,9 @@ function formatCostRounded(minor: number) {
   return `$${(minor / 100).toFixed(2)}`;
 }
 
-export default function RecipeCostBreakdown({ detail }: Props) {
+export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
   const [sellingPriceGstIncluded, setSellingPriceGstIncluded] = useState(true);
+  const [showAddIngredient, setShowAddIngredient] = useState(false);
 
   const rawPrice = detail.catalogProductPrice;
   const effectivePrice =
@@ -104,10 +108,18 @@ export default function RecipeCostBreakdown({ detail }: Props) {
 
       {/* Ingredient breakdown */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
+        <div className="px-5 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
             Ingredients
           </h3>
+          {canEdit && !showAddIngredient && (
+            <button
+              onClick={() => setShowAddIngredient(true)}
+              className="text-xs font-medium text-brand-600 hover:text-brand-700 transition"
+            >
+              + 재료 추가
+            </button>
+          )}
         </div>
         {detail.ingredients.length === 0 ? (
           <div className="p-6 text-center text-sm text-gray-400">
@@ -153,6 +165,14 @@ export default function RecipeCostBreakdown({ detail }: Props) {
               </tr>
             </tbody>
           </table>
+        )}
+        {canEdit && showAddIngredient && (
+          <AddRecipeIngredientForm
+            recipeId={detail.id}
+            storeId={detail.storeId}
+            currentIngredients={detail.ingredients}
+            onClose={() => setShowAddIngredient(false)}
+          />
         )}
       </div>
 
