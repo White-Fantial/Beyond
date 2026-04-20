@@ -31,7 +31,7 @@ export default async function RecipeDetailPage({ params }: Props) {
             </span>
           )}
         </div>
-        <RecipeCostBreakdown detail={detail} />
+        <RecipeCostBreakdown detail={detail} canEdit />
       </div>
     );
   } catch {
