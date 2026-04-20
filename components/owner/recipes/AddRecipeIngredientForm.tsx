@@ -33,6 +33,8 @@ export default function AddRecipeIngredientForm({
   useEffect(() => {
     async function load() {
       try {
+        // pageSize=500 handles most stores. Stores with more than 500 ingredients
+        // will only see the first 500 in this selector.
         const res = await fetch(`/api/owner/ingredients?storeId=${storeId}&pageSize=500`);
         if (res.ok) {
           const json = await res.json();

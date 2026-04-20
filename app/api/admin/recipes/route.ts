@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "yieldQty must be at least 1" }, { status: 400 });
   }
   if (!body.yieldUnit || !VALID_YIELD_UNITS.includes(body.yieldUnit as RecipeYieldUnit)) {
-    return NextResponse.json({ error: `yieldUnit must be one of: ${VALID_YIELD_UNITS.join(", ")}` }, { status: 400 });
+    return NextResponse.json({ error: "Invalid yieldUnit provided" }, { status: 400 });
   }
 
   // Look up the tenantId from the store
