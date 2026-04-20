@@ -40,7 +40,7 @@ const mockPublishedPremium = {
   status: "PUBLISHED",
   providerId: PROVIDER_ID,
   salePrice: 5000,
-  currency: "KRW",
+  currency: "USD",
 };
 
 const mockBasicRecipe = {
@@ -49,7 +49,7 @@ const mockBasicRecipe = {
   status: "PUBLISHED",
   providerId: null,
   salePrice: 0,
-  currency: "KRW",
+  currency: "USD",
 };
 
 const mockPurchaseRow = {
@@ -58,7 +58,7 @@ const mockPurchaseRow = {
   buyerUserId: BUYER_ID,
   tenantId: null,
   pricePaid: 5000,
-  currency: "KRW",
+  currency: "USD",
   paymentRef: null,
   purchasedAt: new Date("2026-02-01"),
   refundedAt: null,

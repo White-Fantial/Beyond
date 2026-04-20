@@ -112,7 +112,7 @@ export async function createPlatformIngredient(
       purchaseUnit: input.purchaseUnit,
       unit: input.unit,
       unitCost: input.unitCost,
-      currency: input.currency ?? "KRW",
+      currency: input.currency ?? "USD",
       isActive: true,
       createdByUserId,
     },

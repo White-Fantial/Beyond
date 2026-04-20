@@ -252,7 +252,7 @@ export async function createMarketplaceRecipe(
       difficulty: input.difficulty ?? null,
       prepTimeMinutes: input.prepTimeMinutes ?? null,
       cookTimeMinutes: input.cookTimeMinutes ?? null,
-      currency: input.currency ?? "KRW",
+      currency: input.currency ?? "USD",
       recommendedPrice: input.recommendedPrice ?? 0,
       salePrice: input.type === "BASIC" ? 0 : (input.salePrice ?? 0),
       publishedAt: initialStatus === "PUBLISHED" ? new Date() : null,

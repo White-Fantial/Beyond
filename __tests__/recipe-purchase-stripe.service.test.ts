@@ -54,7 +54,7 @@ const mockRecipe = {
   type: "PREMIUM",
   status: "PUBLISHED",
   salePrice: 10000,
-  currency: "KRW",
+  currency: "USD",
   providerId: PROVIDER_ID,
   title: "테스트 레시피",
 };
@@ -70,7 +70,7 @@ const mockPurchaseRow = {
   buyerUserId: BUYER_ID,
   tenantId: null,
   pricePaid: 10000,
-  currency: "KRW",
+  currency: "USD",
   paymentRef: null,
   stripePaymentIntentId: PI_ID,
   platformFeeAmount: 1000,
@@ -106,7 +106,7 @@ describe("createPurchaseIntent", () => {
     expect(mockCreateIntent).toHaveBeenCalledWith(
       expect.objectContaining({
         amount: 10000,
-        currency: "KRW",
+        currency: "USD",
         providerAccountId: "acct_test",
         recipeId: RECIPE_ID,
         buyerUserId: BUYER_ID,
@@ -183,7 +183,7 @@ describe("handlePurchaseWebhook", () => {
       object: {
         id: PI_ID,
         amount: 10000,
-        currency: "krw",
+        currency: "usd",
         metadata: {
           recipeId: overrides?.recipeId ?? RECIPE_ID,
           buyerUserId: overrides?.buyerUserId ?? BUYER_ID,
@@ -196,7 +196,7 @@ describe("handlePurchaseWebhook", () => {
     mockPrisma.marketplaceRecipePurchase.findFirst.mockResolvedValue(null);
     mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue({
       salePrice: 10000,
-      currency: "KRW",
+      currency: "USD",
       providerId: PROVIDER_ID,
     });
     mockPrisma.user.findUnique.mockResolvedValue(mockProvider);
@@ -252,7 +252,7 @@ describe("handlePurchaseWebhook", () => {
     mockPrisma.marketplaceRecipePurchase.findFirst.mockResolvedValue(null);
     mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue({
       salePrice: 10000,
-      currency: "KRW",
+      currency: "USD",
       providerId: PROVIDER_ID,
     });
     mockPrisma.user.findUnique.mockResolvedValue(mockProvider);
@@ -273,7 +273,7 @@ describe("handlePurchaseWebhook", () => {
     mockPrisma.marketplaceRecipePurchase.findFirst.mockResolvedValue(null);
     mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue({
       salePrice: 10000,
-      currency: "KRW",
+      currency: "USD",
       providerId: PROVIDER_ID,
     });
     mockPrisma.user.findUnique.mockResolvedValue({
@@ -296,7 +296,7 @@ describe("handlePurchaseWebhook", () => {
         object: {
           id: PI_ID,
           amount: 10000,
-          currency: "krw",
+          currency: "usd",
           metadata: { recipeId: RECIPE_ID, buyerUserId: BUYER_ID },
         },
       },
@@ -316,7 +316,7 @@ describe("handlePurchaseWebhook", () => {
           object: {
             id: PI_ID,
             amount: 10000,
-            currency: "krw",
+            currency: "usd",
             metadata: { recipeId: "", buyerUserId: "" },
           },
         },

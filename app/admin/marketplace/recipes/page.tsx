@@ -89,7 +89,7 @@ export default async function AdminMarketplaceRecipesPage() {
                 <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">
                   {r.type === "BASIC"
                     ? "무료"
-                    : `${r.salePrice.toLocaleString("ko-KR")}원`}
+                    : `${r.salePrice.toLocaleString("en-US", { style: "currency", currency: "USD" })}`}
                 </td>
                 <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell">
                   {new Date(r.createdAt).toLocaleDateString("ko-KR")}

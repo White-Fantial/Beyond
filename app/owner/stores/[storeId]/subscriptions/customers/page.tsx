@@ -49,7 +49,7 @@ export default async function SubscriptionCustomersPage({ params }: Props) {
                     </td>
                     <td className="px-4 py-3 text-right text-gray-700">
                       {c.totalMonthlyAmountMinorUnit > 0
-                        ? `₩${(c.totalMonthlyAmountMinorUnit / 100).toLocaleString()}`
+                        ? `$${(c.totalMonthlyAmountMinorUnit / 100).toLocaleString("en-US")}`
                         : "-"}
                     </td>
                   </tr>

@@ -59,7 +59,7 @@ export default function ProviderRecipeList({ recipes }: ProviderRecipeListProps)
                 </span>
               </td>
               <td className="px-4 py-3 text-gray-600 hidden sm:table-cell">
-                {r.salePrice.toLocaleString("ko-KR")}원
+                {r.salePrice.toLocaleString("en-US", { style: "currency", currency: "USD" })}
               </td>
               <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
                 {new Date(r.createdAt).toLocaleDateString("ko-KR")}
