@@ -37,7 +37,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
   let total = 0;
 
   const where = {
-    deletedAt: null as null,
+    deletedAt: null,
     ...(selectedStoreId ? { storeId: selectedStoreId } : {}),
   };
 

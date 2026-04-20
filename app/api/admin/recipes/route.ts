@@ -5,7 +5,10 @@ import {
   listRecipes,
   createRecipe,
 } from "@/services/owner/owner-recipes.service";
-import type { CreateRecipeInput } from "@/types/owner-recipes";
+import type { CreateRecipeInput, RecipeYieldUnit } from "@/types/owner-recipes";
+import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
+
+const VALID_YIELD_UNITS = Object.keys(RECIPE_YIELD_UNIT_LABELS) as RecipeYieldUnit[];
 
 export async function GET(req: NextRequest) {
   await requirePlatformAdmin();
@@ -84,6 +87,9 @@ export async function POST(req: NextRequest) {
   }
   if (!body.yieldQty || body.yieldQty < 1) {
     return NextResponse.json({ error: "yieldQty must be at least 1" }, { status: 400 });
+  }
+  if (!body.yieldUnit || !VALID_YIELD_UNITS.includes(body.yieldUnit as RecipeYieldUnit)) {
+    return NextResponse.json({ error: `yieldUnit must be one of: ${VALID_YIELD_UNITS.join(", ")}` }, { status: 400 });
   }
 
   // Look up the tenantId from the store

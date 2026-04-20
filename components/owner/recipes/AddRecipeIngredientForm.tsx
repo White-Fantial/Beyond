@@ -33,7 +33,7 @@ export default function AddRecipeIngredientForm({
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/owner/ingredients?storeId=${storeId}&pageSize=200`);
+        const res = await fetch(`/api/owner/ingredients?storeId=${storeId}&pageSize=500`);
         if (res.ok) {
           const json = await res.json();
           setIngredients(json.data?.items ?? []);
