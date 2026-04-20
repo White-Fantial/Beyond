@@ -46,8 +46,8 @@ export default async function OwnerDashboardPage() {
 
       {/* Sales KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <KpiCard label="Today's Revenue" value={`₩${(summary?.todaySales ?? 0).toLocaleString()}`} sub="Today Sales" />
-        <KpiCard label="This Week's Revenue" value={`₩${(summary?.thisWeekSales ?? 0).toLocaleString()}`} sub="This Week Sales" />
+        <KpiCard label="Today's Revenue" value={`$${(summary?.todaySales ?? 0).toLocaleString("en-US")}`} sub="Today Sales" />
+        <KpiCard label="This Week's Revenue" value={`$${(summary?.thisWeekSales ?? 0).toLocaleString("en-US")}`} sub="This Week Sales" />
         <KpiCard label="Today's Orders" value={summary?.ordersToday ?? 0} sub="Orders Today" />
         <KpiCard label="Sold Out Items" value={summary?.soldOutItemsCount ?? 0} sub="Sold Out Items" />
       </div>

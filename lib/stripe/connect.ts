@@ -227,7 +227,7 @@ export async function createProviderTransfer(params: {
  */
 export async function createRecipePaymentIntent(params: {
   amount: number;         // total in minor currency units
-  currency: string;       // e.g. "KRW"
+  currency: string;       // e.g. "USD"
   providerAccountId: string;
   recipeId: string;
   buyerUserId: string;

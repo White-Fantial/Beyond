@@ -56,7 +56,7 @@ const mockRecipeRow = {
   difficulty: "EASY",
   prepTimeMinutes: 10,
   cookTimeMinutes: 20,
-  currency: "KRW",
+  currency: "USD",
   estimatedCostPrice: 0,
   recommendedPrice: 5000,
   salePrice: 4500,

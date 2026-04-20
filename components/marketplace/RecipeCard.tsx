@@ -71,7 +71,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
             <span className="text-sm font-semibold text-green-600">무료</span>
           ) : (
             <span className="text-sm font-semibold text-gray-900">
-              {recipe.salePrice.toLocaleString("ko-KR")}원
+              {recipe.salePrice.toLocaleString("en-US", { style: "currency", currency: "USD" })}
             </span>
           )}
 

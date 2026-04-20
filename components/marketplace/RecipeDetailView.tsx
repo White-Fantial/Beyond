@@ -82,12 +82,12 @@ export default function RecipeDetailView({
             <div>
               <p className="text-sm text-amber-700 font-medium">판매가</p>
               <p className="text-2xl font-bold text-amber-900">
-                {recipe.salePrice.toLocaleString("ko-KR")}원
+                {recipe.salePrice.toLocaleString("en-US", { style: "currency", currency: "USD" })}
               </p>
             </div>
             <div className="text-right text-sm text-amber-600">
-              <p>원가: {recipe.estimatedCostPrice.toLocaleString("ko-KR")}원</p>
-              <p>권장가: {recipe.recommendedPrice.toLocaleString("ko-KR")}원</p>
+              <p>원가: {recipe.estimatedCostPrice.toLocaleString("en-US", { style: "currency", currency: "USD" })}</p>
+              <p>권장가: {recipe.recommendedPrice.toLocaleString("en-US", { style: "currency", currency: "USD" })}</p>
             </div>
           </div>
 
@@ -105,7 +105,7 @@ export default function RecipeDetailView({
                   window.location.reload();
                 }}
               >
-                구매하기 ({recipe.salePrice.toLocaleString("ko-KR")}원)
+                구매하기 ({recipe.salePrice.toLocaleString("en-US", { style: "currency", currency: "USD" })})
               </button>
             </div>
           )}

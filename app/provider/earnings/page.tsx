@@ -33,8 +33,8 @@ export default async function ProviderEarningsPage() {
     getProviderStripeStatus(ctx.userId),
   ]);
 
-  const formatAmount = (amount: number, currency: string) =>
-    new Intl.NumberFormat("ko-KR", { style: "currency", currency }).format(amount);
+  const formatAmount = (amount: number, _currency: string) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
@@ -77,19 +77,19 @@ export default async function ProviderEarningsPage() {
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <p className="text-xs text-gray-500">총 매출</p>
           <p className="text-lg font-bold text-gray-900 mt-1">
-            {formatAmount(summary.totalRevenue, summary.currency || "KRW")}
+            {formatAmount(summary.totalRevenue, summary.currency || "USD")}
           </p>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <p className="text-xs text-gray-500">내 수익 (10% 수수료 제외)</p>
           <p className="text-lg font-bold text-green-700 mt-1">
-            {formatAmount(summary.totalPayoutAmount, summary.currency || "KRW")}
+            {formatAmount(summary.totalPayoutAmount, summary.currency || "USD")}
           </p>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <p className="text-xs text-gray-500">정산 대기</p>
           <p className="text-lg font-bold text-orange-600 mt-1">
-            {formatAmount(summary.pendingPayoutAmount, summary.currency || "KRW")}
+            {formatAmount(summary.pendingPayoutAmount, summary.currency || "USD")}
           </p>
         </div>
       </div>

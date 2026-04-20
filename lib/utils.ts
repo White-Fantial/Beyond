@@ -2,10 +2,10 @@ export function cn(...classes: (string | undefined | null | false)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-export function formatKRW(amount: number): string {
-  return new Intl.NumberFormat("ko-KR", {
+export function formatUSD(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "KRW",
+    currency: "USD",
   }).format(amount);
 }
 

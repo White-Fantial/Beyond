@@ -46,7 +46,7 @@ export default function RecipeForm({
     initial?.recommendedPrice ?? 0
   );
   const [salePrice, setSalePrice] = useState(initial?.salePrice ?? 0);
-  const [currency] = useState(initial?.currency ?? "KRW");
+  const [currency] = useState(initial?.currency ?? "USD");
 
   const [steps, setSteps] = useState<MarketplaceRecipeStepInput[]>(
     initial?.steps.map((s) => ({
@@ -311,7 +311,7 @@ export default function RecipeForm({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              권장 판매가 (원)
+              권장 판매가 ($)
             </label>
             <input
               type="number"
@@ -323,7 +323,7 @@ export default function RecipeForm({
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              실제 판매가 (원)
+              실제 판매가 ($)
             </label>
             <input
               type="number"

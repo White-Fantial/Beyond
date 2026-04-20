@@ -54,10 +54,10 @@ function PendingRecipeRow({ recipe }: PendingRecipeRowProps) {
         </div>
         <div className="text-right text-sm shrink-0">
           <p className="font-semibold text-gray-900">
-            {recipe.salePrice.toLocaleString("ko-KR")}원
+            {recipe.salePrice.toLocaleString("en-US", { style: "currency", currency: "USD" })}
           </p>
           <p className="text-xs text-gray-400">
-            권장: {recipe.recommendedPrice.toLocaleString("ko-KR")}원
+            권장: {recipe.recommendedPrice.toLocaleString("en-US", { style: "currency", currency: "USD" })}
           </p>
         </div>
       </div>

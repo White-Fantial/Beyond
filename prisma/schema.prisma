@@ -3352,7 +3352,7 @@ model Ingredient {
   category         String?         // e.g. "채소", "육류", "유제품" — mainly for PLATFORM scope
   unit             IngredientUnit  @default(GRAM)
   unitCost         Int             @default(0) // minor currency units (e.g. cents)
-  currency         String          @default("KRW")
+  currency         String          @default("USD")
   isActive         Boolean         @default(true)
   createdByUserId  String?         // set for PLATFORM scope (admin/moderator who created it)
   notes            String?
@@ -3577,7 +3577,7 @@ model MarketplaceRecipe {
   cookTimeMinutes    Int?
 
   // Pricing (minor currency units)
-  currency           String  @default("KRW")
+  currency           String  @default("USD")
   estimatedCostPrice Int     @default(0) // auto-computed from ingredients
   recommendedPrice   Int     @default(0) // provider's suggested price
   salePrice          Int     @default(0) // actual listed price (0 for BASIC)
@@ -3672,7 +3672,7 @@ model MarketplaceRecipePurchase {
   buyerUserId String
   tenantId    String?
   pricePaid   Int      @default(0) // minor currency units
-  currency    String   @default("KRW")
+  currency    String   @default("USD")
   paymentRef  String?
 
   // Stripe Payment

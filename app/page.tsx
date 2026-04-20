@@ -463,9 +463,9 @@ const costFeatures = [
 ];
 
 const costCards = [
-  { label: "Chicken Burger Recipe Cost", value: "₩3,420 / serving", delta: "▼ 5.2%", positive: true },
-  { label: "Avocado Toast Cost", value: "₩2,180 / serving", delta: "▲ 1.8%", positive: false },
-  { label: "Signature Latte Cost", value: "₩890 / cup", delta: "▼ 2.1%", positive: true },
+  { label: "Chicken Burger Recipe Cost", value: "$3.42 / serving", delta: "▼ 5.2%", positive: true },
+  { label: "Avocado Toast Cost", value: "$2.18 / serving", delta: "▲ 1.8%", positive: false },
+  { label: "Signature Latte Cost", value: "$0.89 / cup", delta: "▼ 2.1%", positive: true },
   { label: "Avg. Food Cost Ratio", value: "28.4%", delta: "▼ 1.3pp", positive: true },
 ];
 
