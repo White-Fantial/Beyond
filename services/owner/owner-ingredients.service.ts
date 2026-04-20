@@ -24,6 +24,7 @@ function toIngredient(row: {
   name: string;
   description: string | null;
   category: string | null;
+  purchaseUnit: string;
   unit: string;
   unitCost: number;
   currency: string;
@@ -41,6 +42,7 @@ function toIngredient(row: {
     name: row.name,
     description: row.description,
     category: row.category,
+    purchaseUnit: row.purchaseUnit as IngredientUnit,
     unit: row.unit as IngredientUnit,
     unitCost: row.unitCost,
     currency: row.currency,
@@ -103,6 +105,7 @@ export async function createIngredient(
       name: input.name,
       description: input.description ?? null,
       category: input.category ?? null,
+      purchaseUnit: input.purchaseUnit,
       unit: input.unit,
       unitCost: input.unitCost,
       currency: input.currency ?? "KRW",
@@ -128,6 +131,7 @@ export async function updateIngredient(
       ...(input.name !== undefined ? { name: input.name } : {}),
       ...(input.description !== undefined ? { description: input.description } : {}),
       ...(input.category !== undefined ? { category: input.category } : {}),
+      ...(input.purchaseUnit !== undefined ? { purchaseUnit: input.purchaseUnit } : {}),
       ...(input.unit !== undefined ? { unit: input.unit } : {}),
       ...(input.unitCost !== undefined ? { unitCost: input.unitCost } : {}),
       ...(input.currency !== undefined ? { currency: input.currency } : {}),

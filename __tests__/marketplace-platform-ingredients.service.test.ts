@@ -41,6 +41,7 @@ const mockIngredient = {
   name: "소금",
   description: null,
   category: "조미료",
+  purchaseUnit: "KG",
   unit: "GRAM",
   unitCost: 2,
   currency: "KRW",
@@ -136,6 +137,7 @@ describe("createPlatformIngredient", () => {
 
     const result = await createPlatformIngredient(CREATOR_ID, {
       name: "소금",
+      purchaseUnit: "KG",
       unit: "GRAM",
       unitCost: 2,
       category: "조미료",
@@ -165,6 +167,7 @@ describe("createPlatformIngredient", () => {
 
     const result = await createPlatformIngredient(CREATOR_ID, {
       name: "설탕",
+      purchaseUnit: "KG",
       unit: "GRAM",
       unitCost: 3,
     });

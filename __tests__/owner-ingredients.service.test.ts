@@ -42,6 +42,7 @@ const mockIngredient = {
   name: "Bread Flour",
   description: null,
   category: null,
+  purchaseUnit: "KG",
   unit: "GRAM",
   unitCost: 5,
   currency: "KRW",
@@ -124,6 +125,7 @@ describe("getIngredient", () => {
     const result = await getIngredient(TENANT, "ing-1");
 
     expect(result.id).toBe("ing-1");
+    expect(result.purchaseUnit).toBe("KG");
     expect(result.unit).toBe("GRAM");
   });
 
@@ -143,6 +145,7 @@ describe("createIngredient", () => {
     const result = await createIngredient(TENANT, {
       storeId: STORE,
       name: "Bread Flour",
+      purchaseUnit: "KG",
       unit: "GRAM",
       unitCost: 5,
     });
@@ -154,6 +157,7 @@ describe("createIngredient", () => {
         data: expect.objectContaining({
           tenantId: TENANT,
           storeId: STORE,
+          purchaseUnit: "KG",
           unit: "GRAM",
           unitCost: 5,
         }),
@@ -167,6 +171,7 @@ describe("createIngredient", () => {
     await createIngredient(TENANT, {
       storeId: STORE,
       name: "Salt",
+      purchaseUnit: "KG",
       unit: "GRAM",
       unitCost: 1,
     });

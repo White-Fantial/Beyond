@@ -45,10 +45,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = (await req.json()) as Pick<CreateIngredientInput, "name" | "description" | "category" | "unit" | "unitCost" | "currency">;
+  const body = (await req.json()) as Pick<CreateIngredientInput, "name" | "description" | "category" | "purchaseUnit" | "unit" | "unitCost" | "currency">;
 
   if (!body.name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
+  }
+  if (!body.purchaseUnit) {
+    return NextResponse.json({ error: "purchaseUnit is required" }, { status: 400 });
   }
   if (!body.unit) {
     return NextResponse.json({ error: "unit is required" }, { status: 400 });
