@@ -7,14 +7,14 @@ interface Props {
 }
 
 function formatCost(minor: number, currency: string) {
-  return `${(minor / 100).toFixed(2)} ${currency}`;
+  return `${(minor / 100).toFixed(4)} ${currency}`;
 }
 
 export default function IngredientTable({ items }: Props) {
   if (items.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-sm text-gray-500">
-        No ingredients yet. Add one above.
+        재료가 없습니다. 위에서 추가해주세요.
       </div>
     );
   }
@@ -25,10 +25,11 @@ export default function IngredientTable({ items }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-gray-500 bg-gray-50 border-b border-gray-100">
-              <th className="px-5 py-3 text-left font-medium">Name</th>
-              <th className="px-5 py-3 text-left font-medium">Unit</th>
+              <th className="px-5 py-3 text-left font-medium">이름</th>
+              <th className="px-5 py-3 text-left font-medium">구매 단위</th>
+              <th className="px-5 py-3 text-left font-medium">레시피 단위</th>
               <th className="px-5 py-3 text-right font-medium">Unit Cost (ex-GST)</th>
-              <th className="px-5 py-3 text-left font-medium">Notes</th>
+              <th className="px-5 py-3 text-left font-medium">메모</th>
               <th className="px-5 py-3" />
             </tr>
           </thead>
@@ -37,10 +38,14 @@ export default function IngredientTable({ items }: Props) {
               <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-5 py-3 font-medium text-gray-900">{item.name}</td>
                 <td className="px-5 py-3 text-gray-600">
+                  {INGREDIENT_UNIT_LABELS[item.purchaseUnit] ?? item.purchaseUnit}
+                </td>
+                <td className="px-5 py-3 text-gray-600">
                   {INGREDIENT_UNIT_LABELS[item.unit] ?? item.unit}
                 </td>
                 <td className="px-5 py-3 text-right text-gray-700">
-                  {formatCost(item.unitCost, item.currency)}
+                  {formatCost(item.unitCost, item.currency)}&nbsp;/&nbsp;
+                  {INGREDIENT_UNIT_LABELS[item.unit] ?? item.unit}
                 </td>
                 <td className="px-5 py-3 text-gray-500 truncate max-w-xs">
                   {item.notes ?? "—"}
@@ -50,7 +55,7 @@ export default function IngredientTable({ items }: Props) {
                     href={`/owner/ingredients/${item.id}`}
                     className="text-brand-600 hover:text-brand-800 text-xs font-medium"
                   >
-                    Edit
+                    편집
                   </Link>
                 </td>
               </tr>
