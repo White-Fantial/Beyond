@@ -16,6 +16,7 @@ frontend:
         - echo "===== env file check ====="
         - cat .env.production | sed 's/=.*/=***hidden***/'
         - node -e "console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)"
+        - npm run db:deploy
         - npm run build
   artifacts:
     baseDirectory: .next
