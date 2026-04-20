@@ -44,7 +44,7 @@ const mockIngredient = {
   category: null,
   unit: "GRAM",
   unitCost: 5,
-  currency: "KRW",
+  currency: "USD",
   isActive: true,
   createdByUserId: null,
   notes: null,
@@ -161,7 +161,7 @@ describe("createIngredient", () => {
     );
   });
 
-  it("defaults currency to KRW", async () => {
+  it("defaults currency to USD", async () => {
     mockPrisma.ingredient.create.mockResolvedValue(mockIngredient);
 
     await createIngredient(TENANT, {
@@ -173,7 +173,7 @@ describe("createIngredient", () => {
 
     expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ currency: "KRW" }),
+        data: expect.objectContaining({ currency: "USD" }),
       })
     );
   });

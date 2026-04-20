@@ -21,7 +21,7 @@ export default function CreateTenantDialog({ open, onClose }: Props) {
     legalName: "",
     displayName: "",
     timezone: "Asia/Seoul",
-    currency: "KRW",
+    currency: "USD",
     countryCode: "KR",
     status: "ACTIVE",
   });

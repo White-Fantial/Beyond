@@ -239,7 +239,7 @@ describe("updateOwnerTenantSettings", () => {
     await updateOwnerTenantSettings({
       tenantId: TENANT_ID,
       actorUserId: USER_ID,
-      data: { currency: "KRW" },
+      data: { currency: "USD" },
     });
 
     expect(mockLogAudit).toHaveBeenCalledWith(

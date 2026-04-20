@@ -105,7 +105,7 @@ export async function createIngredient(
       category: input.category ?? null,
       unit: input.unit,
       unitCost: input.unitCost,
-      currency: input.currency ?? "KRW",
+      currency: input.currency ?? "USD",
       notes: input.notes ?? null,
     },
   });

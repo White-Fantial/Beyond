@@ -101,17 +101,17 @@ export default function DashboardPage() {
 }
 
 const stats = [
-  { label: "Today's Revenue", value: "₩2,450,000", change: "+12.5%", icon: "💰" },
+  { label: "Today's Revenue", value: "$1,885", change: "+12.5%", icon: "💰" },
   { label: "Today's Orders", value: "87", change: "+8.2%", icon: "📦" },
   { label: "Pending", value: "3", change: "-2", icon: "⏳" },
   { label: "Active Stores", value: "2 more", change: "+0", icon: "🏪" },
 ];
 
 const recentOrders = [
-  { id: "#ORD-2024-001", channel: "Uber Eats", time: "10분 전", amount: "₩28,000", status: "Processing" },
-  { id: "#ORD-2024-002", channel: "DoorDash", time: "23분 전", amount: "₩45,000", status: "Completed" },
-  { id: "#ORD-2024-003", channel: "POS (In-store)", time: "35분 전", amount: "₩18,500", status: "Completed" },
-  { id: "#ORD-2024-004", channel: "Online Order", time: "1Time 전", amount: "₩67,000", status: "Completed" },
+  { id: "#ORD-2024-001", channel: "Uber Eats", time: "10분 전", amount: "$22", status: "Processing" },
+  { id: "#ORD-2024-002", channel: "DoorDash", time: "23분 전", amount: "$35", status: "Completed" },
+  { id: "#ORD-2024-003", channel: "POS (In-store)", time: "35분 전", amount: "$14", status: "Completed" },
+  { id: "#ORD-2024-004", channel: "Online Order", time: "1Time 전", amount: "$52", status: "Completed" },
 ];
 
 const channels = [

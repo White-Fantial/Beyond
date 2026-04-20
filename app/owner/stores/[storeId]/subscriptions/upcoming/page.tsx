@@ -50,7 +50,7 @@ export default async function UpcomingSubscriptionsPage({ params }: Props) {
                     </td>
                     <td className="px-4 py-3 text-right text-gray-700">
                       {row.expectedAmountMinorUnit > 0
-                        ? `₩${(row.expectedAmountMinorUnit / 100).toLocaleString()}`
+                        ? `$${(row.expectedAmountMinorUnit / 100).toLocaleString("en-US")}`
                         : "-"}
                     </td>
                     <td className="px-4 py-3 text-center">

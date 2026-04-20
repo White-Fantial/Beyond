@@ -29,7 +29,7 @@ const mockPurchaseRow = {
   recipeId: "recipe-1",
   buyerUserId: "buyer-1",
   pricePaid: 10000,
-  currency: "KRW",
+  currency: "USD",
   platformFeeAmount: 1000,
   providerPayoutAmount: 9000,
   payoutStatus: "TRANSFERRED",
@@ -119,14 +119,14 @@ describe("getEarningsSummary", () => {
     mockPrisma.marketplaceRecipePurchase.findMany.mockResolvedValue([
       {
         pricePaid: 10000,
-        currency: "KRW",
+        currency: "USD",
         platformFeeAmount: 1000,
         providerPayoutAmount: 9000,
         payoutStatus: "TRANSFERRED",
       },
       {
         pricePaid: 5000,
-        currency: "KRW",
+        currency: "USD",
         platformFeeAmount: 500,
         providerPayoutAmount: 4500,
         payoutStatus: "PENDING",

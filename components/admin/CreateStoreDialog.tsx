@@ -23,7 +23,7 @@ export default function CreateStoreDialog({ open, onClose, tenantId }: Props) {
     name: "",
     displayName: "",
     timezone: "Asia/Seoul",
-    currency: "KRW",
+    currency: "USD",
     countryCode: "KR",
     status: "ACTIVE",
   });

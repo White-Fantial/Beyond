@@ -48,7 +48,7 @@ function toEarningItem(row: RawPurchase): ProviderEarningItem {
 }
 
 function computeSummary(items: ProviderEarningItem[]): ProviderEarningsSummary {
-  const currency = items[0]?.currency ?? "KRW";
+  const currency = items[0]?.currency ?? "USD";
   let totalRevenue = 0;
   let totalPlatformFees = 0;
   let totalPayoutAmount = 0;
