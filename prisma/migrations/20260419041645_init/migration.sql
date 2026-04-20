@@ -1,293 +1,581 @@
 -- CreateEnum
-CREATE TYPE "CatalogSourceType" AS ENUM ('POS', 'DELIVERY', 'LOCAL', 'MERGED', 'IMPORTED');
+DO $$ BEGIN
+  CREATE TYPE "CatalogSourceType" AS ENUM ('POS', 'DELIVERY', 'LOCAL', 'MERGED', 'IMPORTED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogOriginType" AS ENUM ('BEYOND_CREATED', 'IMPORTED_FROM_POS', 'IMPORTED_FROM_DELIVERY', 'IMPORTED_FROM_OTHER');
+DO $$ BEGIN
+  CREATE TYPE "CatalogOriginType" AS ENUM ('BEYOND_CREATED', 'IMPORTED_FROM_POS', 'IMPORTED_FROM_DELIVERY', 'IMPORTED_FROM_OTHER');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogChannelType" AS ENUM ('LOYVERSE', 'UBER_EATS', 'DOORDASH', 'ONLINE_ORDER', 'SUBSCRIPTION', 'OTHER');
+DO $$ BEGIN
+  CREATE TYPE "CatalogChannelType" AS ENUM ('LOYVERSE', 'UBER_EATS', 'DOORDASH', 'ONLINE_ORDER', 'SUBSCRIPTION', 'OTHER');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogEntityType" AS ENUM ('CATEGORY', 'PRODUCT', 'MODIFIER_GROUP', 'MODIFIER_OPTION');
+DO $$ BEGIN
+  CREATE TYPE "CatalogEntityType" AS ENUM ('CATEGORY', 'PRODUCT', 'MODIFIER_GROUP', 'MODIFIER_OPTION');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "MappingStatus" AS ENUM ('ACTIVE', 'BROKEN', 'PENDING', 'DISCONNECTED');
+DO $$ BEGIN
+  CREATE TYPE "MappingStatus" AS ENUM ('ACTIVE', 'BROKEN', 'PENDING', 'DISCONNECTED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogMappingStatus" AS ENUM ('ACTIVE', 'NEEDS_REVIEW', 'UNMATCHED', 'BROKEN', 'ARCHIVED');
+DO $$ BEGIN
+  CREATE TYPE "CatalogMappingStatus" AS ENUM ('ACTIVE', 'NEEDS_REVIEW', 'UNMATCHED', 'BROKEN', 'ARCHIVED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogMappingSource" AS ENUM ('AUTO', 'MANUAL', 'IMPORT_SEEDED');
+DO $$ BEGIN
+  CREATE TYPE "CatalogMappingSource" AS ENUM ('AUTO', 'MANUAL', 'IMPORT_SEEDED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "TenantStatus" AS ENUM ('ACTIVE', 'TRIAL', 'SUSPENDED', 'ARCHIVED');
+DO $$ BEGIN
+  CREATE TYPE "TenantStatus" AS ENUM ('ACTIVE', 'TRIAL', 'SUSPENDED', 'ARCHIVED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INVITED', 'SUSPENDED', 'ARCHIVED');
+DO $$ BEGIN
+  CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'INVITED', 'SUSPENDED', 'ARCHIVED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "PlatformRole" AS ENUM ('USER', 'PLATFORM_ADMIN', 'PLATFORM_SUPPORT', 'RECIPE_PROVIDER', 'PLATFORM_MODERATOR');
+DO $$ BEGIN
+  CREATE TYPE "PlatformRole" AS ENUM ('USER', 'PLATFORM_ADMIN', 'PLATFORM_SUPPORT', 'RECIPE_PROVIDER', 'PLATFORM_MODERATOR');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "ProviderApplicationStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+DO $$ BEGIN
+  CREATE TYPE "ProviderApplicationStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "RecipePayoutStatus" AS ENUM ('PENDING', 'TRANSFERRED', 'FAILED');
+DO $$ BEGIN
+  CREATE TYPE "RecipePayoutStatus" AS ENUM ('PENDING', 'TRANSFERRED', 'FAILED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "MembershipRole" AS ENUM ('OWNER', 'ADMIN', 'MANAGER', 'STAFF', 'ANALYST');
+DO $$ BEGIN
+  CREATE TYPE "MembershipRole" AS ENUM ('OWNER', 'ADMIN', 'MANAGER', 'STAFF', 'ANALYST');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "MembershipStatus" AS ENUM ('INVITED', 'ACTIVE', 'SUSPENDED', 'REMOVED');
+DO $$ BEGIN
+  CREATE TYPE "MembershipStatus" AS ENUM ('INVITED', 'ACTIVE', 'SUSPENDED', 'REMOVED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "StoreStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'ARCHIVED');
+DO $$ BEGIN
+  CREATE TYPE "StoreStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'ARCHIVED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "StoreRole" AS ENUM ('OWNER', 'ADMIN', 'MANAGER', 'SUPERVISOR', 'STAFF');
+DO $$ BEGIN
+  CREATE TYPE "StoreRole" AS ENUM ('OWNER', 'ADMIN', 'MANAGER', 'SUPERVISOR', 'STAFF');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "StoreMembershipStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'REMOVED');
+DO $$ BEGIN
+  CREATE TYPE "StoreMembershipStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'REMOVED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "ConnectionType" AS ENUM ('POS', 'DELIVERY', 'PAYMENT');
+DO $$ BEGIN
+  CREATE TYPE "ConnectionType" AS ENUM ('POS', 'DELIVERY', 'PAYMENT');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "ConnectionProvider" AS ENUM ('LOYVERSE', 'LIGHTSPEED', 'UBER_EATS', 'DOORDASH', 'STRIPE', 'OTHER');
+DO $$ BEGIN
+  CREATE TYPE "ConnectionProvider" AS ENUM ('LOYVERSE', 'LIGHTSPEED', 'UBER_EATS', 'DOORDASH', 'STRIPE', 'OTHER');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "ConnectionStatus" AS ENUM ('NOT_CONNECTED', 'CONNECTING', 'CONNECTED', 'ERROR', 'REAUTH_REQUIRED', 'DISCONNECTED');
+DO $$ BEGIN
+  CREATE TYPE "ConnectionStatus" AS ENUM ('NOT_CONNECTED', 'CONNECTING', 'CONNECTED', 'ERROR', 'REAUTH_REQUIRED', 'DISCONNECTED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "ProviderEnvironment" AS ENUM ('SANDBOX', 'PRODUCTION');
+DO $$ BEGIN
+  CREATE TYPE "ProviderEnvironment" AS ENUM ('SANDBOX', 'PRODUCTION');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "AuthScheme" AS ENUM ('OAUTH2', 'JWT_BEARER', 'API_KEY', 'BASIC', 'CUSTOM');
+DO $$ BEGIN
+  CREATE TYPE "AuthScheme" AS ENUM ('OAUTH2', 'JWT_BEARER', 'API_KEY', 'BASIC', 'CUSTOM');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CredentialType" AS ENUM ('OAUTH_TOKEN', 'CLIENT_CREDENTIAL', 'JWT_SIGNING_KEY', 'JWT_ASSERTION', 'API_KEY', 'WEBHOOK_SECRET', 'CUSTOM_SECRET');
+DO $$ BEGIN
+  CREATE TYPE "CredentialType" AS ENUM ('OAUTH_TOKEN', 'CLIENT_CREDENTIAL', 'JWT_SIGNING_KEY', 'JWT_ASSERTION', 'API_KEY', 'WEBHOOK_SECRET', 'CUSTOM_SECRET');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "ConnectionActionType" AS ENUM ('CONNECT_START', 'CONNECT_CALLBACK', 'CONNECT_SUCCESS', 'CONNECT_FAILURE', 'REFRESH_SUCCESS', 'REFRESH_FAILURE', 'DISCONNECT', 'REAUTHORIZE', 'STORE_MAPPING_UPDATE', 'SYNC_TEST');
+DO $$ BEGIN
+  CREATE TYPE "ConnectionActionType" AS ENUM ('CONNECT_START', 'CONNECT_CALLBACK', 'CONNECT_SUCCESS', 'CONNECT_FAILURE', 'REFRESH_SUCCESS', 'REFRESH_FAILURE', 'DISCONNECT', 'REAUTHORIZE', 'STORE_MAPPING_UPDATE', 'SYNC_TEST');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "SyncStatus" AS ENUM ('NEVER', 'RUNNING', 'SUCCESS', 'FAILED', 'PARTIAL');
+DO $$ BEGIN
+  CREATE TYPE "SyncStatus" AS ENUM ('NEVER', 'RUNNING', 'SUCCESS', 'FAILED', 'PARTIAL');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "PlanStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'ARCHIVED');
+DO $$ BEGIN
+  CREATE TYPE "PlanStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'ARCHIVED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "BillingInterval" AS ENUM ('MONTHLY', 'YEARLY', 'CUSTOM');
+DO $$ BEGIN
+  CREATE TYPE "BillingInterval" AS ENUM ('MONTHLY', 'YEARLY', 'CUSTOM');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "SubscriptionStatus" AS ENUM ('TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELLED', 'EXPIRED', 'INCOMPLETE');
+DO $$ BEGIN
+  CREATE TYPE "SubscriptionStatus" AS ENUM ('TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELLED', 'EXPIRED', 'INCOMPLETE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "SubscriptionEventType" AS ENUM ('PLAN_ASSIGNED', 'PLAN_CHANGED', 'TRIAL_EXTENDED', 'STATUS_CHANGED', 'CANCEL_AT_PERIOD_END_SET', 'SUBSCRIPTION_REACTIVATED', 'BILLING_OVERRIDE_APPLIED', 'BILLING_NOTE_ADDED');
+DO $$ BEGIN
+  CREATE TYPE "SubscriptionEventType" AS ENUM ('PLAN_ASSIGNED', 'PLAN_CHANGED', 'TRIAL_EXTENDED', 'STATUS_CHANGED', 'CANCEL_AT_PERIOD_END_SET', 'SUBSCRIPTION_REACTIVATED', 'BILLING_OVERRIDE_APPLIED', 'BILLING_NOTE_ADDED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "BillingRecordType" AS ENUM ('INVOICE', 'PAYMENT', 'ADJUSTMENT', 'CREDIT', 'NOTE');
+DO $$ BEGIN
+  CREATE TYPE "BillingRecordType" AS ENUM ('INVOICE', 'PAYMENT', 'ADJUSTMENT', 'CREDIT', 'NOTE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "BillingRecordStatus" AS ENUM ('DRAFT', 'OPEN', 'PAID', 'VOID', 'UNCOLLECTIBLE');
+DO $$ BEGIN
+  CREATE TYPE "BillingRecordStatus" AS ENUM ('DRAFT', 'OPEN', 'PAID', 'VOID', 'UNCOLLECTIBLE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "BillingInvoiceStatus" AS ENUM ('PAID', 'OPEN', 'PAST_DUE', 'FAILED', 'VOID', 'REFUNDED', 'DRAFT');
+DO $$ BEGIN
+  CREATE TYPE "BillingInvoiceStatus" AS ENUM ('PAID', 'OPEN', 'PAST_DUE', 'FAILED', 'VOID', 'REFUNDED', 'DRAFT');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "BillingInvoiceLineType" AS ENUM ('PLAN', 'USAGE', 'ADJUSTMENT', 'CREDIT', 'TAX');
+DO $$ BEGIN
+  CREATE TYPE "BillingInvoiceLineType" AS ENUM ('PLAN', 'USAGE', 'ADJUSTMENT', 'CREDIT', 'TAX');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "PaymentAttemptStatus" AS ENUM ('SUCCEEDED', 'FAILED', 'REQUIRES_ACTION', 'PROCESSING', 'CANCELED');
+DO $$ BEGIN
+  CREATE TYPE "PaymentAttemptStatus" AS ENUM ('SUCCEEDED', 'FAILED', 'REQUIRES_ACTION', 'PROCESSING', 'CANCELED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "UsageMetricStatus" AS ENUM ('NORMAL', 'NEAR_LIMIT', 'REACHED', 'EXCEEDED');
+DO $$ BEGIN
+  CREATE TYPE "UsageMetricStatus" AS ENUM ('NORMAL', 'NEAR_LIMIT', 'REACHED', 'EXCEEDED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "SubscriptionChangeType" AS ENUM ('UPGRADE', 'DOWNGRADE');
+DO $$ BEGIN
+  CREATE TYPE "SubscriptionChangeType" AS ENUM ('UPGRADE', 'DOWNGRADE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "SubscriptionChangeStatus" AS ENUM ('PENDING', 'BLOCKED', 'CONFIRMED', 'APPLIED', 'CANCELED');
+DO $$ BEGIN
+  CREATE TYPE "SubscriptionChangeStatus" AS ENUM ('PENDING', 'BLOCKED', 'CONFIRMED', 'APPLIED', 'CANCELED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "SubscriptionChangeEffectiveMode" AS ENUM ('IMMEDIATE', 'NEXT_CYCLE');
+DO $$ BEGIN
+  CREATE TYPE "SubscriptionChangeEffectiveMode" AS ENUM ('IMMEDIATE', 'NEXT_CYCLE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "SoldOutResetMode" AS ENUM ('NONE', 'DAILY_AUTO_RESET');
+DO $$ BEGIN
+  CREATE TYPE "SoldOutResetMode" AS ENUM ('NONE', 'DAILY_AUTO_RESET');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "DefaultAvailabilityMode" AS ENUM ('AVAILABLE', 'MANUAL_CONTROLLED');
+DO $$ BEGIN
+  CREATE TYPE "DefaultAvailabilityMode" AS ENUM ('AVAILABLE', 'MANUAL_CONTROLLED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "OrderSourceChannel" AS ENUM ('POS', 'UBER_EATS', 'DOORDASH', 'ONLINE', 'SUBSCRIPTION', 'MANUAL', 'UNKNOWN');
+DO $$ BEGIN
+  CREATE TYPE "OrderSourceChannel" AS ENUM ('POS', 'UBER_EATS', 'DOORDASH', 'ONLINE', 'SUBSCRIPTION', 'MANUAL', 'UNKNOWN');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "OrderChannelType" AS ENUM ('POS', 'UBER_EATS', 'DOORDASH', 'ONLINE', 'SUBSCRIPTION', 'MANUAL');
+DO $$ BEGIN
+  CREATE TYPE "OrderChannelType" AS ENUM ('POS', 'UBER_EATS', 'DOORDASH', 'ONLINE', 'SUBSCRIPTION', 'MANUAL');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "OrderChannelRole" AS ENUM ('SOURCE', 'FORWARDED', 'MIRROR');
+DO $$ BEGIN
+  CREATE TYPE "OrderChannelRole" AS ENUM ('SOURCE', 'FORWARDED', 'MIRROR');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "OrderLinkDirection" AS ENUM ('INBOUND', 'OUTBOUND');
+DO $$ BEGIN
+  CREATE TYPE "OrderLinkDirection" AS ENUM ('INBOUND', 'OUTBOUND');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "OrderStatus" AS ENUM ('RECEIVED', 'ACCEPTED', 'IN_PROGRESS', 'READY', 'COMPLETED', 'CANCELLED', 'FAILED');
+DO $$ BEGIN
+  CREATE TYPE "OrderStatus" AS ENUM ('RECEIVED', 'ACCEPTED', 'IN_PROGRESS', 'READY', 'COMPLETED', 'CANCELLED', 'FAILED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "PosSubmissionStatus" AS ENUM ('NOT_REQUIRED', 'PENDING', 'SENT', 'ACCEPTED', 'FAILED', 'SKIPPED');
+DO $$ BEGIN
+  CREATE TYPE "PosSubmissionStatus" AS ENUM ('NOT_REQUIRED', 'PENDING', 'SENT', 'ACCEPTED', 'FAILED', 'SKIPPED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "OrderEventType" AS ENUM ('ORDER_RECEIVED', 'ORDER_CREATED', 'ORDER_UPDATED', 'ORDER_STATUS_CHANGED', 'POS_FORWARD_REQUESTED', 'POS_FORWARD_SENT', 'POS_FORWARD_ACCEPTED', 'POS_FORWARD_FAILED', 'POS_RECONCILED', 'ORDER_CANCELLED', 'RAW_WEBHOOK_RECEIVED', 'RAW_SYNC_RECEIVED');
+DO $$ BEGIN
+  CREATE TYPE "OrderEventType" AS ENUM ('ORDER_RECEIVED', 'ORDER_CREATED', 'ORDER_UPDATED', 'ORDER_STATUS_CHANGED', 'POS_FORWARD_REQUESTED', 'POS_FORWARD_SENT', 'POS_FORWARD_ACCEPTED', 'POS_FORWARD_FAILED', 'POS_RECONCILED', 'ORDER_CANCELLED', 'RAW_WEBHOOK_RECEIVED', 'RAW_SYNC_RECEIVED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogPublishAction" AS ENUM ('CREATE', 'UPDATE', 'ARCHIVE', 'UNARCHIVE');
+DO $$ BEGIN
+  CREATE TYPE "CatalogPublishAction" AS ENUM ('CREATE', 'UPDATE', 'ARCHIVE', 'UNARCHIVE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogPublishStatus" AS ENUM ('PENDING', 'RUNNING', 'SUCCEEDED', 'FAILED', 'SKIPPED', 'CANCELLED');
+DO $$ BEGIN
+  CREATE TYPE "CatalogPublishStatus" AS ENUM ('PENDING', 'RUNNING', 'SUCCEEDED', 'FAILED', 'SKIPPED', 'CANCELLED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogPublishScope" AS ENUM ('CATEGORY', 'PRODUCT', 'MODIFIER_GROUP', 'MODIFIER_OPTION', 'PRODUCT_CATEGORY_LINK', 'PRODUCT_MODIFIER_GROUP_LINK');
+DO $$ BEGIN
+  CREATE TYPE "CatalogPublishScope" AS ENUM ('CATEGORY', 'PRODUCT', 'MODIFIER_GROUP', 'MODIFIER_OPTION', 'PRODUCT_CATEGORY_LINK', 'PRODUCT_MODIFIER_GROUP_LINK');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "ExternalCatalogChangeKind" AS ENUM ('CREATED', 'UPDATED', 'DELETED', 'RELINKED', 'STRUCTURE_UPDATED');
+DO $$ BEGIN
+  CREATE TYPE "ExternalCatalogChangeKind" AS ENUM ('CREATED', 'UPDATED', 'DELETED', 'RELINKED', 'STRUCTURE_UPDATED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "ExternalCatalogChangeStatus" AS ENUM ('OPEN', 'ACKNOWLEDGED', 'IGNORED', 'SUPERSEDED');
+DO $$ BEGIN
+  CREATE TYPE "ExternalCatalogChangeStatus" AS ENUM ('OPEN', 'ACKNOWLEDGED', 'IGNORED', 'SUPERSEDED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogConflictType" AS ENUM ('FIELD_VALUE_CONFLICT', 'STRUCTURE_CONFLICT', 'MISSING_ON_EXTERNAL', 'MISSING_ON_INTERNAL', 'PARENT_RELATION_CONFLICT', 'UNKNOWN_CONFLICT');
+DO $$ BEGIN
+  CREATE TYPE "CatalogConflictType" AS ENUM ('FIELD_VALUE_CONFLICT', 'STRUCTURE_CONFLICT', 'MISSING_ON_EXTERNAL', 'MISSING_ON_INTERNAL', 'PARENT_RELATION_CONFLICT', 'UNKNOWN_CONFLICT');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogConflictStatus" AS ENUM ('OPEN', 'IN_REVIEW', 'RESOLVED', 'IGNORED', 'SUPERSEDED');
+DO $$ BEGIN
+  CREATE TYPE "CatalogConflictStatus" AS ENUM ('OPEN', 'IN_REVIEW', 'RESOLVED', 'IGNORED', 'SUPERSEDED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogConflictResolutionStrategy" AS ENUM ('KEEP_INTERNAL', 'ACCEPT_EXTERNAL', 'MERGE_MANUALLY', 'DEFER', 'IGNORE');
+DO $$ BEGIN
+  CREATE TYPE "CatalogConflictResolutionStrategy" AS ENUM ('KEEP_INTERNAL', 'ACCEPT_EXTERNAL', 'MERGE_MANUALLY', 'DEFER', 'IGNORE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogConflictScope" AS ENUM ('CATEGORY', 'PRODUCT', 'MODIFIER_GROUP', 'MODIFIER_OPTION', 'PRODUCT_CATEGORY_LINK', 'PRODUCT_MODIFIER_GROUP_LINK');
+DO $$ BEGIN
+  CREATE TYPE "CatalogConflictScope" AS ENUM ('CATEGORY', 'PRODUCT', 'MODIFIER_GROUP', 'MODIFIER_OPTION', 'PRODUCT_CATEGORY_LINK', 'PRODUCT_MODIFIER_GROUP_LINK');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogSyncDirection" AS ENUM ('INTERNAL_TO_EXTERNAL', 'EXTERNAL_TO_INTERNAL', 'BIDIRECTIONAL', 'DISABLED');
+DO $$ BEGIN
+  CREATE TYPE "CatalogSyncDirection" AS ENUM ('INTERNAL_TO_EXTERNAL', 'EXTERNAL_TO_INTERNAL', 'BIDIRECTIONAL', 'DISABLED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogSyncConflictStrategy" AS ENUM ('MANUAL_REVIEW', 'PREFER_INTERNAL', 'PREFER_EXTERNAL', 'LAST_WRITE_WINS');
+DO $$ BEGIN
+  CREATE TYPE "CatalogSyncConflictStrategy" AS ENUM ('MANUAL_REVIEW', 'PREFER_INTERNAL', 'PREFER_EXTERNAL', 'LAST_WRITE_WINS');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogSyncAutoApplyMode" AS ENUM ('NEVER', 'SAFE_ONLY', 'ALWAYS');
+DO $$ BEGIN
+  CREATE TYPE "CatalogSyncAutoApplyMode" AS ENUM ('NEVER', 'SAFE_ONLY', 'ALWAYS');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogSyncPolicyScope" AS ENUM ('CATEGORY', 'PRODUCT', 'MODIFIER_GROUP', 'MODIFIER_OPTION', 'PRODUCT_CATEGORY_LINK', 'PRODUCT_MODIFIER_GROUP_LINK');
+DO $$ BEGIN
+  CREATE TYPE "CatalogSyncPolicyScope" AS ENUM ('CATEGORY', 'PRODUCT', 'MODIFIER_GROUP', 'MODIFIER_OPTION', 'PRODUCT_CATEGORY_LINK', 'PRODUCT_MODIFIER_GROUP_LINK');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogSyncPlanStatus" AS ENUM ('DRAFT', 'READY', 'PARTIALLY_BLOCKED', 'BLOCKED', 'APPLIED', 'FAILED', 'CANCELLED');
+DO $$ BEGIN
+  CREATE TYPE "CatalogSyncPlanStatus" AS ENUM ('DRAFT', 'READY', 'PARTIALLY_BLOCKED', 'BLOCKED', 'APPLIED', 'FAILED', 'CANCELLED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogSyncAction" AS ENUM ('APPLY_INTERNAL_PATCH', 'APPLY_EXTERNAL_PATCH', 'CREATE_INTERNAL_ENTITY', 'CREATE_EXTERNAL_ENTITY', 'ARCHIVE_INTERNAL_ENTITY', 'ARCHIVE_EXTERNAL_ENTITY', 'LINK_MAPPING', 'UNLINK_MAPPING', 'SKIP');
+DO $$ BEGIN
+  CREATE TYPE "CatalogSyncAction" AS ENUM ('APPLY_INTERNAL_PATCH', 'APPLY_EXTERNAL_PATCH', 'CREATE_INTERNAL_ENTITY', 'CREATE_EXTERNAL_ENTITY', 'ARCHIVE_INTERNAL_ENTITY', 'ARCHIVE_EXTERNAL_ENTITY', 'LINK_MAPPING', 'UNLINK_MAPPING', 'SKIP');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogSyncItemStatus" AS ENUM ('PENDING', 'READY', 'BLOCKED', 'APPLIED', 'FAILED', 'SKIPPED');
+DO $$ BEGIN
+  CREATE TYPE "CatalogSyncItemStatus" AS ENUM ('PENDING', 'READY', 'BLOCKED', 'APPLIED', 'FAILED', 'SKIPPED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogMergeDraftStatus" AS ENUM ('DRAFT', 'VALIDATED', 'INVALID', 'PLAN_GENERATED', 'APPLIED', 'CANCELLED');
+DO $$ BEGIN
+  CREATE TYPE "CatalogMergeDraftStatus" AS ENUM ('DRAFT', 'VALIDATED', 'INVALID', 'PLAN_GENERATED', 'APPLIED', 'CANCELLED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogMergeFieldChoice" AS ENUM ('TAKE_INTERNAL', 'TAKE_EXTERNAL', 'CUSTOM_VALUE');
+DO $$ BEGIN
+  CREATE TYPE "CatalogMergeFieldChoice" AS ENUM ('TAKE_INTERNAL', 'TAKE_EXTERNAL', 'CUSTOM_VALUE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogMergeStructureChoice" AS ENUM ('KEEP_INTERNAL_SET', 'TAKE_EXTERNAL_SET', 'MERGE_SELECTED', 'CUSTOM_STRUCTURE');
+DO $$ BEGIN
+  CREATE TYPE "CatalogMergeStructureChoice" AS ENUM ('KEEP_INTERNAL_SET', 'TAKE_EXTERNAL_SET', 'MERGE_SELECTED', 'CUSTOM_STRUCTURE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogMergeParentChoice" AS ENUM ('KEEP_INTERNAL_PARENT', 'TAKE_EXTERNAL_PARENT', 'SET_CUSTOM_PARENT');
+DO $$ BEGIN
+  CREATE TYPE "CatalogMergeParentChoice" AS ENUM ('KEEP_INTERNAL_PARENT', 'TAKE_EXTERNAL_PARENT', 'SET_CUSTOM_PARENT');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CatalogMergeApplyTarget" AS ENUM ('INTERNAL_ONLY', 'EXTERNAL_ONLY', 'INTERNAL_THEN_EXTERNAL');
+DO $$ BEGIN
+  CREATE TYPE "CatalogMergeApplyTarget" AS ENUM ('INTERNAL_ONLY', 'EXTERNAL_ONLY', 'INTERNAL_THEN_EXTERNAL');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "JobType" AS ENUM ('CATALOG_SYNC', 'CONNECTION_VALIDATE', 'CONNECTION_REFRESH_CHECK', 'ORDER_RECOVERY_RETRY', 'ORDER_RECONCILIATION_RETRY', 'ANALYTICS_REBUILD');
+DO $$ BEGIN
+  CREATE TYPE "JobType" AS ENUM ('CATALOG_SYNC', 'CONNECTION_VALIDATE', 'CONNECTION_REFRESH_CHECK', 'ORDER_RECOVERY_RETRY', 'ORDER_RECONCILIATION_RETRY', 'ANALYTICS_REBUILD');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "JobRunStatus" AS ENUM ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'CANCELLED', 'SKIPPED');
+DO $$ BEGIN
+  CREATE TYPE "JobRunStatus" AS ENUM ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'CANCELLED', 'SKIPPED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "JobTriggerSource" AS ENUM ('SYSTEM', 'ADMIN_MANUAL', 'ADMIN_RETRY');
+DO $$ BEGIN
+  CREATE TYPE "JobTriggerSource" AS ENUM ('SYSTEM', 'ADMIN_MANUAL', 'ADMIN_RETRY');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "FlagType" AS ENUM ('BOOLEAN', 'STRING', 'INTEGER', 'JSON', 'VARIANT');
+DO $$ BEGIN
+  CREATE TYPE "FlagType" AS ENUM ('BOOLEAN', 'STRING', 'INTEGER', 'JSON', 'VARIANT');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "FlagStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'ARCHIVED');
+DO $$ BEGIN
+  CREATE TYPE "FlagStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'ARCHIVED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "FlagScopeType" AS ENUM ('GLOBAL', 'TENANT', 'STORE', 'USER', 'ROLE', 'PORTAL', 'PROVIDER', 'ENVIRONMENT', 'PERCENTAGE');
+DO $$ BEGIN
+  CREATE TYPE "FlagScopeType" AS ENUM ('GLOBAL', 'TENANT', 'STORE', 'USER', 'ROLE', 'PORTAL', 'PROVIDER', 'ENVIRONMENT', 'PERCENTAGE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "CustomerNotificationType" AS ENUM ('ORDER_STATUS_UPDATE', 'SUBSCRIPTION_REMINDER', 'PAYMENT_ISSUE', 'GENERAL');
+DO $$ BEGIN
+  CREATE TYPE "CustomerNotificationType" AS ENUM ('ORDER_STATUS_UPDATE', 'SUBSCRIPTION_REMINDER', 'PAYMENT_ISSUE', 'GENERAL');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "LoyaltyTransactionType" AS ENUM ('EARN', 'REDEEM', 'ADJUSTMENT');
+DO $$ BEGIN
+  CREATE TYPE "LoyaltyTransactionType" AS ENUM ('EARN', 'REDEEM', 'ADJUSTMENT');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "LoyaltyTier" AS ENUM ('BRONZE', 'SILVER', 'GOLD', 'PLATINUM');
+DO $$ BEGIN
+  CREATE TYPE "LoyaltyTier" AS ENUM ('BRONZE', 'SILVER', 'GOLD', 'PLATINUM');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "AlertMetricType" AS ENUM ('CANCELLATION_RATE', 'REVENUE_DROP', 'SOLD_OUT_COUNT', 'ORDER_FAILURE_RATE', 'LOW_STOCK_ITEMS', 'POS_DISCONNECT', 'DELIVERY_DISCONNECT');
+DO $$ BEGIN
+  CREATE TYPE "AlertMetricType" AS ENUM ('CANCELLATION_RATE', 'REVENUE_DROP', 'SOLD_OUT_COUNT', 'ORDER_FAILURE_RATE', 'LOW_STOCK_ITEMS', 'POS_DISCONNECT', 'DELIVERY_DISCONNECT');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "NotificationType" AS ENUM ('ALERT_TRIGGERED', 'SYSTEM_INFO', 'BILLING_REMINDER', 'SUBSCRIPTION_EVENT', 'INTEGRATION_ISSUE', 'STAFF_ACTIVITY');
+DO $$ BEGIN
+  CREATE TYPE "NotificationType" AS ENUM ('ALERT_TRIGGERED', 'SYSTEM_INFO', 'BILLING_REMINDER', 'SUBSCRIPTION_EVENT', 'INTEGRATION_ISSUE', 'STAFF_ACTIVITY');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "PromoDiscountType" AS ENUM ('PERCENT', 'FIXED_AMOUNT', 'FREE_ITEM');
+DO $$ BEGIN
+  CREATE TYPE "PromoDiscountType" AS ENUM ('PERCENT', 'FIXED_AMOUNT', 'FREE_ITEM');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "PromoStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'EXPIRED');
+DO $$ BEGIN
+  CREATE TYPE "PromoStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'EXPIRED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "ReviewStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+DO $$ BEGIN
+  CREATE TYPE "ReviewStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "SupportTicketStatus" AS ENUM ('OPEN', 'IN_PROGRESS', 'WAITING_CUSTOMER', 'RESOLVED', 'CLOSED');
+DO $$ BEGIN
+  CREATE TYPE "SupportTicketStatus" AS ENUM ('OPEN', 'IN_PROGRESS', 'WAITING_CUSTOMER', 'RESOLVED', 'CLOSED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "SupportTicketPriority" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'URGENT');
+DO $$ BEGIN
+  CREATE TYPE "SupportTicketPriority" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'URGENT');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "GiftCardTransactionType" AS ENUM ('ISSUE', 'REDEEM', 'REFUND', 'VOID');
+DO $$ BEGIN
+  CREATE TYPE "GiftCardTransactionType" AS ENUM ('ISSUE', 'REDEEM', 'REFUND', 'VOID');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "EmailLogStatus" AS ENUM ('SENT', 'FAILED', 'BOUNCED');
+DO $$ BEGIN
+  CREATE TYPE "EmailLogStatus" AS ENUM ('SENT', 'FAILED', 'BOUNCED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "ComplianceEventType" AS ENUM ('DATA_EXPORT', 'ERASURE_REQUEST', 'ERASURE_COMPLETE');
+DO $$ BEGIN
+  CREATE TYPE "ComplianceEventType" AS ENUM ('DATA_EXPORT', 'ERASURE_REQUEST', 'ERASURE_COMPLETE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "WebhookDeliveryStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED');
+DO $$ BEGIN
+  CREATE TYPE "WebhookDeliveryStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "IngredientScope" AS ENUM ('PLATFORM', 'STORE');
+DO $$ BEGIN
+  CREATE TYPE "IngredientScope" AS ENUM ('PLATFORM', 'STORE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "IngredientUnit" AS ENUM ('GRAM', 'KG', 'ML', 'LITER', 'EACH', 'TSP', 'TBSP', 'OZ', 'LB', 'CUP', 'PIECE');
+DO $$ BEGIN
+  CREATE TYPE "IngredientUnit" AS ENUM ('GRAM', 'KG', 'ML', 'LITER', 'EACH', 'TSP', 'TBSP', 'OZ', 'LB', 'CUP', 'PIECE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "RecipeYieldUnit" AS ENUM ('EACH', 'BATCH', 'SERVING', 'GRAM', 'KG', 'ML', 'LITER');
+DO $$ BEGIN
+  CREATE TYPE "RecipeYieldUnit" AS ENUM ('EACH', 'BATCH', 'SERVING', 'GRAM', 'KG', 'ML', 'LITER');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "MarketplaceRecipeType" AS ENUM ('BASIC', 'PREMIUM');
+DO $$ BEGIN
+  CREATE TYPE "MarketplaceRecipeType" AS ENUM ('BASIC', 'PREMIUM');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "MarketplaceRecipeStatus" AS ENUM ('DRAFT', 'PENDING_REVIEW', 'CHANGE_REQUESTED', 'APPROVED', 'PUBLISHED', 'REJECTED', 'ARCHIVED');
+DO $$ BEGIN
+  CREATE TYPE "MarketplaceRecipeStatus" AS ENUM ('DRAFT', 'PENDING_REVIEW', 'CHANGE_REQUESTED', 'APPROVED', 'PUBLISHED', 'REJECTED', 'ARCHIVED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "RecipeDifficulty" AS ENUM ('EASY', 'MEDIUM', 'HARD');
+DO $$ BEGIN
+  CREATE TYPE "RecipeDifficulty" AS ENUM ('EASY', 'MEDIUM', 'HARD');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "RecipeReviewAction" AS ENUM ('SUBMITTED', 'APPROVED', 'REJECTED', 'CHANGE_REQUESTED', 'REVISION_SUBMITTED', 'PUBLISHED', 'ARCHIVED');
+DO $$ BEGIN
+  CREATE TYPE "RecipeReviewAction" AS ENUM ('SUBMITTED', 'APPROVED', 'REJECTED', 'CHANGE_REQUESTED', 'REVISION_SUBMITTED', 'PUBLISHED', 'ARCHIVED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "IngredientRequestStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'DUPLICATE');
+DO $$ BEGIN
+  CREATE TYPE "IngredientRequestStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'DUPLICATE');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateTable
-CREATE TABLE "tenants" (
+CREATE TABLE IF NOT EXISTS "tenants" (
     "id" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "legalName" TEXT NOT NULL,
@@ -304,7 +592,7 @@ CREATE TABLE "tenants" (
 );
 
 -- CreateTable
-CREATE TABLE "users" (
+CREATE TABLE IF NOT EXISTS "users" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -328,7 +616,7 @@ CREATE TABLE "users" (
 );
 
 -- CreateTable
-CREATE TABLE "memberships" (
+CREATE TABLE IF NOT EXISTS "memberships" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -343,7 +631,7 @@ CREATE TABLE "memberships" (
 );
 
 -- CreateTable
-CREATE TABLE "stores" (
+CREATE TABLE IF NOT EXISTS "stores" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "code" TEXT NOT NULL,
@@ -369,7 +657,7 @@ CREATE TABLE "stores" (
 );
 
 -- CreateTable
-CREATE TABLE "store_memberships" (
+CREATE TABLE IF NOT EXISTS "store_memberships" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "membershipId" TEXT NOT NULL,
@@ -383,7 +671,7 @@ CREATE TABLE "store_memberships" (
 );
 
 -- CreateTable
-CREATE TABLE "provider_app_credentials" (
+CREATE TABLE IF NOT EXISTS "provider_app_credentials" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT,
     "provider" "ConnectionProvider" NOT NULL,
@@ -403,7 +691,7 @@ CREATE TABLE "provider_app_credentials" (
 );
 
 -- CreateTable
-CREATE TABLE "connections" (
+CREATE TABLE IF NOT EXISTS "connections" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -434,7 +722,7 @@ CREATE TABLE "connections" (
 );
 
 -- CreateTable
-CREATE TABLE "connection_credentials" (
+CREATE TABLE IF NOT EXISTS "connection_credentials" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -463,7 +751,7 @@ CREATE TABLE "connection_credentials" (
 );
 
 -- CreateTable
-CREATE TABLE "connection_oauth_states" (
+CREATE TABLE IF NOT EXISTS "connection_oauth_states" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -482,7 +770,7 @@ CREATE TABLE "connection_oauth_states" (
 );
 
 -- CreateTable
-CREATE TABLE "connection_action_logs" (
+CREATE TABLE IF NOT EXISTS "connection_action_logs" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -500,7 +788,7 @@ CREATE TABLE "connection_action_logs" (
 );
 
 -- CreateTable
-CREATE TABLE "audit_logs" (
+CREATE TABLE IF NOT EXISTS "audit_logs" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT,
     "storeId" TEXT,
@@ -515,7 +803,7 @@ CREATE TABLE "audit_logs" (
 );
 
 -- CreateTable
-CREATE TABLE "roles" (
+CREATE TABLE IF NOT EXISTS "roles" (
     "id" TEXT NOT NULL,
     "key" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -525,7 +813,7 @@ CREATE TABLE "roles" (
 );
 
 -- CreateTable
-CREATE TABLE "permissions" (
+CREATE TABLE IF NOT EXISTS "permissions" (
     "id" TEXT NOT NULL,
     "key" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -535,7 +823,7 @@ CREATE TABLE "permissions" (
 );
 
 -- CreateTable
-CREATE TABLE "role_permissions" (
+CREATE TABLE IF NOT EXISTS "role_permissions" (
     "id" TEXT NOT NULL,
     "roleId" TEXT NOT NULL,
     "permissionId" TEXT NOT NULL,
@@ -544,7 +832,7 @@ CREATE TABLE "role_permissions" (
 );
 
 -- CreateTable
-CREATE TABLE "categories" (
+CREATE TABLE IF NOT EXISTS "categories" (
     "id" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -557,7 +845,7 @@ CREATE TABLE "categories" (
 );
 
 -- CreateTable
-CREATE TABLE "menu_items" (
+CREATE TABLE IF NOT EXISTS "menu_items" (
     "id" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
     "categoryId" TEXT NOT NULL,
@@ -572,7 +860,7 @@ CREATE TABLE "menu_items" (
 );
 
 -- CreateTable
-CREATE TABLE "option_groups" (
+CREATE TABLE IF NOT EXISTS "option_groups" (
     "id" TEXT NOT NULL,
     "menuItemId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -583,7 +871,7 @@ CREATE TABLE "option_groups" (
 );
 
 -- CreateTable
-CREATE TABLE "menu_options" (
+CREATE TABLE IF NOT EXISTS "menu_options" (
     "id" TEXT NOT NULL,
     "optionGroupId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -593,7 +881,7 @@ CREATE TABLE "menu_options" (
 );
 
 -- CreateTable
-CREATE TABLE "legacy_orders" (
+CREATE TABLE IF NOT EXISTS "legacy_orders" (
     "id" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
     "channelType" TEXT NOT NULL,
@@ -607,7 +895,7 @@ CREATE TABLE "legacy_orders" (
 );
 
 -- CreateTable
-CREATE TABLE "legacy_order_items" (
+CREATE TABLE IF NOT EXISTS "legacy_order_items" (
     "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
     "menuItemId" TEXT NOT NULL,
@@ -620,7 +908,7 @@ CREATE TABLE "legacy_order_items" (
 );
 
 -- CreateTable
-CREATE TABLE "legacy_payments" (
+CREATE TABLE IF NOT EXISTS "legacy_payments" (
     "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -636,7 +924,7 @@ CREATE TABLE "legacy_payments" (
 );
 
 -- CreateTable
-CREATE TABLE "orders" (
+CREATE TABLE IF NOT EXISTS "orders" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -677,7 +965,7 @@ CREATE TABLE "orders" (
 );
 
 -- CreateTable
-CREATE TABLE "order_items" (
+CREATE TABLE IF NOT EXISTS "order_items" (
     "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
@@ -698,7 +986,7 @@ CREATE TABLE "order_items" (
 );
 
 -- CreateTable
-CREATE TABLE "order_item_modifiers" (
+CREATE TABLE IF NOT EXISTS "order_item_modifiers" (
     "id" TEXT NOT NULL,
     "orderItemId" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
@@ -720,7 +1008,7 @@ CREATE TABLE "order_item_modifiers" (
 );
 
 -- CreateTable
-CREATE TABLE "order_channel_links" (
+CREATE TABLE IF NOT EXISTS "order_channel_links" (
     "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
@@ -746,7 +1034,7 @@ CREATE TABLE "order_channel_links" (
 );
 
 -- CreateTable
-CREATE TABLE "order_events" (
+CREATE TABLE IF NOT EXISTS "order_events" (
     "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
@@ -762,7 +1050,7 @@ CREATE TABLE "order_events" (
 );
 
 -- CreateTable
-CREATE TABLE "inbound_webhook_logs" (
+CREATE TABLE IF NOT EXISTS "inbound_webhook_logs" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT,
     "storeId" TEXT,
@@ -783,7 +1071,7 @@ CREATE TABLE "inbound_webhook_logs" (
 );
 
 -- CreateTable
-CREATE TABLE "pos_integrations" (
+CREATE TABLE IF NOT EXISTS "pos_integrations" (
     "id" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
     "provider" TEXT NOT NULL,
@@ -798,7 +1086,7 @@ CREATE TABLE "pos_integrations" (
 );
 
 -- CreateTable
-CREATE TABLE "delivery_integrations" (
+CREATE TABLE IF NOT EXISTS "delivery_integrations" (
     "id" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
     "platform" TEXT NOT NULL,
@@ -813,7 +1101,7 @@ CREATE TABLE "delivery_integrations" (
 );
 
 -- CreateTable
-CREATE TABLE "customers" (
+CREATE TABLE IF NOT EXISTS "customers" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "name" TEXT,
@@ -829,7 +1117,7 @@ CREATE TABLE "customers" (
 );
 
 -- CreateTable
-CREATE TABLE "subscription_plans" (
+CREATE TABLE IF NOT EXISTS "subscription_plans" (
     "id" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -844,7 +1132,7 @@ CREATE TABLE "subscription_plans" (
 );
 
 -- CreateTable
-CREATE TABLE "subscriptions" (
+CREATE TABLE IF NOT EXISTS "subscriptions" (
     "id" TEXT NOT NULL,
     "planId" TEXT NOT NULL,
     "customerId" TEXT NOT NULL,
@@ -865,7 +1153,7 @@ CREATE TABLE "subscriptions" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_categories" (
+CREATE TABLE IF NOT EXISTS "catalog_categories" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -896,7 +1184,7 @@ CREATE TABLE "catalog_categories" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_products" (
+CREATE TABLE IF NOT EXISTS "catalog_products" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -935,7 +1223,7 @@ CREATE TABLE "catalog_products" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_product_categories" (
+CREATE TABLE IF NOT EXISTS "catalog_product_categories" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -949,7 +1237,7 @@ CREATE TABLE "catalog_product_categories" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_modifier_groups" (
+CREATE TABLE IF NOT EXISTS "catalog_modifier_groups" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -977,7 +1265,7 @@ CREATE TABLE "catalog_modifier_groups" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_modifier_options" (
+CREATE TABLE IF NOT EXISTS "catalog_modifier_options" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1006,7 +1294,7 @@ CREATE TABLE "catalog_modifier_options" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_product_modifier_groups" (
+CREATE TABLE IF NOT EXISTS "catalog_product_modifier_groups" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1024,7 +1312,7 @@ CREATE TABLE "catalog_product_modifier_groups" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_import_runs" (
+CREATE TABLE IF NOT EXISTS "catalog_import_runs" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1047,7 +1335,7 @@ CREATE TABLE "catalog_import_runs" (
 );
 
 -- CreateTable
-CREATE TABLE "external_catalog_snapshots" (
+CREATE TABLE IF NOT EXISTS "external_catalog_snapshots" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1064,7 +1352,7 @@ CREATE TABLE "external_catalog_snapshots" (
 );
 
 -- CreateTable
-CREATE TABLE "external_catalog_categories" (
+CREATE TABLE IF NOT EXISTS "external_catalog_categories" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1086,7 +1374,7 @@ CREATE TABLE "external_catalog_categories" (
 );
 
 -- CreateTable
-CREATE TABLE "external_catalog_products" (
+CREATE TABLE IF NOT EXISTS "external_catalog_products" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1109,7 +1397,7 @@ CREATE TABLE "external_catalog_products" (
 );
 
 -- CreateTable
-CREATE TABLE "external_catalog_modifier_groups" (
+CREATE TABLE IF NOT EXISTS "external_catalog_modifier_groups" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1131,7 +1419,7 @@ CREATE TABLE "external_catalog_modifier_groups" (
 );
 
 -- CreateTable
-CREATE TABLE "external_catalog_modifier_options" (
+CREATE TABLE IF NOT EXISTS "external_catalog_modifier_options" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1154,7 +1442,7 @@ CREATE TABLE "external_catalog_modifier_options" (
 );
 
 -- CreateTable
-CREATE TABLE "external_catalog_product_modifier_group_links" (
+CREATE TABLE IF NOT EXISTS "external_catalog_product_modifier_group_links" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1172,7 +1460,7 @@ CREATE TABLE "external_catalog_product_modifier_group_links" (
 );
 
 -- CreateTable
-CREATE TABLE "channel_entity_mappings" (
+CREATE TABLE IF NOT EXISTS "channel_entity_mappings" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1201,7 +1489,7 @@ CREATE TABLE "channel_entity_mappings" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_publish_jobs" (
+CREATE TABLE IF NOT EXISTS "catalog_publish_jobs" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1226,7 +1514,7 @@ CREATE TABLE "catalog_publish_jobs" (
 );
 
 -- CreateTable
-CREATE TABLE "external_catalog_changes" (
+CREATE TABLE IF NOT EXISTS "external_catalog_changes" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1252,7 +1540,7 @@ CREATE TABLE "external_catalog_changes" (
 );
 
 -- CreateTable
-CREATE TABLE "external_catalog_change_fields" (
+CREATE TABLE IF NOT EXISTS "external_catalog_change_fields" (
     "id" TEXT NOT NULL,
     "changeId" TEXT NOT NULL,
     "fieldPath" TEXT NOT NULL,
@@ -1265,7 +1553,7 @@ CREATE TABLE "external_catalog_change_fields" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_conflicts" (
+CREATE TABLE IF NOT EXISTS "catalog_conflicts" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1292,7 +1580,7 @@ CREATE TABLE "catalog_conflicts" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_conflict_fields" (
+CREATE TABLE IF NOT EXISTS "catalog_conflict_fields" (
     "id" TEXT NOT NULL,
     "conflictId" TEXT NOT NULL,
     "fieldPath" TEXT NOT NULL,
@@ -1306,7 +1594,7 @@ CREATE TABLE "catalog_conflict_fields" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_conflict_resolution_logs" (
+CREATE TABLE IF NOT EXISTS "catalog_conflict_resolution_logs" (
     "id" TEXT NOT NULL,
     "conflictId" TEXT NOT NULL,
     "previousStatus" "CatalogConflictStatus",
@@ -1320,7 +1608,7 @@ CREATE TABLE "catalog_conflict_resolution_logs" (
 );
 
 -- CreateTable
-CREATE TABLE "internal_catalog_changes" (
+CREATE TABLE IF NOT EXISTS "internal_catalog_changes" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1337,7 +1625,7 @@ CREATE TABLE "internal_catalog_changes" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_sync_policies" (
+CREATE TABLE IF NOT EXISTS "catalog_sync_policies" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1356,7 +1644,7 @@ CREATE TABLE "catalog_sync_policies" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_sync_plans" (
+CREATE TABLE IF NOT EXISTS "catalog_sync_plans" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1375,7 +1663,7 @@ CREATE TABLE "catalog_sync_plans" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_sync_plan_items" (
+CREATE TABLE IF NOT EXISTS "catalog_sync_plan_items" (
     "id" TEXT NOT NULL,
     "planId" TEXT NOT NULL,
     "internalEntityType" "CatalogEntityType",
@@ -1401,7 +1689,7 @@ CREATE TABLE "catalog_sync_plan_items" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_sync_execution_logs" (
+CREATE TABLE IF NOT EXISTS "catalog_sync_execution_logs" (
     "id" TEXT NOT NULL,
     "planId" TEXT NOT NULL,
     "planItemId" TEXT,
@@ -1419,7 +1707,7 @@ CREATE TABLE "catalog_sync_execution_logs" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_merge_drafts" (
+CREATE TABLE IF NOT EXISTS "catalog_merge_drafts" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1444,7 +1732,7 @@ CREATE TABLE "catalog_merge_drafts" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_merge_draft_fields" (
+CREATE TABLE IF NOT EXISTS "catalog_merge_draft_fields" (
     "id" TEXT NOT NULL,
     "draftId" TEXT NOT NULL,
     "fieldPath" TEXT NOT NULL,
@@ -1462,7 +1750,7 @@ CREATE TABLE "catalog_merge_draft_fields" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_merge_draft_structures" (
+CREATE TABLE IF NOT EXISTS "catalog_merge_draft_structures" (
     "id" TEXT NOT NULL,
     "draftId" TEXT NOT NULL,
     "fieldPath" TEXT NOT NULL,
@@ -1480,7 +1768,7 @@ CREATE TABLE "catalog_merge_draft_structures" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_merge_execution_logs" (
+CREATE TABLE IF NOT EXISTS "catalog_merge_execution_logs" (
     "id" TEXT NOT NULL,
     "draftId" TEXT NOT NULL,
     "generatedPlanId" TEXT,
@@ -1495,7 +1783,7 @@ CREATE TABLE "catalog_merge_execution_logs" (
 );
 
 -- CreateTable
-CREATE TABLE "job_runs" (
+CREATE TABLE IF NOT EXISTS "job_runs" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT,
     "storeId" TEXT,
@@ -1521,7 +1809,7 @@ CREATE TABLE "job_runs" (
 );
 
 -- CreateTable
-CREATE TABLE "plans" (
+CREATE TABLE IF NOT EXISTS "plans" (
     "id" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -1541,7 +1829,7 @@ CREATE TABLE "plans" (
 );
 
 -- CreateTable
-CREATE TABLE "plan_limits" (
+CREATE TABLE IF NOT EXISTS "plan_limits" (
     "id" TEXT NOT NULL,
     "planId" TEXT NOT NULL,
     "key" TEXT NOT NULL,
@@ -1556,7 +1844,7 @@ CREATE TABLE "plan_limits" (
 );
 
 -- CreateTable
-CREATE TABLE "plan_features" (
+CREATE TABLE IF NOT EXISTS "plan_features" (
     "id" TEXT NOT NULL,
     "planId" TEXT NOT NULL,
     "key" TEXT NOT NULL,
@@ -1569,7 +1857,7 @@ CREATE TABLE "plan_features" (
 );
 
 -- CreateTable
-CREATE TABLE "tenant_billing_accounts" (
+CREATE TABLE IF NOT EXISTS "tenant_billing_accounts" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "billingEmail" TEXT NOT NULL,
@@ -1591,7 +1879,7 @@ CREATE TABLE "tenant_billing_accounts" (
 );
 
 -- CreateTable
-CREATE TABLE "tenant_subscriptions" (
+CREATE TABLE IF NOT EXISTS "tenant_subscriptions" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "planId" TEXT NOT NULL,
@@ -1620,7 +1908,7 @@ CREATE TABLE "tenant_subscriptions" (
 );
 
 -- CreateTable
-CREATE TABLE "tenant_subscription_events" (
+CREATE TABLE IF NOT EXISTS "tenant_subscription_events" (
     "id" TEXT NOT NULL,
     "tenantSubscriptionId" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
@@ -1639,7 +1927,7 @@ CREATE TABLE "tenant_subscription_events" (
 );
 
 -- CreateTable
-CREATE TABLE "billing_records" (
+CREATE TABLE IF NOT EXISTS "billing_records" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "tenantSubscriptionId" TEXT,
@@ -1659,7 +1947,7 @@ CREATE TABLE "billing_records" (
 );
 
 -- CreateTable
-CREATE TABLE "billing_invoices" (
+CREATE TABLE IF NOT EXISTS "billing_invoices" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "subscriptionId" TEXT,
@@ -1687,7 +1975,7 @@ CREATE TABLE "billing_invoices" (
 );
 
 -- CreateTable
-CREATE TABLE "billing_invoice_lines" (
+CREATE TABLE IF NOT EXISTS "billing_invoice_lines" (
     "id" TEXT NOT NULL,
     "invoiceId" TEXT NOT NULL,
     "type" "BillingInvoiceLineType" NOT NULL DEFAULT 'PLAN',
@@ -1703,7 +1991,7 @@ CREATE TABLE "billing_invoice_lines" (
 );
 
 -- CreateTable
-CREATE TABLE "payment_attempts" (
+CREATE TABLE IF NOT EXISTS "payment_attempts" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "invoiceId" TEXT,
@@ -1720,7 +2008,7 @@ CREATE TABLE "payment_attempts" (
 );
 
 -- CreateTable
-CREATE TABLE "usage_metric_snapshots" (
+CREATE TABLE IF NOT EXISTS "usage_metric_snapshots" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "subscriptionId" TEXT,
@@ -1739,7 +2027,7 @@ CREATE TABLE "usage_metric_snapshots" (
 );
 
 -- CreateTable
-CREATE TABLE "subscription_change_requests" (
+CREATE TABLE IF NOT EXISTS "subscription_change_requests" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "subscriptionId" TEXT,
@@ -1761,7 +2049,7 @@ CREATE TABLE "subscription_change_requests" (
 );
 
 -- CreateTable
-CREATE TABLE "billing_event_logs" (
+CREATE TABLE IF NOT EXISTS "billing_event_logs" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT,
     "subscriptionId" TEXT,
@@ -1776,7 +2064,7 @@ CREATE TABLE "billing_event_logs" (
 );
 
 -- CreateTable
-CREATE TABLE "usage_snapshots" (
+CREATE TABLE IF NOT EXISTS "usage_snapshots" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "periodStart" TIMESTAMP(3) NOT NULL,
@@ -1795,7 +2083,7 @@ CREATE TABLE "usage_snapshots" (
 );
 
 -- CreateTable
-CREATE TABLE "feature_flags" (
+CREATE TABLE IF NOT EXISTS "feature_flags" (
     "id" TEXT NOT NULL,
     "key" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -1815,7 +2103,7 @@ CREATE TABLE "feature_flags" (
 );
 
 -- CreateTable
-CREATE TABLE "feature_flag_assignments" (
+CREATE TABLE IF NOT EXISTS "feature_flag_assignments" (
     "id" TEXT NOT NULL,
     "featureFlagId" TEXT NOT NULL,
     "scopeType" "FlagScopeType" NOT NULL DEFAULT 'GLOBAL',
@@ -1836,7 +2124,7 @@ CREATE TABLE "feature_flag_assignments" (
 );
 
 -- CreateTable
-CREATE TABLE "store_settings" (
+CREATE TABLE IF NOT EXISTS "store_settings" (
     "id" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
     "taxRate" DECIMAL(5,4) NOT NULL DEFAULT 0,
@@ -1853,7 +2141,7 @@ CREATE TABLE "store_settings" (
 );
 
 -- CreateTable
-CREATE TABLE "catalog_settings" (
+CREATE TABLE IF NOT EXISTS "catalog_settings" (
     "id" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
     "sourceConnectionId" TEXT,
@@ -1867,7 +2155,7 @@ CREATE TABLE "catalog_settings" (
 );
 
 -- CreateTable
-CREATE TABLE "store_operation_settings" (
+CREATE TABLE IF NOT EXISTS "store_operation_settings" (
     "id" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
     "storeOpen" BOOLEAN NOT NULL DEFAULT true,
@@ -1899,7 +2187,7 @@ CREATE TABLE "store_operation_settings" (
 );
 
 -- CreateTable
-CREATE TABLE "store_hours" (
+CREATE TABLE IF NOT EXISTS "store_hours" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -1916,7 +2204,7 @@ CREATE TABLE "store_hours" (
 );
 
 -- CreateTable
-CREATE TABLE "customer_notifications" (
+CREATE TABLE IF NOT EXISTS "customer_notifications" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "type" "CustomerNotificationType" NOT NULL DEFAULT 'GENERAL',
@@ -1931,7 +2219,7 @@ CREATE TABLE "customer_notifications" (
 );
 
 -- CreateTable
-CREATE TABLE "customer_addresses" (
+CREATE TABLE IF NOT EXISTS "customer_addresses" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "label" TEXT NOT NULL DEFAULT 'Home',
@@ -1949,7 +2237,7 @@ CREATE TABLE "customer_addresses" (
 );
 
 -- CreateTable
-CREATE TABLE "loyalty_accounts" (
+CREATE TABLE IF NOT EXISTS "loyalty_accounts" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "points" INTEGER NOT NULL DEFAULT 0,
@@ -1961,7 +2249,7 @@ CREATE TABLE "loyalty_accounts" (
 );
 
 -- CreateTable
-CREATE TABLE "loyalty_transactions" (
+CREATE TABLE IF NOT EXISTS "loyalty_transactions" (
     "id" TEXT NOT NULL,
     "accountId" TEXT NOT NULL,
     "orderId" TEXT,
@@ -1974,7 +2262,7 @@ CREATE TABLE "loyalty_transactions" (
 );
 
 -- CreateTable
-CREATE TABLE "referral_codes" (
+CREATE TABLE IF NOT EXISTS "referral_codes" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "accountId" TEXT NOT NULL,
@@ -1988,7 +2276,7 @@ CREATE TABLE "referral_codes" (
 );
 
 -- CreateTable
-CREATE TABLE "saved_payment_methods" (
+CREATE TABLE IF NOT EXISTS "saved_payment_methods" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "provider" TEXT NOT NULL DEFAULT 'STRIPE',
@@ -2005,7 +2293,7 @@ CREATE TABLE "saved_payment_methods" (
 );
 
 -- CreateTable
-CREATE TABLE "alert_rules" (
+CREATE TABLE IF NOT EXISTS "alert_rules" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT,
@@ -2022,7 +2310,7 @@ CREATE TABLE "alert_rules" (
 );
 
 -- CreateTable
-CREATE TABLE "notifications" (
+CREATE TABLE IF NOT EXISTS "notifications" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -2039,7 +2327,7 @@ CREATE TABLE "notifications" (
 );
 
 -- CreateTable
-CREATE TABLE "push_subscriptions" (
+CREATE TABLE IF NOT EXISTS "push_subscriptions" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "endpoint" TEXT NOT NULL,
@@ -2053,7 +2341,7 @@ CREATE TABLE "push_subscriptions" (
 );
 
 -- CreateTable
-CREATE TABLE "promo_codes" (
+CREATE TABLE IF NOT EXISTS "promo_codes" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT,
@@ -2075,7 +2363,7 @@ CREATE TABLE "promo_codes" (
 );
 
 -- CreateTable
-CREATE TABLE "promo_redemptions" (
+CREATE TABLE IF NOT EXISTS "promo_redemptions" (
     "id" TEXT NOT NULL,
     "promoCodeId" TEXT NOT NULL,
     "orderId" TEXT,
@@ -2087,7 +2375,7 @@ CREATE TABLE "promo_redemptions" (
 );
 
 -- CreateTable
-CREATE TABLE "product_reviews" (
+CREATE TABLE IF NOT EXISTS "product_reviews" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -2106,7 +2394,7 @@ CREATE TABLE "product_reviews" (
 );
 
 -- CreateTable
-CREATE TABLE "support_tickets" (
+CREATE TABLE IF NOT EXISTS "support_tickets" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -2122,7 +2410,7 @@ CREATE TABLE "support_tickets" (
 );
 
 -- CreateTable
-CREATE TABLE "support_ticket_messages" (
+CREATE TABLE IF NOT EXISTS "support_ticket_messages" (
     "id" TEXT NOT NULL,
     "ticketId" TEXT NOT NULL,
     "authorId" TEXT NOT NULL,
@@ -2134,7 +2422,7 @@ CREATE TABLE "support_ticket_messages" (
 );
 
 -- CreateTable
-CREATE TABLE "push_preferences" (
+CREATE TABLE IF NOT EXISTS "push_preferences" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "orders" BOOLEAN NOT NULL DEFAULT true,
@@ -2147,7 +2435,7 @@ CREATE TABLE "push_preferences" (
 );
 
 -- CreateTable
-CREATE TABLE "gift_cards" (
+CREATE TABLE IF NOT EXISTS "gift_cards" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT,
@@ -2164,7 +2452,7 @@ CREATE TABLE "gift_cards" (
 );
 
 -- CreateTable
-CREATE TABLE "gift_card_transactions" (
+CREATE TABLE IF NOT EXISTS "gift_card_transactions" (
     "id" TEXT NOT NULL,
     "giftCardId" TEXT NOT NULL,
     "type" "GiftCardTransactionType" NOT NULL,
@@ -2177,7 +2465,7 @@ CREATE TABLE "gift_card_transactions" (
 );
 
 -- CreateTable
-CREATE TABLE "email_logs" (
+CREATE TABLE IF NOT EXISTS "email_logs" (
     "id" TEXT NOT NULL,
     "to" TEXT NOT NULL,
     "subject" TEXT NOT NULL,
@@ -2191,7 +2479,7 @@ CREATE TABLE "email_logs" (
 );
 
 -- CreateTable
-CREATE TABLE "compliance_events" (
+CREATE TABLE IF NOT EXISTS "compliance_events" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "type" "ComplianceEventType" NOT NULL,
@@ -2203,7 +2491,7 @@ CREATE TABLE "compliance_events" (
 );
 
 -- CreateTable
-CREATE TABLE "webhook_endpoints" (
+CREATE TABLE IF NOT EXISTS "webhook_endpoints" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "url" TEXT NOT NULL,
@@ -2217,7 +2505,7 @@ CREATE TABLE "webhook_endpoints" (
 );
 
 -- CreateTable
-CREATE TABLE "webhook_deliveries" (
+CREATE TABLE IF NOT EXISTS "webhook_deliveries" (
     "id" TEXT NOT NULL,
     "endpointId" TEXT NOT NULL,
     "event" TEXT NOT NULL,
@@ -2233,7 +2521,7 @@ CREATE TABLE "webhook_deliveries" (
 );
 
 -- CreateTable
-CREATE TABLE "ingredients" (
+CREATE TABLE IF NOT EXISTS "ingredients" (
     "id" TEXT NOT NULL,
     "scope" "IngredientScope" NOT NULL DEFAULT 'STORE',
     "tenantId" TEXT,
@@ -2255,7 +2543,7 @@ CREATE TABLE "ingredients" (
 );
 
 -- CreateTable
-CREATE TABLE "recipes" (
+CREATE TABLE IF NOT EXISTS "recipes" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -2273,7 +2561,7 @@ CREATE TABLE "recipes" (
 );
 
 -- CreateTable
-CREATE TABLE "recipe_ingredients" (
+CREATE TABLE IF NOT EXISTS "recipe_ingredients" (
     "id" TEXT NOT NULL,
     "recipeId" TEXT NOT NULL,
     "ingredientId" TEXT NOT NULL,
@@ -2286,7 +2574,7 @@ CREATE TABLE "recipe_ingredients" (
 );
 
 -- CreateTable
-CREATE TABLE "suppliers" (
+CREATE TABLE IF NOT EXISTS "suppliers" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "storeId" TEXT NOT NULL,
@@ -2303,7 +2591,7 @@ CREATE TABLE "suppliers" (
 );
 
 -- CreateTable
-CREATE TABLE "supplier_products" (
+CREATE TABLE IF NOT EXISTS "supplier_products" (
     "id" TEXT NOT NULL,
     "supplierId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -2323,7 +2611,7 @@ CREATE TABLE "supplier_products" (
 );
 
 -- CreateTable
-CREATE TABLE "ingredient_supplier_links" (
+CREATE TABLE IF NOT EXISTS "ingredient_supplier_links" (
     "id" TEXT NOT NULL,
     "ingredientId" TEXT NOT NULL,
     "supplierProductId" TEXT NOT NULL,
@@ -2334,7 +2622,7 @@ CREATE TABLE "ingredient_supplier_links" (
 );
 
 -- CreateTable
-CREATE TABLE "supplier_credentials" (
+CREATE TABLE IF NOT EXISTS "supplier_credentials" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -2352,7 +2640,7 @@ CREATE TABLE "supplier_credentials" (
 );
 
 -- CreateTable
-CREATE TABLE "supplier_price_observations" (
+CREATE TABLE IF NOT EXISTS "supplier_price_observations" (
     "id" TEXT NOT NULL,
     "supplierProductId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -2364,7 +2652,7 @@ CREATE TABLE "supplier_price_observations" (
 );
 
 -- CreateTable
-CREATE TABLE "marketplace_recipes" (
+CREATE TABLE IF NOT EXISTS "marketplace_recipes" (
     "id" TEXT NOT NULL,
     "type" "MarketplaceRecipeType" NOT NULL DEFAULT 'PREMIUM',
     "status" "MarketplaceRecipeStatus" NOT NULL DEFAULT 'DRAFT',
@@ -2393,7 +2681,7 @@ CREATE TABLE "marketplace_recipes" (
 );
 
 -- CreateTable
-CREATE TABLE "marketplace_recipe_steps" (
+CREATE TABLE IF NOT EXISTS "marketplace_recipe_steps" (
     "id" TEXT NOT NULL,
     "recipeId" TEXT NOT NULL,
     "stepNumber" INTEGER NOT NULL,
@@ -2407,7 +2695,7 @@ CREATE TABLE "marketplace_recipe_steps" (
 );
 
 -- CreateTable
-CREATE TABLE "marketplace_recipe_ingredients" (
+CREATE TABLE IF NOT EXISTS "marketplace_recipe_ingredients" (
     "id" TEXT NOT NULL,
     "recipeId" TEXT NOT NULL,
     "ingredientId" TEXT NOT NULL,
@@ -2422,7 +2710,7 @@ CREATE TABLE "marketplace_recipe_ingredients" (
 );
 
 -- CreateTable
-CREATE TABLE "marketplace_recipe_reviews" (
+CREATE TABLE IF NOT EXISTS "marketplace_recipe_reviews" (
     "id" TEXT NOT NULL,
     "recipeId" TEXT NOT NULL,
     "reviewerId" TEXT NOT NULL,
@@ -2434,7 +2722,7 @@ CREATE TABLE "marketplace_recipe_reviews" (
 );
 
 -- CreateTable
-CREATE TABLE "marketplace_recipe_purchases" (
+CREATE TABLE IF NOT EXISTS "marketplace_recipe_purchases" (
     "id" TEXT NOT NULL,
     "recipeId" TEXT NOT NULL,
     "buyerUserId" TEXT NOT NULL,
@@ -2455,7 +2743,7 @@ CREATE TABLE "marketplace_recipe_purchases" (
 );
 
 -- CreateTable
-CREATE TABLE "ingredient_requests" (
+CREATE TABLE IF NOT EXISTS "ingredient_requests" (
     "id" TEXT NOT NULL,
     "requestedByUserId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -2474,7 +2762,7 @@ CREATE TABLE "ingredient_requests" (
 );
 
 -- CreateTable
-CREATE TABLE "provider_onboarding_applications" (
+CREATE TABLE IF NOT EXISTS "provider_onboarding_applications" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "businessName" TEXT NOT NULL,
@@ -2493,1123 +2781,1510 @@ CREATE TABLE "provider_onboarding_applications" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "tenants_slug_key" ON "tenants"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "tenants_slug_key" ON "tenants"("slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "users_email_key" ON "users"("email");
 
 -- CreateIndex
-CREATE INDEX "memberships_tenantId_idx" ON "memberships"("tenantId");
+CREATE INDEX IF NOT EXISTS "memberships_tenantId_idx" ON "memberships"("tenantId");
 
 -- CreateIndex
-CREATE INDEX "memberships_userId_idx" ON "memberships"("userId");
+CREATE INDEX IF NOT EXISTS "memberships_userId_idx" ON "memberships"("userId");
 
 -- CreateIndex
-CREATE INDEX "memberships_status_idx" ON "memberships"("status");
+CREATE INDEX IF NOT EXISTS "memberships_status_idx" ON "memberships"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "memberships_tenantId_userId_key" ON "memberships"("tenantId", "userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "memberships_tenantId_userId_key" ON "memberships"("tenantId", "userId");
 
 -- CreateIndex
-CREATE INDEX "stores_tenantId_idx" ON "stores"("tenantId");
+CREATE INDEX IF NOT EXISTS "stores_tenantId_idx" ON "stores"("tenantId");
 
 -- CreateIndex
-CREATE INDEX "stores_status_idx" ON "stores"("status");
+CREATE INDEX IF NOT EXISTS "stores_status_idx" ON "stores"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "stores_tenantId_code_key" ON "stores"("tenantId", "code");
+CREATE UNIQUE INDEX IF NOT EXISTS "stores_tenantId_code_key" ON "stores"("tenantId", "code");
 
 -- CreateIndex
-CREATE INDEX "store_memberships_tenantId_idx" ON "store_memberships"("tenantId");
+CREATE INDEX IF NOT EXISTS "store_memberships_tenantId_idx" ON "store_memberships"("tenantId");
 
 -- CreateIndex
-CREATE INDEX "store_memberships_storeId_idx" ON "store_memberships"("storeId");
+CREATE INDEX IF NOT EXISTS "store_memberships_storeId_idx" ON "store_memberships"("storeId");
 
 -- CreateIndex
-CREATE INDEX "store_memberships_membershipId_idx" ON "store_memberships"("membershipId");
+CREATE INDEX IF NOT EXISTS "store_memberships_membershipId_idx" ON "store_memberships"("membershipId");
 
 -- CreateIndex
-CREATE INDEX "store_memberships_status_idx" ON "store_memberships"("status");
+CREATE INDEX IF NOT EXISTS "store_memberships_status_idx" ON "store_memberships"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "store_memberships_membershipId_storeId_key" ON "store_memberships"("membershipId", "storeId");
+CREATE UNIQUE INDEX IF NOT EXISTS "store_memberships_membershipId_storeId_key" ON "store_memberships"("membershipId", "storeId");
 
 -- CreateIndex
-CREATE INDEX "provider_app_credentials_tenantId_provider_environment_isAc_idx" ON "provider_app_credentials"("tenantId", "provider", "environment", "isActive");
+CREATE INDEX IF NOT EXISTS "provider_app_credentials_tenantId_provider_environment_isAc_idx" ON "provider_app_credentials"("tenantId", "provider", "environment", "isActive");
 
 -- CreateIndex
-CREATE INDEX "connections_tenantId_storeId_provider_idx" ON "connections"("tenantId", "storeId", "provider");
+CREATE INDEX IF NOT EXISTS "connections_tenantId_storeId_provider_idx" ON "connections"("tenantId", "storeId", "provider");
 
 -- CreateIndex
-CREATE INDEX "connections_status_reauthRequiredAt_idx" ON "connections"("status", "reauthRequiredAt");
+CREATE INDEX IF NOT EXISTS "connections_status_reauthRequiredAt_idx" ON "connections"("status", "reauthRequiredAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "connections_storeId_provider_type_key" ON "connections"("storeId", "provider", "type");
+CREATE UNIQUE INDEX IF NOT EXISTS "connections_storeId_provider_type_key" ON "connections"("storeId", "provider", "type");
 
 -- CreateIndex
-CREATE INDEX "connection_credentials_connectionId_isActive_idx" ON "connection_credentials"("connectionId", "isActive");
+CREATE INDEX IF NOT EXISTS "connection_credentials_connectionId_isActive_idx" ON "connection_credentials"("connectionId", "isActive");
 
 -- CreateIndex
-CREATE INDEX "connection_credentials_credentialType_authScheme_idx" ON "connection_credentials"("credentialType", "authScheme");
+CREATE INDEX IF NOT EXISTS "connection_credentials_credentialType_authScheme_idx" ON "connection_credentials"("credentialType", "authScheme");
 
 -- CreateIndex
-CREATE INDEX "connection_credentials_expiresAt_refreshAfter_idx" ON "connection_credentials"("expiresAt", "refreshAfter");
+CREATE INDEX IF NOT EXISTS "connection_credentials_expiresAt_refreshAfter_idx" ON "connection_credentials"("expiresAt", "refreshAfter");
 
 -- CreateIndex
-CREATE INDEX "connection_credentials_tenantId_storeId_idx" ON "connection_credentials"("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "connection_credentials_tenantId_storeId_idx" ON "connection_credentials"("tenantId", "storeId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "connection_oauth_states_state_key" ON "connection_oauth_states"("state");
+CREATE UNIQUE INDEX IF NOT EXISTS "connection_oauth_states_state_key" ON "connection_oauth_states"("state");
 
 -- CreateIndex
-CREATE INDEX "connection_oauth_states_provider_expiresAt_idx" ON "connection_oauth_states"("provider", "expiresAt");
+CREATE INDEX IF NOT EXISTS "connection_oauth_states_provider_expiresAt_idx" ON "connection_oauth_states"("provider", "expiresAt");
 
 -- CreateIndex
-CREATE INDEX "connection_oauth_states_tenantId_storeId_idx" ON "connection_oauth_states"("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "connection_oauth_states_tenantId_storeId_idx" ON "connection_oauth_states"("tenantId", "storeId");
 
 -- CreateIndex
-CREATE INDEX "connection_action_logs_tenantId_storeId_provider_createdAt_idx" ON "connection_action_logs"("tenantId", "storeId", "provider", "createdAt");
+CREATE INDEX IF NOT EXISTS "connection_action_logs_tenantId_storeId_provider_createdAt_idx" ON "connection_action_logs"("tenantId", "storeId", "provider", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "connection_action_logs_connectionId_createdAt_idx" ON "connection_action_logs"("connectionId", "createdAt");
+CREATE INDEX IF NOT EXISTS "connection_action_logs_connectionId_createdAt_idx" ON "connection_action_logs"("connectionId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "audit_logs_tenantId_createdAt_idx" ON "audit_logs"("tenantId", "createdAt");
+CREATE INDEX IF NOT EXISTS "audit_logs_tenantId_createdAt_idx" ON "audit_logs"("tenantId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "audit_logs_storeId_createdAt_idx" ON "audit_logs"("storeId", "createdAt");
+CREATE INDEX IF NOT EXISTS "audit_logs_storeId_createdAt_idx" ON "audit_logs"("storeId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "audit_logs_targetType_targetId_idx" ON "audit_logs"("targetType", "targetId");
+CREATE INDEX IF NOT EXISTS "audit_logs_targetType_targetId_idx" ON "audit_logs"("targetType", "targetId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "roles_key_key" ON "roles"("key");
+CREATE UNIQUE INDEX IF NOT EXISTS "roles_key_key" ON "roles"("key");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "permissions_key_key" ON "permissions"("key");
+CREATE UNIQUE INDEX IF NOT EXISTS "permissions_key_key" ON "permissions"("key");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "role_permissions_roleId_permissionId_key" ON "role_permissions"("roleId", "permissionId");
+CREATE UNIQUE INDEX IF NOT EXISTS "role_permissions_roleId_permissionId_key" ON "role_permissions"("roleId", "permissionId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "legacy_payments_orderId_key" ON "legacy_payments"("orderId");
+CREATE UNIQUE INDEX IF NOT EXISTS "legacy_payments_orderId_key" ON "legacy_payments"("orderId");
 
 -- CreateIndex
-CREATE INDEX "orders_tenantId_storeId_orderedAt_idx" ON "orders"("tenantId", "storeId", "orderedAt");
+CREATE INDEX IF NOT EXISTS "orders_tenantId_storeId_orderedAt_idx" ON "orders"("tenantId", "storeId", "orderedAt");
 
 -- CreateIndex
-CREATE INDEX "orders_tenantId_storeId_sourceChannel_idx" ON "orders"("tenantId", "storeId", "sourceChannel");
+CREATE INDEX IF NOT EXISTS "orders_tenantId_storeId_sourceChannel_idx" ON "orders"("tenantId", "storeId", "sourceChannel");
 
 -- CreateIndex
-CREATE INDEX "orders_sourceConnectionId_sourceOrderRef_idx" ON "orders"("sourceConnectionId", "sourceOrderRef");
+CREATE INDEX IF NOT EXISTS "orders_sourceConnectionId_sourceOrderRef_idx" ON "orders"("sourceConnectionId", "sourceOrderRef");
 
 -- CreateIndex
-CREATE INDEX "orders_posConnectionId_posOrderRef_idx" ON "orders"("posConnectionId", "posOrderRef");
+CREATE INDEX IF NOT EXISTS "orders_posConnectionId_posOrderRef_idx" ON "orders"("posConnectionId", "posOrderRef");
 
 -- CreateIndex
-CREATE INDEX "order_items_orderId_idx" ON "order_items"("orderId");
+CREATE INDEX IF NOT EXISTS "order_items_orderId_idx" ON "order_items"("orderId");
 
 -- CreateIndex
-CREATE INDEX "order_items_tenantId_storeId_idx" ON "order_items"("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "order_items_tenantId_storeId_idx" ON "order_items"("tenantId", "storeId");
 
 -- CreateIndex
-CREATE INDEX "order_item_modifiers_orderItemId_idx" ON "order_item_modifiers"("orderItemId");
+CREATE INDEX IF NOT EXISTS "order_item_modifiers_orderItemId_idx" ON "order_item_modifiers"("orderItemId");
 
 -- CreateIndex
-CREATE INDEX "order_item_modifiers_tenantId_storeId_idx" ON "order_item_modifiers"("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "order_item_modifiers_tenantId_storeId_idx" ON "order_item_modifiers"("tenantId", "storeId");
 
 -- CreateIndex
-CREATE INDEX "order_channel_links_orderId_idx" ON "order_channel_links"("orderId");
+CREATE INDEX IF NOT EXISTS "order_channel_links_orderId_idx" ON "order_channel_links"("orderId");
 
 -- CreateIndex
-CREATE INDEX "order_channel_links_tenantId_storeId_channelType_idx" ON "order_channel_links"("tenantId", "storeId", "channelType");
+CREATE INDEX IF NOT EXISTS "order_channel_links_tenantId_storeId_channelType_idx" ON "order_channel_links"("tenantId", "storeId", "channelType");
 
 -- CreateIndex
-CREATE INDEX "order_channel_links_connectionId_externalOrderRef_idx" ON "order_channel_links"("connectionId", "externalOrderRef");
+CREATE INDEX IF NOT EXISTS "order_channel_links_connectionId_externalOrderRef_idx" ON "order_channel_links"("connectionId", "externalOrderRef");
 
 -- CreateIndex
-CREATE INDEX "order_channel_links_tenantId_storeId_role_idx" ON "order_channel_links"("tenantId", "storeId", "role");
+CREATE INDEX IF NOT EXISTS "order_channel_links_tenantId_storeId_role_idx" ON "order_channel_links"("tenantId", "storeId", "role");
 
 -- CreateIndex
-CREATE INDEX "order_events_orderId_createdAt_idx" ON "order_events"("orderId", "createdAt");
+CREATE INDEX IF NOT EXISTS "order_events_orderId_createdAt_idx" ON "order_events"("orderId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "order_events_tenantId_storeId_createdAt_idx" ON "order_events"("tenantId", "storeId", "createdAt");
+CREATE INDEX IF NOT EXISTS "order_events_tenantId_storeId_createdAt_idx" ON "order_events"("tenantId", "storeId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "inbound_webhook_logs_channelType_receivedAt_idx" ON "inbound_webhook_logs"("channelType", "receivedAt");
+CREATE INDEX IF NOT EXISTS "inbound_webhook_logs_channelType_receivedAt_idx" ON "inbound_webhook_logs"("channelType", "receivedAt");
 
 -- CreateIndex
-CREATE INDEX "inbound_webhook_logs_connectionId_externalEventRef_idx" ON "inbound_webhook_logs"("connectionId", "externalEventRef");
+CREATE INDEX IF NOT EXISTS "inbound_webhook_logs_connectionId_externalEventRef_idx" ON "inbound_webhook_logs"("connectionId", "externalEventRef");
 
 -- CreateIndex
-CREATE INDEX "inbound_webhook_logs_deliveryId_idx" ON "inbound_webhook_logs"("deliveryId");
+CREATE INDEX IF NOT EXISTS "inbound_webhook_logs_deliveryId_idx" ON "inbound_webhook_logs"("deliveryId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "pos_integrations_storeId_provider_key" ON "pos_integrations"("storeId", "provider");
+CREATE UNIQUE INDEX IF NOT EXISTS "pos_integrations_storeId_provider_key" ON "pos_integrations"("storeId", "provider");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "delivery_integrations_storeId_platform_key" ON "delivery_integrations"("storeId", "platform");
+CREATE UNIQUE INDEX IF NOT EXISTS "delivery_integrations_storeId_platform_key" ON "delivery_integrations"("storeId", "platform");
 
 -- CreateIndex
-CREATE INDEX "customers_tenantId_idx" ON "customers"("tenantId");
+CREATE INDEX IF NOT EXISTS "customers_tenantId_idx" ON "customers"("tenantId");
 
 -- CreateIndex
-CREATE INDEX "customers_tenantId_email_idx" ON "customers"("tenantId", "email");
+CREATE INDEX IF NOT EXISTS "customers_tenantId_email_idx" ON "customers"("tenantId", "email");
 
 -- CreateIndex
-CREATE INDEX "subscriptions_tenantId_customerId_idx" ON "subscriptions"("tenantId", "customerId");
+CREATE INDEX IF NOT EXISTS "subscriptions_tenantId_customerId_idx" ON "subscriptions"("tenantId", "customerId");
 
 -- CreateIndex
-CREATE INDEX "subscriptions_tenantId_status_idx" ON "subscriptions"("tenantId", "status");
+CREATE INDEX IF NOT EXISTS "subscriptions_tenantId_status_idx" ON "subscriptions"("tenantId", "status");
 
 -- CreateIndex
-CREATE INDEX "catalog_categories_tenantId_storeId_idx" ON "catalog_categories"("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "catalog_categories_tenantId_storeId_idx" ON "catalog_categories"("tenantId", "storeId");
 
 -- CreateIndex
-CREATE INDEX "catalog_categories_storeId_isActive_isVisibleOnOnlineOrder__idx" ON "catalog_categories"("storeId", "isActive", "isVisibleOnOnlineOrder", "displayOrder");
+CREATE INDEX IF NOT EXISTS "catalog_categories_storeId_isActive_isVisibleOnOnlineOrder__idx" ON "catalog_categories"("storeId", "isActive", "isVisibleOnOnlineOrder", "displayOrder");
 
 -- CreateIndex
-CREATE INDEX "catalog_categories_storeId_originConnectionId_originExterna_idx" ON "catalog_categories"("storeId", "originConnectionId", "originExternalRef");
+CREATE INDEX IF NOT EXISTS "catalog_categories_storeId_originConnectionId_originExterna_idx" ON "catalog_categories"("storeId", "originConnectionId", "originExternalRef");
 
 -- CreateIndex
-CREATE INDEX "catalog_categories_storeId_sourceOfTruthConnectionId_source_idx" ON "catalog_categories"("storeId", "sourceOfTruthConnectionId", "sourceCategoryRef");
+CREATE INDEX IF NOT EXISTS "catalog_categories_storeId_sourceOfTruthConnectionId_source_idx" ON "catalog_categories"("storeId", "sourceOfTruthConnectionId", "sourceCategoryRef");
 
 -- CreateIndex
-CREATE INDEX "catalog_products_tenantId_storeId_idx" ON "catalog_products"("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "catalog_products_tenantId_storeId_idx" ON "catalog_products"("tenantId", "storeId");
 
 -- CreateIndex
-CREATE INDEX "catalog_products_storeId_isActive_isVisibleOnOnlineOrder_di_idx" ON "catalog_products"("storeId", "isActive", "isVisibleOnOnlineOrder", "displayOrder");
+CREATE INDEX IF NOT EXISTS "catalog_products_storeId_isActive_isVisibleOnOnlineOrder_di_idx" ON "catalog_products"("storeId", "isActive", "isVisibleOnOnlineOrder", "displayOrder");
 
 -- CreateIndex
-CREATE INDEX "catalog_products_storeId_originConnectionId_originExternalR_idx" ON "catalog_products"("storeId", "originConnectionId", "originExternalRef");
+CREATE INDEX IF NOT EXISTS "catalog_products_storeId_originConnectionId_originExternalR_idx" ON "catalog_products"("storeId", "originConnectionId", "originExternalRef");
 
 -- CreateIndex
-CREATE INDEX "catalog_products_storeId_sourceOfTruthConnectionId_sourcePr_idx" ON "catalog_products"("storeId", "sourceOfTruthConnectionId", "sourceProductRef");
+CREATE INDEX IF NOT EXISTS "catalog_products_storeId_sourceOfTruthConnectionId_sourcePr_idx" ON "catalog_products"("storeId", "sourceOfTruthConnectionId", "sourceProductRef");
 
 -- CreateIndex
-CREATE INDEX "catalog_products_storeId_name_idx" ON "catalog_products"("storeId", "name");
+CREATE INDEX IF NOT EXISTS "catalog_products_storeId_name_idx" ON "catalog_products"("storeId", "name");
 
 -- CreateIndex
-CREATE INDEX "catalog_product_categories_storeId_categoryId_sortOrder_idx" ON "catalog_product_categories"("storeId", "categoryId", "sortOrder");
+CREATE INDEX IF NOT EXISTS "catalog_product_categories_storeId_categoryId_sortOrder_idx" ON "catalog_product_categories"("storeId", "categoryId", "sortOrder");
 
 -- CreateIndex
-CREATE INDEX "catalog_product_categories_storeId_productId_idx" ON "catalog_product_categories"("storeId", "productId");
+CREATE INDEX IF NOT EXISTS "catalog_product_categories_storeId_productId_idx" ON "catalog_product_categories"("storeId", "productId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "catalog_product_categories_productId_categoryId_key" ON "catalog_product_categories"("productId", "categoryId");
+CREATE UNIQUE INDEX IF NOT EXISTS "catalog_product_categories_productId_categoryId_key" ON "catalog_product_categories"("productId", "categoryId");
 
 -- CreateIndex
-CREATE INDEX "catalog_modifier_groups_tenantId_storeId_idx" ON "catalog_modifier_groups"("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "catalog_modifier_groups_tenantId_storeId_idx" ON "catalog_modifier_groups"("tenantId", "storeId");
 
 -- CreateIndex
-CREATE INDEX "catalog_modifier_groups_storeId_originConnectionId_originEx_idx" ON "catalog_modifier_groups"("storeId", "originConnectionId", "originExternalRef");
+CREATE INDEX IF NOT EXISTS "catalog_modifier_groups_storeId_originConnectionId_originEx_idx" ON "catalog_modifier_groups"("storeId", "originConnectionId", "originExternalRef");
 
 -- CreateIndex
-CREATE INDEX "catalog_modifier_groups_storeId_sourceOfTruthConnectionId_s_idx" ON "catalog_modifier_groups"("storeId", "sourceOfTruthConnectionId", "sourceModifierGroupRef");
+CREATE INDEX IF NOT EXISTS "catalog_modifier_groups_storeId_sourceOfTruthConnectionId_s_idx" ON "catalog_modifier_groups"("storeId", "sourceOfTruthConnectionId", "sourceModifierGroupRef");
 
 -- CreateIndex
-CREATE INDEX "catalog_modifier_groups_storeId_isActive_displayOrder_idx" ON "catalog_modifier_groups"("storeId", "isActive", "displayOrder");
+CREATE INDEX IF NOT EXISTS "catalog_modifier_groups_storeId_isActive_displayOrder_idx" ON "catalog_modifier_groups"("storeId", "isActive", "displayOrder");
 
 -- CreateIndex
-CREATE INDEX "catalog_modifier_options_tenantId_storeId_idx" ON "catalog_modifier_options"("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "catalog_modifier_options_tenantId_storeId_idx" ON "catalog_modifier_options"("tenantId", "storeId");
 
 -- CreateIndex
-CREATE INDEX "catalog_modifier_options_modifierGroupId_isActive_isSoldOut_idx" ON "catalog_modifier_options"("modifierGroupId", "isActive", "isSoldOut", "displayOrder");
+CREATE INDEX IF NOT EXISTS "catalog_modifier_options_modifierGroupId_isActive_isSoldOut_idx" ON "catalog_modifier_options"("modifierGroupId", "isActive", "isSoldOut", "displayOrder");
 
 -- CreateIndex
-CREATE INDEX "catalog_modifier_options_storeId_originConnectionId_originE_idx" ON "catalog_modifier_options"("storeId", "originConnectionId", "originExternalRef");
+CREATE INDEX IF NOT EXISTS "catalog_modifier_options_storeId_originConnectionId_originE_idx" ON "catalog_modifier_options"("storeId", "originConnectionId", "originExternalRef");
 
 -- CreateIndex
-CREATE INDEX "catalog_modifier_options_storeId_sourceOfTruthConnectionId__idx" ON "catalog_modifier_options"("storeId", "sourceOfTruthConnectionId", "sourceModifierOptionRef");
+CREATE INDEX IF NOT EXISTS "catalog_modifier_options_storeId_sourceOfTruthConnectionId__idx" ON "catalog_modifier_options"("storeId", "sourceOfTruthConnectionId", "sourceModifierOptionRef");
 
 -- CreateIndex
-CREATE INDEX "catalog_product_modifier_groups_storeId_productId_displayOr_idx" ON "catalog_product_modifier_groups"("storeId", "productId", "displayOrder");
+CREATE INDEX IF NOT EXISTS "catalog_product_modifier_groups_storeId_productId_displayOr_idx" ON "catalog_product_modifier_groups"("storeId", "productId", "displayOrder");
 
 -- CreateIndex
-CREATE INDEX "catalog_product_modifier_groups_storeId_modifierGroupId_idx" ON "catalog_product_modifier_groups"("storeId", "modifierGroupId");
+CREATE INDEX IF NOT EXISTS "catalog_product_modifier_groups_storeId_modifierGroupId_idx" ON "catalog_product_modifier_groups"("storeId", "modifierGroupId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "catalog_product_modifier_groups_productId_modifierGroupId_key" ON "catalog_product_modifier_groups"("productId", "modifierGroupId");
+CREATE UNIQUE INDEX IF NOT EXISTS "catalog_product_modifier_groups_productId_modifierGroupId_key" ON "catalog_product_modifier_groups"("productId", "modifierGroupId");
 
 -- CreateIndex
-CREATE INDEX "catalog_import_runs_tenantId_storeId_createdAt_idx" ON "catalog_import_runs"("tenantId", "storeId", "createdAt");
+CREATE INDEX IF NOT EXISTS "catalog_import_runs_tenantId_storeId_createdAt_idx" ON "catalog_import_runs"("tenantId", "storeId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "catalog_import_runs_connectionId_status_idx" ON "catalog_import_runs"("connectionId", "status");
+CREATE INDEX IF NOT EXISTS "catalog_import_runs_connectionId_status_idx" ON "catalog_import_runs"("connectionId", "status");
 
 -- CreateIndex
-CREATE INDEX "external_catalog_snapshots_connectionId_entityType_external_idx" ON "external_catalog_snapshots"("connectionId", "entityType", "externalEntityId");
+CREATE INDEX IF NOT EXISTS "external_catalog_snapshots_connectionId_entityType_external_idx" ON "external_catalog_snapshots"("connectionId", "entityType", "externalEntityId");
 
 -- CreateIndex
-CREATE INDEX "external_catalog_snapshots_importRunId_idx" ON "external_catalog_snapshots"("importRunId");
+CREATE INDEX IF NOT EXISTS "external_catalog_snapshots_importRunId_idx" ON "external_catalog_snapshots"("importRunId");
 
 -- CreateIndex
-CREATE INDEX "external_catalog_categories_storeId_connectionId_idx" ON "external_catalog_categories"("storeId", "connectionId");
+CREATE INDEX IF NOT EXISTS "external_catalog_categories_storeId_connectionId_idx" ON "external_catalog_categories"("storeId", "connectionId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "external_catalog_categories_connectionId_externalId_key" ON "external_catalog_categories"("connectionId", "externalId");
+CREATE UNIQUE INDEX IF NOT EXISTS "external_catalog_categories_connectionId_externalId_key" ON "external_catalog_categories"("connectionId", "externalId");
 
 -- CreateIndex
-CREATE INDEX "external_catalog_products_storeId_connectionId_idx" ON "external_catalog_products"("storeId", "connectionId");
+CREATE INDEX IF NOT EXISTS "external_catalog_products_storeId_connectionId_idx" ON "external_catalog_products"("storeId", "connectionId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "external_catalog_products_connectionId_externalId_key" ON "external_catalog_products"("connectionId", "externalId");
+CREATE UNIQUE INDEX IF NOT EXISTS "external_catalog_products_connectionId_externalId_key" ON "external_catalog_products"("connectionId", "externalId");
 
 -- CreateIndex
-CREATE INDEX "external_catalog_modifier_groups_storeId_connectionId_idx" ON "external_catalog_modifier_groups"("storeId", "connectionId");
+CREATE INDEX IF NOT EXISTS "external_catalog_modifier_groups_storeId_connectionId_idx" ON "external_catalog_modifier_groups"("storeId", "connectionId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "external_catalog_modifier_groups_connectionId_externalId_key" ON "external_catalog_modifier_groups"("connectionId", "externalId");
+CREATE UNIQUE INDEX IF NOT EXISTS "external_catalog_modifier_groups_connectionId_externalId_key" ON "external_catalog_modifier_groups"("connectionId", "externalId");
 
 -- CreateIndex
-CREATE INDEX "external_catalog_modifier_options_storeId_connectionId_idx" ON "external_catalog_modifier_options"("storeId", "connectionId");
+CREATE INDEX IF NOT EXISTS "external_catalog_modifier_options_storeId_connectionId_idx" ON "external_catalog_modifier_options"("storeId", "connectionId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "external_catalog_modifier_options_connectionId_externalId_key" ON "external_catalog_modifier_options"("connectionId", "externalId");
+CREATE UNIQUE INDEX IF NOT EXISTS "external_catalog_modifier_options_connectionId_externalId_key" ON "external_catalog_modifier_options"("connectionId", "externalId");
 
 -- CreateIndex
-CREATE INDEX "external_catalog_product_modifier_group_links_storeId_conne_idx" ON "external_catalog_product_modifier_group_links"("storeId", "connectionId", "externalProductId");
+CREATE INDEX IF NOT EXISTS "external_catalog_product_modifier_group_links_storeId_conne_idx" ON "external_catalog_product_modifier_group_links"("storeId", "connectionId", "externalProductId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "external_catalog_product_modifier_group_links_connectionId__key" ON "external_catalog_product_modifier_group_links"("connectionId", "externalProductId", "externalModifierGroupId");
+CREATE UNIQUE INDEX IF NOT EXISTS "external_catalog_product_modifier_group_links_connectionId__key" ON "external_catalog_product_modifier_group_links"("connectionId", "externalProductId", "externalModifierGroupId");
 
 -- CreateIndex
-CREATE INDEX "channel_entity_mappings_tenantId_storeId_connectionId_inter_idx" ON "channel_entity_mappings"("tenantId", "storeId", "connectionId", "internalEntityType", "internalEntityId");
+CREATE INDEX IF NOT EXISTS "channel_entity_mappings_tenantId_storeId_connectionId_inter_idx" ON "channel_entity_mappings"("tenantId", "storeId", "connectionId", "internalEntityType", "internalEntityId");
 
 -- CreateIndex
-CREATE INDEX "channel_entity_mappings_tenantId_storeId_connectionId_exter_idx" ON "channel_entity_mappings"("tenantId", "storeId", "connectionId", "externalEntityType", "externalEntityId");
+CREATE INDEX IF NOT EXISTS "channel_entity_mappings_tenantId_storeId_connectionId_exter_idx" ON "channel_entity_mappings"("tenantId", "storeId", "connectionId", "externalEntityType", "externalEntityId");
 
 -- CreateIndex
-CREATE INDEX "channel_entity_mappings_tenantId_storeId_connectionId_statu_idx" ON "channel_entity_mappings"("tenantId", "storeId", "connectionId", "status");
+CREATE INDEX IF NOT EXISTS "channel_entity_mappings_tenantId_storeId_connectionId_statu_idx" ON "channel_entity_mappings"("tenantId", "storeId", "connectionId", "status");
 
 -- CreateIndex
-CREATE INDEX "catalog_publish_jobs_tenantId_storeId_connectionId_status_idx" ON "catalog_publish_jobs"("tenantId", "storeId", "connectionId", "status");
+CREATE INDEX IF NOT EXISTS "catalog_publish_jobs_tenantId_storeId_connectionId_status_idx" ON "catalog_publish_jobs"("tenantId", "storeId", "connectionId", "status");
 
 -- CreateIndex
-CREATE INDEX "catalog_publish_jobs_tenantId_storeId_connectionId_internal_idx" ON "catalog_publish_jobs"("tenantId", "storeId", "connectionId", "internalEntityType", "internalEntityId");
+CREATE INDEX IF NOT EXISTS "catalog_publish_jobs_tenantId_storeId_connectionId_internal_idx" ON "catalog_publish_jobs"("tenantId", "storeId", "connectionId", "internalEntityType", "internalEntityId");
 
 -- CreateIndex
-CREATE INDEX "external_catalog_changes_tenantId_storeId_connectionId_stat_idx" ON "external_catalog_changes"("tenantId", "storeId", "connectionId", "status");
+CREATE INDEX IF NOT EXISTS "external_catalog_changes_tenantId_storeId_connectionId_stat_idx" ON "external_catalog_changes"("tenantId", "storeId", "connectionId", "status");
 
 -- CreateIndex
-CREATE INDEX "external_catalog_changes_tenantId_storeId_connectionId_enti_idx" ON "external_catalog_changes"("tenantId", "storeId", "connectionId", "entityType");
+CREATE INDEX IF NOT EXISTS "external_catalog_changes_tenantId_storeId_connectionId_enti_idx" ON "external_catalog_changes"("tenantId", "storeId", "connectionId", "entityType");
 
 -- CreateIndex
-CREATE INDEX "external_catalog_changes_connectionId_externalEntityId_enti_idx" ON "external_catalog_changes"("connectionId", "externalEntityId", "entityType");
+CREATE INDEX IF NOT EXISTS "external_catalog_changes_connectionId_externalEntityId_enti_idx" ON "external_catalog_changes"("connectionId", "externalEntityId", "entityType");
 
 -- CreateIndex
-CREATE INDEX "external_catalog_changes_importRunId_idx" ON "external_catalog_changes"("importRunId");
+CREATE INDEX IF NOT EXISTS "external_catalog_changes_importRunId_idx" ON "external_catalog_changes"("importRunId");
 
 -- CreateIndex
-CREATE INDEX "external_catalog_change_fields_changeId_idx" ON "external_catalog_change_fields"("changeId");
+CREATE INDEX IF NOT EXISTS "external_catalog_change_fields_changeId_idx" ON "external_catalog_change_fields"("changeId");
 
 -- CreateIndex
-CREATE INDEX "catalog_conflicts_tenantId_storeId_connectionId_status_idx" ON "catalog_conflicts"("tenantId", "storeId", "connectionId", "status");
+CREATE INDEX IF NOT EXISTS "catalog_conflicts_tenantId_storeId_connectionId_status_idx" ON "catalog_conflicts"("tenantId", "storeId", "connectionId", "status");
 
 -- CreateIndex
-CREATE INDEX "catalog_conflicts_tenantId_storeId_connectionId_internalEnt_idx" ON "catalog_conflicts"("tenantId", "storeId", "connectionId", "internalEntityType", "internalEntityId");
+CREATE INDEX IF NOT EXISTS "catalog_conflicts_tenantId_storeId_connectionId_internalEnt_idx" ON "catalog_conflicts"("tenantId", "storeId", "connectionId", "internalEntityType", "internalEntityId");
 
 -- CreateIndex
-CREATE INDEX "catalog_conflicts_connectionId_externalEntityType_externalE_idx" ON "catalog_conflicts"("connectionId", "externalEntityType", "externalEntityId");
+CREATE INDEX IF NOT EXISTS "catalog_conflicts_connectionId_externalEntityType_externalE_idx" ON "catalog_conflicts"("connectionId", "externalEntityType", "externalEntityId");
 
 -- CreateIndex
-CREATE INDEX "catalog_conflicts_externalChangeId_idx" ON "catalog_conflicts"("externalChangeId");
+CREATE INDEX IF NOT EXISTS "catalog_conflicts_externalChangeId_idx" ON "catalog_conflicts"("externalChangeId");
 
 -- CreateIndex
-CREATE INDEX "catalog_conflict_fields_conflictId_idx" ON "catalog_conflict_fields"("conflictId");
+CREATE INDEX IF NOT EXISTS "catalog_conflict_fields_conflictId_idx" ON "catalog_conflict_fields"("conflictId");
 
 -- CreateIndex
-CREATE INDEX "catalog_conflict_resolution_logs_conflictId_idx" ON "catalog_conflict_resolution_logs"("conflictId");
+CREATE INDEX IF NOT EXISTS "catalog_conflict_resolution_logs_conflictId_idx" ON "catalog_conflict_resolution_logs"("conflictId");
 
 -- CreateIndex
-CREATE INDEX "internal_catalog_changes_tenantId_storeId_entityType_intern_idx" ON "internal_catalog_changes"("tenantId", "storeId", "entityType", "internalEntityId", "changedAt");
+CREATE INDEX IF NOT EXISTS "internal_catalog_changes_tenantId_storeId_entityType_intern_idx" ON "internal_catalog_changes"("tenantId", "storeId", "entityType", "internalEntityId", "changedAt");
 
 -- CreateIndex
-CREATE INDEX "internal_catalog_changes_tenantId_storeId_changedAt_idx" ON "internal_catalog_changes"("tenantId", "storeId", "changedAt");
+CREATE INDEX IF NOT EXISTS "internal_catalog_changes_tenantId_storeId_changedAt_idx" ON "internal_catalog_changes"("tenantId", "storeId", "changedAt");
 
 -- CreateIndex
-CREATE INDEX "catalog_sync_policies_tenantId_storeId_connectionId_scope_i_idx" ON "catalog_sync_policies"("tenantId", "storeId", "connectionId", "scope", "isEnabled");
+CREATE INDEX IF NOT EXISTS "catalog_sync_policies_tenantId_storeId_connectionId_scope_i_idx" ON "catalog_sync_policies"("tenantId", "storeId", "connectionId", "scope", "isEnabled");
 
 -- CreateIndex
-CREATE INDEX "catalog_sync_policies_tenantId_storeId_connectionId_fieldPa_idx" ON "catalog_sync_policies"("tenantId", "storeId", "connectionId", "fieldPath");
+CREATE INDEX IF NOT EXISTS "catalog_sync_policies_tenantId_storeId_connectionId_fieldPa_idx" ON "catalog_sync_policies"("tenantId", "storeId", "connectionId", "fieldPath");
 
 -- CreateIndex
-CREATE INDEX "catalog_sync_plans_tenantId_storeId_connectionId_status_idx" ON "catalog_sync_plans"("tenantId", "storeId", "connectionId", "status");
+CREATE INDEX IF NOT EXISTS "catalog_sync_plans_tenantId_storeId_connectionId_status_idx" ON "catalog_sync_plans"("tenantId", "storeId", "connectionId", "status");
 
 -- CreateIndex
-CREATE INDEX "catalog_sync_plan_items_planId_status_idx" ON "catalog_sync_plan_items"("planId", "status");
+CREATE INDEX IF NOT EXISTS "catalog_sync_plan_items_planId_status_idx" ON "catalog_sync_plan_items"("planId", "status");
 
 -- CreateIndex
-CREATE INDEX "catalog_sync_plan_items_conflictId_idx" ON "catalog_sync_plan_items"("conflictId");
+CREATE INDEX IF NOT EXISTS "catalog_sync_plan_items_conflictId_idx" ON "catalog_sync_plan_items"("conflictId");
 
 -- CreateIndex
-CREATE INDEX "catalog_sync_plan_items_externalChangeId_idx" ON "catalog_sync_plan_items"("externalChangeId");
+CREATE INDEX IF NOT EXISTS "catalog_sync_plan_items_externalChangeId_idx" ON "catalog_sync_plan_items"("externalChangeId");
 
 -- CreateIndex
-CREATE INDEX "catalog_sync_execution_logs_planId_idx" ON "catalog_sync_execution_logs"("planId");
+CREATE INDEX IF NOT EXISTS "catalog_sync_execution_logs_planId_idx" ON "catalog_sync_execution_logs"("planId");
 
 -- CreateIndex
-CREATE INDEX "catalog_sync_execution_logs_planItemId_idx" ON "catalog_sync_execution_logs"("planItemId");
+CREATE INDEX IF NOT EXISTS "catalog_sync_execution_logs_planItemId_idx" ON "catalog_sync_execution_logs"("planItemId");
 
 -- CreateIndex
-CREATE INDEX "catalog_merge_drafts_tenantId_storeId_connectionId_status_idx" ON "catalog_merge_drafts"("tenantId", "storeId", "connectionId", "status");
+CREATE INDEX IF NOT EXISTS "catalog_merge_drafts_tenantId_storeId_connectionId_status_idx" ON "catalog_merge_drafts"("tenantId", "storeId", "connectionId", "status");
 
 -- CreateIndex
-CREATE INDEX "catalog_merge_drafts_conflictId_idx" ON "catalog_merge_drafts"("conflictId");
+CREATE INDEX IF NOT EXISTS "catalog_merge_drafts_conflictId_idx" ON "catalog_merge_drafts"("conflictId");
 
 -- CreateIndex
-CREATE INDEX "catalog_merge_drafts_generatedPlanId_idx" ON "catalog_merge_drafts"("generatedPlanId");
+CREATE INDEX IF NOT EXISTS "catalog_merge_drafts_generatedPlanId_idx" ON "catalog_merge_drafts"("generatedPlanId");
 
 -- CreateIndex
-CREATE INDEX "catalog_merge_draft_fields_draftId_idx" ON "catalog_merge_draft_fields"("draftId");
+CREATE INDEX IF NOT EXISTS "catalog_merge_draft_fields_draftId_idx" ON "catalog_merge_draft_fields"("draftId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "catalog_merge_draft_fields_draftId_fieldPath_key" ON "catalog_merge_draft_fields"("draftId", "fieldPath");
+CREATE UNIQUE INDEX IF NOT EXISTS "catalog_merge_draft_fields_draftId_fieldPath_key" ON "catalog_merge_draft_fields"("draftId", "fieldPath");
 
 -- CreateIndex
-CREATE INDEX "catalog_merge_draft_structures_draftId_idx" ON "catalog_merge_draft_structures"("draftId");
+CREATE INDEX IF NOT EXISTS "catalog_merge_draft_structures_draftId_idx" ON "catalog_merge_draft_structures"("draftId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "catalog_merge_draft_structures_draftId_fieldPath_key" ON "catalog_merge_draft_structures"("draftId", "fieldPath");
+CREATE UNIQUE INDEX IF NOT EXISTS "catalog_merge_draft_structures_draftId_fieldPath_key" ON "catalog_merge_draft_structures"("draftId", "fieldPath");
 
 -- CreateIndex
-CREATE INDEX "catalog_merge_execution_logs_draftId_idx" ON "catalog_merge_execution_logs"("draftId");
+CREATE INDEX IF NOT EXISTS "catalog_merge_execution_logs_draftId_idx" ON "catalog_merge_execution_logs"("draftId");
 
 -- CreateIndex
-CREATE INDEX "catalog_merge_execution_logs_generatedPlanId_idx" ON "catalog_merge_execution_logs"("generatedPlanId");
+CREATE INDEX IF NOT EXISTS "catalog_merge_execution_logs_generatedPlanId_idx" ON "catalog_merge_execution_logs"("generatedPlanId");
 
 -- CreateIndex
-CREATE INDEX "job_runs_tenantId_storeId_idx" ON "job_runs"("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "job_runs_tenantId_storeId_idx" ON "job_runs"("tenantId", "storeId");
 
 -- CreateIndex
-CREATE INDEX "job_runs_status_createdAt_idx" ON "job_runs"("status", "createdAt");
+CREATE INDEX IF NOT EXISTS "job_runs_status_createdAt_idx" ON "job_runs"("status", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "job_runs_jobType_status_idx" ON "job_runs"("jobType", "status");
+CREATE INDEX IF NOT EXISTS "job_runs_jobType_status_idx" ON "job_runs"("jobType", "status");
 
 -- CreateIndex
-CREATE INDEX "job_runs_triggeredByUserId_idx" ON "job_runs"("triggeredByUserId");
+CREATE INDEX IF NOT EXISTS "job_runs_triggeredByUserId_idx" ON "job_runs"("triggeredByUserId");
 
 -- CreateIndex
-CREATE INDEX "job_runs_parentRunId_idx" ON "job_runs"("parentRunId");
+CREATE INDEX IF NOT EXISTS "job_runs_parentRunId_idx" ON "job_runs"("parentRunId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "plans_code_key" ON "plans"("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "plans_code_key" ON "plans"("code");
 
 -- CreateIndex
-CREATE INDEX "plans_status_sortOrder_idx" ON "plans"("status", "sortOrder");
+CREATE INDEX IF NOT EXISTS "plans_status_sortOrder_idx" ON "plans"("status", "sortOrder");
 
 -- CreateIndex
-CREATE INDEX "plan_limits_planId_idx" ON "plan_limits"("planId");
+CREATE INDEX IF NOT EXISTS "plan_limits_planId_idx" ON "plan_limits"("planId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "plan_limits_planId_key_key" ON "plan_limits"("planId", "key");
+CREATE UNIQUE INDEX IF NOT EXISTS "plan_limits_planId_key_key" ON "plan_limits"("planId", "key");
 
 -- CreateIndex
-CREATE INDEX "plan_features_planId_idx" ON "plan_features"("planId");
+CREATE INDEX IF NOT EXISTS "plan_features_planId_idx" ON "plan_features"("planId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "plan_features_planId_key_key" ON "plan_features"("planId", "key");
+CREATE UNIQUE INDEX IF NOT EXISTS "plan_features_planId_key_key" ON "plan_features"("planId", "key");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "tenant_billing_accounts_tenantId_key" ON "tenant_billing_accounts"("tenantId");
+CREATE UNIQUE INDEX IF NOT EXISTS "tenant_billing_accounts_tenantId_key" ON "tenant_billing_accounts"("tenantId");
 
 -- CreateIndex
-CREATE INDEX "tenant_subscriptions_tenantId_status_idx" ON "tenant_subscriptions"("tenantId", "status");
+CREATE INDEX IF NOT EXISTS "tenant_subscriptions_tenantId_status_idx" ON "tenant_subscriptions"("tenantId", "status");
 
 -- CreateIndex
-CREATE INDEX "tenant_subscriptions_status_currentPeriodEnd_idx" ON "tenant_subscriptions"("status", "currentPeriodEnd");
+CREATE INDEX IF NOT EXISTS "tenant_subscriptions_status_currentPeriodEnd_idx" ON "tenant_subscriptions"("status", "currentPeriodEnd");
 
 -- CreateIndex
-CREATE INDEX "tenant_subscription_events_tenantSubscriptionId_createdAt_idx" ON "tenant_subscription_events"("tenantSubscriptionId", "createdAt");
+CREATE INDEX IF NOT EXISTS "tenant_subscription_events_tenantSubscriptionId_createdAt_idx" ON "tenant_subscription_events"("tenantSubscriptionId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "tenant_subscription_events_tenantId_createdAt_idx" ON "tenant_subscription_events"("tenantId", "createdAt");
+CREATE INDEX IF NOT EXISTS "tenant_subscription_events_tenantId_createdAt_idx" ON "tenant_subscription_events"("tenantId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "billing_records_tenantId_createdAt_idx" ON "billing_records"("tenantId", "createdAt");
+CREATE INDEX IF NOT EXISTS "billing_records_tenantId_createdAt_idx" ON "billing_records"("tenantId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "billing_records_tenantId_recordType_status_idx" ON "billing_records"("tenantId", "recordType", "status");
+CREATE INDEX IF NOT EXISTS "billing_records_tenantId_recordType_status_idx" ON "billing_records"("tenantId", "recordType", "status");
 
 -- CreateIndex
-CREATE INDEX "billing_invoices_tenantId_billedAt_idx" ON "billing_invoices"("tenantId", "billedAt");
+CREATE INDEX IF NOT EXISTS "billing_invoices_tenantId_billedAt_idx" ON "billing_invoices"("tenantId", "billedAt");
 
 -- CreateIndex
-CREATE INDEX "billing_invoices_tenantId_status_idx" ON "billing_invoices"("tenantId", "status");
+CREATE INDEX IF NOT EXISTS "billing_invoices_tenantId_status_idx" ON "billing_invoices"("tenantId", "status");
 
 -- CreateIndex
-CREATE INDEX "billing_invoice_lines_invoiceId_idx" ON "billing_invoice_lines"("invoiceId");
+CREATE INDEX IF NOT EXISTS "billing_invoice_lines_invoiceId_idx" ON "billing_invoice_lines"("invoiceId");
 
 -- CreateIndex
-CREATE INDEX "payment_attempts_tenantId_attemptedAt_idx" ON "payment_attempts"("tenantId", "attemptedAt");
+CREATE INDEX IF NOT EXISTS "payment_attempts_tenantId_attemptedAt_idx" ON "payment_attempts"("tenantId", "attemptedAt");
 
 -- CreateIndex
-CREATE INDEX "payment_attempts_invoiceId_idx" ON "payment_attempts"("invoiceId");
+CREATE INDEX IF NOT EXISTS "payment_attempts_invoiceId_idx" ON "payment_attempts"("invoiceId");
 
 -- CreateIndex
-CREATE INDEX "usage_metric_snapshots_tenantId_metricKey_measuredAt_idx" ON "usage_metric_snapshots"("tenantId", "metricKey", "measuredAt");
+CREATE INDEX IF NOT EXISTS "usage_metric_snapshots_tenantId_metricKey_measuredAt_idx" ON "usage_metric_snapshots"("tenantId", "metricKey", "measuredAt");
 
 -- CreateIndex
-CREATE INDEX "subscription_change_requests_tenantId_requestedAt_idx" ON "subscription_change_requests"("tenantId", "requestedAt");
+CREATE INDEX IF NOT EXISTS "subscription_change_requests_tenantId_requestedAt_idx" ON "subscription_change_requests"("tenantId", "requestedAt");
 
 -- CreateIndex
-CREATE INDEX "billing_event_logs_tenantId_createdAt_idx" ON "billing_event_logs"("tenantId", "createdAt");
+CREATE INDEX IF NOT EXISTS "billing_event_logs_tenantId_createdAt_idx" ON "billing_event_logs"("tenantId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "billing_event_logs_eventType_createdAt_idx" ON "billing_event_logs"("eventType", "createdAt");
+CREATE INDEX IF NOT EXISTS "billing_event_logs_eventType_createdAt_idx" ON "billing_event_logs"("eventType", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "usage_snapshots_tenantId_capturedAt_idx" ON "usage_snapshots"("tenantId", "capturedAt");
+CREATE INDEX IF NOT EXISTS "usage_snapshots_tenantId_capturedAt_idx" ON "usage_snapshots"("tenantId", "capturedAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "feature_flags_key_key" ON "feature_flags"("key");
+CREATE UNIQUE INDEX IF NOT EXISTS "feature_flags_key_key" ON "feature_flags"("key");
 
 -- CreateIndex
-CREATE INDEX "feature_flags_status_idx" ON "feature_flags"("status");
+CREATE INDEX IF NOT EXISTS "feature_flags_status_idx" ON "feature_flags"("status");
 
 -- CreateIndex
-CREATE INDEX "feature_flags_key_idx" ON "feature_flags"("key");
+CREATE INDEX IF NOT EXISTS "feature_flags_key_idx" ON "feature_flags"("key");
 
 -- CreateIndex
-CREATE INDEX "feature_flag_assignments_featureFlagId_idx" ON "feature_flag_assignments"("featureFlagId");
+CREATE INDEX IF NOT EXISTS "feature_flag_assignments_featureFlagId_idx" ON "feature_flag_assignments"("featureFlagId");
 
 -- CreateIndex
-CREATE INDEX "feature_flag_assignments_scopeType_scopeKey_idx" ON "feature_flag_assignments"("scopeType", "scopeKey");
+CREATE INDEX IF NOT EXISTS "feature_flag_assignments_scopeType_scopeKey_idx" ON "feature_flag_assignments"("scopeType", "scopeKey");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "store_settings_storeId_key" ON "store_settings"("storeId");
+CREATE UNIQUE INDEX IF NOT EXISTS "store_settings_storeId_key" ON "store_settings"("storeId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "catalog_settings_storeId_key" ON "catalog_settings"("storeId");
+CREATE UNIQUE INDEX IF NOT EXISTS "catalog_settings_storeId_key" ON "catalog_settings"("storeId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "store_operation_settings_storeId_key" ON "store_operation_settings"("storeId");
+CREATE UNIQUE INDEX IF NOT EXISTS "store_operation_settings_storeId_key" ON "store_operation_settings"("storeId");
 
 -- CreateIndex
-CREATE INDEX "store_hours_tenantId_storeId_idx" ON "store_hours"("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "store_hours_tenantId_storeId_idx" ON "store_hours"("tenantId", "storeId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "store_hours_storeId_dayOfWeek_key" ON "store_hours"("storeId", "dayOfWeek");
+CREATE UNIQUE INDEX IF NOT EXISTS "store_hours_storeId_dayOfWeek_key" ON "store_hours"("storeId", "dayOfWeek");
 
 -- CreateIndex
-CREATE INDEX "customer_notifications_userId_createdAt_idx" ON "customer_notifications"("userId", "createdAt");
+CREATE INDEX IF NOT EXISTS "customer_notifications_userId_createdAt_idx" ON "customer_notifications"("userId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "customer_notifications_userId_readAt_idx" ON "customer_notifications"("userId", "readAt");
+CREATE INDEX IF NOT EXISTS "customer_notifications_userId_readAt_idx" ON "customer_notifications"("userId", "readAt");
 
 -- CreateIndex
-CREATE INDEX "customer_addresses_userId_idx" ON "customer_addresses"("userId");
+CREATE INDEX IF NOT EXISTS "customer_addresses_userId_idx" ON "customer_addresses"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "loyalty_accounts_userId_key" ON "loyalty_accounts"("userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "loyalty_accounts_userId_key" ON "loyalty_accounts"("userId");
 
 -- CreateIndex
-CREATE INDEX "loyalty_accounts_userId_idx" ON "loyalty_accounts"("userId");
+CREATE INDEX IF NOT EXISTS "loyalty_accounts_userId_idx" ON "loyalty_accounts"("userId");
 
 -- CreateIndex
-CREATE INDEX "loyalty_transactions_accountId_createdAt_idx" ON "loyalty_transactions"("accountId", "createdAt");
+CREATE INDEX IF NOT EXISTS "loyalty_transactions_accountId_createdAt_idx" ON "loyalty_transactions"("accountId", "createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "referral_codes_code_key" ON "referral_codes"("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "referral_codes_code_key" ON "referral_codes"("code");
 
 -- CreateIndex
-CREATE INDEX "referral_codes_userId_idx" ON "referral_codes"("userId");
+CREATE INDEX IF NOT EXISTS "referral_codes_userId_idx" ON "referral_codes"("userId");
 
 -- CreateIndex
-CREATE INDEX "saved_payment_methods_userId_idx" ON "saved_payment_methods"("userId");
+CREATE INDEX IF NOT EXISTS "saved_payment_methods_userId_idx" ON "saved_payment_methods"("userId");
 
 -- CreateIndex
-CREATE INDEX "alert_rules_tenantId_enabled_idx" ON "alert_rules"("tenantId", "enabled");
+CREATE INDEX IF NOT EXISTS "alert_rules_tenantId_enabled_idx" ON "alert_rules"("tenantId", "enabled");
 
 -- CreateIndex
-CREATE INDEX "alert_rules_storeId_idx" ON "alert_rules"("storeId");
+CREATE INDEX IF NOT EXISTS "alert_rules_storeId_idx" ON "alert_rules"("storeId");
 
 -- CreateIndex
-CREATE INDEX "notifications_tenantId_userId_createdAt_idx" ON "notifications"("tenantId", "userId", "createdAt");
+CREATE INDEX IF NOT EXISTS "notifications_tenantId_userId_createdAt_idx" ON "notifications"("tenantId", "userId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "notifications_userId_readAt_idx" ON "notifications"("userId", "readAt");
+CREATE INDEX IF NOT EXISTS "notifications_userId_readAt_idx" ON "notifications"("userId", "readAt");
 
 -- CreateIndex
-CREATE INDEX "push_subscriptions_userId_idx" ON "push_subscriptions"("userId");
+CREATE INDEX IF NOT EXISTS "push_subscriptions_userId_idx" ON "push_subscriptions"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "push_subscriptions_userId_endpoint_key" ON "push_subscriptions"("userId", "endpoint");
+CREATE UNIQUE INDEX IF NOT EXISTS "push_subscriptions_userId_endpoint_key" ON "push_subscriptions"("userId", "endpoint");
 
 -- CreateIndex
-CREATE INDEX "promo_codes_tenantId_status_idx" ON "promo_codes"("tenantId", "status");
+CREATE INDEX IF NOT EXISTS "promo_codes_tenantId_status_idx" ON "promo_codes"("tenantId", "status");
 
 -- CreateIndex
-CREATE INDEX "promo_codes_storeId_idx" ON "promo_codes"("storeId");
+CREATE INDEX IF NOT EXISTS "promo_codes_storeId_idx" ON "promo_codes"("storeId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "promo_codes_tenantId_code_key" ON "promo_codes"("tenantId", "code");
+CREATE UNIQUE INDEX IF NOT EXISTS "promo_codes_tenantId_code_key" ON "promo_codes"("tenantId", "code");
 
 -- CreateIndex
-CREATE INDEX "promo_redemptions_promoCodeId_idx" ON "promo_redemptions"("promoCodeId");
+CREATE INDEX IF NOT EXISTS "promo_redemptions_promoCodeId_idx" ON "promo_redemptions"("promoCodeId");
 
 -- CreateIndex
-CREATE INDEX "promo_redemptions_orderId_idx" ON "promo_redemptions"("orderId");
+CREATE INDEX IF NOT EXISTS "promo_redemptions_orderId_idx" ON "promo_redemptions"("orderId");
 
 -- CreateIndex
-CREATE INDEX "product_reviews_tenantId_status_idx" ON "product_reviews"("tenantId", "status");
+CREATE INDEX IF NOT EXISTS "product_reviews_tenantId_status_idx" ON "product_reviews"("tenantId", "status");
 
 -- CreateIndex
-CREATE INDEX "product_reviews_userId_idx" ON "product_reviews"("userId");
+CREATE INDEX IF NOT EXISTS "product_reviews_userId_idx" ON "product_reviews"("userId");
 
 -- CreateIndex
-CREATE INDEX "product_reviews_productId_idx" ON "product_reviews"("productId");
+CREATE INDEX IF NOT EXISTS "product_reviews_productId_idx" ON "product_reviews"("productId");
 
 -- CreateIndex
-CREATE INDEX "support_tickets_tenantId_status_idx" ON "support_tickets"("tenantId", "status");
+CREATE INDEX IF NOT EXISTS "support_tickets_tenantId_status_idx" ON "support_tickets"("tenantId", "status");
 
 -- CreateIndex
-CREATE INDEX "support_tickets_userId_idx" ON "support_tickets"("userId");
+CREATE INDEX IF NOT EXISTS "support_tickets_userId_idx" ON "support_tickets"("userId");
 
 -- CreateIndex
-CREATE INDEX "support_ticket_messages_ticketId_idx" ON "support_ticket_messages"("ticketId");
+CREATE INDEX IF NOT EXISTS "support_ticket_messages_ticketId_idx" ON "support_ticket_messages"("ticketId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "push_preferences_userId_key" ON "push_preferences"("userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "push_preferences_userId_key" ON "push_preferences"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "gift_cards_code_key" ON "gift_cards"("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "gift_cards_code_key" ON "gift_cards"("code");
 
 -- CreateIndex
-CREATE INDEX "gift_cards_tenantId_idx" ON "gift_cards"("tenantId");
+CREATE INDEX IF NOT EXISTS "gift_cards_tenantId_idx" ON "gift_cards"("tenantId");
 
 -- CreateIndex
-CREATE INDEX "gift_cards_storeId_idx" ON "gift_cards"("storeId");
+CREATE INDEX IF NOT EXISTS "gift_cards_storeId_idx" ON "gift_cards"("storeId");
 
 -- CreateIndex
-CREATE INDEX "gift_card_transactions_giftCardId_idx" ON "gift_card_transactions"("giftCardId");
+CREATE INDEX IF NOT EXISTS "gift_card_transactions_giftCardId_idx" ON "gift_card_transactions"("giftCardId");
 
 -- CreateIndex
-CREATE INDEX "email_logs_to_idx" ON "email_logs"("to");
+CREATE INDEX IF NOT EXISTS "email_logs_to_idx" ON "email_logs"("to");
 
 -- CreateIndex
-CREATE INDEX "email_logs_createdAt_idx" ON "email_logs"("createdAt");
+CREATE INDEX IF NOT EXISTS "email_logs_createdAt_idx" ON "email_logs"("createdAt");
 
 -- CreateIndex
-CREATE INDEX "compliance_events_userId_idx" ON "compliance_events"("userId");
+CREATE INDEX IF NOT EXISTS "compliance_events_userId_idx" ON "compliance_events"("userId");
 
 -- CreateIndex
-CREATE INDEX "compliance_events_createdAt_idx" ON "compliance_events"("createdAt");
+CREATE INDEX IF NOT EXISTS "compliance_events_createdAt_idx" ON "compliance_events"("createdAt");
 
 -- CreateIndex
-CREATE INDEX "webhook_endpoints_tenantId_idx" ON "webhook_endpoints"("tenantId");
+CREATE INDEX IF NOT EXISTS "webhook_endpoints_tenantId_idx" ON "webhook_endpoints"("tenantId");
 
 -- CreateIndex
-CREATE INDEX "webhook_deliveries_endpointId_idx" ON "webhook_deliveries"("endpointId");
+CREATE INDEX IF NOT EXISTS "webhook_deliveries_endpointId_idx" ON "webhook_deliveries"("endpointId");
 
 -- CreateIndex
-CREATE INDEX "webhook_deliveries_event_idx" ON "webhook_deliveries"("event");
+CREATE INDEX IF NOT EXISTS "webhook_deliveries_event_idx" ON "webhook_deliveries"("event");
 
 -- CreateIndex
-CREATE INDEX "ingredients_scope_isActive_idx" ON "ingredients"("scope", "isActive");
+CREATE INDEX IF NOT EXISTS "ingredients_scope_isActive_idx" ON "ingredients"("scope", "isActive");
 
 -- CreateIndex
-CREATE INDEX "ingredients_scope_category_idx" ON "ingredients"("scope", "category");
+CREATE INDEX IF NOT EXISTS "ingredients_scope_category_idx" ON "ingredients"("scope", "category");
 
 -- CreateIndex
-CREATE INDEX "ingredients_tenantId_storeId_idx" ON "ingredients"("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "ingredients_tenantId_storeId_idx" ON "ingredients"("tenantId", "storeId");
 
 -- CreateIndex
-CREATE INDEX "ingredients_storeId_name_idx" ON "ingredients"("storeId", "name");
+CREATE INDEX IF NOT EXISTS "ingredients_storeId_name_idx" ON "ingredients"("storeId", "name");
 
 -- CreateIndex
-CREATE INDEX "recipes_tenantId_storeId_idx" ON "recipes"("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "recipes_tenantId_storeId_idx" ON "recipes"("tenantId", "storeId");
 
 -- CreateIndex
-CREATE INDEX "recipes_storeId_catalogProductId_idx" ON "recipes"("storeId", "catalogProductId");
+CREATE INDEX IF NOT EXISTS "recipes_storeId_catalogProductId_idx" ON "recipes"("storeId", "catalogProductId");
 
 -- CreateIndex
-CREATE INDEX "recipe_ingredients_recipeId_idx" ON "recipe_ingredients"("recipeId");
+CREATE INDEX IF NOT EXISTS "recipe_ingredients_recipeId_idx" ON "recipe_ingredients"("recipeId");
 
 -- CreateIndex
-CREATE INDEX "recipe_ingredients_ingredientId_idx" ON "recipe_ingredients"("ingredientId");
+CREATE INDEX IF NOT EXISTS "recipe_ingredients_ingredientId_idx" ON "recipe_ingredients"("ingredientId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "recipe_ingredients_recipeId_ingredientId_key" ON "recipe_ingredients"("recipeId", "ingredientId");
+CREATE UNIQUE INDEX IF NOT EXISTS "recipe_ingredients_recipeId_ingredientId_key" ON "recipe_ingredients"("recipeId", "ingredientId");
 
 -- CreateIndex
-CREATE INDEX "suppliers_tenantId_storeId_idx" ON "suppliers"("tenantId", "storeId");
+CREATE INDEX IF NOT EXISTS "suppliers_tenantId_storeId_idx" ON "suppliers"("tenantId", "storeId");
 
 -- CreateIndex
-CREATE INDEX "suppliers_storeId_name_idx" ON "suppliers"("storeId", "name");
+CREATE INDEX IF NOT EXISTS "suppliers_storeId_name_idx" ON "suppliers"("storeId", "name");
 
 -- CreateIndex
-CREATE INDEX "supplier_products_supplierId_idx" ON "supplier_products"("supplierId");
+CREATE INDEX IF NOT EXISTS "supplier_products_supplierId_idx" ON "supplier_products"("supplierId");
 
 -- CreateIndex
-CREATE INDEX "ingredient_supplier_links_ingredientId_idx" ON "ingredient_supplier_links"("ingredientId");
+CREATE INDEX IF NOT EXISTS "ingredient_supplier_links_ingredientId_idx" ON "ingredient_supplier_links"("ingredientId");
 
 -- CreateIndex
-CREATE INDEX "ingredient_supplier_links_supplierProductId_idx" ON "ingredient_supplier_links"("supplierProductId");
+CREATE INDEX IF NOT EXISTS "ingredient_supplier_links_supplierProductId_idx" ON "ingredient_supplier_links"("supplierProductId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ingredient_supplier_links_ingredientId_supplierProductId_key" ON "ingredient_supplier_links"("ingredientId", "supplierProductId");
+CREATE UNIQUE INDEX IF NOT EXISTS "ingredient_supplier_links_ingredientId_supplierProductId_key" ON "ingredient_supplier_links"("ingredientId", "supplierProductId");
 
 -- CreateIndex
-CREATE INDEX "supplier_credentials_tenantId_userId_idx" ON "supplier_credentials"("tenantId", "userId");
+CREATE INDEX IF NOT EXISTS "supplier_credentials_tenantId_userId_idx" ON "supplier_credentials"("tenantId", "userId");
 
 -- CreateIndex
-CREATE INDEX "supplier_credentials_supplierId_idx" ON "supplier_credentials"("supplierId");
+CREATE INDEX IF NOT EXISTS "supplier_credentials_supplierId_idx" ON "supplier_credentials"("supplierId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "supplier_credentials_tenantId_userId_supplierId_key" ON "supplier_credentials"("tenantId", "userId", "supplierId");
+CREATE UNIQUE INDEX IF NOT EXISTS "supplier_credentials_tenantId_userId_supplierId_key" ON "supplier_credentials"("tenantId", "userId", "supplierId");
 
 -- CreateIndex
-CREATE INDEX "supplier_price_observations_supplierProductId_idx" ON "supplier_price_observations"("supplierProductId");
+CREATE INDEX IF NOT EXISTS "supplier_price_observations_supplierProductId_idx" ON "supplier_price_observations"("supplierProductId");
 
 -- CreateIndex
-CREATE INDEX "supplier_price_observations_credentialId_idx" ON "supplier_price_observations"("credentialId");
+CREATE INDEX IF NOT EXISTS "supplier_price_observations_credentialId_idx" ON "supplier_price_observations"("credentialId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "supplier_price_observations_supplierProductId_userId_key" ON "supplier_price_observations"("supplierProductId", "userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "supplier_price_observations_supplierProductId_userId_key" ON "supplier_price_observations"("supplierProductId", "userId");
 
 -- CreateIndex
-CREATE INDEX "marketplace_recipes_status_idx" ON "marketplace_recipes"("status");
+CREATE INDEX IF NOT EXISTS "marketplace_recipes_status_idx" ON "marketplace_recipes"("status");
 
 -- CreateIndex
-CREATE INDEX "marketplace_recipes_type_status_idx" ON "marketplace_recipes"("type", "status");
+CREATE INDEX IF NOT EXISTS "marketplace_recipes_type_status_idx" ON "marketplace_recipes"("type", "status");
 
 -- CreateIndex
-CREATE INDEX "marketplace_recipes_providerId_idx" ON "marketplace_recipes"("providerId");
+CREATE INDEX IF NOT EXISTS "marketplace_recipes_providerId_idx" ON "marketplace_recipes"("providerId");
 
 -- CreateIndex
-CREATE INDEX "marketplace_recipe_steps_recipeId_idx" ON "marketplace_recipe_steps"("recipeId");
+CREATE INDEX IF NOT EXISTS "marketplace_recipe_steps_recipeId_idx" ON "marketplace_recipe_steps"("recipeId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "marketplace_recipe_steps_recipeId_stepNumber_key" ON "marketplace_recipe_steps"("recipeId", "stepNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "marketplace_recipe_steps_recipeId_stepNumber_key" ON "marketplace_recipe_steps"("recipeId", "stepNumber");
 
 -- CreateIndex
-CREATE INDEX "marketplace_recipe_ingredients_recipeId_idx" ON "marketplace_recipe_ingredients"("recipeId");
+CREATE INDEX IF NOT EXISTS "marketplace_recipe_ingredients_recipeId_idx" ON "marketplace_recipe_ingredients"("recipeId");
 
 -- CreateIndex
-CREATE INDEX "marketplace_recipe_ingredients_ingredientId_idx" ON "marketplace_recipe_ingredients"("ingredientId");
+CREATE INDEX IF NOT EXISTS "marketplace_recipe_ingredients_ingredientId_idx" ON "marketplace_recipe_ingredients"("ingredientId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "marketplace_recipe_ingredients_recipeId_ingredientId_key" ON "marketplace_recipe_ingredients"("recipeId", "ingredientId");
+CREATE UNIQUE INDEX IF NOT EXISTS "marketplace_recipe_ingredients_recipeId_ingredientId_key" ON "marketplace_recipe_ingredients"("recipeId", "ingredientId");
 
 -- CreateIndex
-CREATE INDEX "marketplace_recipe_reviews_recipeId_createdAt_idx" ON "marketplace_recipe_reviews"("recipeId", "createdAt");
+CREATE INDEX IF NOT EXISTS "marketplace_recipe_reviews_recipeId_createdAt_idx" ON "marketplace_recipe_reviews"("recipeId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "marketplace_recipe_reviews_reviewerId_idx" ON "marketplace_recipe_reviews"("reviewerId");
+CREATE INDEX IF NOT EXISTS "marketplace_recipe_reviews_reviewerId_idx" ON "marketplace_recipe_reviews"("reviewerId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "marketplace_recipe_purchases_stripePaymentIntentId_key" ON "marketplace_recipe_purchases"("stripePaymentIntentId");
+CREATE UNIQUE INDEX IF NOT EXISTS "marketplace_recipe_purchases_stripePaymentIntentId_key" ON "marketplace_recipe_purchases"("stripePaymentIntentId");
 
 -- CreateIndex
-CREATE INDEX "marketplace_recipe_purchases_buyerUserId_idx" ON "marketplace_recipe_purchases"("buyerUserId");
+CREATE INDEX IF NOT EXISTS "marketplace_recipe_purchases_buyerUserId_idx" ON "marketplace_recipe_purchases"("buyerUserId");
 
 -- CreateIndex
-CREATE INDEX "marketplace_recipe_purchases_recipeId_idx" ON "marketplace_recipe_purchases"("recipeId");
+CREATE INDEX IF NOT EXISTS "marketplace_recipe_purchases_recipeId_idx" ON "marketplace_recipe_purchases"("recipeId");
 
 -- CreateIndex
-CREATE INDEX "marketplace_recipe_purchases_tenantId_idx" ON "marketplace_recipe_purchases"("tenantId");
+CREATE INDEX IF NOT EXISTS "marketplace_recipe_purchases_tenantId_idx" ON "marketplace_recipe_purchases"("tenantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "marketplace_recipe_purchases_recipeId_buyerUserId_key" ON "marketplace_recipe_purchases"("recipeId", "buyerUserId");
+CREATE UNIQUE INDEX IF NOT EXISTS "marketplace_recipe_purchases_recipeId_buyerUserId_key" ON "marketplace_recipe_purchases"("recipeId", "buyerUserId");
 
 -- CreateIndex
-CREATE INDEX "ingredient_requests_status_idx" ON "ingredient_requests"("status");
+CREATE INDEX IF NOT EXISTS "ingredient_requests_status_idx" ON "ingredient_requests"("status");
 
 -- CreateIndex
-CREATE INDEX "ingredient_requests_requestedByUserId_idx" ON "ingredient_requests"("requestedByUserId");
+CREATE INDEX IF NOT EXISTS "ingredient_requests_requestedByUserId_idx" ON "ingredient_requests"("requestedByUserId");
 
 -- CreateIndex
-CREATE INDEX "provider_onboarding_applications_userId_idx" ON "provider_onboarding_applications"("userId");
+CREATE INDEX IF NOT EXISTS "provider_onboarding_applications_userId_idx" ON "provider_onboarding_applications"("userId");
 
 -- CreateIndex
-CREATE INDEX "provider_onboarding_applications_status_idx" ON "provider_onboarding_applications"("status");
+CREATE INDEX IF NOT EXISTS "provider_onboarding_applications_status_idx" ON "provider_onboarding_applications"("status");
 
 -- AddForeignKey
-ALTER TABLE "memberships" ADD CONSTRAINT "memberships_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "memberships" ADD CONSTRAINT "memberships_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "memberships" ADD CONSTRAINT "memberships_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "memberships" ADD CONSTRAINT "memberships_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "memberships" ADD CONSTRAINT "memberships_invitedByUserId_fkey" FOREIGN KEY ("invitedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "memberships" ADD CONSTRAINT "memberships_invitedByUserId_fkey" FOREIGN KEY ("invitedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "stores" ADD CONSTRAINT "stores_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "stores" ADD CONSTRAINT "stores_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "store_memberships" ADD CONSTRAINT "store_memberships_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "store_memberships" ADD CONSTRAINT "store_memberships_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "store_memberships" ADD CONSTRAINT "store_memberships_membershipId_fkey" FOREIGN KEY ("membershipId") REFERENCES "memberships"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "store_memberships" ADD CONSTRAINT "store_memberships_membershipId_fkey" FOREIGN KEY ("membershipId") REFERENCES "memberships"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "store_memberships" ADD CONSTRAINT "store_memberships_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "store_memberships" ADD CONSTRAINT "store_memberships_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "connections" ADD CONSTRAINT "connections_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "connections" ADD CONSTRAINT "connections_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "connections" ADD CONSTRAINT "connections_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "connections" ADD CONSTRAINT "connections_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "connections" ADD CONSTRAINT "connections_appCredentialId_fkey" FOREIGN KEY ("appCredentialId") REFERENCES "provider_app_credentials"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "connections" ADD CONSTRAINT "connections_appCredentialId_fkey" FOREIGN KEY ("appCredentialId") REFERENCES "provider_app_credentials"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "connection_credentials" ADD CONSTRAINT "connection_credentials_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "connections"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "connection_credentials" ADD CONSTRAINT "connection_credentials_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "connections"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "connection_action_logs" ADD CONSTRAINT "connection_action_logs_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "connections"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "connection_action_logs" ADD CONSTRAINT "connection_action_logs_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "connections"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_actorUserId_fkey" FOREIGN KEY ("actorUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_actorUserId_fkey" FOREIGN KEY ("actorUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "roles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "roles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_permissionId_fkey" FOREIGN KEY ("permissionId") REFERENCES "permissions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_permissionId_fkey" FOREIGN KEY ("permissionId") REFERENCES "permissions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "categories" ADD CONSTRAINT "categories_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "categories" ADD CONSTRAINT "categories_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "menu_items" ADD CONSTRAINT "menu_items_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "menu_items" ADD CONSTRAINT "menu_items_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "menu_items" ADD CONSTRAINT "menu_items_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "menu_items" ADD CONSTRAINT "menu_items_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "option_groups" ADD CONSTRAINT "option_groups_menuItemId_fkey" FOREIGN KEY ("menuItemId") REFERENCES "menu_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "option_groups" ADD CONSTRAINT "option_groups_menuItemId_fkey" FOREIGN KEY ("menuItemId") REFERENCES "menu_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "menu_options" ADD CONSTRAINT "menu_options_optionGroupId_fkey" FOREIGN KEY ("optionGroupId") REFERENCES "option_groups"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "menu_options" ADD CONSTRAINT "menu_options_optionGroupId_fkey" FOREIGN KEY ("optionGroupId") REFERENCES "option_groups"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "legacy_orders" ADD CONSTRAINT "legacy_orders_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "legacy_orders" ADD CONSTRAINT "legacy_orders_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "legacy_order_items" ADD CONSTRAINT "legacy_order_items_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "legacy_orders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "legacy_order_items" ADD CONSTRAINT "legacy_order_items_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "legacy_orders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "legacy_order_items" ADD CONSTRAINT "legacy_order_items_menuItemId_fkey" FOREIGN KEY ("menuItemId") REFERENCES "menu_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "legacy_order_items" ADD CONSTRAINT "legacy_order_items_menuItemId_fkey" FOREIGN KEY ("menuItemId") REFERENCES "menu_items"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "legacy_payments" ADD CONSTRAINT "legacy_payments_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "legacy_orders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "legacy_payments" ADD CONSTRAINT "legacy_payments_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "legacy_orders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "order_items" ADD CONSTRAINT "order_items_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "order_items" ADD CONSTRAINT "order_items_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "order_item_modifiers" ADD CONSTRAINT "order_item_modifiers_orderItemId_fkey" FOREIGN KEY ("orderItemId") REFERENCES "order_items"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "order_item_modifiers" ADD CONSTRAINT "order_item_modifiers_orderItemId_fkey" FOREIGN KEY ("orderItemId") REFERENCES "order_items"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "order_channel_links" ADD CONSTRAINT "order_channel_links_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "order_channel_links" ADD CONSTRAINT "order_channel_links_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "order_events" ADD CONSTRAINT "order_events_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "order_events" ADD CONSTRAINT "order_events_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "pos_integrations" ADD CONSTRAINT "pos_integrations_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "pos_integrations" ADD CONSTRAINT "pos_integrations_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "delivery_integrations" ADD CONSTRAINT "delivery_integrations_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "delivery_integrations" ADD CONSTRAINT "delivery_integrations_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "customers" ADD CONSTRAINT "customers_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "customers" ADD CONSTRAINT "customers_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "subscription_plans" ADD CONSTRAINT "subscription_plans_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "subscription_plans" ADD CONSTRAINT "subscription_plans_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_planId_fkey" FOREIGN KEY ("planId") REFERENCES "subscription_plans"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_planId_fkey" FOREIGN KEY ("planId") REFERENCES "subscription_plans"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "catalog_product_categories" ADD CONSTRAINT "catalog_product_categories_productId_fkey" FOREIGN KEY ("productId") REFERENCES "catalog_products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "catalog_product_categories" ADD CONSTRAINT "catalog_product_categories_productId_fkey" FOREIGN KEY ("productId") REFERENCES "catalog_products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "catalog_product_categories" ADD CONSTRAINT "catalog_product_categories_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "catalog_categories"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "catalog_product_categories" ADD CONSTRAINT "catalog_product_categories_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "catalog_categories"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "catalog_modifier_options" ADD CONSTRAINT "catalog_modifier_options_modifierGroupId_fkey" FOREIGN KEY ("modifierGroupId") REFERENCES "catalog_modifier_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "catalog_modifier_options" ADD CONSTRAINT "catalog_modifier_options_modifierGroupId_fkey" FOREIGN KEY ("modifierGroupId") REFERENCES "catalog_modifier_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "catalog_product_modifier_groups" ADD CONSTRAINT "catalog_product_modifier_groups_productId_fkey" FOREIGN KEY ("productId") REFERENCES "catalog_products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "catalog_product_modifier_groups" ADD CONSTRAINT "catalog_product_modifier_groups_productId_fkey" FOREIGN KEY ("productId") REFERENCES "catalog_products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "catalog_product_modifier_groups" ADD CONSTRAINT "catalog_product_modifier_groups_modifierGroupId_fkey" FOREIGN KEY ("modifierGroupId") REFERENCES "catalog_modifier_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "catalog_product_modifier_groups" ADD CONSTRAINT "catalog_product_modifier_groups_modifierGroupId_fkey" FOREIGN KEY ("modifierGroupId") REFERENCES "catalog_modifier_groups"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "external_catalog_snapshots" ADD CONSTRAINT "external_catalog_snapshots_importRunId_fkey" FOREIGN KEY ("importRunId") REFERENCES "catalog_import_runs"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "external_catalog_snapshots" ADD CONSTRAINT "external_catalog_snapshots_importRunId_fkey" FOREIGN KEY ("importRunId") REFERENCES "catalog_import_runs"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "external_catalog_change_fields" ADD CONSTRAINT "external_catalog_change_fields_changeId_fkey" FOREIGN KEY ("changeId") REFERENCES "external_catalog_changes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "external_catalog_change_fields" ADD CONSTRAINT "external_catalog_change_fields_changeId_fkey" FOREIGN KEY ("changeId") REFERENCES "external_catalog_changes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "catalog_conflict_fields" ADD CONSTRAINT "catalog_conflict_fields_conflictId_fkey" FOREIGN KEY ("conflictId") REFERENCES "catalog_conflicts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "catalog_conflict_fields" ADD CONSTRAINT "catalog_conflict_fields_conflictId_fkey" FOREIGN KEY ("conflictId") REFERENCES "catalog_conflicts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "catalog_conflict_resolution_logs" ADD CONSTRAINT "catalog_conflict_resolution_logs_conflictId_fkey" FOREIGN KEY ("conflictId") REFERENCES "catalog_conflicts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "catalog_conflict_resolution_logs" ADD CONSTRAINT "catalog_conflict_resolution_logs_conflictId_fkey" FOREIGN KEY ("conflictId") REFERENCES "catalog_conflicts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "catalog_sync_plan_items" ADD CONSTRAINT "catalog_sync_plan_items_planId_fkey" FOREIGN KEY ("planId") REFERENCES "catalog_sync_plans"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "catalog_sync_plan_items" ADD CONSTRAINT "catalog_sync_plan_items_planId_fkey" FOREIGN KEY ("planId") REFERENCES "catalog_sync_plans"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "catalog_merge_draft_fields" ADD CONSTRAINT "catalog_merge_draft_fields_draftId_fkey" FOREIGN KEY ("draftId") REFERENCES "catalog_merge_drafts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "catalog_merge_draft_fields" ADD CONSTRAINT "catalog_merge_draft_fields_draftId_fkey" FOREIGN KEY ("draftId") REFERENCES "catalog_merge_drafts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "catalog_merge_draft_structures" ADD CONSTRAINT "catalog_merge_draft_structures_draftId_fkey" FOREIGN KEY ("draftId") REFERENCES "catalog_merge_drafts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "catalog_merge_draft_structures" ADD CONSTRAINT "catalog_merge_draft_structures_draftId_fkey" FOREIGN KEY ("draftId") REFERENCES "catalog_merge_drafts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "catalog_merge_execution_logs" ADD CONSTRAINT "catalog_merge_execution_logs_draftId_fkey" FOREIGN KEY ("draftId") REFERENCES "catalog_merge_drafts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "catalog_merge_execution_logs" ADD CONSTRAINT "catalog_merge_execution_logs_draftId_fkey" FOREIGN KEY ("draftId") REFERENCES "catalog_merge_drafts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "job_runs" ADD CONSTRAINT "job_runs_triggeredByUserId_fkey" FOREIGN KEY ("triggeredByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "job_runs" ADD CONSTRAINT "job_runs_triggeredByUserId_fkey" FOREIGN KEY ("triggeredByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "job_runs" ADD CONSTRAINT "job_runs_parentRunId_fkey" FOREIGN KEY ("parentRunId") REFERENCES "job_runs"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "job_runs" ADD CONSTRAINT "job_runs_parentRunId_fkey" FOREIGN KEY ("parentRunId") REFERENCES "job_runs"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "plan_limits" ADD CONSTRAINT "plan_limits_planId_fkey" FOREIGN KEY ("planId") REFERENCES "plans"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "plan_limits" ADD CONSTRAINT "plan_limits_planId_fkey" FOREIGN KEY ("planId") REFERENCES "plans"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "plan_features" ADD CONSTRAINT "plan_features_planId_fkey" FOREIGN KEY ("planId") REFERENCES "plans"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "plan_features" ADD CONSTRAINT "plan_features_planId_fkey" FOREIGN KEY ("planId") REFERENCES "plans"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "tenant_billing_accounts" ADD CONSTRAINT "tenant_billing_accounts_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "tenant_billing_accounts" ADD CONSTRAINT "tenant_billing_accounts_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "tenant_subscriptions" ADD CONSTRAINT "tenant_subscriptions_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "tenant_subscriptions" ADD CONSTRAINT "tenant_subscriptions_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "tenant_subscriptions" ADD CONSTRAINT "tenant_subscriptions_planId_fkey" FOREIGN KEY ("planId") REFERENCES "plans"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "tenant_subscriptions" ADD CONSTRAINT "tenant_subscriptions_planId_fkey" FOREIGN KEY ("planId") REFERENCES "plans"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "tenant_subscription_events" ADD CONSTRAINT "tenant_subscription_events_tenantSubscriptionId_fkey" FOREIGN KEY ("tenantSubscriptionId") REFERENCES "tenant_subscriptions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "tenant_subscription_events" ADD CONSTRAINT "tenant_subscription_events_tenantSubscriptionId_fkey" FOREIGN KEY ("tenantSubscriptionId") REFERENCES "tenant_subscriptions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "tenant_subscription_events" ADD CONSTRAINT "tenant_subscription_events_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "tenant_subscription_events" ADD CONSTRAINT "tenant_subscription_events_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "billing_records" ADD CONSTRAINT "billing_records_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "billing_records" ADD CONSTRAINT "billing_records_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "billing_records" ADD CONSTRAINT "billing_records_tenantSubscriptionId_fkey" FOREIGN KEY ("tenantSubscriptionId") REFERENCES "tenant_subscriptions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "billing_records" ADD CONSTRAINT "billing_records_tenantSubscriptionId_fkey" FOREIGN KEY ("tenantSubscriptionId") REFERENCES "tenant_subscriptions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "billing_invoices" ADD CONSTRAINT "billing_invoices_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "billing_invoices" ADD CONSTRAINT "billing_invoices_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "billing_invoices" ADD CONSTRAINT "billing_invoices_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "tenant_subscriptions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "billing_invoices" ADD CONSTRAINT "billing_invoices_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "tenant_subscriptions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "billing_invoice_lines" ADD CONSTRAINT "billing_invoice_lines_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "billing_invoices"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "billing_invoice_lines" ADD CONSTRAINT "billing_invoice_lines_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "billing_invoices"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "payment_attempts" ADD CONSTRAINT "payment_attempts_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "payment_attempts" ADD CONSTRAINT "payment_attempts_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "payment_attempts" ADD CONSTRAINT "payment_attempts_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "billing_invoices"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "payment_attempts" ADD CONSTRAINT "payment_attempts_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "billing_invoices"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "usage_metric_snapshots" ADD CONSTRAINT "usage_metric_snapshots_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "usage_metric_snapshots" ADD CONSTRAINT "usage_metric_snapshots_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "usage_metric_snapshots" ADD CONSTRAINT "usage_metric_snapshots_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "tenant_subscriptions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "usage_metric_snapshots" ADD CONSTRAINT "usage_metric_snapshots_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "tenant_subscriptions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "subscription_change_requests" ADD CONSTRAINT "subscription_change_requests_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "subscription_change_requests" ADD CONSTRAINT "subscription_change_requests_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "subscription_change_requests" ADD CONSTRAINT "subscription_change_requests_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "tenant_subscriptions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "subscription_change_requests" ADD CONSTRAINT "subscription_change_requests_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "tenant_subscriptions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "subscription_change_requests" ADD CONSTRAINT "subscription_change_requests_currentPlanId_fkey" FOREIGN KEY ("currentPlanId") REFERENCES "plans"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "subscription_change_requests" ADD CONSTRAINT "subscription_change_requests_currentPlanId_fkey" FOREIGN KEY ("currentPlanId") REFERENCES "plans"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "subscription_change_requests" ADD CONSTRAINT "subscription_change_requests_targetPlanId_fkey" FOREIGN KEY ("targetPlanId") REFERENCES "plans"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "subscription_change_requests" ADD CONSTRAINT "subscription_change_requests_targetPlanId_fkey" FOREIGN KEY ("targetPlanId") REFERENCES "plans"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "usage_snapshots" ADD CONSTRAINT "usage_snapshots_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "usage_snapshots" ADD CONSTRAINT "usage_snapshots_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "feature_flag_assignments" ADD CONSTRAINT "feature_flag_assignments_featureFlagId_fkey" FOREIGN KEY ("featureFlagId") REFERENCES "feature_flags"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "feature_flag_assignments" ADD CONSTRAINT "feature_flag_assignments_featureFlagId_fkey" FOREIGN KEY ("featureFlagId") REFERENCES "feature_flags"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "store_settings" ADD CONSTRAINT "store_settings_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "store_settings" ADD CONSTRAINT "store_settings_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "catalog_settings" ADD CONSTRAINT "catalog_settings_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "catalog_settings" ADD CONSTRAINT "catalog_settings_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "catalog_settings" ADD CONSTRAINT "catalog_settings_sourceConnectionId_fkey" FOREIGN KEY ("sourceConnectionId") REFERENCES "connections"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "catalog_settings" ADD CONSTRAINT "catalog_settings_sourceConnectionId_fkey" FOREIGN KEY ("sourceConnectionId") REFERENCES "connections"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "store_operation_settings" ADD CONSTRAINT "store_operation_settings_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "store_operation_settings" ADD CONSTRAINT "store_operation_settings_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "store_hours" ADD CONSTRAINT "store_hours_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "store_hours" ADD CONSTRAINT "store_hours_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "customer_notifications" ADD CONSTRAINT "customer_notifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "customer_notifications" ADD CONSTRAINT "customer_notifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "customer_addresses" ADD CONSTRAINT "customer_addresses_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "customer_addresses" ADD CONSTRAINT "customer_addresses_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "loyalty_accounts" ADD CONSTRAINT "loyalty_accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "loyalty_accounts" ADD CONSTRAINT "loyalty_accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "loyalty_transactions" ADD CONSTRAINT "loyalty_transactions_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "loyalty_accounts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "loyalty_transactions" ADD CONSTRAINT "loyalty_transactions_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "loyalty_accounts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "referral_codes" ADD CONSTRAINT "referral_codes_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "loyalty_accounts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "referral_codes" ADD CONSTRAINT "referral_codes_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "loyalty_accounts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "saved_payment_methods" ADD CONSTRAINT "saved_payment_methods_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "saved_payment_methods" ADD CONSTRAINT "saved_payment_methods_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "alert_rules" ADD CONSTRAINT "alert_rules_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "alert_rules" ADD CONSTRAINT "alert_rules_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "alert_rules" ADD CONSTRAINT "alert_rules_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "alert_rules" ADD CONSTRAINT "alert_rules_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "alert_rules" ADD CONSTRAINT "alert_rules_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "alert_rules" ADD CONSTRAINT "alert_rules_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "notifications" ADD CONSTRAINT "notifications_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "notifications" ADD CONSTRAINT "notifications_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "notifications" ADD CONSTRAINT "notifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "notifications" ADD CONSTRAINT "notifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "push_subscriptions" ADD CONSTRAINT "push_subscriptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "push_subscriptions" ADD CONSTRAINT "push_subscriptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "promo_codes" ADD CONSTRAINT "promo_codes_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "promo_codes" ADD CONSTRAINT "promo_codes_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "promo_codes" ADD CONSTRAINT "promo_codes_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "promo_codes" ADD CONSTRAINT "promo_codes_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "promo_codes" ADD CONSTRAINT "promo_codes_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "promo_codes" ADD CONSTRAINT "promo_codes_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "promo_redemptions" ADD CONSTRAINT "promo_redemptions_promoCodeId_fkey" FOREIGN KEY ("promoCodeId") REFERENCES "promo_codes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "promo_redemptions" ADD CONSTRAINT "promo_redemptions_promoCodeId_fkey" FOREIGN KEY ("promoCodeId") REFERENCES "promo_codes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "support_tickets" ADD CONSTRAINT "support_tickets_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "support_tickets" ADD CONSTRAINT "support_tickets_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "support_tickets" ADD CONSTRAINT "support_tickets_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "support_tickets" ADD CONSTRAINT "support_tickets_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "support_ticket_messages" ADD CONSTRAINT "support_ticket_messages_ticketId_fkey" FOREIGN KEY ("ticketId") REFERENCES "support_tickets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "support_ticket_messages" ADD CONSTRAINT "support_ticket_messages_ticketId_fkey" FOREIGN KEY ("ticketId") REFERENCES "support_tickets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "support_ticket_messages" ADD CONSTRAINT "support_ticket_messages_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "support_ticket_messages" ADD CONSTRAINT "support_ticket_messages_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "push_preferences" ADD CONSTRAINT "push_preferences_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "push_preferences" ADD CONSTRAINT "push_preferences_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "gift_cards" ADD CONSTRAINT "gift_cards_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "gift_cards" ADD CONSTRAINT "gift_cards_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "gift_cards" ADD CONSTRAINT "gift_cards_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "gift_cards" ADD CONSTRAINT "gift_cards_storeId_fkey" FOREIGN KEY ("storeId") REFERENCES "stores"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "gift_card_transactions" ADD CONSTRAINT "gift_card_transactions_giftCardId_fkey" FOREIGN KEY ("giftCardId") REFERENCES "gift_cards"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "gift_card_transactions" ADD CONSTRAINT "gift_card_transactions_giftCardId_fkey" FOREIGN KEY ("giftCardId") REFERENCES "gift_cards"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "webhook_endpoints" ADD CONSTRAINT "webhook_endpoints_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "webhook_endpoints" ADD CONSTRAINT "webhook_endpoints_tenantId_fkey" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "webhook_deliveries" ADD CONSTRAINT "webhook_deliveries_endpointId_fkey" FOREIGN KEY ("endpointId") REFERENCES "webhook_endpoints"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "webhook_deliveries" ADD CONSTRAINT "webhook_deliveries_endpointId_fkey" FOREIGN KEY ("endpointId") REFERENCES "webhook_endpoints"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "ingredients" ADD CONSTRAINT "ingredients_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "ingredients" ADD CONSTRAINT "ingredients_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "recipes" ADD CONSTRAINT "recipes_catalogProductId_fkey" FOREIGN KEY ("catalogProductId") REFERENCES "catalog_products"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "recipes" ADD CONSTRAINT "recipes_catalogProductId_fkey" FOREIGN KEY ("catalogProductId") REFERENCES "catalog_products"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "recipe_ingredients" ADD CONSTRAINT "recipe_ingredients_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "recipe_ingredients" ADD CONSTRAINT "recipe_ingredients_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "recipe_ingredients" ADD CONSTRAINT "recipe_ingredients_ingredientId_fkey" FOREIGN KEY ("ingredientId") REFERENCES "ingredients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "recipe_ingredients" ADD CONSTRAINT "recipe_ingredients_ingredientId_fkey" FOREIGN KEY ("ingredientId") REFERENCES "ingredients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "supplier_products" ADD CONSTRAINT "supplier_products_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "suppliers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "supplier_products" ADD CONSTRAINT "supplier_products_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "suppliers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "ingredient_supplier_links" ADD CONSTRAINT "ingredient_supplier_links_ingredientId_fkey" FOREIGN KEY ("ingredientId") REFERENCES "ingredients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "ingredient_supplier_links" ADD CONSTRAINT "ingredient_supplier_links_ingredientId_fkey" FOREIGN KEY ("ingredientId") REFERENCES "ingredients"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "ingredient_supplier_links" ADD CONSTRAINT "ingredient_supplier_links_supplierProductId_fkey" FOREIGN KEY ("supplierProductId") REFERENCES "supplier_products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "ingredient_supplier_links" ADD CONSTRAINT "ingredient_supplier_links_supplierProductId_fkey" FOREIGN KEY ("supplierProductId") REFERENCES "supplier_products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "supplier_credentials" ADD CONSTRAINT "supplier_credentials_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "suppliers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "supplier_credentials" ADD CONSTRAINT "supplier_credentials_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "suppliers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "supplier_price_observations" ADD CONSTRAINT "supplier_price_observations_supplierProductId_fkey" FOREIGN KEY ("supplierProductId") REFERENCES "supplier_products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "supplier_price_observations" ADD CONSTRAINT "supplier_price_observations_supplierProductId_fkey" FOREIGN KEY ("supplierProductId") REFERENCES "supplier_products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "supplier_price_observations" ADD CONSTRAINT "supplier_price_observations_credentialId_fkey" FOREIGN KEY ("credentialId") REFERENCES "supplier_credentials"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "supplier_price_observations" ADD CONSTRAINT "supplier_price_observations_credentialId_fkey" FOREIGN KEY ("credentialId") REFERENCES "supplier_credentials"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "marketplace_recipes" ADD CONSTRAINT "marketplace_recipes_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "marketplace_recipes" ADD CONSTRAINT "marketplace_recipes_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "marketplace_recipes" ADD CONSTRAINT "marketplace_recipes_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "marketplace_recipes" ADD CONSTRAINT "marketplace_recipes_createdByUserId_fkey" FOREIGN KEY ("createdByUserId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "marketplace_recipe_steps" ADD CONSTRAINT "marketplace_recipe_steps_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "marketplace_recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "marketplace_recipe_steps" ADD CONSTRAINT "marketplace_recipe_steps_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "marketplace_recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "marketplace_recipe_ingredients" ADD CONSTRAINT "marketplace_recipe_ingredients_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "marketplace_recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "marketplace_recipe_ingredients" ADD CONSTRAINT "marketplace_recipe_ingredients_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "marketplace_recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "marketplace_recipe_ingredients" ADD CONSTRAINT "marketplace_recipe_ingredients_ingredientId_fkey" FOREIGN KEY ("ingredientId") REFERENCES "ingredients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "marketplace_recipe_ingredients" ADD CONSTRAINT "marketplace_recipe_ingredients_ingredientId_fkey" FOREIGN KEY ("ingredientId") REFERENCES "ingredients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "marketplace_recipe_reviews" ADD CONSTRAINT "marketplace_recipe_reviews_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "marketplace_recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "marketplace_recipe_reviews" ADD CONSTRAINT "marketplace_recipe_reviews_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "marketplace_recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "marketplace_recipe_reviews" ADD CONSTRAINT "marketplace_recipe_reviews_reviewerId_fkey" FOREIGN KEY ("reviewerId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "marketplace_recipe_reviews" ADD CONSTRAINT "marketplace_recipe_reviews_reviewerId_fkey" FOREIGN KEY ("reviewerId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "marketplace_recipe_purchases" ADD CONSTRAINT "marketplace_recipe_purchases_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "marketplace_recipes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "marketplace_recipe_purchases" ADD CONSTRAINT "marketplace_recipe_purchases_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "marketplace_recipes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "marketplace_recipe_purchases" ADD CONSTRAINT "marketplace_recipe_purchases_buyerUserId_fkey" FOREIGN KEY ("buyerUserId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "marketplace_recipe_purchases" ADD CONSTRAINT "marketplace_recipe_purchases_buyerUserId_fkey" FOREIGN KEY ("buyerUserId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "ingredient_requests" ADD CONSTRAINT "ingredient_requests_requestedByUserId_fkey" FOREIGN KEY ("requestedByUserId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "ingredient_requests" ADD CONSTRAINT "ingredient_requests_requestedByUserId_fkey" FOREIGN KEY ("requestedByUserId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "ingredient_requests" ADD CONSTRAINT "ingredient_requests_reviewedByUserId_fkey" FOREIGN KEY ("reviewedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "ingredient_requests" ADD CONSTRAINT "ingredient_requests_reviewedByUserId_fkey" FOREIGN KEY ("reviewedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "ingredient_requests" ADD CONSTRAINT "ingredient_requests_resolvedIngredientId_fkey" FOREIGN KEY ("resolvedIngredientId") REFERENCES "ingredients"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "ingredient_requests" ADD CONSTRAINT "ingredient_requests_resolvedIngredientId_fkey" FOREIGN KEY ("resolvedIngredientId") REFERENCES "ingredients"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "provider_onboarding_applications" ADD CONSTRAINT "provider_onboarding_applications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "provider_onboarding_applications" ADD CONSTRAINT "provider_onboarding_applications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "provider_onboarding_applications" ADD CONSTRAINT "provider_onboarding_applications_reviewedByUserId_fkey" FOREIGN KEY ("reviewedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+  ALTER TABLE "provider_onboarding_applications" ADD CONSTRAINT "provider_onboarding_applications_reviewedByUserId_fkey" FOREIGN KEY ("reviewedByUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
