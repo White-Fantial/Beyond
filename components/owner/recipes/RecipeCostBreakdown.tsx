@@ -174,7 +174,7 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
                     )}
                   </tr>
                   {canEdit && editingIngredientId === ing.id && (
-                    <tr key={`${ing.id}-edit`}>
+                    <tr>
                       <td colSpan={6} className="p-0">
                         <EditRecipeIngredientForm
                           recipeId={detail.id}
