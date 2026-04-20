@@ -35,17 +35,22 @@ export default function EditIngredientForm({ ingredient }: Props) {
   const needsManualConversion =
     autoConversion === undefined && purchaseUnit !== recipeUnit;
 
-  // Pre-fill total price from stored unitCost (millicents → dollars)
+  // Pre-fill total price from stored unitCost (millicents → dollars).
+  // With totalQty=1 purchaseUnit, price = unitCost/100000 * conversionFactor (dollars per purchaseUnit).
+  const initConversion =
+    getUnitConversionFactor(ingredient.purchaseUnit, ingredient.unit) ?? 1;
   const [totalPriceStr, setTotalPriceStr] = useState(
-    (ingredient.unitCost / 100000).toFixed(6)
+    ((ingredient.unitCost / 100000) * initConversion).toFixed(6)
   );
 
   const totalQty = parseFloat(totalQtyStr);
   const totalPrice = parseFloat(totalPriceStr);
   const exGstPrice = gstIncluded ? totalPrice / (1 + GST_RATE) : totalPrice;
+  // unitCost = cost per 1 recipeUnit (in millicents)
+  // totalQty purchaseUnits × conversionFactor = total recipeUnits
   const computedUnitCost =
-    totalQty > 0 && totalPrice > 0
-      ? Math.round((exGstPrice / totalQty) * 100000)
+    totalQty > 0 && totalPrice > 0 && conversionFactor !== null && conversionFactor > 0
+      ? Math.round((exGstPrice / (totalQty * conversionFactor)) * 100000)
       : null;
 
   const [submitting, setSubmitting] = useState(false);
