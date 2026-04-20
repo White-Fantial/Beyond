@@ -7,7 +7,7 @@ interface Props {
 }
 
 function formatCost(minor: number, currency: string) {
-  return `${(minor / 100).toFixed(4)} ${currency}`;
+  return `${(minor / 100000).toFixed(6)} ${currency}`;
 }
 
 export default function IngredientTable({ items }: Props) {

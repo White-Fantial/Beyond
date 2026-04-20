@@ -120,7 +120,7 @@ function toIngredientItem(row: RawIngredient): MarketplaceRecipeIngredientItem {
     unit: row.unit as IngredientUnit,
     notes: row.notes,
     unitCostSnapshot: row.unitCostSnapshot,
-    lineCost: Math.round(qty * row.unitCostSnapshot),
+    lineCost: Math.round(qty * row.unitCostSnapshot / 1000),
   };
 }
 

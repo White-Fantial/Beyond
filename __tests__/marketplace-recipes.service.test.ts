@@ -82,7 +82,7 @@ const mockIngredientRow = {
   quantity: { toNumber: () => 300 },
   unit: "GRAM",
   notes: null,
-  unitCostSnapshot: 10,
+  unitCostSnapshot: 10000,
   ingredient: { name: "김치" },
 };
 
@@ -145,7 +145,7 @@ describe("getMarketplaceRecipe", () => {
     expect(result.steps[0].instruction).toBe("김치를 썬다");
     expect(result.ingredients).toHaveLength(1);
     expect(result.ingredients[0].ingredientName).toBe("김치");
-    expect(result.ingredients[0].lineCost).toBe(3000); // 300 * 10
+    expect(result.ingredients[0].lineCost).toBe(3000); // 300 * 10000 / 1000
     expect(result.ingredientCount).toBe(1);
   });
 
@@ -229,13 +229,13 @@ describe("createMarketplaceRecipe", () => {
 
   it("snapshots ingredient unit costs at creation time", async () => {
     mockPrisma.ingredient.findMany.mockResolvedValue([
-      { id: "pi-1", unitCost: 15 },
+      { id: "pi-1", unitCost: 15000 },
     ]);
     const withIngredient = {
       ...mockRecipeRow,
       steps: [],
       ingredients: [
-        { ...mockIngredientRow, unitCostSnapshot: 15 },
+        { ...mockIngredientRow, unitCostSnapshot: 15000 },
       ],
     };
     mockPrisma.marketplaceRecipe.create.mockResolvedValue(withIngredient);
@@ -254,7 +254,7 @@ describe("createMarketplaceRecipe", () => {
         data: expect.objectContaining({
           ingredients: expect.objectContaining({
             create: expect.arrayContaining([
-              expect.objectContaining({ unitCostSnapshot: 15 }),
+              expect.objectContaining({ unitCostSnapshot: 15000 }),
             ]),
           }),
         }),

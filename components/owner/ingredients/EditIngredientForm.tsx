@@ -19,11 +19,11 @@ export default function EditIngredientForm({ ingredient }: Props) {
   const [notes, setNotes] = useState(ingredient.notes ?? "");
   const [isActive, setIsActive] = useState(ingredient.isActive);
 
-  // unitCost is stored in minor units (cents). Allow user to edit as total qty + price.
+  // unitCost is stored in millicents (1/100000 dollar). Allow user to edit as total qty + price.
   // Pre-fill total qty = 1 and total price = unit cost (dollars), so existing cost is preserved.
   const [totalQtyStr, setTotalQtyStr] = useState("1");
   const [totalPriceStr, setTotalPriceStr] = useState(
-    (ingredient.unitCost / 100).toFixed(6)
+    (ingredient.unitCost / 100000).toFixed(6)
   );
   const [gstIncluded, setGstIncluded] = useState(false);
 
@@ -32,7 +32,7 @@ export default function EditIngredientForm({ ingredient }: Props) {
   const exGstPrice = gstIncluded ? totalPrice / (1 + GST_RATE) : totalPrice;
   const computedUnitCost =
     totalQty > 0 && totalPrice > 0
-      ? Math.round((exGstPrice / totalQty) * 100)
+      ? Math.round((exGstPrice / totalQty) * 100000)
       : null;
 
   const [submitting, setSubmitting] = useState(false);
@@ -187,7 +187,7 @@ export default function EditIngredientForm({ ingredient }: Props) {
           <div className="text-xs font-medium text-gray-500 mb-1">자동 계산된 Unit Cost (ex-GST)</div>
           <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-gray-700">
             {computedUnitCost !== null
-              ? `$${(computedUnitCost / 100).toFixed(6)} / ${INGREDIENT_UNIT_LABELS[unit]}`
+              ? `$${(computedUnitCost / 100000).toFixed(6)} / ${INGREDIENT_UNIT_LABELS[unit]}`
               : "—"}
           </div>
         </div>

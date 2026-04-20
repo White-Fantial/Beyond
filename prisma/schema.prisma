@@ -3352,7 +3352,7 @@ model Ingredient {
   category         String?         // e.g. "채소", "육류", "유제품" — mainly for PLATFORM scope
   purchaseUnit     IngredientUnit  @default(GRAM) // unit used when purchasing (구매 단위)
   unit             IngredientUnit  @default(GRAM)
-  unitCost         Int             @default(0) // minor currency units (e.g. cents)
+  unitCost         Int             @default(0) // millicents (1/100000 dollar) per recipe unit
   currency         String          @default("USD")
   isActive         Boolean         @default(true)
   createdByUserId  String?         // set for PLATFORM scope (admin/moderator who created it)
@@ -3440,8 +3440,8 @@ model SupplierProduct {
   supplierId                String
   name                      String
   externalUrl               String?
-  currentPrice              Int            @default(0) // minor currency units per unit (per-session scrape)
-  basePrice                 Int            @default(0) // max across all user observations
+  currentPrice              Int            @default(0) // millicents (1/100000 dollar) per unit (per-session scrape)
+  basePrice                 Int            @default(0) // millicents (1/100000 dollar) — max across all user observations
   basePriceUpdatedAt        DateTime?
   basePriceScrapedUserCount Int            @default(0)
   unit                      IngredientUnit @default(EACH)
@@ -3503,7 +3503,7 @@ model SupplierPriceObservation {
   supplierProductId String
   userId            String
   credentialId      String
-  observedPrice     Int
+  observedPrice     Int      // millicents (1/100000 dollar)
   scrapedAt         DateTime
 
   supplierProduct SupplierProduct    @relation(fields: [supplierProductId], references: [id], onDelete: Cascade)
@@ -3628,7 +3628,7 @@ model MarketplaceRecipeIngredient {
   quantity     Decimal        @default(1) @db.Decimal(12, 4)
   unit         IngredientUnit @default(GRAM)
   notes        String?
-  unitCostSnapshot Int        @default(0) // snapshot of ingredient.unitCost at time of save
+  unitCostSnapshot Int        @default(0) // millicents (1/100000 dollar) — snapshot of ingredient.unitCost at time of save
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

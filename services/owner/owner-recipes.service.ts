@@ -71,7 +71,7 @@ type RawRecipeIngredient = {
 function toRecipeIngredient(row: RawRecipeIngredient): RecipeIngredient {
   const qty =
     typeof row.quantity === "object" ? row.quantity.toNumber() : row.quantity;
-  const lineCost = Math.round(qty * row.ingredient.unitCost);
+  const lineCost = Math.round(qty * row.ingredient.unitCost / 1000);
   return {
     id: row.id,
     recipeId: row.recipeId,
@@ -474,7 +474,7 @@ export async function getRecipeForUser(
       }
     }
 
-    const lineCost = Math.round(qty * effectiveCost);
+    const lineCost = Math.round(qty * effectiveCost / 1000);
 
     return {
       id: ri.id,

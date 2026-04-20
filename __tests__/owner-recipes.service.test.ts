@@ -40,7 +40,7 @@ const mockIngRow = {
   ingredientId: "ing-1",
   quantity: { toNumber: () => 250 },
   unit: "GRAM",
-  ingredient: { name: "Bread Flour", unit: "GRAM", unitCost: 5 },
+  ingredient: { name: "Bread Flour", unit: "GRAM", unitCost: 5000 },
 };
 
 const mockRecipeRow = {
@@ -113,7 +113,7 @@ describe("getRecipe", () => {
 
     const result = await getRecipe(TENANT, "recipe-1");
 
-    // lineCost = 250 × 5 = 1250 (minor units)
+    // lineCost = 250 × 5000 / 1000 = 1250 (cents)
     expect(result.ingredients).toHaveLength(1);
     expect(result.ingredients[0].lineCost).toBe(1250);
     expect(result.totalCost).toBe(1250);
