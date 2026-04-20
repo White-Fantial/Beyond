@@ -3350,6 +3350,7 @@ model Ingredient {
   name             String
   description      String?
   category         String?         // e.g. "채소", "육류", "유제품" — mainly for PLATFORM scope
+  purchaseUnit     IngredientUnit  @default(GRAM) // unit used when purchasing (구매 단위)
   unit             IngredientUnit  @default(GRAM)
   unitCost         Int             @default(0) // minor currency units (e.g. cents)
   currency         String          @default("USD")
