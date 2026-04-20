@@ -35,12 +35,7 @@ export default function EditIngredientForm({ ingredient }: Props) {
   const needsManualConversion =
     autoConversion === undefined && purchaseUnit !== recipeUnit;
 
-  // Pre-fill total price: cost for 1 purchaseUnit = unitCost(per recipeUnit) * conversionFactor / 100
-  const initialConversion = getUnitConversionFactor(ingredient.purchaseUnit, ingredient.unit);
-  const initialConversionFactor =
-    initialConversion !== undefined
-      ? initialConversion
-      : (ingredient.purchaseUnit === ingredient.unit ? 1 : null);
+  // Pre-fill total price from stored unitCost (millicents → dollars)
   const [totalPriceStr, setTotalPriceStr] = useState(
     (ingredient.unitCost / 100000).toFixed(6)
   );
@@ -229,13 +224,30 @@ export default function EditIngredientForm({ ingredient }: Props) {
           </label>
         </div>
         <div className="sm:col-span-2">
-          <div className="text-xs font-medium text-gray-500 mb-1">자동 계산된 Unit Cost (ex-GST)</div>
-          <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-gray-700">
-            {computedUnitCost !== null
-              ? `$${(computedUnitCost / 100000).toFixed(6)} / ${INGREDIENT_UNIT_LABELS[unit]}`
-              : "—"}
-          </div>
-        )}
+          {needsManualConversion && (
+            <div>
+              <label className="block text-xs font-medium text-amber-700 mb-1">
+                환산 계수 (1 {INGREDIENT_UNIT_LABELS[purchaseUnit]} = ?{" "}
+                {INGREDIENT_UNIT_LABELS[recipeUnit]}) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="any"
+                value={manualConversion}
+                onChange={(e) => setManualConversion(e.target.value)}
+                placeholder="예: 각(ea)당 300g이면 300 입력"
+                className="w-full rounded-lg border border-amber-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              />
+            </div>
+          )}
+          {!needsManualConversion && autoConversion !== undefined && autoConversion !== 1 && (
+            <div className="text-xs text-gray-400 pb-0.5">
+              1 {INGREDIENT_UNIT_LABELS[purchaseUnit]} = {autoConversion}{" "}
+              {INGREDIENT_UNIT_LABELS[recipeUnit]}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Row 4: computed unit cost */}
@@ -245,7 +257,7 @@ export default function EditIngredientForm({ ingredient }: Props) {
         </div>
         <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-gray-700">
           {computedUnitCost !== null
-            ? `${(computedUnitCost / 100).toFixed(6)} / ${INGREDIENT_UNIT_LABELS[recipeUnit]}`
+            ? `${(computedUnitCost / 100000).toFixed(6)} / ${INGREDIENT_UNIT_LABELS[recipeUnit]}`
             : "—"}
         </div>
       </div>
