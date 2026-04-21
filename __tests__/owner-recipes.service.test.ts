@@ -19,6 +19,7 @@ import {
   createRecipe,
   updateRecipe,
   deleteRecipe,
+  getTenantProductRecipes,
 } from "@/services/owner/owner-recipes.service";
 
 const mockPrisma = prisma as unknown as {
@@ -48,11 +49,13 @@ const mockRecipeRow = {
   tenantId: TENANT,
   storeId: STORE,
   catalogProductId: null,
+  tenantCatalogProductId: null,
   catalogProduct: null,
   name: "Classic Bagel",
   yieldQty: 12,
   yieldUnit: "EACH",
   notes: null,
+  marketplaceSourceId: null,
   createdAt: new Date("2026-01-01"),
   updatedAt: new Date("2026-01-01"),
 };
@@ -259,5 +262,90 @@ describe("deleteRecipe", () => {
     mockPrisma.recipe.findFirst.mockResolvedValue(null);
 
     await expect(deleteRecipe(TENANT, "missing")).rejects.toThrow("not found");
+  });
+});
+
+// ─── getTenantProductRecipes ──────────────────────────────────────────────────
+
+describe("getTenantProductRecipes", () => {
+  it("returns recipes for a tenant catalog product across all stores", async () => {
+    const tenantProductId = "tp-1";
+    const row = {
+      ...mockRecipeRow,
+      tenantCatalogProductId: tenantProductId,
+      ingredients: [],
+    };
+    mockPrisma.recipe.findMany.mockResolvedValue([row]);
+
+    const result = await getTenantProductRecipes(TENANT, tenantProductId);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].tenantCatalogProductId).toBe(tenantProductId);
+    expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { tenantId: TENANT, tenantCatalogProductId: tenantProductId, deletedAt: null },
+      })
+    );
+  });
+
+  it("returns empty array when no recipes linked", async () => {
+    mockPrisma.recipe.findMany.mockResolvedValue([]);
+
+    const result = await getTenantProductRecipes(TENANT, "tp-none");
+
+    expect(result).toHaveLength(0);
+  });
+});
+
+// ─── createRecipe with tenantCatalogProductId ─────────────────────────────────
+
+describe("createRecipe with tenantCatalogProductId", () => {
+  it("saves tenantCatalogProductId when provided", async () => {
+    const tenantProductId = "tp-1";
+    mockPrisma.recipe.create.mockResolvedValue({
+      ...mockRecipeRow,
+      tenantCatalogProductId: tenantProductId,
+      ingredients: [],
+    });
+
+    await createRecipe(TENANT, {
+      storeId: STORE,
+      tenantCatalogProductId: tenantProductId,
+      name: "New Recipe",
+      yieldQty: 1,
+      yieldUnit: "EACH",
+      ingredients: [],
+    });
+
+    expect(mockPrisma.recipe.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tenantCatalogProductId: tenantProductId,
+        }),
+      })
+    );
+  });
+
+  it("saves null tenantCatalogProductId when not provided", async () => {
+    mockPrisma.recipe.create.mockResolvedValue({
+      ...mockRecipeRow,
+      ingredients: [],
+    });
+
+    await createRecipe(TENANT, {
+      storeId: STORE,
+      name: "New Recipe",
+      yieldQty: 1,
+      yieldUnit: "EACH",
+      ingredients: [],
+    });
+
+    expect(mockPrisma.recipe.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tenantCatalogProductId: null,
+        }),
+      })
+    );
   });
 });

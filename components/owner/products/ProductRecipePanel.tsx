@@ -4,7 +4,8 @@ import ProductRecipeActions from "@/components/owner/products/ProductRecipeActio
 
 interface Props {
   storeId: string;
-  productId: string;
+  catalogProductId?: string;
+  tenantCatalogProductId?: string;
   recipes: RecipeDetail[];
 }
 
@@ -23,7 +24,7 @@ function RecipeBadge({ recipe }: { recipe: RecipeDetail }) {
   );
 }
 
-export default function ProductRecipePanel({ storeId, productId, recipes }: Props) {
+export default function ProductRecipePanel({ storeId, catalogProductId, tenantCatalogProductId, recipes }: Props) {
   return (
     <div className="space-y-6">
       {recipes.length === 0 ? (
@@ -32,7 +33,11 @@ export default function ProductRecipePanel({ storeId, productId, recipes }: Prop
           <p className="text-sm text-gray-500">
             No recipe is linked to this product yet. Search the marketplace to import one, or create your own from scratch.
           </p>
-          <ProductRecipeActions storeId={storeId} productId={productId} />
+          <ProductRecipeActions
+            storeId={storeId}
+            catalogProductId={catalogProductId}
+            tenantCatalogProductId={tenantCatalogProductId}
+          />
         </div>
       ) : (
         <>
@@ -56,7 +61,11 @@ export default function ProductRecipePanel({ storeId, productId, recipes }: Prop
           ))}
           <div className="bg-white rounded-xl border border-gray-200 p-4">
             <p className="text-xs font-medium text-gray-500 mb-2">Add another recipe</p>
-            <ProductRecipeActions storeId={storeId} productId={productId} />
+            <ProductRecipeActions
+              storeId={storeId}
+              catalogProductId={catalogProductId}
+              tenantCatalogProductId={tenantCatalogProductId}
+            />
           </div>
         </>
       )}

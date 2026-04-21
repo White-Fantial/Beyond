@@ -38,6 +38,7 @@ export interface Recipe {
   catalogProductId: string | null;
   catalogProductName: string | null;
   catalogProductPrice: number | null; // basePriceAmount (minor units)
+  tenantCatalogProductId: string | null;
   name: string;
   yieldQty: number;
   yieldUnit: RecipeYieldUnit;
@@ -71,6 +72,7 @@ export interface RecipeIngredientInput {
 export interface CreateRecipeInput {
   storeId?: string;
   catalogProductId?: string;
+  tenantCatalogProductId?: string;
   name: string;
   yieldQty: number;
   yieldUnit: RecipeYieldUnit;
@@ -100,4 +102,6 @@ export interface CopyMarketplaceRecipeInput {
   name?: string;
   /** If provided, the copied recipe is immediately linked to this catalog product. */
   catalogProductId?: string;
+  /** If provided, the copied recipe is immediately linked to this tenant catalog product. */
+  tenantCatalogProductId?: string;
 }

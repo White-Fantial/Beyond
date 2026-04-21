@@ -1,8 +1,11 @@
 import { requireOwnerPortalAccess } from "@/lib/owner/auth-guard";
 import { getTenantProduct } from "@/services/owner/owner-tenant-products.service";
+import { getTenantProductRecipes } from "@/services/owner/owner-recipes.service";
+import { getOwnerStores } from "@/services/owner/owner-store.service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import TenantProductEditForm from "@/components/owner/products/TenantProductEditForm";
+import TenantProductRecipeSection from "@/components/owner/products/TenantProductRecipeSection";
 
 interface Props {
   params: Promise<{ productId: string }>;
@@ -13,8 +16,14 @@ export default async function TenantProductDetailPage({ params }: Props) {
   const ctx = await requireOwnerPortalAccess();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
 
-  const product = await getTenantProduct(tenantId, productId);
+  const [product, stores, recipes] = await Promise.all([
+    getTenantProduct(tenantId, productId),
+    tenantId ? getOwnerStores(tenantId) : [],
+    tenantId ? getTenantProductRecipes(tenantId, productId) : [],
+  ]);
   if (!product) notFound();
+
+  const storeOptions = stores.map((s) => ({ id: s.id, name: s.name }));
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
@@ -28,10 +37,19 @@ export default async function TenantProductDetailPage({ params }: Props) {
 
       <TenantProductEditForm product={product} />
 
-      <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-sm text-blue-700">
-        <strong>Store assignment:</strong> To assign this product to a specific store, go to that
-        store&apos;s{" "}
-        <strong>Products</strong> page and use the <strong>Add from Catalog</strong> button.
+      {/* Recipe management */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-semibold text-gray-800">Recipe &amp; Cost</h2>
+          <span className="text-xs text-gray-400">
+            Recipes are stored per-store. Select a store below to manage.
+          </span>
+        </div>
+        <TenantProductRecipeSection
+          tenantProductId={productId}
+          stores={storeOptions}
+          allRecipes={recipes}
+        />
       </div>
     </div>
   );

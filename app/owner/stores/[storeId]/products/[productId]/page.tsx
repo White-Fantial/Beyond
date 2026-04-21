@@ -110,7 +110,7 @@ export default async function ProductDetailPage({ params }: Props) {
             Recipes and ingredient costs for this product.
           </span>
         </div>
-        <ProductRecipePanel storeId={storeId} productId={productId} recipes={recipes} />
+        <ProductRecipePanel storeId={storeId} catalogProductId={productId} recipes={recipes} />
       </div>
     </div>
   );
