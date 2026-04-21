@@ -14,7 +14,7 @@ export default function IngredientTable({ items }: Props) {
   if (items.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-sm text-gray-500">
-        No ingredients yet. Add one above.
+        No ingredients yet. Click "Add Ingredient" to get started.
       </div>
     );
   }

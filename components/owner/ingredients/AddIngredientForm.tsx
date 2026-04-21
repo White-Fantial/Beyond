@@ -87,15 +87,7 @@ export default function AddIngredientForm({ storeId }: Props) {
         setError(data.error ?? "Failed to create ingredient");
         return;
       }
-      setName("");
-      setPurchaseUnit("KG");
-      setRecipeUnit("GRAM");
-      setTotalQtyStr("");
-      setTotalPriceStr("");
-      setGstIncluded(false);
-      setManualConversion("");
-      setNotes("");
-      router.refresh();
+      router.push("/owner/ingredients");
     } catch {
       setError("Network error. Please try again.");
     } finally {

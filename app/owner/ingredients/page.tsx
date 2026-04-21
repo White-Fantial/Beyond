@@ -1,7 +1,7 @@
+import Link from "next/link";
 import { requireAuth } from "@/lib/auth/permissions";
 import { listIngredients } from "@/services/owner/owner-ingredients.service";
 import IngredientTable from "@/components/owner/ingredients/IngredientTable";
-import AddIngredientForm from "@/components/owner/ingredients/AddIngredientForm";
 import ImportPlatformIngredientPanel from "@/components/owner/ingredients/ImportPlatformIngredientPanel";
 
 export default async function OwnerIngredientsPage() {
@@ -21,9 +21,16 @@ export default async function OwnerIngredientsPage() {
             {result.total} ingredient{result.total !== 1 ? "s" : ""}
           </p>
         </div>
-        <ImportPlatformIngredientPanel storeId={storeId} />
+        <div className="flex items-center gap-3">
+          <ImportPlatformIngredientPanel storeId={storeId} />
+          <Link
+            href="/owner/ingredients/new"
+            className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition"
+          >
+            + Add Ingredient
+          </Link>
+        </div>
       </div>
-      <AddIngredientForm storeId={storeId} />
       <IngredientTable items={result.items} />
     </div>
   );
