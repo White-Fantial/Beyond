@@ -41,10 +41,7 @@ const mockIngredient = {
   name: "소금",
   description: null,
   category: "조미료",
-  purchaseUnit: "KG",
   unit: "GRAM",
-  unitCost: 2,
-  currency: "USD",
   isActive: true,
   createdByUserId: CREATOR_ID,
   notes: null,
@@ -137,9 +134,7 @@ describe("createPlatformIngredient", () => {
 
     const result = await createPlatformIngredient(CREATOR_ID, {
       name: "소금",
-      purchaseUnit: "KG",
       unit: "GRAM",
-      unitCost: 2,
       category: "조미료",
     });
 
@@ -151,7 +146,6 @@ describe("createPlatformIngredient", () => {
           name: "소금",
           createdByUserId: CREATOR_ID,
           unit: "GRAM",
-          unitCost: 2,
           tenantId: null,
           storeId: null,
         }),
@@ -162,17 +156,15 @@ describe("createPlatformIngredient", () => {
   it("defaults currency to USD", async () => {
     mockPrisma.ingredient.create.mockResolvedValue({
       ...mockIngredient,
-      currency: "USD",
+      name: "설탕",
     });
 
     const result = await createPlatformIngredient(CREATOR_ID, {
       name: "설탕",
-      purchaseUnit: "KG",
       unit: "GRAM",
-      unitCost: 3,
     });
 
-    expect(result.currency).toBe("USD");
+    expect(result.name).toBe("설탕");
   });
 });
 

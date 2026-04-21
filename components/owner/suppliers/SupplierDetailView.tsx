@@ -31,7 +31,6 @@ export default function SupplierDetailView({ supplier }: Props) {
   const router = useRouter();
   const [productName, setProductName] = useState("");
   const [productUrl, setProductUrl] = useState("");
-  const [productPrice, setProductPrice] = useState("");
   const [productUnit, setProductUnit] = useState<IngredientUnit>("EACH");
   const [addingProduct, setAddingProduct] = useState(false);
   const [productError, setProductError] = useState<string | null>(null);
@@ -43,17 +42,11 @@ export default function SupplierDetailView({ supplier }: Props) {
   async function handleAddProduct(e: React.FormEvent) {
     e.preventDefault();
     setProductError(null);
-    const price = Math.round(parseFloat(productPrice) * 100);
-    if (!price || price < 0) {
-      setProductError("Please enter a valid price");
-      return;
-    }
     setAddingProduct(true);
     try {
       const body: UpsertSupplierProductInput = {
         name: productName,
         externalUrl: productUrl || undefined,
-        currentPrice: price,
         unit: productUnit,
       };
       const res = await fetch(`/api/owner/suppliers/${supplier.id}/products`, {
@@ -68,7 +61,6 @@ export default function SupplierDetailView({ supplier }: Props) {
       }
       setProductName("");
       setProductUrl("");
-      setProductPrice("");
       router.refresh();
     } catch {
       setProductError("Network error. Please try again.");
@@ -210,21 +202,6 @@ export default function SupplierDetailView({ supplier }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
-              Price ($) <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              required
-              value={productPrice}
-              onChange={(e) => setProductPrice(e.target.value)}
-              placeholder="12.50"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
-          </div>
-          <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Unit</label>
             <select
               value={productUnit}
@@ -286,15 +263,7 @@ export default function SupplierDetailView({ supplier }: Props) {
                     )}
                   </td>
                   <td className="px-5 py-3 text-right font-medium text-gray-900">
-                    <div>{formatPrice(product.currentPrice)}</div>
-                    {product.basePrice > 0 && product.basePrice !== product.currentPrice && (
-                      <div className="text-xs text-gray-400 font-normal">
-                        Base: {formatPrice(product.basePrice)}
-                      </div>
-                    )}
-                    {product.basePrice > 0 && product.basePrice === product.currentPrice && (
-                      <div className="text-xs text-gray-400 font-normal">= Base price</div>
-                    )}
+                    <div>{formatPrice(product.referencePrice)}</div>
                   </td>
                   <td className="px-5 py-3 text-gray-600">
                     {INGREDIENT_UNIT_LABELS[product.unit] ?? product.unit}
