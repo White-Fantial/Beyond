@@ -101,7 +101,7 @@ export async function getPlatformIngredient(id: string): Promise<Ingredient> {
 
 export async function createPlatformIngredient(
   createdByUserId: string,
-  input: Pick<CreateIngredientInput, "name" | "description" | "category" | "purchaseUnit" | "unit" | "unitCost" | "currency">
+  input: Pick<CreateIngredientInput, "name" | "description" | "category" | "purchaseUnit" | "purchaseQty" | "unit" | "unitCost" | "currency">
 ): Promise<Ingredient> {
   const row = await prisma.ingredient.create({
     data: {
@@ -112,6 +112,7 @@ export async function createPlatformIngredient(
       description: input.description ?? null,
       category: input.category ?? null,
       purchaseUnit: input.purchaseUnit,
+      purchaseQty: input.purchaseQty ?? 1,
       unit: input.unit,
       unitCost: input.unitCost,
       currency: input.currency ?? "USD",
@@ -138,6 +139,7 @@ export async function updatePlatformIngredient(
       ...(input.description !== undefined ? { description: input.description } : {}),
       ...(input.category !== undefined ? { category: input.category } : {}),
       ...(input.purchaseUnit !== undefined ? { purchaseUnit: input.purchaseUnit } : {}),
+      ...(input.purchaseQty !== undefined ? { purchaseQty: input.purchaseQty } : {}),
       ...(input.unit !== undefined ? { unit: input.unit } : {}),
       ...(input.unitCost !== undefined ? { unitCost: input.unitCost } : {}),
       ...(input.currency !== undefined ? { currency: input.currency } : {}),
