@@ -167,13 +167,14 @@ export async function getRecipe(
 }
 
 export async function createRecipe(
-  tenantId: string | null,
+  tenantId: string,
   input: CreateRecipeInput
 ): Promise<RecipeDetail> {
+  if (!input.storeId) throw new Error("storeId is required");
   const row = await prisma.recipe.create({
     data: {
       tenantId,
-      storeId: input.storeId ?? null,
+      storeId: input.storeId,
       catalogProductId: input.catalogProductId ?? null,
       tenantCatalogProductId: input.tenantCatalogProductId ?? null,
       name: input.name,

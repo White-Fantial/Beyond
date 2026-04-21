@@ -10,7 +10,7 @@ const YIELD_UNITS = Object.keys(RECIPE_YIELD_UNIT_LABELS) as RecipeYieldUnit[];
 interface RecipeRow {
   id: string;
   name: string;
-  storeId: string;
+  storeId: string | null;
   storeName: string | null;
   yieldQty: number;
   yieldUnit: string;
