@@ -232,7 +232,7 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
         {canEdit && showAddIngredient && (
           <AddRecipeIngredientForm
             recipeId={detail.id}
-            storeId={detail.storeId}
+            storeId={detail.storeId ?? ""}
             currentIngredients={detail.ingredients}
             onClose={() => setShowAddIngredient(false)}
           />
