@@ -331,6 +331,7 @@ export async function copyMarketplaceRecipeToOwner(
       yieldUnit: source.yieldUnit as RecipeYieldUnit,
       notes: source.description ?? null,
       marketplaceSourceId: source.id,
+      catalogProductId: input.catalogProductId ?? null,
       ingredients: {
         create: ingredientsToCreate,
       },

@@ -32,8 +32,6 @@ const customersItems: NavItem[] = [
 ];
 
 const costItems: NavItem[] = [
-  { href: "/owner/recipes", label: "Recipe Library", icon: "📋" },
-  { href: "/owner/marketplace-search", label: "마켓플레이스 검색", icon: "🔍" },
   { href: "/owner/ingredients", label: "Ingredients", icon: "🥕" },
   { href: "/owner/suppliers", label: "Suppliers", icon: "🚚" },
   { href: "/owner/supplier-credentials", label: "Supplier Accounts", icon: "🔑" },

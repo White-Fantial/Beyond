@@ -105,9 +105,9 @@ export default async function ProductDetailPage({ params }: Props) {
       {/* Recipe section — core of this page */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold text-gray-800">레시피 & 원가</h2>
+          <h2 className="text-base font-semibold text-gray-800">Recipe & Cost</h2>
           <span className="text-xs text-gray-400">
-            이 상품을 만드는 데 사용되는 레시피와 재료 원가입니다.
+            Recipes and ingredient costs for this product.
           </span>
         </div>
         <ProductRecipePanel storeId={storeId} productId={productId} recipes={recipes} />
