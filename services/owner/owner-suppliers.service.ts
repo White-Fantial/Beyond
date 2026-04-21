@@ -6,7 +6,6 @@
  *
  * As of the platform supplier redesign:
  * - PLATFORM suppliers are admin-managed and visible to all owners (read-only browse).
- * - STORE suppliers are legacy tenant-managed (backward compat).
  * - listAvailableSuppliers() returns both PLATFORM and the tenant's own STORE suppliers.
  * - linkIngredientToSupplierProduct() allows linking to PLATFORM supplier products.
  */
@@ -17,7 +16,6 @@ import type {
   SupplierProduct,
   IngredientSupplierLink,
   SupplierListResult,
-  CreateSupplierInput,
   UpdateSupplierInput,
   UpsertSupplierProductInput,
   UpdateSupplierProductInput,
@@ -90,41 +88,6 @@ function toSupplierProduct(row: RawSupplierProduct): SupplierProduct {
 // ─── Supplier CRUD ────────────────────────────────────────────────────────────
 
 /**
- * List all STORE-scope suppliers for the given tenant (legacy path).
- * Use listAvailableSuppliers() for owner browse which includes PLATFORM suppliers.
- */
-export async function listSuppliers(
-  tenantId: string,
-  filters: SupplierFilters = {}
-): Promise<SupplierListResult> {
-  const { storeId, page = 1, pageSize = 20 } = filters;
-
-  const where = {
-    tenantId,
-    deletedAt: null,
-    ...(storeId ? { storeId } : {}),
-  };
-
-  const [rows, total] = await Promise.all([
-    prisma.supplier.findMany({
-      where,
-      include: { _count: { select: { products: true } } },
-      orderBy: { name: "asc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-    prisma.supplier.count({ where }),
-  ]);
-
-  return {
-    items: rows.map((r) => toSupplier(r as RawSupplier)),
-    total,
-    page,
-    pageSize,
-  };
-}
-
-/**
  * List available suppliers for an owner: PLATFORM suppliers + the tenant's own STORE suppliers.
  * Owners use this to browse and select suppliers to attach credentials to.
  */
@@ -188,26 +151,6 @@ export async function getSupplierDetail(
     ...toSupplier(rest),
     products: products.map(toSupplierProduct),
   };
-}
-
-export async function createSupplier(
-  tenantId: string,
-  input: CreateSupplierInput
-): Promise<Supplier> {
-  const row = await prisma.supplier.create({
-    data: {
-      scope: "STORE",
-      tenantId,
-      storeId: input.storeId,
-      name: input.name,
-      websiteUrl: input.websiteUrl ?? null,
-      contactEmail: input.contactEmail ?? null,
-      contactPhone: input.contactPhone ?? null,
-      notes: input.notes ?? null,
-    },
-    include: { _count: { select: { products: true } } },
-  });
-  return toSupplier(row as RawSupplier);
 }
 
 export async function updateSupplier(

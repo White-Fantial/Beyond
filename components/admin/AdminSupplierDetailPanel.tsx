@@ -81,7 +81,7 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
       const body: UpsertSupplierProductInput = {
         name: productName,
         externalUrl: productUrl || undefined,
-        currentPrice: Math.round(parseFloat(productPrice) * 100000),
+        referencePrice: Math.round(parseFloat(productPrice) * 100000),
         unit: productUnit as UpsertSupplierProductInput["unit"],
       };
       const res = await fetch(`/api/admin/suppliers/${supplier.id}/products`, {
@@ -272,7 +272,7 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
                   </td>
                   <td className="px-5 py-3 text-gray-600">{p.unit}</td>
                   <td className="px-5 py-3 text-right text-gray-700">
-                    ${(p.currentPrice / 100000).toFixed(2)}
+                   ${(p.referencePrice / 100000).toFixed(2)}
                   </td>
                   <td className="px-5 py-3 text-right">
                     <button

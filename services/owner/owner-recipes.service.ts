@@ -487,16 +487,3 @@ export async function getTenantProductRecipes(
     })
   );
 }
-
-/**
- * Get a recipe with cost calculation for a specific user.
- * Pricing is now tenant-scoped (not user-scoped), so userId is kept for
- * API compatibility but does not affect cost resolution.
- */
-export async function getRecipeForUser(
-  tenantId: string,
-  recipeId: string,
-  _userId: string
-): Promise<RecipeDetail> {
-  return getRecipe(tenantId, recipeId);
-}

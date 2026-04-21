@@ -40,10 +40,7 @@ type RawSupplierProduct = {
   supplierId: string;
   name: string;
   externalUrl: string | null;
-  currentPrice: number;
-  basePrice: number;
-  basePriceUpdatedAt: Date | null;
-  basePriceScrapedUserCount: number;
+  referencePrice: number;
   unit: string;
   lastScrapedAt: Date | null;
   metadata: unknown;
@@ -74,10 +71,7 @@ function toProduct(row: RawSupplierProduct): SupplierProduct {
     supplierId: row.supplierId,
     name: row.name,
     externalUrl: row.externalUrl,
-    currentPrice: row.currentPrice,
-    basePrice: row.basePrice,
-    basePriceUpdatedAt: row.basePriceUpdatedAt?.toISOString() ?? null,
-    basePriceScrapedUserCount: row.basePriceScrapedUserCount,
+    referencePrice: row.referencePrice,
     unit: row.unit as IngredientUnit,
     lastScrapedAt: row.lastScrapedAt?.toISOString() ?? null,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
@@ -206,7 +200,7 @@ export async function createPlatformSupplierProduct(
       supplierId,
       name: input.name.trim(),
       externalUrl: input.externalUrl?.trim() ?? null,
-      currentPrice: input.currentPrice,
+      referencePrice: input.referencePrice ?? 0,
       unit: input.unit,
     },
   });
@@ -233,7 +227,7 @@ export async function updatePlatformSupplierProduct(
     data: {
       ...(input.name !== undefined ? { name: input.name } : {}),
       ...(input.externalUrl !== undefined ? { externalUrl: input.externalUrl } : {}),
-      ...(input.currentPrice !== undefined ? { currentPrice: input.currentPrice } : {}),
+      ...(input.referencePrice !== undefined ? { referencePrice: input.referencePrice } : {}),
       ...(input.unit !== undefined ? { unit: input.unit } : {}),
     },
   });

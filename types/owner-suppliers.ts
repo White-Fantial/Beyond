@@ -80,12 +80,14 @@ export interface UpdateSupplierInput {
 export interface UpsertSupplierProductInput {
   name: string;
   externalUrl?: string;
+  referencePrice?: number; // millicents (1/100000 dollar)
   unit: IngredientUnit;
 }
 
 export interface UpdateSupplierProductInput {
   name?: string;
   externalUrl?: string | null;
+  referencePrice?: number; // millicents (1/100000 dollar)
   unit?: IngredientUnit;
 }
 

@@ -333,6 +333,3 @@ export async function getReferencePriceInfo(
     priceRecordCount,
   };
 }
-
-// Keep backward-compatible alias
-export { getReferencePriceInfo as getBasePriceInfo };

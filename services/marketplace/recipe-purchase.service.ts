@@ -18,7 +18,6 @@ import {
 } from "@/lib/stripe/connect";
 import type {
   MarketplaceRecipePurchase,
-  PurchaseRecipeInput,
   RecipeAccessResult,
 } from "@/types/marketplace";
 
@@ -86,45 +85,6 @@ export async function checkRecipeAccess(
   }
 
   return { hasAccess: false, reason: "not_purchased" };
-}
-
-/** Purchase a premium recipe (legacy — direct DB write without real Stripe payment). */
-export async function purchaseRecipe(
-  recipeId: string,
-  buyerUserId: string,
-  input: PurchaseRecipeInput = {}
-): Promise<MarketplaceRecipePurchase> {
-  const recipe = await prisma.marketplaceRecipe.findFirst({
-    where: { id: recipeId, deletedAt: null },
-    select: { type: true, status: true, salePrice: true, currency: true },
-  });
-  if (!recipe) throw new Error(`MarketplaceRecipe ${recipeId} not found`);
-
-  if (recipe.type === "BASIC") {
-    throw new Error("BASIC recipes are free and do not require purchase");
-  }
-  if (recipe.status !== "PUBLISHED") {
-    throw new Error("Recipe is not available for purchase");
-  }
-
-  // Prevent duplicate purchases
-  const existing = await prisma.marketplaceRecipePurchase.findFirst({
-    where: { recipeId, buyerUserId, refundedAt: null },
-  });
-  if (existing) throw new Error("Recipe already purchased");
-
-  const row = await prisma.marketplaceRecipePurchase.create({
-    data: {
-      recipeId,
-      buyerUserId,
-      tenantId: input.tenantId ?? null,
-      pricePaid: recipe.salePrice,
-      currency: recipe.currency,
-      paymentRef: input.paymentRef ?? null,
-    },
-  });
-
-  return toPurchase(row);
 }
 
 /**

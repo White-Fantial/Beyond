@@ -16,7 +16,6 @@ vi.mock("@/lib/prisma", () => ({
 import { prisma } from "@/lib/prisma";
 import {
   checkRecipeAccess,
-  purchaseRecipe,
   listUserPurchases,
 } from "@/services/marketplace/recipe-purchase.service";
 
@@ -151,66 +150,6 @@ describe("checkRecipeAccess", () => {
     await expect(
       checkRecipeAccess("nonexistent", BUYER_ID, "USER")
     ).rejects.toThrow("MarketplaceRecipe nonexistent not found");
-  });
-});
-
-// ─── purchaseRecipe ───────────────────────────────────────────────────────────
-
-describe("purchaseRecipe", () => {
-  it("creates a purchase record for a published PREMIUM recipe", async () => {
-    mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue(
-      mockPublishedPremium
-    );
-    mockPrisma.marketplaceRecipePurchase.findFirst.mockResolvedValue(null);
-    mockPrisma.marketplaceRecipePurchase.create.mockResolvedValue(
-      mockPurchaseRow
-    );
-
-    const result = await purchaseRecipe("recipe-1", BUYER_ID);
-
-    expect(result.pricePaid).toBe(5000);
-    expect(result.buyerUserId).toBe(BUYER_ID);
-    expect(mockPrisma.marketplaceRecipePurchase.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          recipeId: "recipe-1",
-          buyerUserId: BUYER_ID,
-          pricePaid: 5000,
-        }),
-      })
-    );
-  });
-
-  it("throws when trying to purchase a BASIC recipe", async () => {
-    mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue(mockBasicRecipe);
-
-    await expect(purchaseRecipe("recipe-basic-1", BUYER_ID)).rejects.toThrow(
-      "BASIC recipes are free and do not require purchase"
-    );
-  });
-
-  it("throws when recipe is not published", async () => {
-    mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue({
-      ...mockPublishedPremium,
-      status: "APPROVED",
-    });
-
-    await expect(purchaseRecipe("recipe-1", BUYER_ID)).rejects.toThrow(
-      "Recipe is not available for purchase"
-    );
-  });
-
-  it("throws when recipe is already purchased", async () => {
-    mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue(
-      mockPublishedPremium
-    );
-    mockPrisma.marketplaceRecipePurchase.findFirst.mockResolvedValue(
-      mockPurchaseRow
-    );
-
-    await expect(purchaseRecipe("recipe-1", BUYER_ID)).rejects.toThrow(
-      "Recipe already purchased"
-    );
   });
 });
 

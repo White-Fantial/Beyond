@@ -1,6 +1,6 @@
 import { requireAuth } from "@/lib/auth/permissions";
 import { listCredentials } from "@/services/owner/owner-supplier-credentials.service";
-import { listSuppliers } from "@/services/owner/owner-suppliers.service";
+import { listAvailableSuppliers } from "@/services/owner/owner-suppliers.service";
 import AddCredentialForm from "@/components/owner/supplier-credentials/AddCredentialForm";
 import CredentialList from "@/components/owner/supplier-credentials/CredentialList";
 
@@ -11,7 +11,7 @@ export default async function SupplierCredentialsPage() {
 
   const [credentials, suppliersResult] = await Promise.all([
     listCredentials(tenantId, userId),
-    listSuppliers(tenantId, { pageSize: 100 }),
+    listAvailableSuppliers(tenantId, { pageSize: 100 }),
   ]);
 
   const suppliers = suppliersResult.items.map((s) => ({ id: s.id, name: s.name }));
