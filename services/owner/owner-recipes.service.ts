@@ -36,6 +36,7 @@ type RawRecipe = {
   yieldQty: number;
   yieldUnit: string;
   notes: string | null;
+  instructions: string | null;
   marketplaceSourceId: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -58,6 +59,7 @@ function toRecipe(row: RawRecipe): Recipe {
     yieldQty: row.yieldQty,
     yieldUnit: row.yieldUnit as RecipeYieldUnit,
     notes: row.notes,
+    instructions: row.instructions ?? null,
     marketplaceSourceId: row.marketplaceSourceId ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -244,6 +246,7 @@ export async function createRecipe(
       yieldQty: input.yieldQty,
       yieldUnit: input.yieldUnit,
       notes: input.notes ?? null,
+      instructions: input.instructions ?? null,
       ingredients: {
         create: input.ingredients.map((i) => ({
           ingredientId: i.ingredientId,
@@ -289,6 +292,7 @@ export async function updateRecipe(
       ...(input.yieldQty !== undefined ? { yieldQty: input.yieldQty } : {}),
       ...(input.yieldUnit !== undefined ? { yieldUnit: input.yieldUnit } : {}),
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
+      ...(input.instructions !== undefined ? { instructions: input.instructions } : {}),
       ...(input.ingredients !== undefined
         ? {
             ingredients: {

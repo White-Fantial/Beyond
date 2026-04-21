@@ -20,14 +20,14 @@ export default async function NewProviderRecipePage() {
     <div className="max-w-3xl mx-auto py-8 px-4">
       <div className="mb-6">
         <Link href="/provider/recipes" className="text-xs text-gray-400 hover:underline">
-          ← 내 레시피
+          ← My Recipes
         </Link>
       </div>
 
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">새 레시피 등록</h1>
+        <h1 className="text-xl font-bold text-gray-900">New Recipe</h1>
         <p className="text-sm text-gray-500 mt-1">
-          프리미엄 레시피를 작성하고 검토 제출하세요.
+          Create a premium recipe and submit it for review.
         </p>
       </div>
 

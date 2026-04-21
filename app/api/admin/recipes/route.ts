@@ -130,6 +130,7 @@ export async function POST(req: NextRequest) {
         yieldQty: body.yieldQty,
         yieldUnit: body.yieldUnit,
         notes: body.notes ?? null,
+        instructions: body.instructions ?? null,
         ingredients: {
           create: (body.ingredients ?? []).map((i) => ({
             ingredientId: i.ingredientId,
