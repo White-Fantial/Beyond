@@ -34,6 +34,7 @@ vi.mock("@/lib/prisma", () => ({
 import { prisma } from "@/lib/prisma";
 import {
   listSuppliers,
+  listAvailableSuppliers,
   getSupplierDetail,
   createSupplier,
   updateSupplier,
@@ -78,6 +79,7 @@ const STORE = "store-1";
 
 const mockSupplier = {
   id: "sup-1",
+  scope: "STORE",
   tenantId: TENANT,
   storeId: STORE,
   name: "Flour Co",
@@ -88,6 +90,21 @@ const mockSupplier = {
   createdAt: new Date("2026-01-01"),
   updatedAt: new Date("2026-01-01"),
   _count: { products: 2 },
+};
+
+const mockPlatformSupplier = {
+  id: "sup-platform-1",
+  scope: "PLATFORM",
+  tenantId: null,
+  storeId: null,
+  name: "Sysco Foods",
+  websiteUrl: "https://sysco.com",
+  contactEmail: null,
+  contactPhone: null,
+  notes: null,
+  createdAt: new Date("2026-01-01"),
+  updatedAt: new Date("2026-01-01"),
+  _count: { products: 5 },
 };
 
 const mockProduct = {
@@ -144,6 +161,34 @@ describe("listSuppliers", () => {
     expect(mockPrisma.supplier.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ deletedAt: null }),
+      })
+    );
+  });
+});
+
+// ─── listAvailableSuppliers ───────────────────────────────────────────────────
+
+describe("listAvailableSuppliers", () => {
+  it("returns PLATFORM and tenant STORE suppliers combined", async () => {
+    mockPrisma.supplier.findMany.mockResolvedValue([
+      mockPlatformSupplier,
+      mockSupplier,
+    ]);
+    mockPrisma.supplier.count.mockResolvedValue(2);
+
+    const result = await listAvailableSuppliers(TENANT);
+
+    expect(result.items).toHaveLength(2);
+    expect(result.items.some((s) => s.scope === "PLATFORM")).toBe(true);
+    expect(result.items.some((s) => s.scope === "STORE")).toBe(true);
+    expect(mockPrisma.supplier.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([
+            { scope: "PLATFORM" },
+            { tenantId: TENANT },
+          ]),
+        }),
       })
     );
   });
@@ -354,6 +399,31 @@ describe("linkIngredientToSupplierProduct", () => {
         data: { isPreferred: false },
       })
     );
+  });
+  it("allows linking to a PLATFORM supplier product", async () => {
+    mockPrisma.ingredient.findFirst.mockResolvedValue({ id: "ing-1", tenantId: TENANT });
+    // PLATFORM supplier product found via OR query
+    mockPrisma.supplierProduct.findFirst.mockResolvedValue({
+      ...mockProduct,
+      supplierId: "sup-platform-1",
+      supplier: { name: "Sysco Foods" },
+    });
+    mockPrisma.ingredientSupplierLink.updateMany.mockResolvedValue({ count: 0 });
+    mockPrisma.ingredientSupplierLink.upsert.mockResolvedValue({
+      id: "link-2",
+      ingredientId: "ing-1",
+      supplierProductId: "sp-1",
+      isPreferred: false,
+      createdAt: new Date("2026-01-01"),
+      supplierProduct: {
+        name: "All Purpose Flour",
+        supplier: { name: "Sysco Foods" },
+      },
+    });
+
+    const result = await linkIngredientToSupplierProduct(TENANT, "ing-1", "sp-1");
+
+    expect(result.supplierName).toBe("Sysco Foods");
   });
 });
 
