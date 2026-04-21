@@ -357,8 +357,7 @@ export async function copyMarketplaceRecipeToOwner(
   });
 
   const recipe = toRecipe(row as RawRecipe);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ingredients = ((row as any).ingredients as RawRecipeIngredient[]).map(toRecipeIngredient);
+  const ingredients = (row.ingredients as unknown as RawRecipeIngredient[]).map(toRecipeIngredient);
   return computeCosts(recipe, ingredients);
 }
 
