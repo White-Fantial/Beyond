@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
 import { prisma } from "@/lib/prisma";
-import {
-  createRecipe,
-} from "@/services/owner/owner-recipes.service";
 import type { CreateRecipeInput, RecipeYieldUnit } from "@/types/owner-recipes";
 import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
 
@@ -116,9 +113,6 @@ export async function POST(req: NextRequest) {
   if (!body.name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
-  if (!body.storeId) {
-    return NextResponse.json({ error: "storeId is required" }, { status: 400 });
-  }
   if (!body.yieldQty || body.yieldQty < 1) {
     return NextResponse.json({ error: "yieldQty must be at least 1" }, { status: 400 });
   }
@@ -126,20 +120,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid yieldUnit provided" }, { status: 400 });
   }
 
-  // Derive tenantId from the store
-  const store = await prisma.store.findUnique({
-    where: { id: body.storeId },
-    select: { tenantId: true },
-  });
-  if (!store) {
-    return NextResponse.json({ error: "Store not found" }, { status: 404 });
-  }
-  const tenantId = store.tenantId;
-
   try {
-    const recipe = await createRecipe(tenantId, {
-      ...body,
-      ingredients: body.ingredients ?? [],
+    // Platform-level recipes are not tied to any tenant or store (tenantId/storeId are null).
+    const recipe = await prisma.recipe.create({
+      data: {
+        tenantId: null,
+        storeId: null,
+        name: body.name.trim(),
+        yieldQty: body.yieldQty,
+        yieldUnit: body.yieldUnit,
+        notes: body.notes ?? null,
+        ingredients: {
+          create: (body.ingredients ?? []).map((i) => ({
+            ingredientId: i.ingredientId,
+            quantity: i.quantity,
+            unit: i.unit,
+          })),
+        },
+      },
     });
     return NextResponse.json({ data: recipe }, { status: 201 });
   } catch (err) {

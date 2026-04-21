@@ -7,21 +7,9 @@ import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
 
 const YIELD_UNITS = Object.keys(RECIPE_YIELD_UNIT_LABELS) as RecipeYieldUnit[];
 
-interface StoreOption {
-  id: string;
-  name: string;
-  tenantId: string;
-  tenant?: { displayName: string } | null;
-}
-
-interface Props {
-  stores: StoreOption[];
-}
-
-export default function AdminCreateRecipeForm({ stores }: Props) {
+export default function AdminCreateRecipeForm() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [storeId, setStoreId] = useState("");
   const [name, setName] = useState("");
   const [yieldQty, setYieldQty] = useState("1");
   const [yieldUnit, setYieldUnit] = useState<RecipeYieldUnit>("EACH");
@@ -33,10 +21,6 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
     e.preventDefault();
     setError(null);
     const qty = parseInt(yieldQty, 10);
-    if (!storeId) {
-      setError("Please select a store.");
-      return;
-    }
     if (!name.trim()) {
       setError("Please enter a recipe name.");
       return;
@@ -51,7 +35,6 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          storeId: storeId || undefined,
           name: name.trim(),
           yieldQty: qty,
           yieldUnit,
@@ -65,7 +48,6 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
         return;
       }
       // Reset form and refresh
-      setStoreId("");
       setName("");
       setYieldQty("1");
       setYieldUnit("EACH");
@@ -104,26 +86,6 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
         >
           Close
         </button>
-      </div>
-
-      {/* Store selector */}
-      <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">
-          Store <span className="text-red-500">*</span>
-        </label>
-        <select
-          required
-          value={storeId}
-          onChange={(e) => setStoreId(e.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-        >
-          <option value="">Select a store…</option>
-          {stores.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name} ({s.tenant?.displayName ?? s.tenantId})
-            </option>
-          ))}
-        </select>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

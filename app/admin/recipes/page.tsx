@@ -83,7 +83,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
       </div>
 
       {/* Create recipe form */}
-      <AdminCreateRecipeForm stores={stores} />
+      <AdminCreateRecipeForm />
 
       {/* Store filter */}
       <form method="GET" className="flex items-center gap-3">
