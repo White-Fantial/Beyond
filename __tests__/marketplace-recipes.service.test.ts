@@ -161,7 +161,7 @@ describe("getMarketplaceRecipe", () => {
         {
           ...mockIngredientRow,
           unitCostSnapshot: staleSnapshot,
-          ingredient: { name: "김치", unitCost: liveUnitCost },
+          ingredient: { name: "Kimchi", unitCost: liveUnitCost },
         },
       ],
     });
@@ -171,6 +171,8 @@ describe("getMarketplaceRecipe", () => {
 
     // lineCost must use the live unitCost, not the snapshot
     expect(result.ingredients[0].lineCost).toBe(6000); // 300 * 20000 / 1000
+    // unitCostSnapshot preserves the historical value
+    expect(result.ingredients[0].unitCostSnapshot).toBe(staleSnapshot);
     // estimatedCostPrice updated to live total
     expect(result.estimatedCostPrice).toBe(6000);
     // DB should have been updated with the live cost
