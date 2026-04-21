@@ -1,8 +1,7 @@
 import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
 import { prisma } from "@/lib/prisma";
 import AdminCreateRecipeForm from "@/components/admin/AdminCreateRecipeForm";
-import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
-import type { RecipeYieldUnit } from "@/types/owner-recipes";
+import AdminRecipeActions from "@/components/admin/AdminRecipeActions";
 import Link from "next/link";
 
 interface PageProps {
@@ -32,6 +31,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
     storeName: string | null;
     yieldQty: number;
     yieldUnit: string;
+    notes: string | null;
     createdAt: string;
   }[] = [];
   let total = 0;
@@ -66,6 +66,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
     storeName: r.storeId ? (storeNameMap.get(r.storeId) ?? null) : null,
     yieldQty: r.yieldQty,
     yieldUnit: r.yieldUnit,
+    notes: r.notes,
     createdAt: r.createdAt.toISOString(),
   }));
   total = count;
@@ -103,7 +104,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
           type="submit"
           className="px-3 py-1.5 text-xs font-medium text-white bg-gray-700 rounded-lg hover:bg-gray-800 transition"
         >
-          Apply
+          Apply filter
         </button>
         {selectedStoreId && (
           <Link
@@ -124,30 +125,19 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
               <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">Store</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Yield</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Created</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
             {recipes.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
                   No recipes found.
                 </td>
               </tr>
             ) : (
               recipes.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{r.name}</td>
-                  <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">
-                    {r.storeName ?? (r.storeId ? r.storeId : <span className="text-gray-400 italic">Platform</span>)}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 hidden md:table-cell">
-                    {r.yieldQty}{" "}
-                    {RECIPE_YIELD_UNIT_LABELS[r.yieldUnit as RecipeYieldUnit] ?? r.yieldUnit}
-                  </td>
-                  <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell">
-                    {new Date(r.createdAt).toLocaleDateString("en-US")}
-                  </td>
-                </tr>
+                <AdminRecipeActions key={r.id} recipe={r} />
               ))
             )}
           </tbody>

@@ -21,6 +21,10 @@ export default function AdminCreateRecipeForm() {
     e.preventDefault();
     setError(null);
     const qty = parseInt(yieldQty, 10);
+    if (!storeId) {
+      setError("Please select a store.");
+      return;
+    }
     if (!name.trim()) {
       setError("Recipe name is required.");
       return;
@@ -55,7 +59,7 @@ export default function AdminCreateRecipeForm() {
       setOpen(false);
       router.refresh();
     } catch {
-      setError("A network error occurred.");
+      setError("Network error. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -78,14 +82,34 @@ export default function AdminCreateRecipeForm() {
       className="bg-white rounded-xl border border-gray-200 p-5 space-y-4"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-900">Add Platform Recipe</h2>
+        <h2 className="text-sm font-semibold text-gray-900">Add Recipe</h2>
         <button
           type="button"
           onClick={() => setOpen(false)}
           className="text-xs text-gray-400 hover:text-gray-600"
         >
-          Cancel
+          Close
         </button>
+      </div>
+
+      {/* Store selector */}
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">
+          Store <span className="text-red-500">*</span>
+        </label>
+        <select
+          required
+          value={storeId}
+          onChange={(e) => setStoreId(e.target.value)}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+        >
+          <option value="">Select store…</option>
+          {stores.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name} ({s.tenant?.displayName ?? s.tenantId})
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -153,7 +177,7 @@ export default function AdminCreateRecipeForm() {
           disabled={submitting}
           className="px-5 py-2 bg-red-700 text-white text-sm font-medium rounded-lg hover:bg-red-800 disabled:opacity-50 transition"
         >
-          {submitting ? "Saving…" : "Save Recipe"}
+          {submitting ? "Saving…" : "Add Recipe"}
         </button>
         <button
           type="button"
