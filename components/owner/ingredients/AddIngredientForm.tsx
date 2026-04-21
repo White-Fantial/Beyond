@@ -51,19 +51,19 @@ export default function AddIngredientForm({ storeId }: Props) {
     e.preventDefault();
     setError(null);
     if (!totalQty || totalQty <= 0) {
-      setError("총 용량을 입력해주세요.");
+      setError("Please enter a valid total quantity.");
       return;
     }
     if (!totalPrice || totalPrice <= 0) {
-      setError("총 가격을 입력해주세요.");
+      setError("Please enter a valid total price.");
       return;
     }
     if (needsManualConversion && (!conversionFactor || conversionFactor <= 0)) {
-      setError("구매 단위와 레시피 단위가 호환되지 않습니다. 환산 계수를 입력해주세요.");
+      setError("Purchase unit and recipe unit are incompatible. Please enter a conversion factor.");
       return;
     }
     if (computedUnitCost === null || computedUnitCost <= 0) {
-      setError("유닛 코스트를 계산할 수 없습니다. 입력값을 확인해주세요.");
+      setError("Unable to compute unit cost. Please check your inputs.");
       return;
     }
     setSubmitting(true);
@@ -107,19 +107,19 @@ export default function AddIngredientForm({ storeId }: Props) {
       onSubmit={handleSubmit}
       className="bg-white rounded-xl border border-gray-200 p-5 space-y-4"
     >
-      <h2 className="text-sm font-semibold text-gray-900">재료 추가</h2>
+      <h2 className="text-sm font-semibold text-gray-900">Add Ingredient</h2>
 
       {/* Row 1: name */}
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">
-          이름 <span className="text-red-500">*</span>
+          Name <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="강력분"
+          placeholder="Bread flour"
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
       </div>
@@ -128,7 +128,7 @@ export default function AddIngredientForm({ storeId }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            구매 단위 <span className="text-red-500">*</span>
+            Purchase Unit <span className="text-red-500">*</span>
           </label>
           <select
             required
@@ -145,7 +145,7 @@ export default function AddIngredientForm({ storeId }: Props) {
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            구매량 ({INGREDIENT_UNIT_LABELS[purchaseUnit]}) <span className="text-red-500">*</span>
+            Purchase Qty ({INGREDIENT_UNIT_LABELS[purchaseUnit]}) <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
@@ -160,7 +160,7 @@ export default function AddIngredientForm({ storeId }: Props) {
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            총 구매가격 <span className="text-red-500">*</span>
+            Total Purchase Price ($) <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
@@ -169,7 +169,7 @@ export default function AddIngredientForm({ storeId }: Props) {
             required
             value={totalPriceStr}
             onChange={(e) => setTotalPriceStr(e.target.value)}
-            placeholder="5000"
+            placeholder="35.00"
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
@@ -179,7 +179,7 @@ export default function AddIngredientForm({ storeId }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            레시피 단위 <span className="text-red-500">*</span>
+            Recipe Unit <span className="text-red-500">*</span>
           </label>
           <select
             required
@@ -203,13 +203,13 @@ export default function AddIngredientForm({ storeId }: Props) {
             className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
           />
           <label htmlFor="ingredient-gst" className="text-xs text-gray-600 select-none">
-            GST 포함 가격
+            Price includes GST
           </label>
         </div>
         {needsManualConversion && (
           <div>
             <label className="block text-xs font-medium text-amber-700 mb-1">
-              환산 계수 (1 {INGREDIENT_UNIT_LABELS[purchaseUnit]} = ?{" "}
+              Conversion factor (1 {INGREDIENT_UNIT_LABELS[purchaseUnit]} = ?{" "}
               {INGREDIENT_UNIT_LABELS[recipeUnit]}) <span className="text-red-500">*</span>
             </label>
             <input
@@ -218,7 +218,7 @@ export default function AddIngredientForm({ storeId }: Props) {
               step="any"
               value={manualConversion}
               onChange={(e) => setManualConversion(e.target.value)}
-              placeholder="예: 각(ea)당 300g이면 300 입력"
+              placeholder="e.g. 300 for 300g per ea"
               className="w-full rounded-lg border border-amber-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
@@ -234,11 +234,11 @@ export default function AddIngredientForm({ storeId }: Props) {
       {/* Row 4: computed unit cost */}
       <div className="sm:w-2/3">
         <div className="text-xs font-medium text-gray-500 mb-1">
-          자동 계산된 Unit Cost ({INGREDIENT_UNIT_LABELS[recipeUnit]}당, ex-GST)
+          Computed Unit Cost (per {INGREDIENT_UNIT_LABELS[recipeUnit]}, ex-GST)
         </div>
         <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-gray-700">
           {computedUnitCost !== null
-            ? `${(computedUnitCost / 100000).toFixed(6)} / ${INGREDIENT_UNIT_LABELS[recipeUnit]}`
+            ? `$${(computedUnitCost / 100000).toFixed(6)} / ${INGREDIENT_UNIT_LABELS[recipeUnit]}`
             : "—"}
         </div>
       </div>
@@ -246,13 +246,13 @@ export default function AddIngredientForm({ storeId }: Props) {
       {/* Notes */}
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">
-          메모 (선택)
+          Notes (optional)
         </label>
         <input
           type="text"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="예: 고급 강력분"
+          placeholder="e.g. Premium bread flour"
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
       </div>
@@ -263,7 +263,7 @@ export default function AddIngredientForm({ storeId }: Props) {
         disabled={submitting}
         className="px-5 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition"
       >
-        {submitting ? "저장 중…" : "재료 추가"}
+        {submitting ? "Saving…" : "Add Ingredient"}
       </button>
     </form>
   );
