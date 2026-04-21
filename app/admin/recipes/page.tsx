@@ -16,7 +16,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
   const page = params.page ? Number(params.page) : 1;
   const pageSize = 20;
 
-  // Fetch all active stores for the selector
+  // Fetch all active stores for the filter selector
   const stores = await prisma.store.findMany({
     where: { status: "ACTIVE" },
     select: { id: true, name: true, tenantId: true, tenant: { select: { displayName: true } } },
@@ -27,7 +27,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
   let recipes: {
     id: string;
     name: string;
-    storeId: string;
+    storeId: string | null;
     storeName: string | null;
     yieldQty: number;
     yieldUnit: string;
@@ -51,8 +51,8 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
     prisma.recipe.count({ where }),
   ]);
 
-  // Fetch store names for the returned recipes
-  const recipeStoreIds = [...new Set(rows.map((r) => r.storeId))];
+  // Fetch store names only for recipes that have a storeId
+  const recipeStoreIds = [...new Set(rows.map((r) => r.storeId).filter((id): id is string => id !== null))];
   const storeRows = await prisma.store.findMany({
     where: { id: { in: recipeStoreIds } },
     select: { id: true, name: true },
@@ -63,7 +63,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
     id: r.id,
     name: r.name,
     storeId: r.storeId,
-    storeName: storeNameMap.get(r.storeId) ?? null,
+    storeName: r.storeId ? (storeNameMap.get(r.storeId) ?? null) : null,
     yieldQty: r.yieldQty,
     yieldUnit: r.yieldUnit,
     notes: r.notes,
@@ -83,11 +83,11 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
       </div>
 
       {/* Create recipe form */}
-      <AdminCreateRecipeForm stores={stores} />
+      <AdminCreateRecipeForm />
 
       {/* Store filter */}
       <form method="GET" className="flex items-center gap-3">
-        <label className="text-xs text-gray-500 font-medium">Store filter:</label>
+        <label className="text-xs text-gray-500 font-medium">Filter by store:</label>
         <select
           name="storeId"
           defaultValue={selectedStoreId}

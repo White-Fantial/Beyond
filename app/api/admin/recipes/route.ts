@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
 import { prisma } from "@/lib/prisma";
 import {
-  listRecipes,
   createRecipe,
 } from "@/services/owner/owner-recipes.service";
 import type { CreateRecipeInput, RecipeYieldUnit } from "@/types/owner-recipes";
@@ -26,8 +25,43 @@ export async function GET(req: NextRequest) {
     if (!store) {
       return NextResponse.json({ error: "Store not found" }, { status: 404 });
     }
-    const result = await listRecipes(store.tenantId, { storeId, page, pageSize });
-    return NextResponse.json({ data: result });
+    const where = { tenantId: store.tenantId, storeId, deletedAt: null };
+    const [rows, total] = await Promise.all([
+      prisma.recipe.findMany({
+        where,
+        include: { catalogProduct: { select: { name: true, basePriceAmount: true } } },
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.recipe.count({ where }),
+    ]);
+
+    const storeNames = await prisma.store.findMany({
+      where: { id: { in: [storeId] } },
+      select: { id: true, name: true },
+    });
+    const storeNameMap = new Map(storeNames.map((s) => [s.id, s.name]));
+
+    return NextResponse.json({
+      data: {
+        items: rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          tenantId: r.tenantId,
+          storeId: r.storeId,
+          storeName: r.storeId ? (storeNameMap.get(r.storeId) ?? null) : null,
+          yieldQty: r.yieldQty,
+          yieldUnit: r.yieldUnit,
+          notes: r.notes,
+          createdAt: r.createdAt.toISOString(),
+          updatedAt: r.updatedAt.toISOString(),
+        })),
+        total,
+        page,
+        pageSize,
+      },
+    });
   }
 
   // List all recipes across all tenants (admin view)
@@ -45,8 +79,8 @@ export async function GET(req: NextRequest) {
     prisma.recipe.count({ where }),
   ]);
 
-  // Fetch store names for the returned recipes
-  const storeIds = [...new Set(rows.map((r) => r.storeId))];
+  // Fetch store names for the returned recipes (only for those that have a storeId)
+  const storeIds = [...new Set(rows.map((r) => r.storeId).filter((id): id is string => id !== null))];
   const storeNames = await prisma.store.findMany({
     where: { id: { in: storeIds } },
     select: { id: true, name: true },
@@ -60,7 +94,7 @@ export async function GET(req: NextRequest) {
         name: r.name,
         tenantId: r.tenantId,
         storeId: r.storeId,
-        storeName: storeNameMap.get(r.storeId) ?? null,
+        storeName: r.storeId ? (storeNameMap.get(r.storeId) ?? null) : null,
         yieldQty: r.yieldQty,
         yieldUnit: r.yieldUnit,
         notes: r.notes,
@@ -77,11 +111,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   await requirePlatformAdmin();
 
-  const body = (await req.json()) as CreateRecipeInput & { storeId: string };
+  const body = (await req.json()) as CreateRecipeInput;
 
-  if (!body.storeId) {
-    return NextResponse.json({ error: "storeId is required" }, { status: 400 });
-  }
   if (!body.name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
@@ -92,17 +123,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid yieldUnit provided" }, { status: 400 });
   }
 
-  // Look up the tenantId from the store
-  const store = await prisma.store.findUnique({
-    where: { id: body.storeId },
-    select: { tenantId: true },
-  });
-  if (!store) {
-    return NextResponse.json({ error: "Store not found" }, { status: 404 });
+  // Determine tenantId: derive from store if provided, otherwise null (platform-level recipe)
+  let tenantId: string | null = null;
+  if (body.storeId) {
+    const store = await prisma.store.findUnique({
+      where: { id: body.storeId },
+      select: { tenantId: true },
+    });
+    if (!store) {
+      return NextResponse.json({ error: "Store not found" }, { status: 404 });
+    }
+    tenantId = store.tenantId;
   }
 
   try {
-    const recipe = await createRecipe(store.tenantId, {
+    const recipe = await createRecipe(tenantId, {
       ...body,
       ingredients: body.ingredients ?? [],
     });

@@ -3444,8 +3444,8 @@ model Ingredient {
 
 model Recipe {
   id               String          @id @default(uuid())
-  tenantId         String
-  storeId          String
+  tenantId         String?
+  storeId          String?
   catalogProductId String?
   name             String
   yieldQty         Int             @default(1)
