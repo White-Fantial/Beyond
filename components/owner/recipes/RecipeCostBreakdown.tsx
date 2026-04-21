@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { RecipeDetail } from "@/types/owner-recipes";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
 import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
@@ -24,9 +25,30 @@ function formatCostRounded(minor: number) {
 }
 
 export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
+  const router = useRouter();
   const [sellingPriceGstIncluded, setSellingPriceGstIncluded] = useState(true);
   const [showAddIngredient, setShowAddIngredient] = useState(false);
   const [editingIngredientId, setEditingIngredientId] = useState<string | null>(null);
+  const [deletingIngredientId, setDeletingIngredientId] = useState<string | null>(null);
+
+  async function handleDeleteIngredient(ingredientId: string) {
+    setDeletingIngredientId(ingredientId);
+    try {
+      const remaining = detail.ingredients
+        .filter((i) => i.id !== ingredientId)
+        .map((i) => ({ ingredientId: i.ingredientId, quantity: i.quantity, unit: i.unit }));
+      const res = await fetch(`/api/owner/recipes/${detail.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ingredients: remaining }),
+      });
+      if (res.ok) {
+        router.refresh();
+      }
+    } finally {
+      setDeletingIngredientId(null);
+    }
+  }
 
   const rawPrice = detail.catalogProductPrice;
   const effectivePrice =
@@ -159,17 +181,26 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
                     </td>
                     {canEdit && (
                       <td className="px-5 py-3 text-right">
-                        <button
-                          onClick={() => {
-                            setShowAddIngredient(false);
-                            setEditingIngredientId(
-                              editingIngredientId === ing.id ? null : ing.id
-                            );
-                          }}
-                          className="text-xs font-medium text-brand-600 hover:text-brand-700 transition"
-                        >
-                          {editingIngredientId === ing.id ? "Cancel" : "Edit"}
-                        </button>
+                        <div className="flex items-center justify-end gap-3">
+                          <button
+                            onClick={() => {
+                              setShowAddIngredient(false);
+                              setEditingIngredientId(
+                                editingIngredientId === ing.id ? null : ing.id
+                              );
+                            }}
+                            className="text-xs font-medium text-brand-600 hover:text-brand-700 transition"
+                          >
+                            {editingIngredientId === ing.id ? "Cancel" : "Edit"}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteIngredient(ing.id)}
+                            disabled={deletingIngredientId === ing.id}
+                            className="text-xs font-medium text-red-500 hover:text-red-700 disabled:opacity-50 transition"
+                          >
+                            {deletingIngredientId === ing.id ? "Deleting…" : "Delete"}
+                          </button>
+                        </div>
                       </td>
                     )}
                   </tr>
