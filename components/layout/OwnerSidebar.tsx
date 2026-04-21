@@ -22,6 +22,7 @@ interface StoreNavGroup {
 
 const storeManagementItems: NavItem[] = [
   { href: "/owner/stores", label: "My Stores", icon: "🏬", exact: true },
+  { href: "/owner/products", label: "Products", icon: "📦" },
   { href: "/owner/team", label: "Team", icon: "👥" },
 ];
 
