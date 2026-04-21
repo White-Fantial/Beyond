@@ -151,6 +151,23 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
           </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Contact Phone</label>
+            <input
+              type="tel"
+              value={editPhone}
+              onChange={(e) => setEditPhone(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
+            <input
+              value={editNotes}
+              onChange={(e) => setEditNotes(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+            />
+          </div>
         </div>
         {supplierError && <p className="text-sm text-red-600">{supplierError}</p>}
         <div className="flex gap-3">

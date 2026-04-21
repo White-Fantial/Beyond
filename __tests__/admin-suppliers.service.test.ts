@@ -69,10 +69,7 @@ const mockProduct = {
   supplierId: SUP_ID,
   name: "All Purpose Flour 25kg",
   externalUrl: null,
-  currentPrice: 3500000,
-  basePrice: 3500000,
-  basePriceUpdatedAt: null,
-  basePriceScrapedUserCount: 0,
+  referencePrice: 3500000,
   unit: "KG",
   lastScrapedAt: null,
   metadata: {},
@@ -119,7 +116,7 @@ describe("getPlatformSupplierDetail", () => {
     expect(result.id).toBe(SUP_ID);
     expect(result.scope).toBe("PLATFORM");
     expect(result.products).toHaveLength(1);
-    expect(result.products[0].currentPrice).toBe(3500000);
+    expect(result.products[0].referencePrice).toBe(3500000);
   });
 
   it("throws when not found", async () => {
@@ -226,12 +223,12 @@ describe("createPlatformSupplierProduct", () => {
 
     const result = await createPlatformSupplierProduct(SUP_ID, {
       name: "All Purpose Flour 25kg",
-      currentPrice: 3500000,
+      referencePrice: 3500000,
       unit: "KG",
     });
 
     expect(result.name).toBe("All Purpose Flour 25kg");
-    expect(result.currentPrice).toBe(3500000);
+    expect(result.referencePrice).toBe(3500000);
     expect(result.unit).toBe("KG");
   });
 
@@ -241,7 +238,7 @@ describe("createPlatformSupplierProduct", () => {
     await expect(
       createPlatformSupplierProduct("missing", {
         name: "X",
-        currentPrice: 0,
+        referencePrice: 0,
         unit: "EACH",
       })
     ).rejects.toThrow("not found");
@@ -256,14 +253,14 @@ describe("updatePlatformSupplierProduct", () => {
     mockPrisma.supplierProduct.findFirst.mockResolvedValue(mockProduct);
     mockPrisma.supplierProduct.update.mockResolvedValue({
       ...mockProduct,
-      currentPrice: 4000000,
+      referencePrice: 4000000,
     });
 
     const result = await updatePlatformSupplierProduct(SUP_ID, PROD_ID, {
-      currentPrice: 4000000,
+      referencePrice: 4000000,
     });
 
-    expect(result.currentPrice).toBe(4000000);
+    expect(result.referencePrice).toBe(4000000);
   });
 });
 

@@ -33,10 +33,8 @@ vi.mock("@/lib/prisma", () => ({
 
 import { prisma } from "@/lib/prisma";
 import {
-  listSuppliers,
   listAvailableSuppliers,
   getSupplierDetail,
-  createSupplier,
   updateSupplier,
   deleteSupplier,
   listSupplierProducts,
@@ -124,48 +122,6 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-// ─── listSuppliers ────────────────────────────────────────────────────────────
-
-describe("listSuppliers", () => {
-  it("returns paginated suppliers with product counts", async () => {
-    mockPrisma.supplier.findMany.mockResolvedValue([mockSupplier]);
-    mockPrisma.supplier.count.mockResolvedValue(1);
-
-    const result = await listSuppliers(TENANT);
-
-    expect(result.items).toHaveLength(1);
-    expect(result.total).toBe(1);
-    expect(result.items[0].name).toBe("Flour Co");
-    expect(result.items[0].productCount).toBe(2);
-  });
-
-  it("filters by storeId", async () => {
-    mockPrisma.supplier.findMany.mockResolvedValue([]);
-    mockPrisma.supplier.count.mockResolvedValue(0);
-
-    await listSuppliers(TENANT, { storeId: STORE });
-
-    expect(mockPrisma.supplier.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ storeId: STORE }),
-      })
-    );
-  });
-
-  it("excludes soft-deleted suppliers", async () => {
-    mockPrisma.supplier.findMany.mockResolvedValue([]);
-    mockPrisma.supplier.count.mockResolvedValue(0);
-
-    await listSuppliers(TENANT);
-
-    expect(mockPrisma.supplier.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({ deletedAt: null }),
-      })
-    );
-  });
-});
-
 // ─── listAvailableSuppliers ───────────────────────────────────────────────────
 
 describe("listAvailableSuppliers", () => {
@@ -214,27 +170,6 @@ describe("getSupplierDetail", () => {
     mockPrisma.supplier.findFirst.mockResolvedValue(null);
 
     await expect(getSupplierDetail(TENANT, "missing")).rejects.toThrow("not found");
-  });
-});
-
-// ─── createSupplier ───────────────────────────────────────────────────────────
-
-describe("createSupplier", () => {
-  it("creates a supplier", async () => {
-    mockPrisma.supplier.create.mockResolvedValue(mockSupplier);
-
-    const result = await createSupplier(TENANT, {
-      storeId: STORE,
-      name: "Flour Co",
-      websiteUrl: "https://flourco.nz",
-    });
-
-    expect(result.name).toBe("Flour Co");
-    expect(mockPrisma.supplier.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ tenantId: TENANT, storeId: STORE }),
-      })
-    );
   });
 });
 
