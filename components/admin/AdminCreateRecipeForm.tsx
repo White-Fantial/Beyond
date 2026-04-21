@@ -7,9 +7,21 @@ import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
 
 const YIELD_UNITS = Object.keys(RECIPE_YIELD_UNIT_LABELS) as RecipeYieldUnit[];
 
-export default function AdminCreateRecipeForm() {
+interface StoreOption {
+  id: string;
+  name: string;
+  tenantId: string;
+  tenant?: { displayName: string } | null;
+}
+
+interface Props {
+  stores: StoreOption[];
+}
+
+export default function AdminCreateRecipeForm({ stores }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [storeId, setStoreId] = useState("");
   const [name, setName] = useState("");
   const [yieldQty, setYieldQty] = useState("1");
   const [yieldUnit, setYieldUnit] = useState<RecipeYieldUnit>("EACH");
@@ -39,6 +51,7 @@ export default function AdminCreateRecipeForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          storeId: storeId || undefined,
           name: name.trim(),
           yieldQty: qty,
           yieldUnit,
@@ -52,6 +65,7 @@ export default function AdminCreateRecipeForm() {
         return;
       }
       // Reset form and refresh
+      setStoreId("");
       setName("");
       setYieldQty("1");
       setYieldUnit("EACH");

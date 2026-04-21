@@ -116,6 +116,9 @@ export async function POST(req: NextRequest) {
   if (!body.name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
+  if (!body.storeId) {
+    return NextResponse.json({ error: "storeId is required" }, { status: 400 });
+  }
   if (!body.yieldQty || body.yieldQty < 1) {
     return NextResponse.json({ error: "yieldQty must be at least 1" }, { status: 400 });
   }
@@ -123,18 +126,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid yieldUnit provided" }, { status: 400 });
   }
 
-  // Determine tenantId: derive from store if provided, otherwise null (platform-level recipe)
-  let tenantId: string | null = null;
-  if (body.storeId) {
-    const store = await prisma.store.findUnique({
-      where: { id: body.storeId },
-      select: { tenantId: true },
-    });
-    if (!store) {
-      return NextResponse.json({ error: "Store not found" }, { status: 404 });
-    }
-    tenantId = store.tenantId;
+  // Derive tenantId from the store
+  const store = await prisma.store.findUnique({
+    where: { id: body.storeId },
+    select: { tenantId: true },
+  });
+  if (!store) {
+    return NextResponse.json({ error: "Store not found" }, { status: 404 });
   }
+  const tenantId = store.tenantId;
 
   try {
     const recipe = await createRecipe(tenantId, {
