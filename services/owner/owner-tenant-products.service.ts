@@ -7,7 +7,94 @@
  */
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
-import type { TenantProductRow, StoreProductSelectionRow } from "@/types/owner";
+import type { TenantProductRow, TenantProductCategoryRow, StoreProductSelectionRow } from "@/types/owner";
+
+// ─── Tenant-level product categories ──────────────────────────────────────────
+
+export async function listTenantProductCategories(
+  tenantId: string
+): Promise<TenantProductCategoryRow[]> {
+  const rows = await prisma.tenantProductCategory.findMany({
+    where: { tenantId },
+    orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    tenantId: r.tenantId,
+    name: r.name,
+    displayOrder: r.displayOrder,
+  }));
+}
+
+export async function createTenantProductCategory(
+  tenantId: string,
+  actorUserId: string,
+  name: string,
+  displayOrder = 0
+): Promise<TenantProductCategoryRow> {
+  const row = await prisma.tenantProductCategory.create({
+    data: { tenantId, name: name.trim(), displayOrder },
+  });
+  await logAuditEvent({
+    tenantId,
+    actorUserId,
+    action: "TENANT_PRODUCT_CATEGORY_CREATED",
+    targetType: "TenantProductCategory",
+    targetId: row.id,
+    metadata: { name },
+  });
+  return { id: row.id, tenantId: row.tenantId, name: row.name, displayOrder: row.displayOrder };
+}
+
+export async function updateTenantProductCategory(
+  tenantId: string,
+  categoryId: string,
+  actorUserId: string,
+  data: { name?: string; displayOrder?: number }
+): Promise<TenantProductCategoryRow> {
+  const existing = await prisma.tenantProductCategory.findFirst({
+    where: { id: categoryId, tenantId },
+  });
+  if (!existing) throw new Error("Category not found");
+
+  const row = await prisma.tenantProductCategory.update({
+    where: { id: categoryId },
+    data: {
+      ...(data.name !== undefined ? { name: data.name.trim() } : {}),
+      ...(data.displayOrder !== undefined ? { displayOrder: data.displayOrder } : {}),
+    },
+  });
+  await logAuditEvent({
+    tenantId,
+    actorUserId,
+    action: "TENANT_PRODUCT_CATEGORY_UPDATED",
+    targetType: "TenantProductCategory",
+    targetId: categoryId,
+    metadata: { fields: Object.keys(data) },
+  });
+  return { id: row.id, tenantId: row.tenantId, name: row.name, displayOrder: row.displayOrder };
+}
+
+export async function deleteTenantProductCategory(
+  tenantId: string,
+  categoryId: string,
+  actorUserId: string
+): Promise<void> {
+  const existing = await prisma.tenantProductCategory.findFirst({
+    where: { id: categoryId, tenantId },
+  });
+  if (!existing) throw new Error("Category not found");
+
+  await prisma.tenantProductCategory.delete({ where: { id: categoryId } });
+  await logAuditEvent({
+    tenantId,
+    actorUserId,
+    action: "TENANT_PRODUCT_CATEGORY_DELETED",
+    targetType: "TenantProductCategory",
+    targetId: categoryId,
+    metadata: {},
+  });
+}
 
 // ─── Tenant-level product CRUD ────────────────────────────────────────────────
 
@@ -16,6 +103,7 @@ export async function listTenantProducts(tenantId: string): Promise<TenantProduc
     where: { tenantId, deletedAt: null },
     include: {
       _count: { select: { storeSelections: true } },
+      category: true,
     },
     orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
   });
@@ -33,6 +121,8 @@ export async function listTenantProducts(tenantId: string): Promise<TenantProduc
     isActive: p.isActive,
     internalNote: p.internalNote,
     createdAt: p.createdAt.toISOString(),
+    categoryId: p.categoryId,
+    categoryName: p.category?.name ?? null,
     selectionCount: p._count.storeSelections,
   }));
 }
@@ -45,6 +135,7 @@ export async function getTenantProduct(
     where: { id: productId, tenantId, deletedAt: null },
     include: {
       _count: { select: { storeSelections: true } },
+      category: true,
     },
   });
   if (!p) return null;
@@ -61,6 +152,8 @@ export async function getTenantProduct(
     isActive: p.isActive,
     internalNote: p.internalNote,
     createdAt: p.createdAt.toISOString(),
+    categoryId: p.categoryId,
+    categoryName: p.category?.name ?? null,
     selectionCount: p._count.storeSelections,
   };
 }
@@ -78,6 +171,7 @@ export interface CreateTenantProductInput {
     displayOrder?: number;
     isActive?: boolean;
     internalNote?: string | null;
+    categoryId?: string | null;
   };
 }
 
@@ -96,9 +190,11 @@ export async function createTenantProduct(input: CreateTenantProductInput): Prom
       displayOrder: data.displayOrder ?? 0,
       isActive: data.isActive ?? true,
       internalNote: data.internalNote ?? null,
+      categoryId: data.categoryId ?? null,
     },
     include: {
       _count: { select: { storeSelections: true } },
+      category: true,
     },
   });
 
@@ -124,6 +220,8 @@ export async function createTenantProduct(input: CreateTenantProductInput): Prom
     isActive: product.isActive,
     internalNote: product.internalNote,
     createdAt: product.createdAt.toISOString(),
+    categoryId: product.categoryId,
+    categoryName: product.category?.name ?? null,
     selectionCount: product._count.storeSelections,
   };
 }
@@ -141,6 +239,7 @@ export interface UpdateTenantProductInput {
     displayOrder?: number;
     isActive?: boolean;
     internalNote?: string | null;
+    categoryId?: string | null;
   };
 }
 
@@ -162,6 +261,7 @@ export async function updateTenantProduct(input: UpdateTenantProductInput): Prom
       displayOrder: data.displayOrder,
       isActive: data.isActive,
       internalNote: data.internalNote,
+      categoryId: data.categoryId,
     },
   });
 

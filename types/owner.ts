@@ -467,6 +467,13 @@ export interface OwnerTeamMember {
 
 // ─── Tenant Catalog Products ──────────────────────────────────────────────────
 
+export interface TenantProductCategoryRow {
+  id: string;
+  tenantId: string;
+  name: string;
+  displayOrder: number;
+}
+
 export interface TenantProductRow {
   id: string;
   tenantId: string;
@@ -480,6 +487,8 @@ export interface TenantProductRow {
   isActive: boolean;
   internalNote: string | null;
   createdAt: string;
+  categoryId: string | null;
+  categoryName: string | null;
   /** Number of stores that have selected this product. */
   selectionCount: number;
 }

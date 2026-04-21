@@ -16,6 +16,7 @@ interface Props {
 export default function AddIngredientForm({ storeId }: Props) {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
   const [purchaseUnit, setPurchaseUnit] = useState<IngredientUnit>("KG");
   const [recipeUnit, setRecipeUnit] = useState<IngredientUnit>("GRAM");
   const [totalQtyStr, setTotalQtyStr] = useState("");
@@ -71,6 +72,7 @@ export default function AddIngredientForm({ storeId }: Props) {
       const body: CreateIngredientInput = {
         storeId,
         name,
+        category: category.trim() || undefined,
         purchaseUnit,
         purchaseQty: totalQty,
         unit: recipeUnit,
@@ -102,19 +104,33 @@ export default function AddIngredientForm({ storeId }: Props) {
     >
       <h2 className="text-sm font-semibold text-gray-900">Add Ingredient</h2>
 
-      {/* Row 1: name */}
-      <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">
-          Name <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Bread flour"
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-        />
+      {/* Row 1: name + category */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Bread flour"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Category (optional)
+          </label>
+          <input
+            type="text"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="e.g. Dairy, Produce, Meat"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
       </div>
 
       {/* Row 2: purchase unit + qty + total price */}
