@@ -16,6 +16,11 @@ interface PlatformIngredient {
   category: string | null;
 }
 
+interface RecipeCategory {
+  id: string;
+  name: string;
+}
+
 interface IngredientRow {
   ingredientId: string;
   quantity: number;
@@ -30,6 +35,7 @@ export default function AdminCreateRecipeForm() {
   const [yieldUnit, setYieldUnit] = useState<RecipeYieldUnit>("EACH");
   const [notes, setNotes] = useState("");
   const [instructions, setInstructions] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,20 +44,29 @@ export default function AdminCreateRecipeForm() {
   const [platformIngredients, setPlatformIngredients] = useState<PlatformIngredient[]>([]);
   const [loadingIngredients, setLoadingIngredients] = useState(false);
 
-  // Load platform ingredients when the form is opened
+  // Recipe categories
+  const [categories, setCategories] = useState<RecipeCategory[]>([]);
+
+  // Load platform ingredients and categories when the form is opened
   useEffect(() => {
     if (!open) return;
     setLoadingIngredients(true);
-    fetch("/api/admin/platform-ingredients?pageSize=200")
-      .then((r) => r.json())
-      .then((json) => {
-        const items: PlatformIngredient[] = json.data?.items ?? [];
-        setPlatformIngredients(items);
-      })
-      .catch(() => {
-        // Non-fatal: ingredient selection just won't be available
-      })
-      .finally(() => setLoadingIngredients(false));
+    Promise.all([
+      fetch("/api/admin/platform-ingredients?pageSize=200")
+        .then((r) => r.json())
+        .then((json) => {
+          const items: PlatformIngredient[] = json.data?.items ?? [];
+          setPlatformIngredients(items);
+        })
+        .catch(() => {}),
+      fetch("/api/admin/recipe-categories")
+        .then((r) => r.json())
+        .then((json) => {
+          const items: RecipeCategory[] = json.data ?? [];
+          setCategories(items);
+        })
+        .catch(() => {}),
+    ]).finally(() => setLoadingIngredients(false));
   }, [open]);
 
   function addIngredientRow() {
@@ -100,6 +115,7 @@ export default function AdminCreateRecipeForm() {
           yieldUnit,
           notes: notes.trim() || undefined,
           instructions: instructions.trim() || undefined,
+          categoryId: categoryId || null,
           ingredients: ingredientRows.map((r) => ({
             ingredientId: r.ingredientId,
             quantity: r.quantity,
@@ -118,6 +134,7 @@ export default function AdminCreateRecipeForm() {
       setYieldUnit("EACH");
       setNotes("");
       setInstructions("");
+      setCategoryId("");
       setIngredientRows([]);
       setOpen(false);
       router.refresh();
@@ -212,6 +229,25 @@ export default function AdminCreateRecipeForm() {
           placeholder="Additional notes…"
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
         />
+      </div>
+
+      {/* Category */}
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">
+          Category (optional)
+        </label>
+        <select
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+        >
+          <option value="">Uncategorized</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Instructions */}

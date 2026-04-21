@@ -39,6 +39,8 @@ export interface Recipe {
   catalogProductName: string | null;
   catalogProductPrice: number | null; // basePriceAmount (minor units)
   tenantCatalogProductId: string | null;
+  categoryId: string | null;
+  categoryName: string | null;
   name: string;
   yieldQty: number;
   yieldUnit: RecipeYieldUnit;
@@ -74,6 +76,7 @@ export interface CreateRecipeInput {
   storeId?: string;
   catalogProductId?: string;
   tenantCatalogProductId?: string;
+  categoryId?: string | null;
   name: string;
   yieldQty: number;
   yieldUnit: RecipeYieldUnit;
@@ -84,6 +87,7 @@ export interface CreateRecipeInput {
 
 export interface UpdateRecipeInput {
   catalogProductId?: string | null;
+  categoryId?: string | null;
   name?: string;
   yieldQty?: number;
   yieldUnit?: RecipeYieldUnit;

@@ -3432,12 +3432,28 @@ model Ingredient {
   @@map("ingredients")
 }
 
+/// Platform-level recipe category managed by admins.
+/// All recipes can optionally belong to one category (nullable = uncategorized).
+model RecipeCategory {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  recipes Recipe[]
+
+  @@index([displayOrder, name])
+  @@map("recipe_categories")
+}
+
 model Recipe {
   id               String          @id @default(uuid())
   tenantId         String?
   storeId          String?
   catalogProductId       String?
   tenantCatalogProductId String?   // links to TenantCatalogProduct (tenant-level shared product)
+  categoryId       String?         // optional admin-managed recipe category
   name             String
   yieldQty         Int             @default(1)
   yieldUnit        RecipeYieldUnit @default(EACH)
@@ -3450,11 +3466,13 @@ model Recipe {
 
   catalogProduct       CatalogProduct?       @relation(fields: [catalogProductId], references: [id], onDelete: SetNull)
   tenantCatalogProduct TenantCatalogProduct? @relation(fields: [tenantCatalogProductId], references: [id], onDelete: SetNull)
+  category             RecipeCategory?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   ingredients          RecipeIngredient[]
 
   @@index([tenantId, storeId])
   @@index([storeId, catalogProductId])
   @@index([tenantId, tenantCatalogProductId])
+  @@index([categoryId])
   @@map("recipes")
 }
 
