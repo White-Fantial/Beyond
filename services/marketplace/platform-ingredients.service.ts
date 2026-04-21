@@ -28,6 +28,7 @@ function toIngredient(row: {
   description: string | null;
   category: string | null;
   purchaseUnit: string;
+  purchaseQty: number;
   unit: string;
   unitCost: number;
   currency: string;
@@ -46,6 +47,7 @@ function toIngredient(row: {
     description: row.description,
     category: row.category,
     purchaseUnit: row.purchaseUnit as Ingredient["purchaseUnit"],
+    purchaseQty: row.purchaseQty,
     unit: row.unit as Ingredient["unit"],
     unitCost: row.unitCost,
     currency: row.currency,

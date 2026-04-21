@@ -72,6 +72,7 @@ export default function AddIngredientForm({ storeId }: Props) {
         storeId,
         name,
         purchaseUnit,
+        purchaseQty: totalQty,
         unit: recipeUnit,
         unitCost: computedUnitCost,
         notes: notes || undefined,

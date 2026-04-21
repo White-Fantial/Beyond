@@ -45,6 +45,7 @@ const mockIngredient = {
   description: null,
   category: null,
   purchaseUnit: "KG",
+  purchaseQty: 1,
   unit: "GRAM",
   unitCost: 5,
   currency: "USD",
@@ -159,6 +160,7 @@ describe("createIngredient", () => {
       storeId: STORE,
       name: "Bread Flour",
       purchaseUnit: "KG",
+      purchaseQty: 20,
       unit: "GRAM",
       unitCost: 5,
     });
@@ -171,9 +173,28 @@ describe("createIngredient", () => {
           tenantId: TENANT,
           storeId: STORE,
           purchaseUnit: "KG",
+          purchaseQty: 20,
           unit: "GRAM",
           unitCost: 5,
         }),
+      })
+    );
+  });
+
+  it("defaults purchaseQty to 1 when not provided", async () => {
+    mockPrisma.ingredient.create.mockResolvedValue(mockIngredient);
+
+    await createIngredient(TENANT, {
+      storeId: STORE,
+      name: "Salt",
+      purchaseUnit: "KG",
+      unit: "GRAM",
+      unitCost: 1,
+    });
+
+    expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ purchaseQty: 1 }),
       })
     );
   });
@@ -214,6 +235,24 @@ describe("updateIngredient", () => {
       expect.objectContaining({
         where: { id: "ing-1" },
         data: expect.objectContaining({ unitCost: 10 }),
+      })
+    );
+  });
+
+  it("persists purchaseQty when provided", async () => {
+    mockPrisma.ingredient.findFirst.mockResolvedValue(mockIngredient);
+    mockPrisma.ingredient.update.mockResolvedValue({
+      ...mockIngredient,
+      purchaseQty: 20,
+      unitCost: 175,
+    });
+
+    const result = await updateIngredient(TENANT, "ing-1", { purchaseQty: 20, unitCost: 175 });
+
+    expect(result.purchaseQty).toBe(20);
+    expect(mockPrisma.ingredient.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ purchaseQty: 20 }),
       })
     );
   });

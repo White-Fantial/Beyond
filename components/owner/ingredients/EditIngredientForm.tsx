@@ -22,8 +22,9 @@ export default function EditIngredientForm({ ingredient }: Props) {
   const [manualConversion, setManualConversion] = useState("");
 
   // unitCost is stored in millicents (1/100000 dollar). Allow user to edit as total qty + price.
-  // Pre-fill total qty = 1 and total price = unit cost (dollars), so existing cost is preserved.
-  const [totalQtyStr, setTotalQtyStr] = useState("1");
+  // Pre-fill qty and total price from stored purchaseQty and unitCost so the values
+  // the owner originally entered are restored on the edit form.
+  const [totalQtyStr, setTotalQtyStr] = useState(String(ingredient.purchaseQty));
   const [gstIncluded, setGstIncluded] = useState(false);
 
   const autoConversion = getUnitConversionFactor(purchaseUnit, recipeUnit);
@@ -35,15 +36,14 @@ export default function EditIngredientForm({ ingredient }: Props) {
   const needsManualConversion =
     autoConversion === undefined && purchaseUnit !== recipeUnit;
 
-  // Pre-fill total price from stored unitCost (millicents → dollars).
-  // With totalQty=1 purchaseUnit, price = unitCost/100000 * conversionFactor (dollars per purchaseUnit).
-  // When purchaseUnit and unit are incompatible (no auto-conversion), we cannot derive a meaningful
-  // total price without the original manual conversion factor, so we leave the field empty and let
-  // the user re-enter their purchase details.
+  // Pre-fill total price from stored unitCost and purchaseQty:
+  //   totalPrice = unitCost (millicents/recipeUnit) * purchaseQty * conversionFactor / 100000
+  // When units are incompatible (no auto-conversion), we cannot derive a meaningful
+  // total price without the original manual conversion factor, so leave the field empty.
   const initConversion = getUnitConversionFactor(ingredient.purchaseUnit, ingredient.unit);
   const [totalPriceStr, setTotalPriceStr] = useState(
     initConversion !== undefined
-      ? ((ingredient.unitCost / 100000) * initConversion).toFixed(6)
+      ? ((ingredient.unitCost / 100000) * ingredient.purchaseQty * initConversion).toFixed(2)
       : ""
   );
 
@@ -85,6 +85,7 @@ export default function EditIngredientForm({ ingredient }: Props) {
       const body: UpdateIngredientInput = {
         name,
         purchaseUnit,
+        purchaseQty: totalQty,
         unit: recipeUnit,
         unitCost: computedUnitCost,
         isActive,
