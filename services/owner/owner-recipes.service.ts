@@ -32,6 +32,7 @@ type RawRecipe = {
   storeId: string | null;
   catalogProductId: string | null;
   tenantCatalogProductId: string | null;
+  categoryId: string | null;
   name: string;
   yieldQty: number;
   yieldUnit: string;
@@ -44,6 +45,9 @@ type RawRecipe = {
     name: string;
     basePriceAmount: number;
   } | null;
+  category?: {
+    name: string;
+  } | null;
 };
 
 function toRecipe(row: RawRecipe): Recipe {
@@ -55,6 +59,8 @@ function toRecipe(row: RawRecipe): Recipe {
     catalogProductName: row.catalogProduct?.name ?? null,
     catalogProductPrice: row.catalogProduct?.basePriceAmount ?? null,
     tenantCatalogProductId: row.tenantCatalogProductId ?? null,
+    categoryId: row.categoryId ?? null,
+    categoryName: row.category?.name ?? null,
     name: row.name,
     yieldQty: row.yieldQty,
     yieldUnit: row.yieldUnit as RecipeYieldUnit,

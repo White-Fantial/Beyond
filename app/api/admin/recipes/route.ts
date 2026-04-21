@@ -26,7 +26,10 @@ export async function GET(req: NextRequest) {
     const [rows, total] = await Promise.all([
       prisma.recipe.findMany({
         where,
-        include: { catalogProduct: { select: { name: true, basePriceAmount: true } } },
+        include: {
+          catalogProduct: { select: { name: true, basePriceAmount: true } },
+          category: { select: { name: true } },
+        },
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -48,6 +51,8 @@ export async function GET(req: NextRequest) {
           tenantId: r.tenantId,
           storeId: r.storeId,
           storeName: r.storeId ? (storeNameMap.get(r.storeId) ?? null) : null,
+          categoryId: r.categoryId,
+          categoryName: r.category?.name ?? null,
           yieldQty: r.yieldQty,
           yieldUnit: r.yieldUnit,
           notes: r.notes,
@@ -68,6 +73,7 @@ export async function GET(req: NextRequest) {
       where,
       include: {
         catalogProduct: { select: { name: true, basePriceAmount: true } },
+        category: { select: { name: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
@@ -92,6 +98,8 @@ export async function GET(req: NextRequest) {
         tenantId: r.tenantId,
         storeId: r.storeId,
         storeName: r.storeId ? (storeNameMap.get(r.storeId) ?? null) : null,
+        categoryId: r.categoryId,
+        categoryName: r.category?.name ?? null,
         yieldQty: r.yieldQty,
         yieldUnit: r.yieldUnit,
         notes: r.notes,
@@ -131,6 +139,7 @@ export async function POST(req: NextRequest) {
         yieldUnit: body.yieldUnit,
         notes: body.notes ?? null,
         instructions: body.instructions ?? null,
+        categoryId: body.categoryId ?? null,
         ingredients: {
           create: (body.ingredients ?? []).map((i) => ({
             ingredientId: i.ingredientId,

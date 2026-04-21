@@ -1,7 +1,6 @@
 import { requireOwnerPortalAccess } from "@/lib/owner/auth-guard";
-import { listTenantProducts, listTenantProductCategories } from "@/services/owner/owner-tenant-products.service";
+import { listTenantProducts } from "@/services/owner/owner-tenant-products.service";
 import Link from "next/link";
-import ProductCategoryManager from "@/components/owner/products/ProductCategoryManager";
 
 function formatPrice(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount / 100000);
@@ -10,10 +9,7 @@ function formatPrice(amount: number, currency: string) {
 export default async function OwnerProductsPage() {
   const ctx = await requireOwnerPortalAccess();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
-  const [products, categories] = await Promise.all([
-    tenantId ? listTenantProducts(tenantId) : [],
-    tenantId ? listTenantProductCategories(tenantId) : [],
-  ]);
+  const products = tenantId ? await listTenantProducts(tenantId) : [];
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 space-y-4">
@@ -25,7 +21,12 @@ export default async function OwnerProductsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <ProductCategoryManager initialCategories={categories} />
+          <Link
+            href="/owner/products/categories"
+            className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Manage Categories
+          </Link>
           <Link
             href="/owner/products/new"
             className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"

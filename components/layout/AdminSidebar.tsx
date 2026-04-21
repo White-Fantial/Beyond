@@ -23,7 +23,8 @@ const tenantManagementItems: NavItem[] = [
 
 const marketplaceItems: NavItem[] = [
   { href: "/admin/marketplace/recipes", label: "Recipe Moderation", icon: "🍳" },
-  { href: "/admin/recipes", label: "일반 레시피", icon: "📋" },
+  { href: "/admin/recipes", label: "Recipes", icon: "📋" },
+  { href: "/admin/recipe-categories", label: "Recipe Categories", icon: "🏷️" },
   { href: "/admin/provider-applications", label: "Provider Applications", icon: "📝" },
   { href: "/admin/platform-ingredients", label: "Platform Ingredients", icon: "🥬" },
   { href: "/admin/ingredient-requests", label: "Ingredient Requests", icon: "📋" },

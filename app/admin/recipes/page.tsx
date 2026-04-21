@@ -29,6 +29,8 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
     name: string;
     storeId: string | null;
     storeName: string | null;
+    categoryId: string | null;
+    categoryName: string | null;
     yieldQty: number;
     yieldUnit: string;
     notes: string | null;
@@ -44,6 +46,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
   const [rows, count] = await Promise.all([
     prisma.recipe.findMany({
       where,
+      include: { category: { select: { name: true } } },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -64,6 +67,8 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
     name: r.name,
     storeId: r.storeId,
     storeName: r.storeId ? (storeNameMap.get(r.storeId) ?? null) : null,
+    categoryId: r.categoryId,
+    categoryName: r.category?.name ?? null,
     yieldQty: r.yieldQty,
     yieldUnit: r.yieldUnit,
     notes: r.notes,
@@ -122,15 +127,17 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Recipe Name</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">Store</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">Category</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Store</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Yield</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Created</th>
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
             {recipes.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
                   No recipes found.
                 </td>
               </tr>

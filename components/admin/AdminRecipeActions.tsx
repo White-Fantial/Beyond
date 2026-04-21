@@ -12,6 +12,8 @@ interface RecipeRow {
   name: string;
   storeId: string | null;
   storeName: string | null;
+  categoryId: string | null;
+  categoryName: string | null;
   yieldQty: number;
   yieldUnit: string;
   notes?: string | null;
@@ -110,7 +112,7 @@ export default function AdminRecipeActions({ recipe }: Props) {
   if (mode === "edit") {
     return (
       <tr>
-        <td colSpan={5} className="px-4 py-4 bg-blue-50">
+        <td colSpan={6} className="px-4 py-4 bg-blue-50">
           <form onSubmit={handleSave} className="flex flex-wrap items-end gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -193,7 +195,7 @@ export default function AdminRecipeActions({ recipe }: Props) {
   if (mode === "confirmDelete") {
     return (
       <tr>
-        <td colSpan={5} className="px-4 py-3 bg-red-50">
+        <td colSpan={6} className="px-4 py-3 bg-red-50">
           <div className="flex items-center gap-3">
             <span className="text-sm text-red-700">
               Delete &ldquo;{recipe.name}&rdquo;? This cannot be undone.
@@ -221,8 +223,17 @@ export default function AdminRecipeActions({ recipe }: Props) {
   return (
     <tr className="hover:bg-gray-50">
       <td className="px-4 py-3 font-medium text-gray-900">{recipe.name}</td>
-      <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">
-        {recipe.storeName ?? recipe.storeId}
+      <td className="px-4 py-3 hidden sm:table-cell">
+        {recipe.categoryName ? (
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+            {recipe.categoryName}
+          </span>
+        ) : (
+          <span className="text-gray-300 text-xs">—</span>
+        )}
+      </td>
+      <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
+        {recipe.storeName ?? recipe.storeId ?? <span className="text-gray-300">Platform</span>}
       </td>
       <td className="px-4 py-3 text-gray-600 hidden md:table-cell">
         {recipe.yieldQty}{" "}
