@@ -173,7 +173,8 @@ export async function importPlatformIngredient(
   tenantId: string,
   storeId: string,
   platformIngredientId: string,
-  unitCost: number
+  unitCost: number,
+  purchaseQty?: number
 ): Promise<Ingredient> {
   const platform = await prisma.ingredient.findFirst({
     where: { id: platformIngredientId, scope: "PLATFORM", deletedAt: null },
@@ -193,6 +194,7 @@ export async function importPlatformIngredient(
       purchaseUnit: platform.purchaseUnit,
       unit: platform.unit,
       unitCost,
+      purchaseQty: purchaseQty !== undefined ? purchaseQty : 1,
       currency: platform.currency,
       notes: platform.notes,
     },
