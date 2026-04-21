@@ -33,8 +33,8 @@ export interface RecipeIngredient {
 
 export interface Recipe {
   id: string;
-  tenantId: string;
-  storeId: string;
+  tenantId: string | null;
+  storeId: string | null;
   catalogProductId: string | null;
   catalogProductName: string | null;
   catalogProductPrice: number | null; // basePriceAmount (minor units)
@@ -70,7 +70,7 @@ export interface RecipeIngredientInput {
 }
 
 export interface CreateRecipeInput {
-  storeId: string;
+  storeId?: string;
   catalogProductId?: string;
   tenantCatalogProductId?: string;
   name: string;

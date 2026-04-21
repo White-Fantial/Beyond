@@ -21,8 +21,8 @@ import type { IngredientUnit } from "@/types/owner-ingredients";
 
 type RawRecipe = {
   id: string;
-  tenantId: string;
-  storeId: string;
+  tenantId: string | null;
+  storeId: string | null;
   catalogProductId: string | null;
   tenantCatalogProductId: string | null;
   name: string;
@@ -167,13 +167,13 @@ export async function getRecipe(
 }
 
 export async function createRecipe(
-  tenantId: string,
+  tenantId: string | null,
   input: CreateRecipeInput
 ): Promise<RecipeDetail> {
   const row = await prisma.recipe.create({
     data: {
       tenantId,
-      storeId: input.storeId,
+      storeId: input.storeId ?? null,
       catalogProductId: input.catalogProductId ?? null,
       tenantCatalogProductId: input.tenantCatalogProductId ?? null,
       name: input.name,
