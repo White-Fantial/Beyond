@@ -3351,6 +3351,7 @@ model Ingredient {
   description      String?
   category         String?         // e.g. "채소", "육류", "유제품" — mainly for PLATFORM scope
   purchaseUnit     IngredientUnit  @default(GRAM) // unit used when purchasing (구매 단위)
+  purchaseQty      Float           @default(1)   // quantity of purchaseUnits bought at the recorded price
   unit             IngredientUnit  @default(GRAM)
   unitCost         Int             @default(0) // millicents (1/100000 dollar) per recipe unit
   currency         String          @default("USD")

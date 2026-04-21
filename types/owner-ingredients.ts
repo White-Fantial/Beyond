@@ -69,6 +69,8 @@ export interface Ingredient {
   category: string | null;
   /** Unit used when purchasing (구매 단위), e.g. KG */
   purchaseUnit: IngredientUnit;
+  /** Number of purchaseUnits in the recorded purchase, e.g. 20 for a 20 kg bag */
+  purchaseQty: number;
   /** Unit used when adding to recipes (레시피 단위), e.g. GRAM */
   unit: IngredientUnit;
   /** Cost per recipe unit (unit) in minor currency units */
@@ -98,6 +100,8 @@ export interface CreateIngredientInput {
   category?: string;
   /** Unit used when purchasing (구매 단위) */
   purchaseUnit: IngredientUnit;
+  /** Number of purchaseUnits in the recorded purchase, e.g. 20 for a 20 kg bag */
+  purchaseQty?: number;
   /** Unit used in recipes (레시피 단위) */
   unit: IngredientUnit;
   /** Cost per recipe unit in minor currency units */
@@ -112,6 +116,8 @@ export interface UpdateIngredientInput {
   category?: string;
   /** Unit used when purchasing (구매 단위) */
   purchaseUnit?: IngredientUnit;
+  /** Number of purchaseUnits in the recorded purchase, e.g. 20 for a 20 kg bag */
+  purchaseQty?: number;
   /** Unit used in recipes (레시피 단위) */
   unit?: IngredientUnit;
   /** Cost per recipe unit in minor currency units */
