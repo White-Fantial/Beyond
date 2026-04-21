@@ -23,7 +23,7 @@ export default function ProviderRecipeList({ recipes }: ProviderRecipeListProps)
     return (
       <div className="text-center py-12 text-gray-400">
         <p className="text-4xl mb-3">📝</p>
-        <p className="text-sm">아직 등록한 레시피가 없습니다.</p>
+        <p className="text-sm">No recipes yet. Create your first one!</p>
       </div>
     );
   }
@@ -33,10 +33,10 @@ export default function ProviderRecipeList({ recipes }: ProviderRecipeListProps)
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">레시피</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500">상태</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">판매가</th>
-            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">등록일</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Recipe</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">Sale Price</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Created</th>
             <th className="px-4 py-3"></th>
           </tr>
         </thead>
@@ -62,7 +62,7 @@ export default function ProviderRecipeList({ recipes }: ProviderRecipeListProps)
                 {r.salePrice.toLocaleString("en-US", { style: "currency", currency: "USD" })}
               </td>
               <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
-                {new Date(r.createdAt).toLocaleDateString("ko-KR")}
+                {new Date(r.createdAt).toLocaleDateString("en-US")}
               </td>
               <td className="px-4 py-3 text-right">
                 {(r.status === "DRAFT" || r.status === "CHANGE_REQUESTED") && (
@@ -70,14 +70,14 @@ export default function ProviderRecipeList({ recipes }: ProviderRecipeListProps)
                     href={`/provider/recipes/${r.id}/edit`}
                     className="text-xs text-blue-600 hover:underline mr-3"
                   >
-                    편집
+                    Edit
                   </Link>
                 )}
                 <Link
                   href={`/marketplace/${r.id}`}
                   className="text-xs text-gray-500 hover:underline"
                 >
-                  보기
+                  View
                 </Link>
               </td>
             </tr>

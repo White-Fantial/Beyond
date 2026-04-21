@@ -55,6 +55,7 @@ const mockRecipeRow = {
   yieldQty: 12,
   yieldUnit: "EACH",
   notes: null,
+  instructions: null,
   marketplaceSourceId: null,
   createdAt: new Date("2026-01-01"),
   updatedAt: new Date("2026-01-01"),
@@ -187,6 +188,31 @@ describe("createRecipe", () => {
       })
     );
   });
+
+  it("saves instructions when provided", async () => {
+    mockPrisma.recipe.create.mockResolvedValue({
+      ...mockRecipeRow,
+      instructions: "Mix flour and water.",
+      ingredients: [],
+    });
+
+    await createRecipe(TENANT, {
+      storeId: STORE,
+      name: "Classic Bagel",
+      yieldQty: 12,
+      yieldUnit: "EACH",
+      instructions: "Mix flour and water.",
+      ingredients: [],
+    });
+
+    expect(mockPrisma.recipe.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          instructions: "Mix flour and water.",
+        }),
+      })
+    );
+  });
 });
 
 // ─── updateRecipe ─────────────────────────────────────────────────────────────
@@ -231,7 +257,25 @@ describe("updateRecipe", () => {
     );
   });
 
-  it("throws if recipe not found", async () => {
+  it("updates instructions when provided", async () => {
+    mockPrisma.recipe.findFirst.mockResolvedValue(mockRecipeRow);
+    mockPrisma.recipe.update.mockResolvedValue({
+      ...mockRecipeRow,
+      instructions: "Knead for 10 minutes.",
+      ingredients: [],
+    });
+
+    const result = await updateRecipe(TENANT, "recipe-1", { instructions: "Knead for 10 minutes." });
+
+    expect(result.instructions).toBe("Knead for 10 minutes.");
+    expect(mockPrisma.recipe.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ instructions: "Knead for 10 minutes." }),
+      })
+    );
+  });
+
+  it("throws if recipe not found (updateRecipe)", async () => {
     mockPrisma.recipe.findFirst.mockResolvedValue(null);
 
     await expect(updateRecipe(TENANT, "missing", {})).rejects.toThrow("not found");

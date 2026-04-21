@@ -167,12 +167,12 @@ export default function RecipeForm({
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "저장에 실패했습니다.");
+        throw new Error(data.error ?? "Failed to save recipe.");
       }
 
       router.push("/provider/recipes");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
+      setError(err instanceof Error ? err.message : "An error occurred.");
     } finally {
       setSaving(false);
     }
@@ -189,11 +189,11 @@ export default function RecipeForm({
       );
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "검토 제출에 실패했습니다.");
+        throw new Error(data.error ?? "Failed to submit for review.");
       }
       router.push("/provider/recipes");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
+      setError(err instanceof Error ? err.message : "An error occurred.");
     } finally {
       setSaving(false);
     }
@@ -209,11 +209,11 @@ export default function RecipeForm({
 
       {/* Basic Info */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
-        <h2 className="text-sm font-semibold text-gray-700">기본 정보</h2>
+        <h2 className="text-sm font-semibold text-gray-700">Basic Information</h2>
 
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            레시피 이름 *
+            Recipe Title *
           </label>
           <input
             type="text"
@@ -226,7 +226,7 @@ export default function RecipeForm({
 
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            설명
+            Description
           </label>
           <textarea
             value={description}
@@ -239,28 +239,28 @@ export default function RecipeForm({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              요리 분류
+              Cuisine Type
             </label>
             <input
               type="text"
               value={cuisineTag}
               onChange={(e) => setCuisineTag(e.target.value)}
-              placeholder="예: 한식, 이탈리안"
+              placeholder="e.g. Italian, Korean"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              난이도
+              Difficulty
             </label>
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value as "EASY" | "MEDIUM" | "HARD")}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             >
-              <option value="EASY">쉬움</option>
-              <option value="MEDIUM">보통</option>
-              <option value="HARD">어려움</option>
+              <option value="EASY">Easy</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="HARD">Hard</option>
             </select>
           </div>
         </div>
@@ -268,7 +268,7 @@ export default function RecipeForm({
         <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              몇 인분
+              Servings
             </label>
             <input
               type="number"
@@ -280,7 +280,7 @@ export default function RecipeForm({
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              준비 시간 (분)
+              Prep Time (min)
             </label>
             <input
               type="number"
@@ -292,7 +292,7 @@ export default function RecipeForm({
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              조리 시간 (분)
+              Cook Time (min)
             </label>
             <input
               type="number"
@@ -307,11 +307,11 @@ export default function RecipeForm({
 
       {/* Pricing */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
-        <h2 className="text-sm font-semibold text-gray-700">가격 설정</h2>
+        <h2 className="text-sm font-semibold text-gray-700">Pricing</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              권장 판매가 ($)
+              Recommended Price ($)
             </label>
             <input
               type="number"
@@ -323,7 +323,7 @@ export default function RecipeForm({
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              실제 판매가 ($)
+              Sale Price ($)
             </label>
             <input
               type="number"
@@ -339,26 +339,26 @@ export default function RecipeForm({
       {/* Ingredients */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-700">재료 목록</h2>
+          <h2 className="text-sm font-semibold text-gray-700">Ingredients</h2>
           <button
             type="button"
             onClick={addIngredient}
             className="text-xs text-orange-600 hover:text-orange-700 font-medium"
           >
-            + 재료 추가
+            + Add Ingredient
           </button>
         </div>
 
         {ingredients.length === 0 && (
           <p className="text-xs text-gray-400 text-center py-4">
-            재료를 추가해주세요.
+            No ingredients added yet.
           </p>
         )}
 
         {ingredients.map((ing, idx) => (
           <div key={idx} className="flex gap-2 items-end">
             <div className="flex-1">
-              <label className="block text-xs text-gray-500 mb-1">재료</label>
+              <label className="block text-xs text-gray-500 mb-1">Ingredient</label>
               <select
                 value={ing.ingredientId}
                 onChange={(e) =>
@@ -375,7 +375,7 @@ export default function RecipeForm({
               </select>
             </div>
             <div className="w-24">
-              <label className="block text-xs text-gray-500 mb-1">수량</label>
+              <label className="block text-xs text-gray-500 mb-1">Qty</label>
               <input
                 type="number"
                 min={0}
@@ -388,7 +388,7 @@ export default function RecipeForm({
               />
             </div>
             <div className="w-24">
-              <label className="block text-xs text-gray-500 mb-1">단위</label>
+              <label className="block text-xs text-gray-500 mb-1">Unit</label>
               <select
                 value={ing.unit}
                 onChange={(e) => updateIngredient(idx, "unit", e.target.value)}
@@ -415,13 +415,13 @@ export default function RecipeForm({
       {/* Steps */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-700">만드는 과정</h2>
+          <h2 className="text-sm font-semibold text-gray-700">Cooking Steps</h2>
           <button
             type="button"
             onClick={addStep}
             className="text-xs text-orange-600 hover:text-orange-700 font-medium"
           >
-            + 단계 추가
+            + Add Step
           </button>
         </div>
 
@@ -441,7 +441,7 @@ export default function RecipeForm({
                 }
                 required
                 rows={2}
-                placeholder="조리 단계를 설명해주세요"
+                placeholder="Describe this cooking step…"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
               <div className="flex gap-2">
@@ -456,7 +456,7 @@ export default function RecipeForm({
                       e.target.value ? Number(e.target.value) : 0
                     )
                   }
-                  placeholder="소요 시간 (분)"
+                  placeholder="Duration (min)"
                   className="w-36 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
                 />
               </div>
@@ -480,7 +480,7 @@ export default function RecipeForm({
           onClick={() => router.back()}
           className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
         >
-          취소
+          Cancel
         </button>
         <div className="flex gap-2">
           <button
@@ -488,7 +488,7 @@ export default function RecipeForm({
             disabled={saving}
             className="px-4 py-2 text-sm bg-gray-100 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-200 disabled:opacity-50"
           >
-            {saving ? "저장 중..." : "임시 저장"}
+            {saving ? "Saving…" : "Save Draft"}
           </button>
           {mode === "edit" && recipeId && (
             <button
@@ -497,7 +497,7 @@ export default function RecipeForm({
               onClick={handleSubmitForReview}
               className="px-4 py-2 text-sm bg-orange-600 hover:bg-orange-700 text-white rounded-lg disabled:opacity-50"
             >
-              {saving ? "처리 중..." : "검토 제출"}
+              {saving ? "Submitting…" : "Submit for Review"}
             </button>
           )}
         </div>

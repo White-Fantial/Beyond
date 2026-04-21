@@ -35,15 +35,15 @@ export default async function EditProviderRecipePage({ params }: PageProps) {
     <div className="max-w-3xl mx-auto py-8 px-4">
       <div className="mb-6">
         <Link href="/provider/recipes" className="text-xs text-gray-400 hover:underline">
-          ← 내 레시피
+          ← My Recipes
         </Link>
       </div>
 
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">레시피 편집</h1>
+        <h1 className="text-xl font-bold text-gray-900">Edit Recipe</h1>
         {recipe.status === "CHANGE_REQUESTED" && (
           <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-            ⚠️ 모더레이터가 수정을 요청했습니다. 수정 후 검토 제출을 눌러주세요.
+            ⚠️ A moderator has requested changes. Please revise and submit for review.
           </div>
         )}
       </div>

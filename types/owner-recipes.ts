@@ -43,6 +43,7 @@ export interface Recipe {
   yieldQty: number;
   yieldUnit: RecipeYieldUnit;
   notes: string | null;
+  instructions: string | null;
   marketplaceSourceId: string | null; // links to the original MarketplaceRecipe if copied
   createdAt: string;
   updatedAt: string;
@@ -77,6 +78,7 @@ export interface CreateRecipeInput {
   yieldQty: number;
   yieldUnit: RecipeYieldUnit;
   notes?: string;
+  instructions?: string;
   ingredients: RecipeIngredientInput[];
 }
 
@@ -86,6 +88,7 @@ export interface UpdateRecipeInput {
   yieldQty?: number;
   yieldUnit?: RecipeYieldUnit;
   notes?: string;
+  instructions?: string;
   ingredients?: RecipeIngredientInput[];
 }
 
