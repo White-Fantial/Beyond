@@ -3445,8 +3445,8 @@ model Ingredient {
 
 model Recipe {
   id               String          @id @default(uuid())
-  tenantId         String
-  storeId          String
+  tenantId         String?
+  storeId          String?
   catalogProductId       String?
   tenantCatalogProductId String?   // links to TenantCatalogProduct (tenant-level shared product)
   name             String
