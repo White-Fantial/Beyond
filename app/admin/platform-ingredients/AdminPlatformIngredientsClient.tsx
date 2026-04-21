@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Ingredient, IngredientUnit } from "@/types/owner-ingredients";
-import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
+import { INGREDIENT_UNIT_LABELS, getUnitConversionFactor } from "@/types/owner-ingredients";
 
 interface Props {
   initialItems: Ingredient[];
@@ -15,10 +15,47 @@ const EMPTY_FORM = {
   category: "",
   description: "",
   purchaseUnit: "KG" as IngredientUnit,
+  purchaseQty: "1",
   unit: "GRAM" as IngredientUnit,
-  unitCost: "",
+  purchasePrice: "",
   currency: "USD",
 };
+
+/**
+ * Calculates unitCost in millicents from purchase price (dollars), purchase
+ * quantity, and the unit conversion between purchaseUnit and recipe unit.
+ * Returns null when inputs are invalid or units are incompatible.
+ */
+function calcUnitCostMillicents(
+  purchasePrice: string,
+  purchaseQty: string,
+  purchaseUnit: IngredientUnit,
+  unit: IngredientUnit
+): number | null {
+  const price = parseFloat(purchasePrice);
+  const qty = parseFloat(purchaseQty);
+  if (!isFinite(price) || !isFinite(qty) || qty <= 0 || price < 0) return null;
+  const factor = getUnitConversionFactor(purchaseUnit, unit);
+  if (factor === undefined) return null;
+  const totalRecipeUnits = qty * factor;
+  return Math.round((price / totalRecipeUnits) * 100000);
+}
+
+/**
+ * Derives the purchase price (dollars) from stored unitCost + purchaseQty.
+ * Returns empty string when units are incompatible.
+ */
+function derivePurchasePrice(
+  unitCostMillicents: number,
+  purchaseQty: number,
+  purchaseUnit: IngredientUnit,
+  unit: IngredientUnit
+): string {
+  const factor = getUnitConversionFactor(purchaseUnit, unit);
+  if (factor === undefined) return "";
+  const totalRecipeUnits = purchaseQty * factor;
+  return ((unitCostMillicents / 100000) * totalRecipeUnits).toFixed(2);
+}
 
 export default function AdminPlatformIngredientsClient({ initialItems }: Props) {
   const [items, setItems] = useState<Ingredient[]>(initialItems);
@@ -34,6 +71,20 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
     new Set(items.map((i) => i.category).filter((c): c is string => !!c))
   ).sort();
 
+  // Computed unitCost previews for the add / edit forms
+  const addUnitCost = calcUnitCostMillicents(
+    form.purchasePrice,
+    form.purchaseQty,
+    form.purchaseUnit,
+    form.unit
+  );
+  const editUnitCost = calcUnitCostMillicents(
+    editForm.purchasePrice,
+    editForm.purchaseQty,
+    editForm.purchaseUnit,
+    editForm.unit
+  );
+
   function startEdit(ing: Ingredient) {
     setEditingId(ing.id);
     setEditForm({
@@ -41,8 +92,9 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
       category: ing.category ?? "",
       description: ing.description ?? "",
       purchaseUnit: ing.purchaseUnit,
+      purchaseQty: String(ing.purchaseQty),
       unit: ing.unit,
-      unitCost: (ing.unitCost / 100000).toFixed(6),
+      purchasePrice: derivePurchasePrice(ing.unitCost, ing.purchaseQty, ing.purchaseUnit, ing.unit),
       currency: ing.currency,
     });
     setError(null);
@@ -51,6 +103,11 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) return;
+    const unitCost = calcUnitCostMillicents(form.purchasePrice, form.purchaseQty, form.purchaseUnit, form.unit);
+    if (unitCost === null) {
+      setError("Cannot calculate unit cost — check purchase quantity, price, and unit compatibility.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -62,8 +119,9 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
           category: form.category.trim() || null,
           description: form.description.trim() || null,
           purchaseUnit: form.purchaseUnit,
+          purchaseQty: parseFloat(form.purchaseQty),
           unit: form.unit,
-          unitCost: Math.round(parseFloat(form.unitCost || "0") * 100000),
+          unitCost,
           currency: form.currency,
         }),
       });
@@ -80,6 +138,11 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
   }
 
   async function handleSaveEdit(id: string) {
+    const unitCost = calcUnitCostMillicents(editForm.purchasePrice, editForm.purchaseQty, editForm.purchaseUnit, editForm.unit);
+    if (unitCost === null) {
+      setError("Cannot calculate unit cost — check purchase quantity, price, and unit compatibility.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -91,8 +154,9 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
           category: editForm.category.trim() || null,
           description: editForm.description.trim() || null,
           purchaseUnit: editForm.purchaseUnit,
+          purchaseQty: parseFloat(editForm.purchaseQty),
           unit: editForm.unit,
-          unitCost: Math.round(parseFloat(editForm.unitCost || "0") * 100000),
+          unitCost,
           currency: editForm.currency,
         }),
       });
@@ -198,6 +262,21 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
               </select>
             </div>
             <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Purchase Quantity <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                required
+                min="0.000001"
+                step="any"
+                value={form.purchaseQty}
+                onChange={(e) => setForm((f) => ({ ...f, purchaseQty: e.target.value }))}
+                placeholder="e.g. 20"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Recipe Unit</label>
               <select
                 value={form.unit}
@@ -211,17 +290,28 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">
-                Unit Cost ($/recipe unit)
+                Purchase Price ($) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
+                required
                 min="0"
-                step="0.000001"
-                value={form.unitCost}
-                onChange={(e) => setForm((f) => ({ ...f, unitCost: e.target.value }))}
-                placeholder="0.000000"
+                step="0.01"
+                value={form.purchasePrice}
+                onChange={(e) => setForm((f) => ({ ...f, purchasePrice: e.target.value }))}
+                placeholder="e.g. 12.50"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Unit Cost (calculated, $/recipe unit)
+              </label>
+              <div className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono text-gray-700">
+                {addUnitCost !== null
+                  ? `$${(addUnitCost / 100000).toFixed(6)}`
+                  : <span className="text-gray-400">—</span>}
+              </div>
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
@@ -237,7 +327,7 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
           <div className="flex gap-2 pt-1">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || addUnitCost === null}
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
               {loading ? "Adding..." : "Add Ingredient"}
@@ -266,6 +356,8 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Name</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Category</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Purchase Unit</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Purchase Qty</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Purchase Price</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Recipe Unit</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Unit Cost</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
@@ -305,6 +397,27 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
                       </select>
                     </td>
                     <td className="px-3 py-2">
+                      <input
+                        type="number"
+                        min="0.000001"
+                        step="any"
+                        value={editForm.purchaseQty}
+                        onChange={(e) => setEditForm((f) => ({ ...f, purchaseQty: e.target.value }))}
+                        className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={editForm.purchasePrice}
+                        onChange={(e) => setEditForm((f) => ({ ...f, purchasePrice: e.target.value }))}
+                        placeholder="0.00"
+                        className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
                       <select
                         value={editForm.unit}
                         onChange={(e) => setEditForm((f) => ({ ...f, unit: e.target.value as IngredientUnit }))}
@@ -313,15 +426,10 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
                         {UNITS.map((u) => <option key={u} value={u}>{INGREDIENT_UNIT_LABELS[u]}</option>)}
                       </select>
                     </td>
-                    <td className="px-3 py-2">
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.000001"
-                        value={editForm.unitCost}
-                        onChange={(e) => setEditForm((f) => ({ ...f, unitCost: e.target.value }))}
-                        className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
+                    <td className="px-3 py-2 font-mono text-xs text-gray-600">
+                      {editUnitCost !== null
+                        ? `$${(editUnitCost / 100000).toFixed(6)}`
+                        : <span className="text-gray-400">—</span>}
                     </td>
                     <td className="px-3 py-2 text-gray-400 text-xs">—</td>
                     <td className="px-3 py-2">
@@ -335,7 +443,7 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
                     <td className="px-3 py-2 whitespace-nowrap">
                       <button
                         onClick={() => handleSaveEdit(ing.id)}
-                        disabled={loading}
+                        disabled={loading || editUnitCost === null}
                         className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 mr-1"
                       >
                         Save
@@ -362,6 +470,15 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
                     </td>
                     <td className="px-4 py-3 text-gray-500">
                       {INGREDIENT_UNIT_LABELS[ing.purchaseUnit] ?? ing.purchaseUnit}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">
+                      {ing.purchaseQty}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 font-mono text-xs">
+                      {(() => {
+                        const pp = derivePurchasePrice(ing.unitCost, ing.purchaseQty, ing.purchaseUnit, ing.unit);
+                        return pp ? `$${pp}` : "—";
+                      })()}
                     </td>
                     <td className="px-4 py-3 text-gray-500">
                       {INGREDIENT_UNIT_LABELS[ing.unit] ?? ing.unit}
