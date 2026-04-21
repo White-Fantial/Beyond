@@ -3386,6 +3386,13 @@ enum IngredientScope {
   STORE    // Owner created — scoped to a specific tenant + store
 }
 
+/// Source of a supplier price record observation.
+enum SupplierPriceSource {
+  SCRAPED        // Obtained via automated credential-based web scraping
+  MANUAL_ENTRY   // Entered manually by the owner
+  INVOICE_IMPORT // Derived from an imported invoice document
+}
+
 enum IngredientUnit {
   GRAM
   KG
@@ -3417,12 +3424,8 @@ model Ingredient {
   storeId          String?         // null for PLATFORM scope
   name             String
   description      String?
-  category         String?         // e.g. "채소", "육류", "유제품" — mainly for PLATFORM scope
-  purchaseUnit     IngredientUnit  @default(GRAM) // unit used when purchasing (구매 단위)
-  purchaseQty      Float           @default(1)   // quantity of purchaseUnits bought at the recorded price
-  unit             IngredientUnit  @default(GRAM)
-  unitCost         Int             @default(0) // millicents (1/100000 dollar) per recipe unit
-  currency         String          @default("USD")
+  category         String?         // e.g. "Vegetables", "Meat", "Dairy" — mainly for PLATFORM scope
+  unit             IngredientUnit  @default(GRAM) // recipe unit (레시피 단위)
   isActive         Boolean         @default(true)
   createdByUserId  String?         // set for PLATFORM scope (admin/moderator who created it)
   notes            String?
@@ -3512,10 +3515,7 @@ model SupplierProduct {
   supplierId                String
   name                      String
   externalUrl               String?
-  currentPrice              Int            @default(0) // millicents (1/100000 dollar) per unit (per-session scrape)
-  basePrice                 Int            @default(0) // millicents (1/100000 dollar) — max across all user observations
-  basePriceUpdatedAt        DateTime?
-  basePriceScrapedUserCount Int            @default(0)
+  referencePrice            Int            @default(0) // millicents — platform-wide aggregate (max across all tenants) maintained by scraper
   unit                      IngredientUnit @default(EACH)
   lastScrapedAt             DateTime?
   metadata                  Json           @default("{}")
@@ -3523,9 +3523,10 @@ model SupplierProduct {
   updatedAt                 DateTime       @updatedAt
   deletedAt                 DateTime?
 
-  supplier          Supplier                       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplier          Supplier                @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   ingredientLinks   IngredientSupplierLink[]
-  priceObservations SupplierPriceObservation[]
+  contractPrices    SupplierContractPrice[]
+  priceRecords      SupplierPriceRecord[]
 
   @@index([supplierId])
   @@map("supplier_products")
@@ -3561,8 +3562,8 @@ model SupplierCredential {
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
 
-  supplier          Supplier                   @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  priceObservations SupplierPriceObservation[]
+  supplier     Supplier              @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  priceRecords SupplierPriceRecord[]
 
   @@unique([tenantId, userId, supplierId])
   @@index([tenantId, userId])
@@ -3570,21 +3571,46 @@ model SupplierCredential {
   @@map("supplier_credentials")
 }
 
-model SupplierPriceObservation {
-  id                String   @id @default(uuid())
+/// Per-owner negotiated/contracted price for a specific supplier product.
+/// Multiple rows per (supplierProductId, tenantId) capture price history.
+/// The row with effectiveTo IS NULL is the currently active contract price.
+model SupplierContractPrice {
+  id                String    @id @default(uuid())
   supplierProductId String
-  userId            String
-  credentialId      String
-  observedPrice     Int      // millicents (1/100000 dollar)
-  scrapedAt         DateTime
+  tenantId          String
+  price             Int       // millicents (1/100000 dollar)
+  effectiveFrom     DateTime  @default(now())
+  effectiveTo       DateTime? // null = currently active
+  contractRef       String?   // e.g. "PO-2025-001"
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  supplierProduct SupplierProduct    @relation(fields: [supplierProductId], references: [id], onDelete: Cascade)
-  credential      SupplierCredential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+  supplierProduct SupplierProduct @relation(fields: [supplierProductId], references: [id], onDelete: Cascade)
 
-  @@unique([supplierProductId, userId])
-  @@index([supplierProductId])
-  @@index([credentialId])
-  @@map("supplier_price_observations")
+  @@index([supplierProductId, tenantId])
+  @@index([tenantId])
+  @@map("supplier_contract_prices")
+}
+
+/// Full price observation history per owner.
+/// Every observation (scraped or manual) is a new row — no UNIQUE constraint.
+model SupplierPriceRecord {
+  id                String              @id @default(uuid())
+  supplierProductId String
+  tenantId          String
+  observedPrice     Int                 // millicents (1/100000 dollar)
+  source            SupplierPriceSource @default(MANUAL_ENTRY)
+  credentialId      String?             // set for SCRAPED source
+  observedAt        DateTime            @default(now())
+  notes             String?
+
+  supplierProduct SupplierProduct     @relation(fields: [supplierProductId], references: [id], onDelete: Cascade)
+  credential      SupplierCredential? @relation(fields: [credentialId], references: [id], onDelete: SetNull)
+
+  @@index([supplierProductId, tenantId])
+  @@index([tenantId])
+  @@map("supplier_price_records")
 }
 
 // ─── Marketplace Enums ────────────────────────────────────────────────────────

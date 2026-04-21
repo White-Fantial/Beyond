@@ -1,7 +1,10 @@
 /**
- * Owner Ingredients Service — Cost Management Phase 1.
+ * Owner Ingredients Service — Cost Management Phase 1 (revised).
  *
  * Manage ingredient master data for a tenant's store (scope = STORE).
+ * Ingredients are now purely conceptual taxonomy nodes — price data lives in
+ * SupplierContractPrice and SupplierPriceRecord, linked via IngredientSupplierLink.
+ *
  * All functions scoped to tenantId.
  */
 import { prisma } from "@/lib/prisma";
@@ -24,11 +27,7 @@ function toIngredient(row: {
   name: string;
   description: string | null;
   category: string | null;
-  purchaseUnit: string;
-  purchaseQty: number;
   unit: string;
-  unitCost: number;
-  currency: string;
   isActive: boolean;
   createdByUserId: string | null;
   notes: string | null;
@@ -43,11 +42,7 @@ function toIngredient(row: {
     name: row.name,
     description: row.description,
     category: row.category,
-    purchaseUnit: row.purchaseUnit as IngredientUnit,
-    purchaseQty: row.purchaseQty,
     unit: row.unit as IngredientUnit,
-    unitCost: row.unitCost,
-    currency: row.currency,
     isActive: row.isActive,
     createdByUserId: row.createdByUserId,
     notes: row.notes,
@@ -107,11 +102,7 @@ export async function createIngredient(
       name: input.name,
       description: input.description ?? null,
       category: input.category ?? null,
-      purchaseUnit: input.purchaseUnit,
-      purchaseQty: input.purchaseQty ?? 1,
       unit: input.unit,
-      unitCost: input.unitCost,
-      currency: input.currency ?? "USD",
       notes: input.notes ?? null,
     },
   });
@@ -134,11 +125,7 @@ export async function updateIngredient(
       ...(input.name !== undefined ? { name: input.name } : {}),
       ...(input.description !== undefined ? { description: input.description } : {}),
       ...(input.category !== undefined ? { category: input.category } : {}),
-      ...(input.purchaseUnit !== undefined ? { purchaseUnit: input.purchaseUnit } : {}),
-      ...(input.purchaseQty !== undefined ? { purchaseQty: input.purchaseQty } : {}),
       ...(input.unit !== undefined ? { unit: input.unit } : {}),
-      ...(input.unitCost !== undefined ? { unitCost: input.unitCost } : {}),
-      ...(input.currency !== undefined ? { currency: input.currency } : {}),
       ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
     },
@@ -165,15 +152,13 @@ export async function deleteIngredient(
  * Import a PLATFORM-scope ingredient into a store's ingredient list.
  *
  * Creates a new STORE-scope Ingredient that mirrors the platform ingredient's
- * name, description, category, purchaseUnit, and unit — but uses the owner's
- * own unitCost (price), because each owner may pay a different price for the
- * same ingredient from the same supplier.
+ * name, description, category, and unit. Pricing is set separately via
+ * SupplierContractPrice or SupplierPriceRecord after import.
  */
 export async function importPlatformIngredient(
   tenantId: string,
   storeId: string,
-  platformIngredientId: string,
-  unitCost: number
+  platformIngredientId: string
 ): Promise<Ingredient> {
   const platform = await prisma.ingredient.findFirst({
     where: { id: platformIngredientId, scope: "PLATFORM", deletedAt: null },
@@ -190,10 +175,7 @@ export async function importPlatformIngredient(
       name: platform.name,
       description: platform.description,
       category: platform.category,
-      purchaseUnit: platform.purchaseUnit,
       unit: platform.unit,
-      unitCost,
-      currency: platform.currency,
       notes: platform.notes,
     },
   });
