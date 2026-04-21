@@ -67,10 +67,6 @@ export interface Ingredient {
   description: string | null;
   /** Category classification, primarily used for PLATFORM scope */
   category: string | null;
-  /** Unit used when purchasing, e.g. KG */
-  purchaseUnit: IngredientUnit;
-  /** Number of purchaseUnits in the recorded purchase, e.g. 20 for a 20 kg bag */
-  purchaseQty: number;
   /** Unit used when adding to recipes, e.g. GRAM */
   unit: IngredientUnit;
   /** Inactive ingredients are hidden from selection UIs */
@@ -95,10 +91,6 @@ export interface CreateIngredientInput {
   name: string;
   description?: string;
   category?: string;
-  /** Unit used when purchasing */
-  purchaseUnit: IngredientUnit;
-  /** Number of purchaseUnits in the recorded purchase, e.g. 20 for a 20 kg bag */
-  purchaseQty?: number;
   /** Unit used in recipes */
   unit: IngredientUnit;
   notes?: string;
@@ -108,10 +100,6 @@ export interface UpdateIngredientInput {
   name?: string;
   description?: string;
   category?: string;
-  /** Unit used when purchasing */
-  purchaseUnit?: IngredientUnit;
-  /** Number of purchaseUnits in the recorded purchase, e.g. 20 for a 20 kg bag */
-  purchaseQty?: number;
   /** Unit used in recipes */
   unit?: IngredientUnit;
   isActive?: boolean;

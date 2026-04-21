@@ -80,12 +80,14 @@ export interface UpdateSupplierInput {
 export interface UpsertSupplierProductInput {
   name: string;
   externalUrl?: string;
+  referencePrice?: number;
   unit: IngredientUnit;
 }
 
 export interface UpdateSupplierProductInput {
   name?: string;
   externalUrl?: string | null;
+  referencePrice?: number;
   unit?: IngredientUnit;
 }
 
