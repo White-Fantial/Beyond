@@ -73,7 +73,7 @@ type RawRecipeIngredient = {
   ingredient: {
     name: string;
     unit: string;
-    supplierLinks: Array<{
+    supplierLinks?: Array<{
       isPreferred: boolean;
       supplierProduct: {
         id: string;
@@ -94,7 +94,7 @@ function toRecipeIngredientWithCost(
   const qty =
     typeof row.quantity === "object" ? row.quantity.toNumber() : row.quantity;
 
-  const preferredLink = row.ingredient.supplierLinks.find((l) => l.isPreferred);
+  const preferredLink = row.ingredient.supplierLinks?.find((l) => l.isPreferred);
   let effectiveCost = 0;
   if (preferredLink) {
     const resolved = costMap.get(preferredLink.supplierProduct.id);
@@ -144,7 +144,7 @@ async function resolveCosts(
 ): Promise<Map<string, { price: number; resolved: boolean }>> {
   const productIds: string[] = [];
   for (const ri of ingredients) {
-    const link = ri.ingredient.supplierLinks.find((l) => l.isPreferred);
+    const link = ri.ingredient.supplierLinks?.find((l) => l.isPreferred);
     if (link) productIds.push(link.supplierProduct.id);
   }
   return resolveEffectiveCostsBulk(tenantId, [...new Set(productIds)]);
