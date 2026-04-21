@@ -67,6 +67,7 @@ const mockCreatedRecipeRow = {
   tenantId: TENANT_ID,
   storeId: STORE_ID,
   catalogProductId: null,
+  tenantCatalogProductId: null,
   name: "기본 파스타",
   yieldQty: 2,
   yieldUnit: "SERVING",
@@ -220,5 +221,23 @@ describe("copyMarketplaceRecipeToOwner", () => {
 
     const createCall = mockPrisma.recipe.create.mock.calls[0][0];
     expect(createCall.data.catalogProductId).toBeNull();
+  });
+
+  it("links the copied recipe to a tenant catalog product when tenantCatalogProductId is provided", async () => {
+    const TENANT_PRODUCT_ID = "tp-abc";
+    mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue(mockMarketplaceRecipeBasic);
+    mockPrisma.recipe.create.mockResolvedValue({
+      ...mockCreatedRecipeRow,
+      tenantCatalogProductId: TENANT_PRODUCT_ID,
+    });
+
+    const result = await copyMarketplaceRecipeToOwner(TENANT_ID, USER_ID, MARKETPLACE_RECIPE_ID, {
+      storeId: STORE_ID,
+      tenantCatalogProductId: TENANT_PRODUCT_ID,
+    });
+
+    const createCall = mockPrisma.recipe.create.mock.calls[0][0];
+    expect(createCall.data.tenantCatalogProductId).toBe(TENANT_PRODUCT_ID);
+    expect(result.tenantCatalogProductId).toBe(TENANT_PRODUCT_ID);
   });
 });

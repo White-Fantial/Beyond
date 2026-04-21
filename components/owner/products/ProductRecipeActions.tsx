@@ -10,7 +10,10 @@ const YIELD_UNITS = Object.keys(RECIPE_YIELD_UNIT_LABELS) as RecipeYieldUnit[];
 
 interface Props {
   storeId: string;
-  productId: string;
+  /** Store-level CatalogProduct ID — set when managing recipes from a store product page. */
+  catalogProductId?: string;
+  /** Tenant-level TenantCatalogProduct ID — set when managing recipes from the global product catalog. */
+  tenantCatalogProductId?: string;
 }
 
 interface MarketplaceSearchResult {
@@ -22,11 +25,13 @@ interface MarketplaceSearchResult {
 
 function MarketplaceSearchPanel({
   storeId,
-  productId,
+  catalogProductId,
+  tenantCatalogProductId,
   onDone,
 }: {
   storeId: string;
-  productId: string;
+  catalogProductId?: string;
+  tenantCatalogProductId?: string;
   onDone: () => void;
 }) {
   const [query, setQuery] = useState("");
@@ -69,7 +74,7 @@ function MarketplaceSearchPanel({
       const res = await fetch(`/api/marketplace/recipes/${recipe.id}/copy`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storeId, catalogProductId: productId }),
+        body: JSON.stringify({ storeId, catalogProductId, tenantCatalogProductId }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -189,11 +194,13 @@ function MarketplaceSearchPanel({
 
 function CreateRecipePanel({
   storeId,
-  productId,
+  catalogProductId,
+  tenantCatalogProductId,
   onDone,
 }: {
   storeId: string;
-  productId: string;
+  catalogProductId?: string;
+  tenantCatalogProductId?: string;
   onDone: () => void;
 }) {
   const router = useRouter();
@@ -219,7 +226,8 @@ function CreateRecipePanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           storeId,
-          catalogProductId: productId,
+          catalogProductId,
+          tenantCatalogProductId,
           name,
           yieldQty: qty,
           yieldUnit,
@@ -314,7 +322,7 @@ function CreateRecipePanel({
 
 type Mode = "none" | "marketplace" | "create";
 
-export default function ProductRecipeActions({ storeId, productId }: Props) {
+export default function ProductRecipeActions({ storeId, catalogProductId, tenantCatalogProductId }: Props) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("none");
 
@@ -381,10 +389,20 @@ export default function ProductRecipeActions({ storeId, productId }: Props) {
       </div>
 
       {mode === "marketplace" && (
-        <MarketplaceSearchPanel storeId={storeId} productId={productId} onDone={handleDone} />
+        <MarketplaceSearchPanel
+          storeId={storeId}
+          catalogProductId={catalogProductId}
+          tenantCatalogProductId={tenantCatalogProductId}
+          onDone={handleDone}
+        />
       )}
       {mode === "create" && (
-        <CreateRecipePanel storeId={storeId} productId={productId} onDone={handleDone} />
+        <CreateRecipePanel
+          storeId={storeId}
+          catalogProductId={catalogProductId}
+          tenantCatalogProductId={tenantCatalogProductId}
+          onDone={handleDone}
+        />
       )}
     </div>
   );
