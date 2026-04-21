@@ -15,7 +15,6 @@ export default function OwnerOverviewGrid({ overview }: OwnerOverviewGridProps) 
     todayOrders,
     todayRevenueAmount,
     monthlyRevenueAmount,
-    currencyCode,
   } = overview;
 
   return (
@@ -39,15 +38,14 @@ export default function OwnerOverviewGrid({ overview }: OwnerOverviewGridProps) 
       />
       <OwnerOverviewCard
         label="Today's Revenue"
-        value={formatMoneyFromMinor(todayRevenueAmount, currencyCode)}
+        value={formatMoneyFromMinor(todayRevenueAmount)}
         accent="blue"
-        sub={currencyCode}
       />
       <OwnerOverviewCard
         label="Monthly Revenue"
-        value={formatMoneyFromMinor(monthlyRevenueAmount, currencyCode)}
+        value={formatMoneyFromMinor(monthlyRevenueAmount)}
         accent="blue"
-        sub={`${currencyCode} · this month`}
+        sub="this month"
       />
     </div>
   );

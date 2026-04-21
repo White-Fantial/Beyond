@@ -13,7 +13,6 @@ interface Props {
     region: string | null;
     postalCode: string | null;
     timezone: string;
-    currency: string;
   };
 }
 
@@ -27,7 +26,6 @@ export default function StoreBasicInfoForm({ storeId, initial }: Props) {
     region: initial.region ?? "",
     postalCode: initial.postalCode ?? "",
     timezone: initial.timezone,
-    currency: initial.currency,
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -53,7 +51,6 @@ export default function StoreBasicInfoForm({ storeId, initial }: Props) {
           region: form.region || null,
           postalCode: form.postalCode || null,
           timezone: form.timezone || undefined,
-          currency: form.currency || undefined,
         }),
       });
       if (!res.ok) {
@@ -79,7 +76,6 @@ export default function StoreBasicInfoForm({ storeId, initial }: Props) {
         <Field label="Region / State" name="region" value={form.region} onChange={handleChange} />
         <Field label="Postal Code" name="postalCode" value={form.postalCode} onChange={handleChange} />
         <Field label="Timezone" name="timezone" value={form.timezone} onChange={handleChange} />
-        <Field label="Currency" name="currency" value={form.currency} onChange={handleChange} maxLength={3} />
       </div>
       {message && (
         <p className={`text-sm ${message.type === "success" ? "text-green-700" : "text-red-600"}`}>

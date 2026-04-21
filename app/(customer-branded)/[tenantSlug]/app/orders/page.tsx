@@ -32,8 +32,8 @@ function fmtDate(iso: string) {
   });
 }
 
-function fmtAmount(minor: number, currency: string) {
-  return new Intl.NumberFormat("ko-KR", { style: "currency", currency }).format(minor / 100);
+function fmtAmount(minor: number) {
+  return new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD" }).format(minor / 100);
 }
 
 export default async function BrandedOrdersPage({ params, searchParams }: Props) {
@@ -127,7 +127,7 @@ export default async function BrandedOrdersPage({ params, searchParams }: Props)
               </div>
               <div className="ml-4 shrink-0 text-right">
                 <div className="text-sm font-semibold text-gray-900">
-                  {fmtAmount(order.totalAmount, order.currencyCode)}
+                  {fmtAmount(order.totalAmount)}
                 </div>
                 <div className="text-xs text-gray-400 mt-0.5">›</div>
               </div>

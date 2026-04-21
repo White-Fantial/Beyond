@@ -68,7 +68,7 @@ export default function OwnerStoreSummaryTable({ stores }: OwnerStoreSummaryTabl
                   {store.todayOrders}
                 </td>
                 <td className="py-3 text-right font-medium text-gray-900">
-                  {formatMoneyFromMinor(store.todayRevenueAmount, store.currencyCode)}
+                  {formatMoneyFromMinor(store.todayRevenueAmount)}
                 </td>
               </tr>
             ))}
@@ -102,7 +102,7 @@ export default function OwnerStoreSummaryTable({ stores }: OwnerStoreSummaryTabl
                 {store.todayOrders} order{store.todayOrders !== 1 ? "s" : ""} today
               </span>
               <span className="font-semibold text-gray-900">
-                {formatMoneyFromMinor(store.todayRevenueAmount, store.currencyCode)}
+                {formatMoneyFromMinor(store.todayRevenueAmount)}
               </span>
             </div>
           </Link>

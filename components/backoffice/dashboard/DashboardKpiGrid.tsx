@@ -1,18 +1,10 @@
 import type { BackofficeDashboardData } from "@/types/backoffice";
 
-function currencySymbol(code: string): string {
-  const map: Record<string, string> = {
-    NZD: "$", AUD: "$", USD: "$", GBP: "£", EUR: "€",
-  };
-  return map[code] ?? `${code} `;
-}
-
-function formatRevenue(minor: number, currencyCode: string): string {
+function formatRevenue(minor: number): string {
   const major = minor / 100;
-  const sym = currencySymbol(currencyCode);
-  if (major >= 1_000_000) return `${sym}${(major / 1_000_000).toFixed(1)}M`;
-  if (major >= 1_000) return `${sym}${(major / 1_000).toFixed(1)}k`;
-  return `${sym}${major.toFixed(2)}`;
+  if (major >= 1_000_000) return `$${(major / 1_000_000).toFixed(1)}M`;
+  if (major >= 1_000) return `$${(major / 1_000).toFixed(1)}k`;
+  return `$${major.toFixed(2)}`;
 }
 
 interface KpiCardProps {
@@ -56,7 +48,7 @@ export default function DashboardKpiGrid({ data }: Props) {
       />
       <KpiCard
         label="Today's Revenue"
-        value={formatRevenue(data.todayRevenueMinor, data.currencyCode)}
+        value={formatRevenue(data.todayRevenueMinor)}
         icon="💰"
       />
       <KpiCard

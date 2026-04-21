@@ -69,26 +69,17 @@ export function insightSeverityIcon(severity: InsightSeverity): string {
 }
 
 /** Format a minor-unit amount as a compact currency string (e.g. "$1.2k"). */
-export function formatMinorCompact(amountMinor: number, currencyCode: string): string {
+export function formatMinorCompact(amountMinor: number): string {
   const major = amountMinor / 100;
-  const symbol = currencySymbol(currencyCode);
-  if (major >= 1_000_000) return `${symbol}${(major / 1_000_000).toFixed(1)}M`;
-  if (major >= 1_000) return `${symbol}${(major / 1_000).toFixed(1)}k`;
-  return `${symbol}${major.toFixed(2)}`;
+  if (major >= 1_000_000) return `$${(major / 1_000_000).toFixed(1)}M`;
+  if (major >= 1_000) return `$${(major / 1_000).toFixed(1)}k`;
+  return `$${major.toFixed(2)}`;
 }
 
 /** Format a minor-unit amount as a full currency string (e.g. "$12.50"). */
-export function formatMinorFull(amountMinor: number, currencyCode: string): string {
+export function formatMinorFull(amountMinor: number): string {
   const major = amountMinor / 100;
-  const symbol = currencySymbol(currencyCode);
-  return `${symbol}${major.toFixed(2)}`;
-}
-
-function currencySymbol(code: string): string {
-  const map: Record<string, string> = {
-    NZD: "$", AUD: "$", USD: "$", GBP: "£", EUR: "€",
-  };
-  return map[code] ?? `${code} `;
+  return `$${major.toFixed(2)}`;
 }
 
 /** Format a rate (0-1) as a percentage string. */

@@ -4,11 +4,10 @@ import OwnerEmptyReportState from "./OwnerEmptyReportState";
 
 interface Props {
   products: OwnerProductPerformanceItem[];
-  currencyCode: string;
   title?: string;
 }
 
-export default function OwnerProductPerformanceTable({ products, currencyCode, title = "Top Products" }: Props) {
+export default function OwnerProductPerformanceTable({ products, title = "Top Products" }: Props) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <h2 className="text-base font-semibold text-gray-900 mb-4">{title}</h2>
@@ -40,7 +39,7 @@ export default function OwnerProductPerformanceTable({ products, currencyCode, t
                   </td>
                   <td className="py-2 pr-4 text-right text-gray-700">{product.quantitySold}</td>
                   <td className="py-2 pr-4 text-right text-gray-700">
-                    {formatMinorCompact(product.revenueMinor, currencyCode)}
+                    {formatMinorCompact(product.revenueMinor)}
                   </td>
                   <td className="py-2 text-right">
                     {product.soldOutFlag ? (

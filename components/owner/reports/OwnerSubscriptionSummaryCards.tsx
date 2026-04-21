@@ -3,10 +3,9 @@ import { formatMinorCompact } from "@/lib/owner/reports/labels";
 
 interface Props {
   summary: OwnerSubscriptionSummary;
-  currencyCode: string;
 }
 
-export default function OwnerSubscriptionSummaryCards({ summary, currencyCode }: Props) {
+export default function OwnerSubscriptionSummaryCards({ summary }: Props) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <h2 className="text-base font-semibold text-gray-900 mb-4">Subscription Summary</h2>
@@ -22,20 +21,20 @@ export default function OwnerSubscriptionSummaryCards({ summary, currencyCode }:
         <div className="bg-gray-50 rounded-lg p-3">
           <div className="text-xs text-gray-500 mb-0.5">Revenue (period)</div>
           <div className="text-xl font-bold text-gray-900">
-            {formatMinorCompact(summary.subscriptionRevenueMinor, currencyCode)}
+            {formatMinorCompact(summary.subscriptionRevenueMinor)}
           </div>
           <div className="text-xs text-gray-400">{summary.subscriptionOrderCount} orders</div>
         </div>
         <div className="bg-purple-50 rounded-lg p-3">
           <div className="text-xs text-purple-600 mb-0.5">Est. Next 7 Days</div>
           <div className="text-xl font-bold text-purple-800">
-            {formatMinorCompact(summary.estimatedUpcoming7dRevenueMinor, currencyCode)}
+            {formatMinorCompact(summary.estimatedUpcoming7dRevenueMinor)}
           </div>
         </div>
         <div className="bg-purple-50 rounded-lg p-3 sm:col-span-2">
           <div className="text-xs text-purple-600 mb-0.5">Est. Next 30 Days</div>
           <div className="text-xl font-bold text-purple-800">
-            {formatMinorCompact(summary.estimatedUpcoming30dRevenueMinor, currencyCode)}
+            {formatMinorCompact(summary.estimatedUpcoming30dRevenueMinor)}
           </div>
         </div>
       </div>

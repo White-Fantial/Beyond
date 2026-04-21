@@ -8,13 +8,12 @@ export interface SubscriptionNoticeData {
   storeName: string;
   subscriptionId: string;
   amount?: number;
-  currencyCode?: string;
   nextBillingDate?: string;
   reason?: string;
 }
 
-function formatMoney(minor: number, currency = "NZD"): string {
-  return new Intl.NumberFormat("en-NZ", { style: "currency", currency }).format(minor / 100);
+function formatMoney(minor: number): string {
+  return new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD" }).format(minor / 100);
 }
 
 const TYPE_CONFIG: Record<SubscriptionNoticeType, { subject: string; emoji: string; headline: string }> = {
@@ -32,8 +31,8 @@ export function renderSubscriptionNoticeEmail(data: SubscriptionNoticeData): {
   const subject = `${config.subject} — ${data.storeName}`;
 
   let details = "";
-  if (data.amount && data.currencyCode) {
-    details += `<p><strong>Amount:</strong> ${formatMoney(data.amount, data.currencyCode)}</p>`;
+  if (data.amount) {
+    details += `<p><strong>Amount:</strong> ${formatMoney(data.amount)}</p>`;
   }
   if (data.nextBillingDate) {
     details += `<p><strong>Next billing date:</strong> ${escapeHtml(data.nextBillingDate)}</p>`;

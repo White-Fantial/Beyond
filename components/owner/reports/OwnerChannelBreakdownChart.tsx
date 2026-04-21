@@ -4,7 +4,6 @@ import OwnerEmptyReportState from "./OwnerEmptyReportState";
 
 interface Props {
   breakdown: OwnerChannelBreakdownItem[];
-  currencyCode: string;
 }
 
 const CHANNEL_COLORS: Record<string, string> = {
@@ -17,7 +16,7 @@ const CHANNEL_COLORS: Record<string, string> = {
   UNKNOWN: "#d1d5db",
 };
 
-export default function OwnerChannelBreakdownChart({ breakdown, currencyCode }: Props) {
+export default function OwnerChannelBreakdownChart({ breakdown }: Props) {
   if (breakdown.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -43,7 +42,7 @@ export default function OwnerChannelBreakdownChart({ breakdown, currencyCode }: 
                 <div className="flex items-center gap-3 text-xs text-gray-500">
                   <span>{item.orderCount} orders</span>
                   <span className="font-medium text-gray-800">
-                    {formatMinorCompact(item.revenueMinor, currencyCode)}
+                    {formatMinorCompact(item.revenueMinor)}
                   </span>
                   <span className="text-red-500">{formatRate(item.cancelledRate)} cancel</span>
                 </div>

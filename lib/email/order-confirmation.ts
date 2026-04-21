@@ -9,11 +9,10 @@ export interface OrderConfirmationData {
   discountApplied?: number;
   loyaltyPointsEarned?: number;
   estimatedPickupAt: string;
-  currencyCode: string;
 }
 
-function formatMoney(minor: number, currency = "NZD"): string {
-  return new Intl.NumberFormat("en-NZ", { style: "currency", currency }).format(minor / 100);
+function formatMoney(minor: number): string {
+  return new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD" }).format(minor / 100);
 }
 
 export function renderOrderConfirmationEmail(data: OrderConfirmationData): {
@@ -25,13 +24,13 @@ export function renderOrderConfirmationEmail(data: OrderConfirmationData): {
   const itemRows = data.items
     .map(
       (item) =>
-        `<tr><td>${escapeHtml(item.name)}</td><td style="text-align:center">${item.quantity}</td><td style="text-align:right">${formatMoney(item.total, data.currencyCode)}</td></tr>`
+        `<tr><td>${escapeHtml(item.name)}</td><td style="text-align:center">${item.quantity}</td><td style="text-align:right">${formatMoney(item.total)}</td></tr>`
     )
     .join("");
 
   const discountRow =
     data.discountApplied && data.discountApplied > 0
-      ? `<tr><td colspan="2" style="color:#10b981;font-weight:600">Discount applied</td><td style="text-align:right;color:#10b981">-${formatMoney(data.discountApplied, data.currencyCode)}</td></tr>`
+      ? `<tr><td colspan="2" style="color:#10b981;font-weight:600">Discount applied</td><td style="text-align:right;color:#10b981">-${formatMoney(data.discountApplied)}</td></tr>`
       : "";
 
   const loyaltyNote =
@@ -48,7 +47,7 @@ export function renderOrderConfirmationEmail(data: OrderConfirmationData): {
       <tbody>
         ${itemRows}
         ${discountRow}
-        <tr style="font-weight:700"><td colspan="2">Order Total</td><td style="text-align:right">${formatMoney(data.totalAmount, data.currencyCode)}</td></tr>
+        <tr style="font-weight:700"><td colspan="2">Order Total</td><td style="text-align:right">${formatMoney(data.totalAmount)}</td></tr>
       </tbody>
     </table>
     ${loyaltyNote}

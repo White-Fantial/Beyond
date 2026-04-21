@@ -1,15 +1,14 @@
 import type { CustomerOrderItem } from "@/types/customer";
 
-function fmtAmount(minor: number, currency: string) {
-  return new Intl.NumberFormat("en-NZ", { style: "currency", currency }).format(minor / 100);
+function fmtAmount(minor: number) {
+  return new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD" }).format(minor / 100);
 }
 
 interface OrderItemsTableProps {
   items: CustomerOrderItem[];
-  currency: string;
 }
 
-export function OrderItemsTable({ items, currency }: OrderItemsTableProps) {
+export function OrderItemsTable({ items }: OrderItemsTableProps) {
   if (items.length === 0) {
     return <p className="text-sm text-gray-500">No items.</p>;
   }
@@ -35,7 +34,7 @@ export function OrderItemsTable({ items, currency }: OrderItemsTableProps) {
                       {mod.modifierOptionName}
                       {mod.totalPriceAmount > 0 && (
                         <span className="ml-1 text-gray-400">
-                          +{fmtAmount(mod.totalPriceAmount, currency)}
+                          +{fmtAmount(mod.totalPriceAmount)}
                         </span>
                       )}
                     </li>
@@ -44,7 +43,7 @@ export function OrderItemsTable({ items, currency }: OrderItemsTableProps) {
               )}
             </div>
             <div className="shrink-0 text-sm font-medium text-gray-900">
-              {fmtAmount(item.totalPriceAmount, currency)}
+              {fmtAmount(item.totalPriceAmount)}
             </div>
           </div>
         </div>

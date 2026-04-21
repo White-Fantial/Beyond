@@ -37,9 +37,8 @@ function ageClass(minutes: number): string {
   return "text-gray-400";
 }
 
-function currencySymbol(code: string): string {
-  const map: Record<string, string> = { NZD: "$", AUD: "$", USD: "$", GBP: "£", EUR: "€" };
-  return map[code] ?? `${code} `;
+function currencySymbol(): string {
+  return "$";
 }
 
 interface Props {
@@ -82,7 +81,7 @@ export default function DashboardActiveOrdersList({ orders }: Props) {
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <span className="text-xs font-semibold text-gray-800">
-                  {currencySymbol(order.currencyCode)}
+                  {currencySymbol()}
                   {(order.totalAmount / 100).toFixed(2)}
                 </span>
                 <span className={`text-xs ${ageClass(order.ageMinutes)}`}>

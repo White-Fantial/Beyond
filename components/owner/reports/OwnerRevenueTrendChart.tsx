@@ -4,10 +4,9 @@ import OwnerEmptyReportState from "./OwnerEmptyReportState";
 
 interface Props {
   trend: OwnerRevenueTrendPoint[];
-  currencyCode: string;
 }
 
-export default function OwnerRevenueTrendChart({ trend, currencyCode }: Props) {
+export default function OwnerRevenueTrendChart({ trend }: Props) {
   if (trend.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -46,7 +45,7 @@ export default function OwnerRevenueTrendChart({ trend, currencyCode }: Props) {
                   height={barH}
                   rx={2}
                   fill={point.revenueMinor > 0 ? "#6366f1" : "#e5e7eb"}
-                  aria-label={`${point.dateLabel}: ${formatMinorCompact(point.revenueMinor, currencyCode)}`}
+                  aria-label={`${point.dateLabel}: ${formatMinorCompact(point.revenueMinor)}`}
                 />
                 {point.orderCount > 0 && (
                   <circle

@@ -36,7 +36,7 @@ export default function ForecastChart({ data }: Props) {
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-base font-semibold text-gray-900">Revenue Forecast</h2>
         <span className="text-xs text-gray-400">
-          {data.horizon}-day horizon · projected {formatMinorCompact(data.projectedTotalMinor, data.currencyCode)}
+          {data.horizon}-day horizon · projected {formatMinorCompact(data.projectedTotalMinor)}
         </span>
       </div>
       <p className="text-xs text-gray-400 mb-4">Shaded band = 80% confidence interval</p>
@@ -78,7 +78,7 @@ export default function ForecastChart({ data }: Props) {
                   height={2}
                   fill={isFuture ? "#6366f1" : "#a5b4fc"}
                   rx={1}
-                  aria-label={`${pt.date} predicted: ${formatMinorCompact(pt.predicted, data.currencyCode)}`}
+                  aria-label={`${pt.date} predicted: ${formatMinorCompact(pt.predicted)}`}
                 />
 
                 {/* Actual value bar (historical) */}
@@ -91,7 +91,7 @@ export default function ForecastChart({ data }: Props) {
                     fill="#818cf8"
                     rx={1}
                     opacity={0.8}
-                    aria-label={`${pt.date} actual: ${formatMinorCompact(pt.actual ?? 0, data.currencyCode)}`}
+                    aria-label={`${pt.date} actual: ${formatMinorCompact(pt.actual ?? 0)}`}
                   />
                 )}
 

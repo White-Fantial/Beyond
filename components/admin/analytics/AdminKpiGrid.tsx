@@ -11,12 +11,12 @@ export default function AdminKpiGrid({ overview }: Props) {
     { ...overview.completedOrders, inverseGood: false },
     {
       ...overview.grossSales,
-      displayValue: `${(overview.grossSales.value / 100).toLocaleString("ko-KR", { minimumFractionDigits: 0 })} ${overview.currencyCode}`,
+      displayValue: `$${(overview.grossSales.value / 100).toLocaleString("en-NZ", { minimumFractionDigits: 2 })}`,
       inverseGood: false,
     },
     {
       ...overview.avgOrderValue,
-      displayValue: `${(overview.avgOrderValue.value / 100).toLocaleString("en-US")} ${overview.currencyCode}`,
+      displayValue: `$${(overview.avgOrderValue.value / 100).toLocaleString("en-NZ", { minimumFractionDigits: 2 })}`,
       inverseGood: false,
     },
     { ...overview.activeConnections, inverseGood: false },
