@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import type { TenantProductCategoryRow } from "@/types/owner";
 
 export default function NewTenantProductPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<TenantProductCategoryRow[]>([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -16,7 +18,17 @@ export default function NewTenantProductPage() {
     basePriceAmount: "",
     currency: "USD",
     internalNote: "",
+    categoryId: "",
   });
+
+  useEffect(() => {
+    fetch("/api/owner/tenant-product-categories")
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.data) setCategories(json.data);
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -37,6 +49,7 @@ export default function NewTenantProductPage() {
             : 0,
           currency: form.currency,
           internalNote: form.internalNote.trim() || null,
+          categoryId: form.categoryId || null,
         }),
       });
       const json = await res.json();
@@ -81,6 +94,31 @@ export default function NewTenantProductPage() {
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400"
               placeholder="e.g. Espresso"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <select
+              value={form.categoryId}
+              onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400"
+            >
+              <option value="">— No category —</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            {categories.length === 0 && (
+              <p className="mt-1 text-xs text-gray-400">
+                No categories yet. You can manage categories from the{" "}
+                <Link href="/owner/products" className="text-brand-600 hover:underline">
+                  Product Catalog
+                </Link>{" "}
+                page.
+              </p>
+            )}
           </div>
 
           <div>

@@ -26,6 +26,7 @@ export default function IngredientTable({ items }: Props) {
           <thead>
             <tr className="text-xs text-gray-500 bg-gray-50 border-b border-gray-100">
               <th className="px-5 py-3 text-left font-medium">Name</th>
+              <th className="px-5 py-3 text-left font-medium">Category</th>
               <th className="px-5 py-3 text-left font-medium">Purchase Unit</th>
               <th className="px-5 py-3 text-left font-medium">Recipe Unit</th>
               <th className="px-5 py-3 text-right font-medium">Unit Cost (ex-GST)</th>
@@ -37,6 +38,15 @@ export default function IngredientTable({ items }: Props) {
             {items.map((item) => (
               <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-5 py-3 font-medium text-gray-900">{item.name}</td>
+                <td className="px-5 py-3">
+                  {item.category ? (
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                      {item.category}
+                    </span>
+                  ) : (
+                    <span className="text-gray-300">—</span>
+                  )}
+                </td>
                 <td className="px-5 py-3 text-gray-600">
                   {INGREDIENT_UNIT_LABELS[item.purchaseUnit] ?? item.purchaseUnit}
                 </td>

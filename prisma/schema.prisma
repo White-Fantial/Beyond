@@ -1323,6 +1323,21 @@ model CatalogProduct {
 
 /// A product definition shared across all stores in a tenant.
 /// Owners manage these at the tenant level; individual stores select which to sell.
+model TenantProductCategory {
+  id           String   @id @default(uuid())
+  tenantId     String
+  name         String
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  products TenantCatalogProduct[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, displayOrder])
+  @@map("tenant_product_categories")
+}
+
 model TenantCatalogProduct {
   id               String   @id @default(uuid())
   tenantId         String
@@ -1335,14 +1350,17 @@ model TenantCatalogProduct {
   displayOrder     Int      @default(0)
   isActive         Boolean  @default(true)
   internalNote     String?
+  categoryId       String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   deletedAt        DateTime?
 
+  category        TenantProductCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   storeSelections StoreProductSelection[]
 
   @@index([tenantId, isActive, displayOrder])
   @@index([tenantId, name])
+  @@index([categoryId])
   @@map("tenant_catalog_products")
 }
 

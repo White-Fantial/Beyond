@@ -1,6 +1,7 @@
 import { requireOwnerPortalAccess } from "@/lib/owner/auth-guard";
-import { listTenantProducts } from "@/services/owner/owner-tenant-products.service";
+import { listTenantProducts, listTenantProductCategories } from "@/services/owner/owner-tenant-products.service";
 import Link from "next/link";
+import ProductCategoryManager from "@/components/owner/products/ProductCategoryManager";
 
 function formatPrice(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount / 100);
@@ -9,7 +10,10 @@ function formatPrice(amount: number, currency: string) {
 export default async function OwnerProductsPage() {
   const ctx = await requireOwnerPortalAccess();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
-  const products = tenantId ? await listTenantProducts(tenantId) : [];
+  const [products, categories] = await Promise.all([
+    tenantId ? listTenantProducts(tenantId) : [],
+    tenantId ? listTenantProductCategories(tenantId) : [],
+  ]);
 
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 space-y-4">
@@ -20,12 +24,15 @@ export default async function OwnerProductsPage() {
             Manage your shared product catalog. Each store can select which products to sell.
           </p>
         </div>
-        <Link
-          href="/owner/products/new"
-          className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
-        >
-          + New Product
-        </Link>
+        <div className="flex items-center gap-2 flex-wrap">
+          <ProductCategoryManager initialCategories={categories} />
+          <Link
+            href="/owner/products/new"
+            className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+          >
+            + New Product
+          </Link>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -42,6 +49,7 @@ export default async function OwnerProductsPage() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Name</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Category</th>
                   <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Description</th>
                   <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500">Base Price</th>
                   <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Stores</th>
@@ -62,6 +70,15 @@ export default async function OwnerProductsPage() {
                         <div className="text-xs text-gray-400 mt-0.5 line-clamp-1">
                           {p.shortDescription}
                         </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {p.categoryName ? (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                          {p.categoryName}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300 text-xs">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-gray-500 text-xs line-clamp-2 max-w-xs">
