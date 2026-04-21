@@ -5,22 +5,15 @@ vi.mock("@/lib/prisma", () => ({
     supplier: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
       count: vi.fn(),
     },
     supplierProduct: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
     },
     ingredientSupplierLink: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
       updateMany: vi.fn(),
       upsert: vi.fn(),
       delete: vi.fn(),
@@ -35,10 +28,7 @@ import { prisma } from "@/lib/prisma";
 import {
   listAvailableSuppliers,
   getSupplierDetail,
-  updateSupplier,
-  deleteSupplier,
   listSupplierProducts,
-  createSupplierProduct,
   linkIngredientToSupplierProduct,
   unlinkIngredientFromSupplierProduct,
 } from "@/services/owner/owner-suppliers.service";
@@ -47,22 +37,15 @@ const mockPrisma = prisma as unknown as {
   supplier: {
     findMany: ReturnType<typeof vi.fn>;
     findFirst: ReturnType<typeof vi.fn>;
-    create: ReturnType<typeof vi.fn>;
-    update: ReturnType<typeof vi.fn>;
     count: ReturnType<typeof vi.fn>;
   };
   supplierProduct: {
     findMany: ReturnType<typeof vi.fn>;
     findFirst: ReturnType<typeof vi.fn>;
-    create: ReturnType<typeof vi.fn>;
-    update: ReturnType<typeof vi.fn>;
   };
   ingredientSupplierLink: {
     findMany: ReturnType<typeof vi.fn>;
     findFirst: ReturnType<typeof vi.fn>;
-    findUnique: ReturnType<typeof vi.fn>;
-    create: ReturnType<typeof vi.fn>;
-    update: ReturnType<typeof vi.fn>;
     updateMany: ReturnType<typeof vi.fn>;
     upsert: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
@@ -73,22 +56,6 @@ const mockPrisma = prisma as unknown as {
 };
 
 const TENANT = "tenant-1";
-const STORE = "store-1";
-
-const mockSupplier = {
-  id: "sup-1",
-  scope: "STORE",
-  tenantId: TENANT,
-  storeId: STORE,
-  name: "Flour Co",
-  websiteUrl: "https://flourco.nz",
-  contactEmail: "orders@flourco.nz",
-  contactPhone: null,
-  notes: null,
-  createdAt: new Date("2026-01-01"),
-  updatedAt: new Date("2026-01-01"),
-  _count: { products: 2 },
-};
 
 const mockPlatformSupplier = {
   id: "sup-platform-1",
@@ -107,9 +74,9 @@ const mockPlatformSupplier = {
 
 const mockProduct = {
   id: "sp-1",
-  supplierId: "sup-1",
+  supplierId: "sup-platform-1",
   name: "High Grade Flour 25kg",
-  externalUrl: "https://flourco.nz/products/hg-flour-25kg",
+  externalUrl: "https://sysco.com/products/hg-flour-25kg",
   referencePrice: 4500,
   unit: "KG",
   lastScrapedAt: null,
@@ -125,28 +92,15 @@ beforeEach(() => {
 // ─── listAvailableSuppliers ───────────────────────────────────────────────────
 
 describe("listAvailableSuppliers", () => {
-  it("returns PLATFORM and tenant STORE suppliers combined", async () => {
-    mockPrisma.supplier.findMany.mockResolvedValue([
-      mockPlatformSupplier,
-      mockSupplier,
-    ]);
-    mockPrisma.supplier.count.mockResolvedValue(2);
+  it("returns PLATFORM suppliers", async () => {
+    mockPrisma.supplier.findMany.mockResolvedValue([mockPlatformSupplier]);
+    mockPrisma.supplier.count.mockResolvedValue(1);
 
     const result = await listAvailableSuppliers(TENANT);
 
-    expect(result.items).toHaveLength(2);
-    expect(result.items.some((s) => s.scope === "PLATFORM")).toBe(true);
-    expect(result.items.some((s) => s.scope === "STORE")).toBe(true);
-    expect(mockPrisma.supplier.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          OR: expect.arrayContaining([
-            { scope: "PLATFORM" },
-            { tenantId: TENANT },
-          ]),
-        }),
-      })
-    );
+    expect(result.items).toHaveLength(1);
+    expect(result.total).toBe(1);
+    expect(result.items[0].scope).toBe("PLATFORM");
   });
 });
 
@@ -155,13 +109,13 @@ describe("listAvailableSuppliers", () => {
 describe("getSupplierDetail", () => {
   it("returns supplier with products", async () => {
     mockPrisma.supplier.findFirst.mockResolvedValue({
-      ...mockSupplier,
+      ...mockPlatformSupplier,
       products: [mockProduct],
     });
 
-    const result = await getSupplierDetail(TENANT, "sup-1");
+    const result = await getSupplierDetail(TENANT, "sup-platform-1");
 
-    expect(result.id).toBe("sup-1");
+    expect(result.id).toBe("sup-platform-1");
     expect(result.products).toHaveLength(1);
     expect(result.products[0].referencePrice).toBe(4500);
   });
@@ -173,65 +127,14 @@ describe("getSupplierDetail", () => {
   });
 });
 
-// ─── updateSupplier ───────────────────────────────────────────────────────────
-
-describe("updateSupplier", () => {
-  it("updates supplier name", async () => {
-    mockPrisma.supplier.findFirst.mockResolvedValue(mockSupplier);
-    mockPrisma.supplier.update.mockResolvedValue({
-      ...mockSupplier,
-      name: "New Name",
-    });
-
-    const result = await updateSupplier(TENANT, "sup-1", { name: "New Name" });
-
-    expect(result.name).toBe("New Name");
-  });
-
-  it("throws if supplier not found", async () => {
-    mockPrisma.supplier.findFirst.mockResolvedValue(null);
-
-    await expect(
-      updateSupplier(TENANT, "missing", { name: "X" })
-    ).rejects.toThrow("not found");
-  });
-});
-
-// ─── deleteSupplier ───────────────────────────────────────────────────────────
-
-describe("deleteSupplier", () => {
-  it("soft-deletes the supplier", async () => {
-    mockPrisma.supplier.findFirst.mockResolvedValue(mockSupplier);
-    mockPrisma.supplier.update.mockResolvedValue({
-      ...mockSupplier,
-      deletedAt: new Date(),
-    });
-
-    await deleteSupplier(TENANT, "sup-1");
-
-    expect(mockPrisma.supplier.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "sup-1" },
-        data: expect.objectContaining({ deletedAt: expect.any(Date) }),
-      })
-    );
-  });
-
-  it("throws if supplier not found", async () => {
-    mockPrisma.supplier.findFirst.mockResolvedValue(null);
-
-    await expect(deleteSupplier(TENANT, "missing")).rejects.toThrow("not found");
-  });
-});
-
 // ─── listSupplierProducts ─────────────────────────────────────────────────────
 
 describe("listSupplierProducts", () => {
   it("returns products for a supplier", async () => {
-    mockPrisma.supplier.findFirst.mockResolvedValue(mockSupplier);
+    mockPrisma.supplier.findFirst.mockResolvedValue(mockPlatformSupplier);
     mockPrisma.supplierProduct.findMany.mockResolvedValue([mockProduct]);
 
-    const result = await listSupplierProducts(TENANT, "sup-1");
+    const result = await listSupplierProducts(TENANT, "sup-platform-1");
 
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe("High Grade Flour 25kg");
@@ -241,35 +144,6 @@ describe("listSupplierProducts", () => {
     mockPrisma.supplier.findFirst.mockResolvedValue(null);
 
     await expect(listSupplierProducts(TENANT, "missing")).rejects.toThrow("not found");
-  });
-});
-
-// ─── createSupplierProduct ────────────────────────────────────────────────────
-
-describe("createSupplierProduct", () => {
-  it("creates a product for a supplier", async () => {
-    mockPrisma.supplier.findFirst.mockResolvedValue(mockSupplier);
-    mockPrisma.supplierProduct.create.mockResolvedValue(mockProduct);
-
-    const result = await createSupplierProduct(TENANT, "sup-1", {
-      name: "High Grade Flour 25kg",
-      externalUrl: "https://flourco.nz/products/hg-flour-25kg",
-      unit: "KG",
-    });
-
-    expect(result.referencePrice).toBe(4500);
-    expect(result.unit).toBe("KG");
-  });
-
-  it("throws if supplier not found", async () => {
-    mockPrisma.supplier.findFirst.mockResolvedValue(null);
-
-    await expect(
-      createSupplierProduct(TENANT, "missing", {
-        name: "X",
-        unit: "EACH",
-      })
-    ).rejects.toThrow("not found");
   });
 });
 
@@ -283,7 +157,7 @@ describe("linkIngredientToSupplierProduct", () => {
     });
     mockPrisma.supplierProduct.findFirst.mockResolvedValue({
       ...mockProduct,
-      supplier: { name: "Flour Co" },
+      supplier: { name: "Sysco Foods" },
     });
     mockPrisma.ingredientSupplierLink.updateMany.mockResolvedValue({ count: 0 });
     mockPrisma.ingredientSupplierLink.upsert.mockResolvedValue({
@@ -294,7 +168,7 @@ describe("linkIngredientToSupplierProduct", () => {
       createdAt: new Date("2026-01-01"),
       supplierProduct: {
         name: "High Grade Flour 25kg",
-        supplier: { name: "Flour Co" },
+        supplier: { name: "Sysco Foods" },
       },
     });
 
@@ -307,14 +181,14 @@ describe("linkIngredientToSupplierProduct", () => {
 
     expect(result.isPreferred).toBe(true);
     expect(result.supplierProductName).toBe("High Grade Flour 25kg");
-    expect(result.supplierName).toBe("Flour Co");
+    expect(result.supplierName).toBe("Sysco Foods");
   });
 
   it("unsets other preferred links when isPreferred = true", async () => {
     mockPrisma.ingredient.findFirst.mockResolvedValue({ id: "ing-1", tenantId: TENANT });
     mockPrisma.supplierProduct.findFirst.mockResolvedValue({
       ...mockProduct,
-      supplier: { name: "Flour Co" },
+      supplier: { name: "Sysco Foods" },
     });
     mockPrisma.ingredientSupplierLink.updateMany.mockResolvedValue({ count: 1 });
     mockPrisma.ingredientSupplierLink.upsert.mockResolvedValue({
@@ -335,9 +209,9 @@ describe("linkIngredientToSupplierProduct", () => {
       })
     );
   });
+
   it("allows linking to a PLATFORM supplier product", async () => {
     mockPrisma.ingredient.findFirst.mockResolvedValue({ id: "ing-1", tenantId: TENANT });
-    // PLATFORM supplier product found via OR query
     mockPrisma.supplierProduct.findFirst.mockResolvedValue({
       ...mockProduct,
       supplierId: "sup-platform-1",
