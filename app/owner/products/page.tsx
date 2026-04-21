@@ -4,7 +4,7 @@ import Link from "next/link";
 import ProductCategoryManager from "@/components/owner/products/ProductCategoryManager";
 
 function formatPrice(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount / 100);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount / 100000);
 }
 
 export default async function OwnerProductsPage() {

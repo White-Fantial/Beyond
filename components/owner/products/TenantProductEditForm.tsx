@@ -9,7 +9,7 @@ interface Props {
 }
 
 function formatPrice(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount / 100);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount / 100000);
 }
 
 export default function TenantProductEditForm({ product }: Props) {
@@ -24,7 +24,7 @@ export default function TenantProductEditForm({ product }: Props) {
     name: product.name,
     shortDescription: product.shortDescription ?? "",
     description: product.description ?? "",
-    basePriceAmount: (product.basePriceAmount / 100).toFixed(2),
+    basePriceAmount: (product.basePriceAmount / 100000).toFixed(2),
     currency: product.currency,
     internalNote: product.internalNote ?? "",
     isActive: product.isActive,
@@ -52,7 +52,7 @@ export default function TenantProductEditForm({ product }: Props) {
           name: form.name.trim(),
           shortDescription: form.shortDescription.trim() || null,
           description: form.description.trim() || null,
-          basePriceAmount: Math.round(parseFloat(form.basePriceAmount) * 100),
+          basePriceAmount: Math.round(parseFloat(form.basePriceAmount) * 100000),
           currency: form.currency,
           internalNote: form.internalNote.trim() || null,
           isActive: form.isActive,

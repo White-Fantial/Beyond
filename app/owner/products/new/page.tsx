@@ -45,7 +45,7 @@ export default function NewTenantProductPage() {
           description: form.description.trim() || null,
           shortDescription: form.shortDescription.trim() || null,
           basePriceAmount: form.basePriceAmount
-            ? Math.round(parseFloat(form.basePriceAmount) * 100)
+            ? Math.round(parseFloat(form.basePriceAmount) * 100000)
             : 0,
           currency: form.currency,
           internalNote: form.internalNote.trim() || null,
