@@ -123,7 +123,7 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
         className="bg-white rounded-xl border border-gray-200 p-5 space-y-4"
       >
         <h2 className="text-sm font-semibold text-gray-900">Supplier Details</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Name *</label>
             <input
@@ -160,9 +160,10 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
           </div>
-          <div className="sm:col-span-2">
+          <div className="sm:col-span-2 lg:col-span-4">
             <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
-            <input
+            <textarea
+              rows={2}
               value={editNotes}
               onChange={(e) => setEditNotes(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"

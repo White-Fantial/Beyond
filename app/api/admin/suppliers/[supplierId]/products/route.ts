@@ -18,6 +18,9 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   if (!body.name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
+  if (body.referencePrice !== undefined && body.referencePrice < 0) {
+    return NextResponse.json({ error: "referencePrice must be non-negative" }, { status: 400 });
+  }
   if (!body.unit) {
     return NextResponse.json({ error: "unit is required" }, { status: 400 });
   }
