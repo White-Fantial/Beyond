@@ -7,6 +7,8 @@ interface ImportBody {
   storeId: string;
   /** Owner's own unit cost in millicents (1/100000 dollar) */
   unitCost: number;
+  /** How many purchase units the owner bought at the given price */
+  purchaseQty?: number;
 }
 
 /**
@@ -43,7 +45,8 @@ export async function POST(req: NextRequest) {
       tenantId,
       body.storeId,
       body.platformIngredientId,
-      body.unitCost
+      body.unitCost,
+      body.purchaseQty
     );
     return NextResponse.json({ data: ingredient }, { status: 201 });
   } catch (err) {

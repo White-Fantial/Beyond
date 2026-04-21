@@ -80,6 +80,7 @@ function PriceForm({
           platformIngredientId: ingredient.id,
           storeId,
           unitCost: computedUnitCost,
+          purchaseQty: totalQty,
         }),
       });
       if (!res.ok) {
