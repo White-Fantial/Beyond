@@ -83,7 +83,7 @@ const mockIngredientRow = {
   unit: "GRAM",
   notes: null,
   unitCostSnapshot: 10000,
-  ingredient: { name: "김치" },
+  ingredient: { name: "김치", unitCost: 10000 },
 };
 
 beforeEach(() => {
@@ -137,6 +137,7 @@ describe("getMarketplaceRecipe", () => {
       steps: [mockStep],
       ingredients: [mockIngredientRow],
     });
+    mockPrisma.marketplaceRecipe.update.mockResolvedValue(mockRecipeRow);
 
     const result = await getMarketplaceRecipe("recipe-1");
 
@@ -147,6 +148,40 @@ describe("getMarketplaceRecipe", () => {
     expect(result.ingredients[0].ingredientName).toBe("김치");
     expect(result.ingredients[0].lineCost).toBe(3000); // 300 * 10000 / 1000
     expect(result.ingredientCount).toBe(1);
+  });
+
+  it("uses live ingredient.unitCost even when unitCostSnapshot differs", async () => {
+    const staleSnapshot = 10000;
+    const liveUnitCost = 20000; // price has gone up since recipe was saved
+    mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue({
+      ...mockRecipeRow,
+      estimatedCostPrice: Math.round(300 * staleSnapshot / 1000), // stale: 3000
+      steps: [],
+      ingredients: [
+        {
+          ...mockIngredientRow,
+          unitCostSnapshot: staleSnapshot,
+          ingredient: { name: "Kimchi", unitCost: liveUnitCost },
+        },
+      ],
+    });
+    mockPrisma.marketplaceRecipe.update.mockResolvedValue(mockRecipeRow);
+
+    const result = await getMarketplaceRecipe("recipe-1");
+
+    // lineCost must use the live unitCost, not the snapshot
+    expect(result.ingredients[0].lineCost).toBe(6000); // 300 * 20000 / 1000
+    // unitCostSnapshot preserves the historical value
+    expect(result.ingredients[0].unitCostSnapshot).toBe(staleSnapshot);
+    // estimatedCostPrice updated to live total
+    expect(result.estimatedCostPrice).toBe(6000);
+    // DB should have been updated with the live cost
+    expect(mockPrisma.marketplaceRecipe.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "recipe-1" },
+        data: expect.objectContaining({ estimatedCostPrice: 6000 }),
+      })
+    );
   });
 
   it("throws when not found", async () => {
@@ -235,7 +270,7 @@ describe("createMarketplaceRecipe", () => {
       ...mockRecipeRow,
       steps: [],
       ingredients: [
-        { ...mockIngredientRow, unitCostSnapshot: 15000 },
+        { ...mockIngredientRow, unitCostSnapshot: 15000, ingredient: { name: "김치", unitCost: 15000 } },
       ],
     };
     mockPrisma.marketplaceRecipe.create.mockResolvedValue(withIngredient);

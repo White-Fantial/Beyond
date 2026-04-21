@@ -66,7 +66,7 @@ type RawIngredient = {
   unit: string;
   notes: string | null;
   unitCostSnapshot: number;
-  ingredient: { name: string };
+  ingredient: { name: string; unitCost: number };
 };
 
 function toRecipe(row: RawRecipe): MarketplaceRecipe {
@@ -111,6 +111,7 @@ function toStep(row: RawStep): MarketplaceRecipeStep {
 function toIngredientItem(row: RawIngredient): MarketplaceRecipeIngredientItem {
   const qty =
     typeof row.quantity === "object" ? row.quantity.toNumber() : row.quantity;
+  const unitCost = row.ingredient.unitCost;
   return {
     id: row.id,
     recipeId: row.recipeId,
@@ -120,7 +121,7 @@ function toIngredientItem(row: RawIngredient): MarketplaceRecipeIngredientItem {
     unit: row.unit as IngredientUnit,
     notes: row.notes,
     unitCostSnapshot: row.unitCostSnapshot,
-    lineCost: Math.round(qty * row.unitCostSnapshot / 1000),
+    lineCost: Math.round(qty * unitCost / 1000),
   };
 }
 
@@ -198,7 +199,7 @@ export async function getMarketplaceRecipe(
       steps: { orderBy: { stepNumber: "asc" } },
       ingredients: {
         include: {
-          ingredient: { select: { name: true } },
+          ingredient: { select: { name: true, unitCost: true } },
         },
         orderBy: { createdAt: "asc" },
       },
@@ -211,6 +212,12 @@ export async function getMarketplaceRecipe(
   const ingredients = (row.ingredients as RawIngredient[]).map(
     toIngredientItem
   );
+
+  const liveTotal = ingredients.reduce((sum, i) => sum + i.lineCost, 0);
+  if (liveTotal !== recipe.estimatedCostPrice) {
+    await recomputeCostPrice(recipe.id, ingredients);
+    recipe.estimatedCostPrice = liveTotal;
+  }
 
   return {
     ...recipe,
@@ -287,7 +294,7 @@ export async function createMarketplaceRecipe(
       provider: { select: { name: true } },
       steps: { orderBy: { stepNumber: "asc" } },
       ingredients: {
-        include: { ingredient: { select: { name: true } } },
+        include: { ingredient: { select: { name: true, unitCost: true } } },
         orderBy: { createdAt: "asc" },
       },
     },
@@ -398,7 +405,7 @@ export async function updateMarketplaceRecipe(
       provider: { select: { name: true } },
       steps: { orderBy: { stepNumber: "asc" } },
       ingredients: {
-        include: { ingredient: { select: { name: true } } },
+        include: { ingredient: { select: { name: true, unitCost: true } } },
         orderBy: { createdAt: "asc" },
       },
     },

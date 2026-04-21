@@ -51,8 +51,8 @@ export interface MarketplaceRecipeIngredientItem {
   quantity: number;
   unit: IngredientUnit;
   notes: string | null;
-  unitCostSnapshot: number;
-  lineCost: number; // quantity × unitCostSnapshot
+  unitCostSnapshot: number; // cost per unit at the time the ingredient was saved (millicents)
+  lineCost: number; // quantity × ingredient.unitCost (live — always reflects current ingredient price)
 }
 
 export interface MarketplaceRecipeStep {
