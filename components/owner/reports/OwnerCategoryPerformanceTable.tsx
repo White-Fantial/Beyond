@@ -4,10 +4,9 @@ import OwnerEmptyReportState from "./OwnerEmptyReportState";
 
 interface Props {
   categories: OwnerCategoryPerformanceItem[];
-  currencyCode: string;
 }
 
-export default function OwnerCategoryPerformanceTable({ categories, currencyCode }: Props) {
+export default function OwnerCategoryPerformanceTable({ categories }: Props) {
   const totalRevenue = categories.reduce((s, c) => s + c.revenueMinor, 0) || 1;
 
   return (
@@ -27,7 +26,7 @@ export default function OwnerCategoryPerformanceTable({ categories, currencyCode
                     <span>{cat.quantitySold} units</span>
                     <span>{cat.orderCount} orders</span>
                     <span className="font-medium text-gray-800">
-                      {formatMinorCompact(cat.revenueMinor, currencyCode)}
+                      {formatMinorCompact(cat.revenueMinor)}
                     </span>
                   </div>
                 </div>

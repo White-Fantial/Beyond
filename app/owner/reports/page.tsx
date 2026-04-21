@@ -51,7 +51,7 @@ export default async function OwnerReportsPage({ searchParams }: Props) {
         <div>
           <h1 className="text-xl font-bold text-gray-900">Reports &amp; Analytics</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {report.fromDate} — {report.toDate} · {report.currencyCode}
+            {report.fromDate} — {report.toDate}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -62,16 +62,16 @@ export default async function OwnerReportsPage({ searchParams }: Props) {
 
       <OwnerReportsFilterBar filters={filters} />
       <OwnerKpiGrid summary={report.summary} comparison={report.comparisonSummary} />
-      <OwnerRevenueTrendChart trend={report.revenueTrend} currencyCode={report.currencyCode} />
+      <OwnerRevenueTrendChart trend={report.revenueTrend} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <OwnerChannelBreakdownChart breakdown={report.channelBreakdown} currencyCode={report.currencyCode} />
+        <OwnerChannelBreakdownChart breakdown={report.channelBreakdown} />
         <OwnerStoreComparisonTable stores={report.storeComparison} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <OwnerProductPerformanceTable products={report.topProducts} currencyCode={report.currencyCode} />
-        <OwnerSubscriptionSummaryCards summary={report.subscriptionSummary} currencyCode={report.currencyCode} />
+        <OwnerProductPerformanceTable products={report.topProducts} />
+        <OwnerSubscriptionSummaryCards summary={report.subscriptionSummary} />
       </div>
 
       <OwnerInsightsPanel insights={report.insights} />

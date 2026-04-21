@@ -48,10 +48,10 @@ function fmtDate(iso: string) {
   });
 }
 
-function fmtAmount(minor: number, currency: string) {
+function fmtAmount(minor: number) {
   return new Intl.NumberFormat("en-NZ", {
     style: "currency",
-    currency,
+    currency: "NZD",
   }).format(minor / 100);
 }
 
@@ -89,7 +89,7 @@ export function OrderListTable({ orders }: OrderListTableProps) {
           </div>
           <div className="ml-4 shrink-0 text-right">
             <div className="text-sm font-semibold text-gray-900">
-              {fmtAmount(order.totalAmount, order.currencyCode)}
+              {fmtAmount(order.totalAmount)}
             </div>
             <div className="text-xs text-gray-400 mt-0.5">›</div>
           </div>

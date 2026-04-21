@@ -60,10 +60,10 @@ const CHANNEL_LABELS: Record<string, string> = {
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
-function formatPrice(amount: number, currency = "NZD"): string {
+function formatPrice(amount: number): string {
   return new Intl.NumberFormat("en-NZ", {
     style: "currency",
-    currency,
+    currency: "NZD",
     minimumFractionDigits: 2,
   }).format(amount / 100);
 }
@@ -111,7 +111,7 @@ function OrderCard({ order, onSelect, onAction, updating }: OrderCardProps) {
           </span>
           <span>{order.itemCount} item{order.itemCount !== 1 ? "s" : ""}</span>
           <span className="ml-auto font-semibold text-gray-700">
-            {formatPrice(order.totalAmount, order.currencyCode)}
+            {formatPrice(order.totalAmount)}
           </span>
         </div>
       </button>
@@ -248,7 +248,7 @@ function OrderDetailDrawer({ orderId, storeId, onClose, onAction, updatingId }: 
                         )}
                       </span>
                       <span className="text-gray-700">
-                        {formatPrice(item.totalPriceAmount, detail.currencyCode)}
+                        {formatPrice(item.totalPriceAmount)}
                       </span>
                     </div>
                     {item.modifiers.length > 0 && (
@@ -257,7 +257,7 @@ function OrderDetailDrawer({ orderId, storeId, onClose, onAction, updatingId }: 
                           <li key={idx} className="flex justify-between text-xs text-gray-500 pl-2">
                             <span>+ {m.modifierOptionName}</span>
                             {m.unitPriceAmount > 0 && (
-                              <span>{formatPrice(m.unitPriceAmount, detail.currencyCode)}</span>
+                              <span>{formatPrice(m.unitPriceAmount)}</span>
                             )}
                           </li>
                         ))}
@@ -278,24 +278,24 @@ function OrderDetailDrawer({ orderId, storeId, onClose, onAction, updatingId }: 
               {detail.discountAmount > 0 && (
                 <div className="flex justify-between text-gray-600">
                   <span>Discount</span>
-                  <span>−{formatPrice(detail.discountAmount, detail.currencyCode)}</span>
+                  <span>−{formatPrice(detail.discountAmount)}</span>
                 </div>
               )}
               {detail.taxAmount > 0 && (
                 <div className="flex justify-between text-gray-600">
                   <span>Tax</span>
-                  <span>{formatPrice(detail.taxAmount, detail.currencyCode)}</span>
+                  <span>{formatPrice(detail.taxAmount)}</span>
                 </div>
               )}
               {detail.tipAmount > 0 && (
                 <div className="flex justify-between text-gray-600">
                   <span>Tip</span>
-                  <span>{formatPrice(detail.tipAmount, detail.currencyCode)}</span>
+                  <span>{formatPrice(detail.tipAmount)}</span>
                 </div>
               )}
               <div className="flex justify-between font-semibold text-gray-900 border-t border-gray-200 pt-1 mt-1">
                 <span>Total</span>
-                <span>{formatPrice(detail.totalAmount, detail.currencyCode)}</span>
+                <span>{formatPrice(detail.totalAmount)}</span>
               </div>
             </div>
 

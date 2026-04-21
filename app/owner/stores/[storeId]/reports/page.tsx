@@ -40,22 +40,22 @@ export default async function StoreReportsPage({ params, searchParams }: Props) 
         <div>
           <h1 className="text-xl font-bold text-gray-900">Store Reports</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {report.storeName} · {report.fromDate} — {report.toDate} · {report.currencyCode}
+            {report.storeName} · {report.fromDate} — {report.toDate}
           </p>
         </div>
       </div>
 
       <OwnerReportsFilterBar filters={filters} />
       <OwnerKpiGrid summary={report.summary} comparison={report.comparisonSummary} />
-      <OwnerRevenueTrendChart trend={report.revenueTrend} currencyCode={report.currencyCode} />
-      <OwnerChannelBreakdownChart breakdown={report.channelBreakdown} currencyCode={report.currencyCode} />
+      <OwnerRevenueTrendChart trend={report.revenueTrend} />
+      <OwnerChannelBreakdownChart breakdown={report.channelBreakdown} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <OwnerCategoryPerformanceTable categories={report.categoryPerformance} currencyCode={report.currencyCode} />
-        <OwnerProductPerformanceTable products={report.productPerformance} currencyCode={report.currencyCode} title="Product Performance" />
+        <OwnerCategoryPerformanceTable categories={report.categoryPerformance} />
+        <OwnerProductPerformanceTable products={report.productPerformance} title="Product Performance" />
       </div>
 
-      <OwnerSubscriptionSummaryCards summary={report.subscriptionSummary} currencyCode={report.currencyCode} />
+      <OwnerSubscriptionSummaryCards summary={report.subscriptionSummary} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <OwnerOrderHealthCard health={report.orderHealth} />

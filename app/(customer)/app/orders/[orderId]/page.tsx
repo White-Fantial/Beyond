@@ -43,7 +43,7 @@ export default async function CustomerOrderDetailPage({ params }: Props) {
             Items ({order.items.length})
           </h2>
           <div className="bg-white rounded-xl border border-gray-200 px-4">
-            <OrderItemsTable items={order.items} currency={order.currencyCode} />
+            <OrderItemsTable items={order.items} />
           </div>
         </div>
 

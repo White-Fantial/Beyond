@@ -166,13 +166,11 @@ export async function getHeatmapData(
  * @param tenantId  Tenant scoping (required).
  * @param storeId   Optional: restrict to a single store.
  * @param horizon   Number of days to forecast (7, 14, or 30).
- * @param currencyCode  Currency code for display.
  */
 export async function getRevenueForecast(
   tenantId: string,
   storeId?: string,
-  horizon: ForecastHorizon = 7,
-  currencyCode = "NZD"
+  horizon: ForecastHorizon = 7
 ): Promise<ForecastData> {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
@@ -233,7 +231,7 @@ export async function getRevenueForecast(
     }
   }
 
-  return { points, horizon, projectedTotalMinor, currencyCode };
+  return { points, horizon, projectedTotalMinor };
 }
 
 // ─── getProductionEstimates ───────────────────────────────────────────────────

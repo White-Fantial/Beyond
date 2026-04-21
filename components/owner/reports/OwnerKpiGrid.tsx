@@ -16,16 +16,14 @@ function trendInfo(current: number, previous: number, format: (n: number) => str
 }
 
 export default function OwnerKpiGrid({ summary, comparison }: Props) {
-  const { currencyCode } = summary;
-
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
       <OwnerKpiCard
         label="Gross Revenue"
-        value={formatMinorCompact(summary.grossRevenueMinor, currencyCode)}
+        value={formatMinorCompact(summary.grossRevenueMinor)}
         sub={`${summary.orderCount} orders`}
         icon="💰"
-        trend={comparison ? trendInfo(summary.grossRevenueMinor, comparison.grossRevenueMinor, (n) => formatMinorCompact(n, currencyCode)) : null}
+        trend={comparison ? trendInfo(summary.grossRevenueMinor, comparison.grossRevenueMinor, formatMinorCompact) : null}
       />
       <OwnerKpiCard
         label="Orders"
@@ -35,9 +33,9 @@ export default function OwnerKpiGrid({ summary, comparison }: Props) {
       />
       <OwnerKpiCard
         label="Avg Order Value"
-        value={formatMinorFull(summary.averageOrderValueMinor, currencyCode)}
+        value={formatMinorFull(summary.averageOrderValueMinor)}
         icon="🧾"
-        trend={comparison ? trendInfo(summary.averageOrderValueMinor, comparison.averageOrderValueMinor, (n) => formatMinorFull(n, currencyCode)) : null}
+        trend={comparison ? trendInfo(summary.averageOrderValueMinor, comparison.averageOrderValueMinor, formatMinorFull) : null}
       />
       <OwnerKpiCard
         label="Completed Rate"
@@ -55,10 +53,10 @@ export default function OwnerKpiGrid({ summary, comparison }: Props) {
       />
       <OwnerKpiCard
         label="Subscription Revenue"
-        value={formatMinorCompact(summary.subscriptionRevenueMinor, currencyCode)}
+        value={formatMinorCompact(summary.subscriptionRevenueMinor)}
         sub={`${summary.subscriptionOrderCount} sub orders`}
         icon="🔄"
-        trend={comparison ? trendInfo(summary.subscriptionRevenueMinor, comparison.subscriptionRevenueMinor, (n) => formatMinorCompact(n, currencyCode)) : null}
+        trend={comparison ? trendInfo(summary.subscriptionRevenueMinor, comparison.subscriptionRevenueMinor, formatMinorCompact) : null}
       />
     </div>
   );

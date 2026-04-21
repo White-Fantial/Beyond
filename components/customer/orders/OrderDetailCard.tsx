@@ -12,8 +12,8 @@ function fmtDate(iso: string | null) {
   });
 }
 
-function fmtAmount(minor: number, currency: string) {
-  return new Intl.NumberFormat("en-NZ", { style: "currency", currency }).format(minor / 100);
+function fmtAmount(minor: number) {
+  return new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD" }).format(minor / 100);
 }
 
 interface OrderDetailCardProps {
@@ -60,29 +60,29 @@ export function OrderDetailCard({ order }: OrderDetailCardProps) {
       <div className="border-t border-gray-100 pt-3 space-y-1">
         <div className="flex justify-between text-sm text-gray-500">
           <span>Subtotal</span>
-          <span>{fmtAmount(order.subtotalAmount, order.currencyCode)}</span>
+          <span>{fmtAmount(order.subtotalAmount)}</span>
         </div>
         {order.discountAmount > 0 && (
           <div className="flex justify-between text-sm text-green-600">
             <span>Discount</span>
-            <span>−{fmtAmount(order.discountAmount, order.currencyCode)}</span>
+            <span>−{fmtAmount(order.discountAmount)}</span>
           </div>
         )}
         {order.taxAmount > 0 && (
           <div className="flex justify-between text-sm text-gray-500">
             <span>Tax</span>
-            <span>{fmtAmount(order.taxAmount, order.currencyCode)}</span>
+            <span>{fmtAmount(order.taxAmount)}</span>
           </div>
         )}
         {order.tipAmount > 0 && (
           <div className="flex justify-between text-sm text-gray-500">
             <span>Tip</span>
-            <span>{fmtAmount(order.tipAmount, order.currencyCode)}</span>
+            <span>{fmtAmount(order.tipAmount)}</span>
           </div>
         )}
         <div className="flex justify-between text-base font-semibold text-gray-900 pt-1 border-t border-gray-100">
           <span>Total</span>
-          <span>{fmtAmount(order.totalAmount, order.currencyCode)}</span>
+          <span>{fmtAmount(order.totalAmount)}</span>
         </div>
       </div>
     </div>

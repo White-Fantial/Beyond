@@ -11,7 +11,6 @@ export default function TenantSettingsForm({ initial }: Props) {
   const [form, setForm] = useState({
     displayName: initial.displayName,
     timezone: initial.timezone,
-    currency: initial.currency,
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -31,7 +30,6 @@ export default function TenantSettingsForm({ initial }: Props) {
         body: JSON.stringify({
           displayName: form.displayName || undefined,
           timezone: form.timezone || undefined,
-          currency: form.currency || undefined,
         }),
       });
       if (!res.ok) {
@@ -83,20 +81,6 @@ export default function TenantSettingsForm({ initial }: Props) {
             value={form.timezone}
             onChange={handleChange}
             placeholder="e.g. Pacific/Auckland"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-            Currency
-          </label>
-          <input
-            type="text"
-            name="currency"
-            value={form.currency}
-            onChange={handleChange}
-            maxLength={3}
-            placeholder="e.g. NZD"
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>

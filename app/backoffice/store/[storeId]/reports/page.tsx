@@ -32,9 +32,9 @@ export default async function BackofficeReportsPage({
       <p className="text-sm text-gray-500">
         {data.fromDate} — {data.toDate} &middot; {data.days} days
       </p>
-      <ReportsDailyChart series={data.dailySeries} currencyCode={data.currencyCode} />
+      <ReportsDailyChart series={data.dailySeries} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ReportsChannelBreakdown breakdown={data.channelBreakdown} currencyCode={data.currencyCode} />
+        <ReportsChannelBreakdown breakdown={data.channelBreakdown} />
         <ReportsStatusFunnel funnel={data.statusFunnel} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

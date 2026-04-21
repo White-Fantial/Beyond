@@ -31,11 +31,11 @@ export default function OwnerStoreComparisonTable({ stores }: Props) {
                 <tr key={store.storeId} className="hover:bg-gray-50">
                   <td className="py-2 pr-4 font-medium text-gray-800">{store.storeName}</td>
                   <td className="py-2 pr-4 text-right text-gray-700">
-                    {formatMinorCompact(store.revenueMinor, store.currencyCode)}
+                    {formatMinorCompact(store.revenueMinor)}
                   </td>
                   <td className="py-2 pr-4 text-right text-gray-600">{store.orderCount}</td>
                   <td className="py-2 pr-4 text-right text-gray-600">
-                    {formatMinorFull(store.averageOrderValueMinor, store.currencyCode)}
+                    {formatMinorFull(store.averageOrderValueMinor)}
                   </td>
                   <td className="py-2 pr-4 text-right">
                     <span className={store.cancelledRate > 0.15 ? "text-red-600 font-medium" : "text-gray-600"}>

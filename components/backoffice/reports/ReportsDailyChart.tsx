@@ -1,16 +1,10 @@
 import type { BackofficeDailyPoint } from "@/types/backoffice";
 
-function currencySymbol(code: string): string {
-  const map: Record<string, string> = { NZD: "$", AUD: "$", USD: "$", GBP: "£", EUR: "€" };
-  return map[code] ?? `${code} `;
-}
-
 interface Props {
   series: BackofficeDailyPoint[];
-  currencyCode: string;
 }
 
-export default function ReportsDailyChart({ series, currencyCode }: Props) {
+export default function ReportsDailyChart({ series }: Props) {
   if (series.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
@@ -21,7 +15,6 @@ export default function ReportsDailyChart({ series, currencyCode }: Props) {
 
   const maxRevenue = Math.max(...series.map((s) => s.revenueMinor), 1);
   const maxOrders = Math.max(...series.map((s) => s.orderCount), 1);
-  const sym = currencySymbol(currencyCode);
 
   const chartH = 120;
   const chartW = Math.max(series.length * 20, 300);
@@ -56,7 +49,7 @@ export default function ReportsDailyChart({ series, currencyCode }: Props) {
                   rx={2}
                 >
                   <title>
-                    {point.dateLabel}: {sym}{(point.revenueMinor / 100).toFixed(2)} revenue
+                    {point.dateLabel}: ${(point.revenueMinor / 100).toFixed(2)} revenue
                   </title>
                 </rect>
                 {/* Order count dot */}

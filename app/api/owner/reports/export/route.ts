@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     if (format === "html") {
       const html = toHtmlReport({
         title: "Owner Reports",
-        subtitle: `${report.fromDate} — ${report.toDate} · ${report.currencyCode}`,
+        subtitle: `${report.fromDate} — ${report.toDate}`,
         sections: [
           {
             title: "Revenue Trend",

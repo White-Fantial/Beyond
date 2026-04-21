@@ -20,17 +20,11 @@ const CHANNEL_COLORS: Record<string, string> = {
   UNKNOWN: "#d1d5db",
 };
 
-function currencySymbol(code: string): string {
-  const map: Record<string, string> = { NZD: "$", AUD: "$", USD: "$", GBP: "£", EUR: "€" };
-  return map[code] ?? `${code} `;
-}
-
 interface Props {
   breakdown: BackofficeChannelReportItem[];
-  currencyCode: string;
 }
 
-export default function ReportsChannelBreakdown({ breakdown, currencyCode }: Props) {
+export default function ReportsChannelBreakdown({ breakdown }: Props) {
   if (breakdown.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -41,7 +35,6 @@ export default function ReportsChannelBreakdown({ breakdown, currencyCode }: Pro
   }
 
   const totalOrders = breakdown.reduce((s, c) => s + c.orderCount, 0) || 1;
-  const sym = currencySymbol(currencyCode);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -59,7 +52,7 @@ export default function ReportsChannelBreakdown({ breakdown, currencyCode }: Pro
                 <div className="flex items-center gap-3 text-xs text-gray-500">
                   <span>{item.orderCount} orders</span>
                   <span className="font-semibold text-gray-800">
-                    {sym}{(item.revenueMinor / 100).toFixed(2)}
+                    ${(item.revenueMinor / 100).toFixed(2)}
                   </span>
                 </div>
               </div>
