@@ -165,6 +165,26 @@ describe("createCredential", () => {
       })
     ).rejects.toThrow("already exists");
   });
+
+  it("allows creating a credential for a PLATFORM supplier", async () => {
+    const platformSupplier = { id: "sup-platform-1", scope: "PLATFORM", tenantId: null, name: "Sysco", deletedAt: null };
+    mockPrisma.supplier.findFirst.mockResolvedValue(platformSupplier);
+    mockPrisma.supplierCredential.findFirst.mockResolvedValue(null);
+    mockPrisma.supplierCredential.create.mockResolvedValue({
+      ...mockCredentialRow,
+      supplierId: "sup-platform-1",
+      supplier: { name: "Sysco" },
+    });
+
+    const result = await createCredential(TENANT, USER, {
+      supplierId: "sup-platform-1",
+      username: "user@sysco.com",
+      password: "pass123",
+    });
+
+    expect(result.supplierId).toBe("sup-platform-1");
+    expect(result.supplierName).toBe("Sysco");
+  });
 });
 
 // ─── updateCredential ─────────────────────────────────────────────────────────

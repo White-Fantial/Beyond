@@ -27,6 +27,8 @@ const marketplaceItems: NavItem[] = [
   { href: "/admin/provider-applications", label: "Provider Applications", icon: "📝" },
   { href: "/admin/platform-ingredients", label: "Platform Ingredients", icon: "🥬" },
   { href: "/admin/ingredient-requests", label: "Ingredient Requests", icon: "📋" },
+  { href: "/admin/suppliers", label: "Platform Suppliers", icon: "🚚" },
+  { href: "/admin/supplier-requests", label: "Supplier Requests", icon: "📨" },
 ];
 
 const platformHealthItems: NavItem[] = [

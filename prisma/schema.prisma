@@ -409,6 +409,8 @@ model User {
   recipePurchases          MarketplaceRecipePurchase[]
   ingredientRequests       IngredientRequest[]    @relation("IngredientRequestedBy")
   ingredientRequestsReviewed IngredientRequest[]  @relation("IngredientRequestReviewedBy")
+  supplierRequests         SupplierRequest[]      @relation("SupplierRequestedBy")
+  supplierRequestsReviewed SupplierRequest[]      @relation("SupplierRequestReviewedBy")
   providerApplications       ProviderOnboardingApplication[] @relation("ProviderApplicationUser")
   providerApplicationsReviewed ProviderOnboardingApplication[] @relation("ProviderApplicationReviewer")
 
@@ -3486,25 +3488,72 @@ model RecipeIngredient {
   @@map("recipe_ingredients")
 }
 
+/// Scope for a supplier record.
+/// PLATFORM = admin-managed, visible to all owners.
+/// STORE = legacy tenant-managed (backward compat).
+enum SupplierScope {
+  PLATFORM
+  STORE
+}
+
+/// Status for an owner-submitted supplier addition request.
+enum SupplierRequestStatus {
+  PENDING    // Awaiting moderator review
+  APPROVED   // Moderator approved — resolvedSupplierId is set to the new PLATFORM supplier
+  REJECTED   // Moderator rejected
+  DUPLICATE  // Already exists in the platform catalogue
+}
+
 model Supplier {
-  id           String   @id @default(uuid())
-  tenantId     String
-  storeId      String
+  id           String        @id @default(uuid())
+  scope        SupplierScope @default(STORE)
+  tenantId     String?       // null for PLATFORM scope
+  storeId      String?       // null for PLATFORM scope
   name         String
   websiteUrl   String?
   contactEmail String?
   contactPhone String?
   notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   deletedAt    DateTime?
 
-  products    SupplierProduct[]
-  credentials SupplierCredential[]
+  products         SupplierProduct[]
+  credentials      SupplierCredential[]
+  supplierRequests SupplierRequest[]
 
+  @@index([scope])
   @@index([tenantId, storeId])
   @@index([storeId, name])
   @@map("suppliers")
+}
+
+/// An owner's request to add a new supplier to the platform catalogue.
+/// Moderators review these and can create a matching Supplier (scope=PLATFORM) on APPROVED.
+model SupplierRequest {
+  id                 String                @id @default(uuid())
+  requestedByUserId  String
+  tenantId           String
+  name               String
+  websiteUrl         String?
+  contactEmail       String?
+  contactPhone       String?
+  notes              String?
+  status             SupplierRequestStatus @default(PENDING)
+  resolvedSupplierId String?               // set on APPROVED — points to Supplier (scope=PLATFORM)
+  reviewedByUserId   String?
+  reviewNotes        String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  requestedBy      User      @relation("SupplierRequestedBy", fields: [requestedByUserId], references: [id], onDelete: Restrict)
+  reviewedBy       User?     @relation("SupplierRequestReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  resolvedSupplier Supplier? @relation(fields: [resolvedSupplierId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([tenantId])
+  @@index([requestedByUserId])
+  @@map("supplier_requests")
 }
 
 model SupplierProduct {
