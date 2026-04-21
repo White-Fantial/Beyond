@@ -77,7 +77,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
         <div>
           <h1 className="text-xl font-bold text-gray-900">Recipe Management</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {total} recipe{total !== 1 ? "s" : ""} total
+            {total} {total === 1 ? "recipe" : "recipes"} total
           </p>
         </div>
       </div>
@@ -87,7 +87,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
 
       {/* Store filter */}
       <form method="GET" className="flex items-center gap-3">
-        <label className="text-xs text-gray-500 font-medium">Filter by store:</label>
+        <label className="text-xs text-gray-500 font-medium">Store filter:</label>
         <select
           name="storeId"
           defaultValue={selectedStoreId}
@@ -104,7 +104,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
           type="submit"
           className="px-3 py-1.5 text-xs font-medium text-white bg-gray-700 rounded-lg hover:bg-gray-800 transition"
         >
-          Apply filter
+          Apply Filter
         </button>
         {selectedStoreId && (
           <Link
@@ -125,13 +125,12 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
               <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">Store</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Yield</th>
               <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Created</th>
-              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
             {recipes.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
                   No recipes found.
                 </td>
               </tr>

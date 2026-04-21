@@ -26,7 +26,7 @@ export default function AdminCreateRecipeForm() {
       return;
     }
     if (!name.trim()) {
-      setError("Recipe name is required.");
+      setError("Please enter a recipe name.");
       return;
     }
     if (!qty || qty < 1) {
@@ -59,7 +59,7 @@ export default function AdminCreateRecipeForm() {
       setOpen(false);
       router.refresh();
     } catch {
-      setError("Network error. Please try again.");
+      setError("A network error occurred.");
     } finally {
       setSubmitting(false);
     }
@@ -103,7 +103,7 @@ export default function AdminCreateRecipeForm() {
           onChange={(e) => setStoreId(e.target.value)}
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
         >
-          <option value="">Select store…</option>
+          <option value="">Select a store…</option>
           {stores.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name} ({s.tenant?.displayName ?? s.tenantId})
@@ -177,7 +177,7 @@ export default function AdminCreateRecipeForm() {
           disabled={submitting}
           className="px-5 py-2 bg-red-700 text-white text-sm font-medium rounded-lg hover:bg-red-800 disabled:opacity-50 transition"
         >
-          {submitting ? "Saving…" : "Add Recipe"}
+          {submitting ? "Creating…" : "Add Recipe"}
         </button>
         <button
           type="button"

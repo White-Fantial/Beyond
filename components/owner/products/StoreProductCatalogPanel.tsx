@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { StoreProductSelectionRow, TenantProductRow } from "@/types/owner";
 
 function formatPrice(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount / 100);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount / 100000);
 }
 
 interface Props {
