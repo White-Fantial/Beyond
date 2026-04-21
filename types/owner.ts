@@ -464,3 +464,42 @@ export interface OwnerTeamMember {
   invitedAt: string | null;
   storeAssignments: OwnerTeamStoreAssignment[];
 }
+
+// ─── Tenant Catalog Products ──────────────────────────────────────────────────
+
+export interface TenantProductRow {
+  id: string;
+  tenantId: string;
+  name: string;
+  description: string | null;
+  shortDescription: string | null;
+  basePriceAmount: number;
+  currency: string;
+  imageUrl: string | null;
+  displayOrder: number;
+  isActive: boolean;
+  internalNote: string | null;
+  createdAt: string;
+  /** Number of stores that have selected this product. */
+  selectionCount: number;
+}
+
+export interface StoreProductSelectionRow {
+  id: string;
+  storeId: string;
+  tenantProductId: string;
+  /** Resolved price: customPriceAmount if set, otherwise tenantProduct.basePriceAmount */
+  effectivePriceAmount: number;
+  customPriceAmount: number | null;
+  isActive: boolean;
+  displayOrder: number;
+  selectedAt: string;
+  product: {
+    name: string;
+    description: string | null;
+    shortDescription: string | null;
+    basePriceAmount: number;
+    currency: string;
+    imageUrl: string | null;
+  };
+}

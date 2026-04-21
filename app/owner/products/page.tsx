@@ -1,58 +1,92 @@
 import { requireOwnerPortalAccess } from "@/lib/owner/auth-guard";
-import { getOwnerStores } from "@/services/owner/owner-store.service";
-import { redirect } from "next/navigation";
+import { listTenantProducts } from "@/services/owner/owner-tenant-products.service";
 import Link from "next/link";
 
-const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  ACTIVE: { label: "Active", className: "bg-green-100 text-green-700" },
-  INACTIVE: { label: "Inactive", className: "bg-gray-100 text-gray-500" },
-  ARCHIVED: { label: "Archived", className: "bg-gray-100 text-gray-400" },
-};
+function formatPrice(amount: number, currency: string) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount / 100);
+}
 
 export default async function OwnerProductsPage() {
   const ctx = await requireOwnerPortalAccess();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
-  const stores = tenantId ? await getOwnerStores(tenantId) : [];
-
-  if (stores.length === 1) {
-    redirect(`/owner/stores/${stores[0].id}/products`);
-  }
+  const products = tenantId ? await listTenantProducts(tenantId) : [];
 
   return (
-    <div className="max-w-3xl mx-auto py-8 px-4">
-      <h1 className="text-xl font-bold text-gray-900 mb-2">Products</h1>
-      <p className="text-sm text-gray-500 mb-6">Select a store to manage its products.</p>
-      {stores.length === 0 ? (
-        <p className="text-gray-500 text-sm">No stores registered.</p>
-      ) : (
-        <div className="space-y-3">
-          {stores.map((store) => {
-            const badge = STATUS_BADGE[store.status] ?? {
-              label: store.status,
-              className: "bg-gray-100 text-gray-500",
-            };
-            return (
-              <Link
-                key={store.id}
-                href={`/owner/stores/${store.id}/products`}
-                className="block bg-white border border-gray-200 rounded-lg p-4 hover:border-brand-400 hover:shadow-sm transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-gray-900">{store.name}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      {store.timezone} · {store.currency}
-                    </div>
-                  </div>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded ${badge.className}`}>
-                    {badge.label}
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
+    <div className="max-w-5xl mx-auto py-8 px-4 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Product Catalog</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Manage your shared product catalog. Each store can select which products to sell.
+          </p>
         </div>
-      )}
+        <Link
+          href="/owner/products/new"
+          className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+        >
+          + New Product
+        </Link>
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        {products.length === 0 ? (
+          <div className="p-10 text-center">
+            <p className="text-gray-400 text-sm">No products in the catalog yet.</p>
+            <p className="text-gray-400 text-xs mt-1">
+              Add products here, then assign them to individual stores.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Name</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-gray-500">Description</th>
+                  <th className="text-right px-4 py-2.5 text-xs font-medium text-gray-500">Base Price</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Stores</th>
+                  <th className="text-center px-4 py-2.5 text-xs font-medium text-gray-500">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {products.map((p) => (
+                  <tr key={p.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/owner/products/${p.id}`}
+                        className="font-medium text-brand-700 hover:text-brand-900 hover:underline"
+                      >
+                        {p.name}
+                      </Link>
+                      {p.shortDescription && (
+                        <div className="text-xs text-gray-400 mt-0.5 line-clamp-1">
+                          {p.shortDescription}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-xs line-clamp-2 max-w-xs">
+                      {p.description ?? <span className="text-gray-300">-</span>}
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-700 font-medium">
+                      {formatPrice(p.basePriceAmount, p.currency)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${p.selectionCount > 0 ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-400"}`}>
+                        {p.selectionCount} {p.selectionCount === 1 ? "store" : "stores"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${p.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-400"}`}>
+                        {p.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
