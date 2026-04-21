@@ -59,14 +59,6 @@ export default function ProductRecipePanel({ storeId, catalogProductId, tenantCa
               </div>
             </div>
           ))}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-xs font-medium text-gray-500 mb-2">Add another recipe</p>
-            <ProductRecipeActions
-              storeId={storeId}
-              catalogProductId={catalogProductId}
-              tenantCatalogProductId={tenantCatalogProductId}
-            />
-          </div>
         </>
       )}
     </div>
