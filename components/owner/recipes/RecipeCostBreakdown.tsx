@@ -24,6 +24,11 @@ function formatCostRounded(minor: number) {
   return `$${(minor / 100).toFixed(2)}`;
 }
 
+/** Format a price stored in millicents (1/100000 dollar). */
+function formatMillicents(millicents: number) {
+  return `$${(millicents / 100000).toFixed(4)}`;
+}
+
 export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
   const router = useRouter();
   const [sellingPriceGstIncluded, setSellingPriceGstIncluded] = useState(true);
@@ -173,7 +178,7 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
                       {INGREDIENT_UNIT_LABELS[ing.unit] ?? ing.unit}
                     </td>
                     <td className="px-5 py-3 text-right text-gray-600">
-                      {formatCost(ing.ingredientUnitCost)}/
+                      {formatMillicents(ing.ingredientUnitCost)}/
                       {INGREDIENT_UNIT_LABELS[ing.ingredientUnit] ?? ing.ingredientUnit}
                     </td>
                     <td className="px-5 py-3 text-right font-medium text-gray-900">

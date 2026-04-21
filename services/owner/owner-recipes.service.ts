@@ -439,7 +439,10 @@ export async function getProductRecipes(
     rows.map(async (row) => {
       const recipe = toRecipe(row as RawRecipe);
       const rawIngredients = row.ingredients as RawRecipeIngredient[];
-      const effectiveTenantId = tenantId ?? row.tenantId ?? "";
+      const effectiveTenantId = tenantId ?? row.tenantId;
+      if (!effectiveTenantId) {
+        throw new Error(`Cannot resolve costs: recipe ${row.id} has no tenantId`);
+      }
       const costMap = await resolveCosts(effectiveTenantId, rawIngredients);
       const ingredients = rawIngredients.map((ri) =>
         toRecipeIngredientWithCost(ri, costMap)
