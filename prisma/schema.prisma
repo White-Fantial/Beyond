@@ -1319,6 +1319,55 @@ model CatalogProduct {
   @@map("catalog_products")
 }
 
+// ─── Tenant Catalog Products (cross-store shared product definitions) ──────────
+
+/// A product definition shared across all stores in a tenant.
+/// Owners manage these at the tenant level; individual stores select which to sell.
+model TenantCatalogProduct {
+  id               String   @id @default(uuid())
+  tenantId         String
+  name             String
+  description      String?
+  shortDescription String?
+  basePriceAmount  Int      @default(0)
+  currency         String   @default("USD")
+  imageUrl         String?
+  displayOrder     Int      @default(0)
+  isActive         Boolean  @default(true)
+  internalNote     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  deletedAt        DateTime?
+
+  storeSelections StoreProductSelection[]
+
+  @@index([tenantId, isActive, displayOrder])
+  @@index([tenantId, name])
+  @@map("tenant_catalog_products")
+}
+
+/// Records which stores have selected a TenantCatalogProduct to sell,
+/// with optional per-store overrides.
+model StoreProductSelection {
+  id               String   @id @default(uuid())
+  tenantId         String
+  storeId          String
+  tenantProductId  String
+  /// Override the tenant-level base price for this store (null = use tenant default).
+  customPriceAmount Int?
+  isActive         Boolean  @default(true)
+  displayOrder     Int      @default(0)
+  selectedAt       DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenantProduct TenantCatalogProduct @relation(fields: [tenantProductId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, tenantProductId])
+  @@index([tenantId, storeId])
+  @@index([storeId, isActive, displayOrder])
+  @@map("store_product_selections")
+}
+
 model CatalogProductCategory {
   id         String   @id @default(uuid())
   tenantId   String
