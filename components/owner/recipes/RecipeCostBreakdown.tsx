@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { RecipeDetail } from "@/types/owner-recipes";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
 import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
 import AddRecipeIngredientForm from "./AddRecipeIngredientForm";
+import EditRecipeIngredientForm from "./EditRecipeIngredientForm";
 
 interface Props {
   detail: RecipeDetail;
@@ -25,6 +26,7 @@ function formatCostRounded(minor: number) {
 export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
   const [sellingPriceGstIncluded, setSellingPriceGstIncluded] = useState(true);
   const [showAddIngredient, setShowAddIngredient] = useState(false);
+  const [editingIngredientId, setEditingIngredientId] = useState<string | null>(null);
 
   const rawPrice = detail.catalogProductPrice;
   const effectivePrice =
@@ -114,10 +116,10 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
           </h3>
           {canEdit && !showAddIngredient && (
             <button
-              onClick={() => setShowAddIngredient(true)}
+              onClick={() => { setShowAddIngredient(true); setEditingIngredientId(null); }}
               className="text-xs font-medium text-brand-600 hover:text-brand-700 transition"
             >
-              + 재료 추가
+              + Add Ingredient
             </button>
           )}
         </div>
@@ -134,29 +136,59 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
                 <th className="px-5 py-3 text-left font-medium">Unit</th>
                 <th className="px-5 py-3 text-right font-medium">Unit Cost (ex-GST)</th>
                 <th className="px-5 py-3 text-right font-medium">Line Cost</th>
+                {canEdit && <th className="px-5 py-3" />}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {detail.ingredients.map((ing) => (
-                <tr key={ing.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3 text-gray-900">{ing.ingredientName}</td>
-                  <td className="px-5 py-3 text-right text-gray-700">
-                    {ing.quantity}
-                  </td>
-                  <td className="px-5 py-3 text-gray-600">
-                    {INGREDIENT_UNIT_LABELS[ing.unit] ?? ing.unit}
-                  </td>
-                  <td className="px-5 py-3 text-right text-gray-600">
-                    {formatCost(ing.ingredientUnitCost)}/
-                    {INGREDIENT_UNIT_LABELS[ing.ingredientUnit] ?? ing.ingredientUnit}
-                  </td>
-                  <td className="px-5 py-3 text-right font-medium text-gray-900">
-                    {formatCost(ing.lineCost)}
-                  </td>
-                </tr>
+                <Fragment key={ing.id}>
+                  <tr className="hover:bg-gray-50 transition-colors">
+                    <td className="px-5 py-3 text-gray-900">{ing.ingredientName}</td>
+                    <td className="px-5 py-3 text-right text-gray-700">
+                      {ing.quantity}
+                    </td>
+                    <td className="px-5 py-3 text-gray-600">
+                      {INGREDIENT_UNIT_LABELS[ing.unit] ?? ing.unit}
+                    </td>
+                    <td className="px-5 py-3 text-right text-gray-600">
+                      {formatCost(ing.ingredientUnitCost)}/
+                      {INGREDIENT_UNIT_LABELS[ing.ingredientUnit] ?? ing.ingredientUnit}
+                    </td>
+                    <td className="px-5 py-3 text-right font-medium text-gray-900">
+                      {formatCost(ing.lineCost)}
+                    </td>
+                    {canEdit && (
+                      <td className="px-5 py-3 text-right">
+                        <button
+                          onClick={() => {
+                            setShowAddIngredient(false);
+                            setEditingIngredientId(
+                              editingIngredientId === ing.id ? null : ing.id
+                            );
+                          }}
+                          className="text-xs font-medium text-brand-600 hover:text-brand-700 transition"
+                        >
+                          {editingIngredientId === ing.id ? "Cancel" : "Edit"}
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                  {canEdit && editingIngredientId === ing.id && (
+                    <tr>
+                      <td colSpan={6} className="p-0">
+                        <EditRecipeIngredientForm
+                          recipeId={detail.id}
+                          ingredient={ing}
+                          currentIngredients={detail.ingredients}
+                          onClose={() => setEditingIngredientId(null)}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
               <tr className="bg-gray-50 border-t-2 border-gray-200">
-                <td colSpan={4} className="px-5 py-3 text-right text-sm font-semibold text-gray-700">
+                <td colSpan={canEdit ? 5 : 4} className="px-5 py-3 text-right text-sm font-semibold text-gray-700">
                   Total
                 </td>
                 <td className="px-5 py-3 text-right font-bold text-gray-900">
