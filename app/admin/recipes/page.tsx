@@ -1,8 +1,7 @@
 import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
 import { prisma } from "@/lib/prisma";
 import AdminCreateRecipeForm from "@/components/admin/AdminCreateRecipeForm";
-import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
-import type { RecipeYieldUnit } from "@/types/owner-recipes";
+import AdminRecipeActions from "@/components/admin/AdminRecipeActions";
 import Link from "next/link";
 
 interface PageProps {
@@ -17,7 +16,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
   const page = params.page ? Number(params.page) : 1;
   const pageSize = 20;
 
-  // Fetch all active stores for the selector
+  // Fetch all active stores for the filter selector
   const stores = await prisma.store.findMany({
     where: { status: "ACTIVE" },
     select: { id: true, name: true, tenantId: true, tenant: { select: { displayName: true } } },
@@ -28,10 +27,11 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
   let recipes: {
     id: string;
     name: string;
-    storeId: string;
+    storeId: string | null;
     storeName: string | null;
     yieldQty: number;
     yieldUnit: string;
+    notes: string | null;
     createdAt: string;
   }[] = [];
   let total = 0;
@@ -51,8 +51,8 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
     prisma.recipe.count({ where }),
   ]);
 
-  // Fetch store names for the returned recipes
-  const recipeStoreIds = [...new Set(rows.map((r) => r.storeId))];
+  // Fetch store names only for recipes that have a storeId
+  const recipeStoreIds = [...new Set(rows.map((r) => r.storeId).filter((id): id is string => id !== null))];
   const storeRows = await prisma.store.findMany({
     where: { id: { in: recipeStoreIds } },
     select: { id: true, name: true },
@@ -63,9 +63,10 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
     id: r.id,
     name: r.name,
     storeId: r.storeId,
-    storeName: storeNameMap.get(r.storeId) ?? null,
+    storeName: r.storeId ? (storeNameMap.get(r.storeId) ?? null) : null,
     yieldQty: r.yieldQty,
     yieldUnit: r.yieldUnit,
+    notes: r.notes,
     createdAt: r.createdAt.toISOString(),
   }));
   total = count;
@@ -82,7 +83,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
       </div>
 
       {/* Create recipe form */}
-      <AdminCreateRecipeForm stores={stores} />
+      <AdminCreateRecipeForm />
 
       {/* Store filter */}
       <form method="GET" className="flex items-center gap-3">
@@ -135,19 +136,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
               </tr>
             ) : (
               recipes.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{r.name}</td>
-                  <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">
-                    {r.storeName ?? r.storeId}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 hidden md:table-cell">
-                    {r.yieldQty}{" "}
-                    {RECIPE_YIELD_UNIT_LABELS[r.yieldUnit as RecipeYieldUnit] ?? r.yieldUnit}
-                  </td>
-                  <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell">
-                    {new Date(r.createdAt).toLocaleDateString("en-US")}
-                  </td>
-                </tr>
+                <AdminRecipeActions key={r.id} recipe={r} />
               ))
             )}
           </tbody>

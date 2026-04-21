@@ -21,9 +21,10 @@ import type { IngredientUnit } from "@/types/owner-ingredients";
 
 type RawRecipe = {
   id: string;
-  tenantId: string;
-  storeId: string;
+  tenantId: string | null;
+  storeId: string | null;
   catalogProductId: string | null;
+  tenantCatalogProductId: string | null;
   name: string;
   yieldQty: number;
   yieldUnit: string;
@@ -45,6 +46,7 @@ function toRecipe(row: RawRecipe): Recipe {
     catalogProductId: row.catalogProductId,
     catalogProductName: row.catalogProduct?.name ?? null,
     catalogProductPrice: row.catalogProduct?.basePriceAmount ?? null,
+    tenantCatalogProductId: row.tenantCatalogProductId ?? null,
     name: row.name,
     yieldQty: row.yieldQty,
     yieldUnit: row.yieldUnit as RecipeYieldUnit,
@@ -165,14 +167,15 @@ export async function getRecipe(
 }
 
 export async function createRecipe(
-  tenantId: string,
+  tenantId: string | null,
   input: CreateRecipeInput
 ): Promise<RecipeDetail> {
   const row = await prisma.recipe.create({
     data: {
       tenantId,
-      storeId: input.storeId,
+      storeId: input.storeId ?? null,
       catalogProductId: input.catalogProductId ?? null,
+      tenantCatalogProductId: input.tenantCatalogProductId ?? null,
       name: input.name,
       yieldQty: input.yieldQty,
       yieldUnit: input.yieldUnit,
@@ -332,6 +335,7 @@ export async function copyMarketplaceRecipeToOwner(
       notes: source.description ?? null,
       marketplaceSourceId: source.id,
       catalogProductId: input.catalogProductId ?? null,
+      tenantCatalogProductId: input.tenantCatalogProductId ?? null,
       ingredients: {
         create: ingredientsToCreate,
       },
@@ -381,6 +385,35 @@ export async function getProductRecipes(
       },
     },
     orderBy: { name: "asc" },
+  });
+
+  return rows.map((row) => {
+    const recipe = toRecipe(row as RawRecipe);
+    const ingredients = (row.ingredients as RawRecipeIngredient[]).map(toRecipeIngredient);
+    return computeCosts(recipe, ingredients);
+  });
+}
+
+/**
+ * List all recipes linked to a TenantCatalogProduct, across all stores.
+ * Used by the global product catalog detail page.
+ */
+export async function getTenantProductRecipes(
+  tenantId: string,
+  tenantCatalogProductId: string
+): Promise<RecipeDetail[]> {
+  const rows = await prisma.recipe.findMany({
+    where: { tenantId, tenantCatalogProductId, deletedAt: null },
+    include: {
+      catalogProduct: { select: { name: true, basePriceAmount: true } },
+      ingredients: {
+        include: {
+          ingredient: { select: { name: true, unit: true, unitCost: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+    orderBy: [{ storeId: "asc" }, { name: "asc" }],
   });
 
   return rows.map((row) => {
