@@ -55,12 +55,6 @@ export default async function OwnerAnalyticsPage({ searchParams }: Props) {
     ? (rawHorizon as ForecastHorizon)
     : 7;
 
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
-    select: { currency: true },
-  });
-  const currencyCode = tenant?.currency ?? "NZD";
-
   const stores = await prisma.store.findMany({
     where: { tenantId },
     select: { id: true, name: true },
@@ -71,7 +65,7 @@ export default async function OwnerAnalyticsPage({ searchParams }: Props) {
 
   const [heatmap, forecast, production, churn] = await Promise.all([
     getHeatmapData(tenantId, storeId, from, to),
-    getRevenueForecast(tenantId, storeId, horizon, currencyCode),
+    getRevenueForecast(tenantId, storeId, horizon),
     getProductionEstimates(tenantId, storeIds, weekStartDate),
     getChurnRiskSignals(tenantId),
   ]);
@@ -93,7 +87,7 @@ export default async function OwnerAnalyticsPage({ searchParams }: Props) {
       <AnalyticsSummaryCards
         peakWeekday={heatmap.peakWeekday}
         peakHour={heatmap.peakHour}
-        projectedRevenue={formatMinorCompact(forecast.projectedTotalMinor, currencyCode)}
+        projectedRevenue={formatMinorCompact(forecast.projectedTotalMinor)}
         atRiskSubscribers={churn.customers.filter((c) => c.activeSubscriptions > 0).length}
       />
 

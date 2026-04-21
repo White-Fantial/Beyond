@@ -222,10 +222,10 @@ describe("getRevenueForecast", () => {
     }
   });
 
-  it("propagates currencyCode into result", async () => {
+  it("returns no projected revenue with no orders", async () => {
     mockPrisma.order.findMany.mockResolvedValue([]);
-    const result = await getRevenueForecast(TENANT_A, undefined, 7, "AUD");
-    expect(result.currencyCode).toBe("AUD");
+    const result = await getRevenueForecast(TENANT_A, undefined, 7);
+    expect(result.projectedTotalMinor).toBe(0);
   });
 });
 

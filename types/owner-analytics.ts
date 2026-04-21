@@ -43,7 +43,6 @@ export interface ForecastData {
   horizon: ForecastHorizon;
   /** Projected total revenue for the forecast window (minor units). */
   projectedTotalMinor: number;
-  currencyCode: string;
 }
 
 // ─── Production Estimates ─────────────────────────────────────────────────────

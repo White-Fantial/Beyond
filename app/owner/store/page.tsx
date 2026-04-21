@@ -32,7 +32,6 @@ export default async function OwnerStorePage() {
                 region: store.region,
                 postalCode: store.postalCode,
                 timezone: store.timezone,
-                currency: store.currency,
               }}
             />
           </section>
