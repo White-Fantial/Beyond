@@ -37,10 +37,14 @@ export default function EditIngredientForm({ ingredient }: Props) {
 
   // Pre-fill total price from stored unitCost (millicents → dollars).
   // With totalQty=1 purchaseUnit, price = unitCost/100000 * conversionFactor (dollars per purchaseUnit).
-  const initConversion =
-    getUnitConversionFactor(ingredient.purchaseUnit, ingredient.unit) ?? 1;
+  // When purchaseUnit and unit are incompatible (no auto-conversion), we cannot derive a meaningful
+  // total price without the original manual conversion factor, so we leave the field empty and let
+  // the user re-enter their purchase details.
+  const initConversion = getUnitConversionFactor(ingredient.purchaseUnit, ingredient.unit);
   const [totalPriceStr, setTotalPriceStr] = useState(
-    ((ingredient.unitCost / 100000) * initConversion).toFixed(6)
+    initConversion !== undefined
+      ? ((ingredient.unitCost / 100000) * initConversion).toFixed(6)
+      : ""
   );
 
   const totalQty = parseFloat(totalQtyStr);
@@ -255,7 +259,18 @@ export default function EditIngredientForm({ ingredient }: Props) {
         </div>
       </div>
 
-      {/* Row 4: computed unit cost */}
+      {/* Row 4: current stored unit cost (shown when manual conversion is required) */}
+      {needsManualConversion && (
+        <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+          Current stored cost:{" "}
+          <span className="font-medium">
+            ${(ingredient.unitCost / 100000).toFixed(6)} / {INGREDIENT_UNIT_LABELS[ingredient.unit]}
+          </span>
+          . Enter your purchase details above to set a new cost.
+        </div>
+      )}
+
+      {/* Row 5: computed unit cost */}
       <div className="sm:w-2/3">
         <div className="text-xs font-medium text-gray-500 mb-1">
           Computed Unit Cost (per {INGREDIENT_UNIT_LABELS[recipeUnit]}, ex-GST)
