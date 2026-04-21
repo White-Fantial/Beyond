@@ -12,6 +12,13 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
+// Mock the bulk cost resolver so recipe tests don't need to wire up supplier price tables
+vi.mock("@/services/owner/owner-supplier-prices.service", () => ({
+  resolveEffectiveCostsBulk: vi.fn().mockResolvedValue(
+    new Map([["sp-1", { price: 5000, resolved: true }]])
+  ),
+}));
+
 import { prisma } from "@/lib/prisma";
 import {
   listRecipes,
@@ -41,7 +48,11 @@ const mockIngRow = {
   ingredientId: "ing-1",
   quantity: { toNumber: () => 250 },
   unit: "GRAM",
-  ingredient: { name: "Bread Flour", unit: "GRAM", unitCost: 5000 },
+  ingredient: {
+    name: "Bread Flour",
+    unit: "GRAM",
+    supplierLinks: [{ isPreferred: true, supplierProduct: { id: "sp-1", referencePrice: 5000 } }],
+  },
 };
 
 const mockRecipeRow = {

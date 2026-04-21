@@ -1,5 +1,5 @@
 /**
- * Types for Supplier Credentials & Base Price (Cost Management Phase 5).
+ * Types for Supplier Credentials & Price Records (Cost Management Phase 5+).
  */
 
 export interface SupplierCredential {
@@ -38,21 +38,12 @@ export interface VerifyCredentialResult {
   message: string;
 }
 
-export interface SupplierPriceObservation {
-  id: string;
-  supplierProductId: string;
-  userId: string;
-  credentialId: string;
-  observedPrice: number;
-  scrapedAt: string;
-}
-
 export interface UserScrapeResult {
   supplierProductId: string;
   supplierProductName: string;
   observedPrice: number;
-  previousObservation: number | null;
-  newBasePrice: number;
+  previousObservedPrice: number | null;
+  newReferencePrice: number;
   scrapedAt: string;
 }
 
@@ -64,10 +55,9 @@ export interface UserScrapeRunResult {
   results: UserScrapeResult[];
 }
 
-export interface BasePriceInfo {
+export interface ReferencePriceInfo {
   supplierProductId: string;
-  basePrice: number;
-  basePriceUpdatedAt: string | null;
-  basePriceScrapedUserCount: number;
-  observationCount: number;
+  referencePrice: number;
+  lastScrapedAt: string | null;
+  priceRecordCount: number;
 }

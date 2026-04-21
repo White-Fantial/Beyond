@@ -1,8 +1,14 @@
 /**
- * Owner Suppliers Service — Cost Management Phase 3.
+ * Owner Suppliers Service — Cost Management Phase 3 (updated for platform suppliers).
  *
  * Manage suppliers, their products, and links to ingredients.
  * All functions scoped to tenantId / storeId where appropriate.
+ *
+ * As of the platform supplier redesign:
+ * - PLATFORM suppliers are admin-managed and visible to all owners (read-only browse).
+ * - STORE suppliers are legacy tenant-managed (backward compat).
+ * - listAvailableSuppliers() returns both PLATFORM and the tenant's own STORE suppliers.
+ * - linkIngredientToSupplierProduct() allows linking to PLATFORM supplier products.
  */
 import { prisma } from "@/lib/prisma";
 import type {
@@ -23,8 +29,9 @@ import type { IngredientUnit } from "@/types/owner-ingredients";
 
 type RawSupplier = {
   id: string;
-  tenantId: string;
-  storeId: string;
+  scope: string;
+  tenantId: string | null;
+  storeId: string | null;
   name: string;
   websiteUrl: string | null;
   contactEmail: string | null;
@@ -40,10 +47,7 @@ type RawSupplierProduct = {
   supplierId: string;
   name: string;
   externalUrl: string | null;
-  currentPrice: number;
-  basePrice: number;
-  basePriceUpdatedAt: Date | null;
-  basePriceScrapedUserCount: number;
+  referencePrice: number;
   unit: string;
   lastScrapedAt: Date | null;
   metadata: unknown;
@@ -54,6 +58,7 @@ type RawSupplierProduct = {
 function toSupplier(row: RawSupplier, productCount = 0): Supplier {
   return {
     id: row.id,
+    scope: row.scope as Supplier["scope"],
     tenantId: row.tenantId,
     storeId: row.storeId,
     name: row.name,
@@ -73,10 +78,7 @@ function toSupplierProduct(row: RawSupplierProduct): SupplierProduct {
     supplierId: row.supplierId,
     name: row.name,
     externalUrl: row.externalUrl,
-    currentPrice: row.currentPrice,
-    basePrice: row.basePrice,
-    basePriceUpdatedAt: row.basePriceUpdatedAt?.toISOString() ?? null,
-    basePriceScrapedUserCount: row.basePriceScrapedUserCount,
+    referencePrice: row.referencePrice,
     unit: row.unit as IngredientUnit,
     lastScrapedAt: row.lastScrapedAt?.toISOString() ?? null,
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
@@ -87,6 +89,10 @@ function toSupplierProduct(row: RawSupplierProduct): SupplierProduct {
 
 // ─── Supplier CRUD ────────────────────────────────────────────────────────────
 
+/**
+ * List all STORE-scope suppliers for the given tenant (legacy path).
+ * Use listAvailableSuppliers() for owner browse which includes PLATFORM suppliers.
+ */
 export async function listSuppliers(
   tenantId: string,
   filters: SupplierFilters = {}
@@ -118,12 +124,54 @@ export async function listSuppliers(
   };
 }
 
+/**
+ * List available suppliers for an owner: PLATFORM suppliers + the tenant's own STORE suppliers.
+ * Owners use this to browse and select suppliers to attach credentials to.
+ */
+export async function listAvailableSuppliers(
+  tenantId: string,
+  filters: SupplierFilters = {}
+): Promise<SupplierListResult> {
+  const { page = 1, pageSize = 50 } = filters;
+
+  const where = {
+    deletedAt: null,
+    OR: [
+      { scope: "PLATFORM" as const },
+      { tenantId },
+    ],
+  };
+
+  const [rows, total] = await Promise.all([
+    prisma.supplier.findMany({
+      where,
+      include: { _count: { select: { products: true } } },
+      orderBy: [{ scope: "asc" }, { name: "asc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.supplier.count({ where }),
+  ]);
+
+  return {
+    items: rows.map((r) => toSupplier(r as RawSupplier)),
+    total,
+    page,
+    pageSize,
+  };
+}
+
 export async function getSupplierDetail(
   tenantId: string,
   supplierId: string
 ): Promise<SupplierDetail> {
+  // Allow access to PLATFORM suppliers or the tenant's own STORE suppliers
   const row = await prisma.supplier.findFirst({
-    where: { id: supplierId, tenantId, deletedAt: null },
+    where: {
+      id: supplierId,
+      deletedAt: null,
+      OR: [{ scope: "PLATFORM" }, { tenantId }],
+    },
     include: {
       products: {
         where: { deletedAt: null },
@@ -148,6 +196,7 @@ export async function createSupplier(
 ): Promise<Supplier> {
   const row = await prisma.supplier.create({
     data: {
+      scope: "STORE",
       tenantId,
       storeId: input.storeId,
       name: input.name,
@@ -206,9 +255,13 @@ export async function listSupplierProducts(
   tenantId: string,
   supplierId: string
 ): Promise<SupplierProduct[]> {
-  // Verify supplier belongs to tenant
+  // Allow access to PLATFORM or the tenant's own STORE suppliers
   const supplier = await prisma.supplier.findFirst({
-    where: { id: supplierId, tenantId, deletedAt: null },
+    where: {
+      id: supplierId,
+      deletedAt: null,
+      OR: [{ scope: "PLATFORM" }, { tenantId }],
+    },
   });
   if (!supplier) throw new Error(`Supplier ${supplierId} not found`);
 
@@ -234,7 +287,6 @@ export async function createSupplierProduct(
       supplierId,
       name: input.name,
       externalUrl: input.externalUrl ?? null,
-      currentPrice: input.currentPrice,
       unit: input.unit,
     },
   });
@@ -262,7 +314,6 @@ export async function updateSupplierProduct(
     data: {
       ...(input.name !== undefined ? { name: input.name } : {}),
       ...(input.externalUrl !== undefined ? { externalUrl: input.externalUrl } : {}),
-      ...(input.currentPrice !== undefined ? { currentPrice: input.currentPrice } : {}),
       ...(input.unit !== undefined ? { unit: input.unit } : {}),
     },
   });
@@ -338,12 +389,15 @@ export async function linkIngredientToSupplierProduct(
   });
   if (!ingredient) throw new Error(`Ingredient ${ingredientId} not found`);
 
-  // Verify supplier product belongs to tenant (through supplier)
+  // Verify supplier product belongs to a PLATFORM supplier OR to the tenant's own STORE supplier
   const supplierProduct = await prisma.supplierProduct.findFirst({
     where: {
       id: supplierProductId,
       deletedAt: null,
-      supplier: { tenantId, deletedAt: null },
+      supplier: {
+        deletedAt: null,
+        OR: [{ scope: "PLATFORM" }, { tenantId }],
+      },
     },
     include: { supplier: { select: { name: true } } },
   });

@@ -73,9 +73,6 @@ export interface Ingredient {
   purchaseQty: number;
   /** Unit used when adding to recipes, e.g. GRAM */
   unit: IngredientUnit;
-  /** Cost per recipe unit (unit) in minor currency units */
-  unitCost: number;
-  currency: string;
   /** Inactive ingredients are hidden from selection UIs */
   isActive: boolean;
   /** Set for PLATFORM scope — the admin/moderator who created it */
@@ -104,9 +101,6 @@ export interface CreateIngredientInput {
   purchaseQty?: number;
   /** Unit used in recipes */
   unit: IngredientUnit;
-  /** Cost per recipe unit in minor currency units */
-  unitCost: number;
-  currency?: string;
   notes?: string;
 }
 
@@ -120,9 +114,6 @@ export interface UpdateIngredientInput {
   purchaseQty?: number;
   /** Unit used in recipes */
   unit?: IngredientUnit;
-  /** Cost per recipe unit in minor currency units */
-  unitCost?: number;
-  currency?: string;
   isActive?: boolean;
   notes?: string;
 }

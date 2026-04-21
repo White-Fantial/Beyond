@@ -1,9 +1,12 @@
 import type { IngredientUnit } from "./owner-ingredients";
 
+export type SupplierScope = "PLATFORM" | "STORE";
+
 export interface Supplier {
   id: string;
-  tenantId: string;
-  storeId: string;
+  scope: SupplierScope;
+  tenantId: string | null;
+  storeId: string | null;
   name: string;
   websiteUrl: string | null;
   contactEmail: string | null;
@@ -19,10 +22,8 @@ export interface SupplierProduct {
   supplierId: string;
   name: string;
   externalUrl: string | null;
-  currentPrice: number; // minor currency units
-  basePrice: number; // max across all user observations
-  basePriceUpdatedAt: string | null;
-  basePriceScrapedUserCount: number;
+  /** Platform-wide aggregate reference price (max across all tenants), maintained by scraper. */
+  referencePrice: number; // millicents (1/100000 dollar)
   unit: IngredientUnit;
   lastScrapedAt: string | null;
   metadata: Record<string, unknown>;
@@ -60,6 +61,14 @@ export interface CreateSupplierInput {
   notes?: string;
 }
 
+export interface CreatePlatformSupplierInput {
+  name: string;
+  websiteUrl?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  notes?: string;
+}
+
 export interface UpdateSupplierInput {
   name?: string;
   websiteUrl?: string | null;
@@ -71,14 +80,12 @@ export interface UpdateSupplierInput {
 export interface UpsertSupplierProductInput {
   name: string;
   externalUrl?: string;
-  currentPrice: number;
   unit: IngredientUnit;
 }
 
 export interface UpdateSupplierProductInput {
   name?: string;
   externalUrl?: string | null;
-  currentPrice?: number;
   unit?: IngredientUnit;
 }
 
@@ -95,3 +102,69 @@ export interface ScrapeResult {
   changed: boolean;
   scrapedAt: string;
 }
+
+// ─── SupplierRequest ──────────────────────────────────────────────────────────
+
+export type SupplierRequestStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "DUPLICATE";
+
+export const SUPPLIER_REQUEST_STATUS_LABELS: Record<
+  SupplierRequestStatus,
+  string
+> = {
+  PENDING: "Pending Review",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+  DUPLICATE: "Duplicate",
+};
+
+export interface SupplierRequest {
+  id: string;
+  requestedByUserId: string;
+  requestedByName: string;
+  tenantId: string;
+  name: string;
+  websiteUrl: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  notes: string | null;
+  status: SupplierRequestStatus;
+  resolvedSupplierId: string | null;
+  reviewedByUserId: string | null;
+  reviewNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SupplierRequestListResult {
+  items: SupplierRequest[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface CreateSupplierRequestInput {
+  name: string;
+  websiteUrl?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  notes?: string;
+}
+
+export interface ReviewSupplierRequestInput {
+  status: "APPROVED" | "REJECTED" | "DUPLICATE";
+  /** Required when status is APPROVED or DUPLICATE — the Supplier id (scope=PLATFORM) to link. */
+  resolvedSupplierId?: string;
+  reviewNotes?: string;
+}
+
+export interface SupplierRequestFilters {
+  status?: SupplierRequestStatus;
+  tenantId?: string;
+  page?: number;
+  pageSize?: number;
+}
+

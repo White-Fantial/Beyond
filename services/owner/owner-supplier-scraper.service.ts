@@ -1,28 +1,26 @@
 /**
- * Owner Supplier Scraper Service — Cost Management Phase 4 & 5.
+ * Owner Supplier Scraper Service — Cost Management Phase 4 & 5 (revised).
  *
  * Phase 4: Fetches current prices from supplier product URLs and updates the database.
- * Phase 5: Per-user credentialed scraping and base-price computation.
+ * Phase 5: Per-user credentialed scraping and reference-price computation.
  *
- * Base price logic:
+ * Reference price logic:
  *   Each user's credential is used to scrape their in-use supplier products.
- *   Observed prices are stored in SupplierPriceObservation (one row per product+user).
- *   The maximum observed price across all users is stored as basePrice on SupplierProduct.
- *   Users without credentials see this basePrice as their cost input.
+ *   Observed prices are stored as SupplierPriceRecord rows (append-only, per-tenant).
+ *   The maximum observed price across all tenants is stored as referencePrice on
+ *   SupplierProduct. Owners without credentials see this referencePrice as a fallback.
  */
 import { prisma } from "@/lib/prisma";
 import { getScraperForUrl } from "@/lib/supplier-scraper";
 import { credentialedScraper } from "@/lib/supplier-scraper/credentialed";
 import { getDecryptedCredential } from "./owner-supplier-credentials.service";
 import type { ScrapeResult } from "@/types/owner-suppliers";
-import type { UserScrapeResult, UserScrapeRunResult, BasePriceInfo } from "@/types/owner-supplier-credentials";
+import type { UserScrapeResult, UserScrapeRunResult, ReferencePriceInfo } from "@/types/owner-supplier-credentials";
 
 // ─── Phase 4: unauthenticated scraping ────────────────────────────────────────
 
 /**
- * Scrape a single supplier product URL and persist the new price.
- * If the product has a preferred ingredient link, the ingredient's
- * unitCost is updated to match the new price.
+ * Scrape a single supplier product URL and persist the new referencePrice.
  */
 export async function scrapeSupplierProduct(
   tenantId: string,
@@ -43,7 +41,7 @@ export async function scrapeSupplierProduct(
   const scraper = getScraperForUrl(product.externalUrl);
   const scraped = await scraper.scrape(product.externalUrl);
 
-  const previousPrice = product.currentPrice;
+  const previousPrice = product.referencePrice;
   const newPrice = scraped.price ?? previousPrice;
   const changed = newPrice !== previousPrice;
   const scrapedAt = new Date();
@@ -51,7 +49,7 @@ export async function scrapeSupplierProduct(
   await prisma.supplierProduct.update({
     where: { id: supplierProductId },
     data: {
-      currentPrice: newPrice,
+      referencePrice: newPrice,
       lastScrapedAt: scrapedAt,
       metadata: {
         ...(product.metadata as Record<string, unknown>),
@@ -60,19 +58,6 @@ export async function scrapeSupplierProduct(
       },
     },
   });
-
-  // Update preferred-linked ingredient unitCost if price changed
-  if (changed) {
-    const preferredLink = await prisma.ingredientSupplierLink.findFirst({
-      where: { supplierProductId, isPreferred: true },
-    });
-    if (preferredLink) {
-      await prisma.ingredient.update({
-        where: { id: preferredLink.ingredientId },
-        data: { unitCost: newPrice },
-      });
-    }
-  }
 
   return {
     supplierProductId,
@@ -117,43 +102,41 @@ export async function scrapeAllSupplierProducts(
   return results;
 }
 
-// ─── Phase 5: per-user credentialed scraping & base price ─────────────────────
+// ─── Phase 5: per-user credentialed scraping & reference price ─────────────────
 
 /**
- * Recompute the basePrice for a supplier product as the MAX of all
- * SupplierPriceObservation rows for that product.
- * Also updates basePriceScrapedUserCount.
+ * Recompute the referencePrice for a supplier product as the MAX of all
+ * SupplierPriceRecord rows for that product (across all tenants).
  */
-export async function recomputeBasePrice(supplierProductId: string): Promise<void> {
-  const observations = await prisma.supplierPriceObservation.findMany({
+export async function recomputeReferencePrice(supplierProductId: string): Promise<void> {
+  const records = await prisma.supplierPriceRecord.findMany({
     where: { supplierProductId },
     select: { observedPrice: true },
   });
 
-  if (observations.length === 0) return;
+  if (records.length === 0) return;
 
-  const maxPrice = Math.max(...observations.map((o) => o.observedPrice));
+  const maxPrice = Math.max(...records.map((r) => r.observedPrice));
 
   await prisma.supplierProduct.update({
     where: { id: supplierProductId },
     data: {
-      basePrice: maxPrice,
-      basePriceUpdatedAt: new Date(),
-      basePriceScrapedUserCount: observations.length,
+      referencePrice: maxPrice,
+      lastScrapedAt: new Date(),
     },
   });
 }
 
 /**
- * Scrape only the supplier products that are used in the given user's recipes,
+ * Scrape only the supplier products that are used in the given tenant's recipes,
  * using the user's registered credentials for each supplier.
  *
  * Algorithm:
  *   1. Find all active credentials for the user in this tenant.
- *   2. Find all supplier products linked to ingredients used in this user's recipes.
+ *   2. Find all supplier products linked to ingredients used in this tenant's recipes.
  *   3. For each product whose supplier has a credential, do a credentialed scrape.
- *   4. Upsert the SupplierPriceObservation (one row per product+user).
- *   5. Recompute basePrice for each scraped product.
+ *   4. Append a SupplierPriceRecord row (one per scrape — full history preserved).
+ *   5. Recompute referencePrice for each scraped product.
  */
 export async function scrapeForUser(
   tenantId: string,
@@ -171,8 +154,6 @@ export async function scrapeForUser(
   }
 
   // 2. Find supplier products linked to ingredients used in any recipe in this tenant.
-  //    Recipes are tenant-scoped, not user-scoped. We identify products that are
-  //    actively used in recipes and whose supplier the user has credentials for.
   const linkedProducts = await prisma.supplierProduct.findMany({
     where: {
       deletedAt: null,
@@ -227,48 +208,39 @@ export async function scrapeForUser(
 
       const scrapedAt = new Date();
 
-      // Find existing observation to track previous price
-      const existing = await prisma.supplierPriceObservation.findFirst({
-        where: { supplierProductId: product.id, userId },
+      // Fetch the most recent observation for this tenant + product (to track change)
+      const previousRecord = await prisma.supplierPriceRecord.findFirst({
+        where: { supplierProductId: product.id, tenantId },
+        orderBy: { observedAt: "desc" },
         select: { observedPrice: true },
       });
 
-      // Upsert the observation (one row per product+user)
-      await prisma.supplierPriceObservation.upsert({
-        where: {
-          supplierProductId_userId: {
-            supplierProductId: product.id,
-            userId,
-          },
-        },
-        create: {
+      // Append a new price record (no upsert — every observation is preserved)
+      await prisma.supplierPriceRecord.create({
+        data: {
           supplierProductId: product.id,
-          userId,
-          credentialId: credential.id,
+          tenantId,
           observedPrice: scraped.price,
-          scrapedAt,
-        },
-        update: {
+          source: "SCRAPED",
           credentialId: credential.id,
-          observedPrice: scraped.price,
-          scrapedAt,
+          observedAt: scrapedAt,
         },
       });
 
-      // Recompute basePrice
-      await recomputeBasePrice(product.id);
+      // Recompute reference price (max across all tenants)
+      await recomputeReferencePrice(product.id);
 
       const updatedProduct = await prisma.supplierProduct.findFirst({
         where: { id: product.id },
-        select: { basePrice: true },
+        select: { referencePrice: true },
       });
 
       results.push({
         supplierProductId: product.id,
         supplierProductName: product.name,
         observedPrice: scraped.price,
-        previousObservation: existing?.observedPrice ?? null,
-        newBasePrice: updatedProduct?.basePrice ?? scraped.price,
+        previousObservedPrice: previousRecord?.observedPrice ?? null,
+        newReferencePrice: updatedProduct?.referencePrice ?? scraped.price,
         scrapedAt: scrapedAt.toISOString(),
       });
     } catch (err) {
@@ -291,12 +263,12 @@ export async function scrapeForUser(
 
 /**
  * Trigger scraping for all users who have credentials covering a specific product,
- * then recompute the base price. Useful for admin-triggered reconciliation.
+ * then recompute the reference price. Useful for admin-triggered reconciliation.
  */
 export async function scrapeAllUsersForProduct(
   tenantId: string,
   supplierProductId: string
-): Promise<{ userCount: number; newBasePrice: number }> {
+): Promise<{ userCount: number; newReferencePrice: number }> {
   const product = await prisma.supplierProduct.findFirst({
     where: { id: supplierProductId, deletedAt: null, supplier: { tenantId, deletedAt: null } },
     select: { id: true, supplierId: true, externalUrl: true },
@@ -327,39 +299,40 @@ export async function scrapeAllUsersForProduct(
 
   const updated = await prisma.supplierProduct.findFirst({
     where: { id: supplierProductId },
-    select: { basePrice: true },
+    select: { referencePrice: true },
   });
 
-  return { userCount: userIds.length, newBasePrice: updated?.basePrice ?? 0 };
+  return { userCount: userIds.length, newReferencePrice: updated?.referencePrice ?? 0 };
 }
 
 /**
- * Return base price information for a supplier product.
+ * Return reference price information for a supplier product.
  */
-export async function getBasePriceInfo(
+export async function getReferencePriceInfo(
   tenantId: string,
   supplierProductId: string
-): Promise<BasePriceInfo> {
+): Promise<ReferencePriceInfo> {
   const product = await prisma.supplierProduct.findFirst({
     where: { id: supplierProductId, deletedAt: null, supplier: { tenantId, deletedAt: null } },
     select: {
       id: true,
-      basePrice: true,
-      basePriceUpdatedAt: true,
-      basePriceScrapedUserCount: true,
+      referencePrice: true,
+      lastScrapedAt: true,
     },
   });
   if (!product) throw new Error(`SupplierProduct ${supplierProductId} not found`);
 
-  const observationCount = await prisma.supplierPriceObservation.count({
+  const priceRecordCount = await prisma.supplierPriceRecord.count({
     where: { supplierProductId },
   });
 
   return {
     supplierProductId: product.id,
-    basePrice: product.basePrice,
-    basePriceUpdatedAt: product.basePriceUpdatedAt?.toISOString() ?? null,
-    basePriceScrapedUserCount: product.basePriceScrapedUserCount,
-    observationCount,
+    referencePrice: product.referencePrice,
+    lastScrapedAt: product.lastScrapedAt?.toISOString() ?? null,
+    priceRecordCount,
   };
 }
+
+// Keep backward-compatible alias
+export { getReferencePriceInfo as getBasePriceInfo };

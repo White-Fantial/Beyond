@@ -34,6 +34,7 @@ vi.mock("@/lib/prisma", () => ({
 import { prisma } from "@/lib/prisma";
 import {
   listSuppliers,
+  listAvailableSuppliers,
   getSupplierDetail,
   createSupplier,
   updateSupplier,
@@ -78,6 +79,7 @@ const STORE = "store-1";
 
 const mockSupplier = {
   id: "sup-1",
+  scope: "STORE",
   tenantId: TENANT,
   storeId: STORE,
   name: "Flour Co",
@@ -90,12 +92,27 @@ const mockSupplier = {
   _count: { products: 2 },
 };
 
+const mockPlatformSupplier = {
+  id: "sup-platform-1",
+  scope: "PLATFORM",
+  tenantId: null,
+  storeId: null,
+  name: "Sysco Foods",
+  websiteUrl: "https://sysco.com",
+  contactEmail: null,
+  contactPhone: null,
+  notes: null,
+  createdAt: new Date("2026-01-01"),
+  updatedAt: new Date("2026-01-01"),
+  _count: { products: 5 },
+};
+
 const mockProduct = {
   id: "sp-1",
   supplierId: "sup-1",
   name: "High Grade Flour 25kg",
   externalUrl: "https://flourco.nz/products/hg-flour-25kg",
-  currentPrice: 4500,
+  referencePrice: 4500,
   unit: "KG",
   lastScrapedAt: null,
   metadata: {},
@@ -149,6 +166,34 @@ describe("listSuppliers", () => {
   });
 });
 
+// ─── listAvailableSuppliers ───────────────────────────────────────────────────
+
+describe("listAvailableSuppliers", () => {
+  it("returns PLATFORM and tenant STORE suppliers combined", async () => {
+    mockPrisma.supplier.findMany.mockResolvedValue([
+      mockPlatformSupplier,
+      mockSupplier,
+    ]);
+    mockPrisma.supplier.count.mockResolvedValue(2);
+
+    const result = await listAvailableSuppliers(TENANT);
+
+    expect(result.items).toHaveLength(2);
+    expect(result.items.some((s) => s.scope === "PLATFORM")).toBe(true);
+    expect(result.items.some((s) => s.scope === "STORE")).toBe(true);
+    expect(mockPrisma.supplier.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([
+            { scope: "PLATFORM" },
+            { tenantId: TENANT },
+          ]),
+        }),
+      })
+    );
+  });
+});
+
 // ─── getSupplierDetail ────────────────────────────────────────────────────────
 
 describe("getSupplierDetail", () => {
@@ -162,7 +207,7 @@ describe("getSupplierDetail", () => {
 
     expect(result.id).toBe("sup-1");
     expect(result.products).toHaveLength(1);
-    expect(result.products[0].currentPrice).toBe(4500);
+    expect(result.products[0].referencePrice).toBe(4500);
   });
 
   it("throws if supplier not found", async () => {
@@ -274,11 +319,10 @@ describe("createSupplierProduct", () => {
     const result = await createSupplierProduct(TENANT, "sup-1", {
       name: "High Grade Flour 25kg",
       externalUrl: "https://flourco.nz/products/hg-flour-25kg",
-      currentPrice: 4500,
       unit: "KG",
     });
 
-    expect(result.currentPrice).toBe(4500);
+    expect(result.referencePrice).toBe(4500);
     expect(result.unit).toBe("KG");
   });
 
@@ -288,7 +332,6 @@ describe("createSupplierProduct", () => {
     await expect(
       createSupplierProduct(TENANT, "missing", {
         name: "X",
-        currentPrice: 100,
         unit: "EACH",
       })
     ).rejects.toThrow("not found");
@@ -356,6 +399,31 @@ describe("linkIngredientToSupplierProduct", () => {
         data: { isPreferred: false },
       })
     );
+  });
+  it("allows linking to a PLATFORM supplier product", async () => {
+    mockPrisma.ingredient.findFirst.mockResolvedValue({ id: "ing-1", tenantId: TENANT });
+    // PLATFORM supplier product found via OR query
+    mockPrisma.supplierProduct.findFirst.mockResolvedValue({
+      ...mockProduct,
+      supplierId: "sup-platform-1",
+      supplier: { name: "Sysco Foods" },
+    });
+    mockPrisma.ingredientSupplierLink.updateMany.mockResolvedValue({ count: 0 });
+    mockPrisma.ingredientSupplierLink.upsert.mockResolvedValue({
+      id: "link-2",
+      ingredientId: "ing-1",
+      supplierProductId: "sp-1",
+      isPreferred: false,
+      createdAt: new Date("2026-01-01"),
+      supplierProduct: {
+        name: "All Purpose Flour",
+        supplier: { name: "Sysco Foods" },
+      },
+    });
+
+    const result = await linkIngredientToSupplierProduct(TENANT, "ing-1", "sp-1");
+
+    expect(result.supplierName).toBe("Sysco Foods");
   });
 });
 

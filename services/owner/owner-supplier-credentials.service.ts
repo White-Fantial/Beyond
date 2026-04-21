@@ -74,9 +74,13 @@ export async function createCredential(
   userId: string,
   input: CreateCredentialInput
 ): Promise<SupplierCredential> {
-  // Verify supplier belongs to tenant
+  // Verify supplier belongs to tenant OR is a PLATFORM supplier
   const supplier = await prisma.supplier.findFirst({
-    where: { id: input.supplierId, tenantId, deletedAt: null },
+    where: {
+      id: input.supplierId,
+      deletedAt: null,
+      OR: [{ scope: "PLATFORM" }, { tenantId }],
+    },
   });
   if (!supplier) throw new Error(`Supplier ${input.supplierId} not found`);
 

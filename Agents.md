@@ -45,3 +45,9 @@ Beyond is a multi-tenant food & beverage platform with the following portals:
 - Monetary fields in the database use **millicents** (Int). Field names follow the pattern: `unitCost`, `basePrice`, `currentPrice`, `observedPrice`.
 - Tests are located in `__tests__/` and must be kept up to date with any service changes.
 - Do not remove or skip existing tests.
+
+## Build Verification
+
+- **After every code change, always run `npm run build` to verify the build succeeds before finalizing.**
+- If build errors occur, fix them before completing the task.
+- Do not consider a task done until the build passes without errors.
