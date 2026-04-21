@@ -29,17 +29,8 @@ export async function POST(req: NextRequest) {
   if (!body.name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
-  if (!body.purchaseUnit) {
-    return NextResponse.json({ error: "purchaseUnit is required" }, { status: 400 });
-  }
   if (!body.unit) {
     return NextResponse.json({ error: "unit is required" }, { status: 400 });
-  }
-  if (body.unitCost === undefined || body.unitCost < 0) {
-    return NextResponse.json(
-      { error: "unitCost must be a non-negative integer (millicents: 1/100000 dollar)" },
-      { status: 400 }
-    );
   }
 
   const ingredient = await createIngredient(tenantId, body);

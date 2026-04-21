@@ -27,11 +27,7 @@ function toIngredient(row: {
   name: string;
   description: string | null;
   category: string | null;
-  purchaseUnit: string;
-  purchaseQty: number;
   unit: string;
-  unitCost: number;
-  currency: string;
   isActive: boolean;
   createdByUserId: string | null;
   notes: string | null;
@@ -46,11 +42,7 @@ function toIngredient(row: {
     name: row.name,
     description: row.description,
     category: row.category,
-    purchaseUnit: row.purchaseUnit as Ingredient["purchaseUnit"],
-    purchaseQty: row.purchaseQty,
     unit: row.unit as Ingredient["unit"],
-    unitCost: row.unitCost,
-    currency: row.currency,
     isActive: row.isActive,
     createdByUserId: row.createdByUserId,
     notes: row.notes,
@@ -101,7 +93,7 @@ export async function getPlatformIngredient(id: string): Promise<Ingredient> {
 
 export async function createPlatformIngredient(
   createdByUserId: string,
-  input: Pick<CreateIngredientInput, "name" | "description" | "category" | "purchaseUnit" | "purchaseQty" | "unit" | "unitCost" | "currency">
+  input: Pick<CreateIngredientInput, "name" | "description" | "category" | "unit">
 ): Promise<Ingredient> {
   const row = await prisma.ingredient.create({
     data: {
@@ -111,11 +103,7 @@ export async function createPlatformIngredient(
       name: input.name,
       description: input.description ?? null,
       category: input.category ?? null,
-      purchaseUnit: input.purchaseUnit,
-      purchaseQty: input.purchaseQty ?? 1,
       unit: input.unit,
-      unitCost: input.unitCost,
-      currency: input.currency ?? "USD",
       isActive: true,
       createdByUserId,
     },
@@ -138,11 +126,7 @@ export async function updatePlatformIngredient(
       ...(input.name !== undefined ? { name: input.name } : {}),
       ...(input.description !== undefined ? { description: input.description } : {}),
       ...(input.category !== undefined ? { category: input.category } : {}),
-      ...(input.purchaseUnit !== undefined ? { purchaseUnit: input.purchaseUnit } : {}),
-      ...(input.purchaseQty !== undefined ? { purchaseQty: input.purchaseQty } : {}),
       ...(input.unit !== undefined ? { unit: input.unit } : {}),
-      ...(input.unitCost !== undefined ? { unitCost: input.unitCost } : {}),
-      ...(input.currency !== undefined ? { currency: input.currency } : {}),
       ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
     },
   });

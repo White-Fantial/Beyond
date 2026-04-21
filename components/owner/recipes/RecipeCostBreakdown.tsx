@@ -28,6 +28,7 @@ function formatCostRounded(minor: number) {
   return `$${(minor / 100).toFixed(2)}`;
 }
 
+
 export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
   const router = useRouter();
   const [sellingPriceGstIncluded, setSellingPriceGstIncluded] = useState(true);

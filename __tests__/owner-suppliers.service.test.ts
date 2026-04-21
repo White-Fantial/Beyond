@@ -112,10 +112,7 @@ const mockProduct = {
   supplierId: "sup-1",
   name: "High Grade Flour 25kg",
   externalUrl: "https://flourco.nz/products/hg-flour-25kg",
-  currentPrice: 4500,
-  basePrice: 0,
-  basePriceUpdatedAt: null,
-  basePriceScrapedUserCount: 0,
+  referencePrice: 4500,
   unit: "KG",
   lastScrapedAt: null,
   metadata: {},
@@ -210,7 +207,7 @@ describe("getSupplierDetail", () => {
 
     expect(result.id).toBe("sup-1");
     expect(result.products).toHaveLength(1);
-    expect(result.products[0].currentPrice).toBe(4500);
+    expect(result.products[0].referencePrice).toBe(4500);
   });
 
   it("throws if supplier not found", async () => {
@@ -322,11 +319,10 @@ describe("createSupplierProduct", () => {
     const result = await createSupplierProduct(TENANT, "sup-1", {
       name: "High Grade Flour 25kg",
       externalUrl: "https://flourco.nz/products/hg-flour-25kg",
-      currentPrice: 4500,
       unit: "KG",
     });
 
-    expect(result.currentPrice).toBe(4500);
+    expect(result.referencePrice).toBe(4500);
     expect(result.unit).toBe("KG");
   });
 
@@ -336,7 +332,6 @@ describe("createSupplierProduct", () => {
     await expect(
       createSupplierProduct(TENANT, "missing", {
         name: "X",
-        currentPrice: 100,
         unit: "EACH",
       })
     ).rejects.toThrow("not found");

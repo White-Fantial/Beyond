@@ -67,15 +67,8 @@ export interface Ingredient {
   description: string | null;
   /** Category classification, primarily used for PLATFORM scope */
   category: string | null;
-  /** Unit used when purchasing (구매 단위), e.g. KG */
-  purchaseUnit: IngredientUnit;
-  /** Number of purchaseUnits in the recorded purchase, e.g. 20 for a 20 kg bag */
-  purchaseQty: number;
-  /** Unit used when adding to recipes (레시피 단위), e.g. GRAM */
+  /** Unit used in recipes, e.g. GRAM */
   unit: IngredientUnit;
-  /** Cost per recipe unit (unit) in minor currency units */
-  unitCost: number;
-  currency: string;
   /** Inactive ingredients are hidden from selection UIs */
   isActive: boolean;
   /** Set for PLATFORM scope — the admin/moderator who created it */
@@ -98,15 +91,8 @@ export interface CreateIngredientInput {
   name: string;
   description?: string;
   category?: string;
-  /** Unit used when purchasing (구매 단위) */
-  purchaseUnit: IngredientUnit;
-  /** Number of purchaseUnits in the recorded purchase, e.g. 20 for a 20 kg bag */
-  purchaseQty?: number;
   /** Unit used in recipes (레시피 단위) */
   unit: IngredientUnit;
-  /** Cost per recipe unit in minor currency units */
-  unitCost: number;
-  currency?: string;
   notes?: string;
 }
 
@@ -114,15 +100,8 @@ export interface UpdateIngredientInput {
   name?: string;
   description?: string;
   category?: string;
-  /** Unit used when purchasing (구매 단위) */
-  purchaseUnit?: IngredientUnit;
-  /** Number of purchaseUnits in the recorded purchase, e.g. 20 for a 20 kg bag */
-  purchaseQty?: number;
   /** Unit used in recipes (레시피 단위) */
   unit?: IngredientUnit;
-  /** Cost per recipe unit in minor currency units */
-  unitCost?: number;
-  currency?: string;
   isActive?: boolean;
   notes?: string;
 }

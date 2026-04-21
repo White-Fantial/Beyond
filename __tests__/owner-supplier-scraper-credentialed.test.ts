@@ -10,10 +10,10 @@ vi.mock("@/lib/prisma", () => ({
       findMany: vi.fn(),
       update: vi.fn(),
     },
-    supplierPriceObservation: {
-      findMany: vi.fn(),
+    supplierPriceRecord: {
       findFirst: vi.fn(),
-      upsert: vi.fn(),
+      create: vi.fn(),
+      findMany: vi.fn(),
       count: vi.fn(),
     },
     supplier: {
@@ -36,9 +36,10 @@ import { prisma } from "@/lib/prisma";
 import { credentialedScraper } from "@/lib/supplier-scraper/credentialed";
 import { getDecryptedCredential } from "@/services/owner/owner-supplier-credentials.service";
 import {
-  recomputeBasePrice,
+  recomputeReferencePrice,
   scrapeForUser,
   scrapeAllUsersForProduct,
+  getReferencePriceInfo,
   getBasePriceInfo,
 } from "@/services/owner/owner-supplier-scraper.service";
 
@@ -49,10 +50,10 @@ const mockPrisma = prisma as unknown as {
     findMany: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
   };
-  supplierPriceObservation: {
-    findMany: ReturnType<typeof vi.fn>;
+  supplierPriceRecord: {
     findFirst: ReturnType<typeof vi.fn>;
-    upsert: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    findMany: ReturnType<typeof vi.fn>;
     count: ReturnType<typeof vi.fn>;
   };
   supplier: { findFirst: ReturnType<typeof vi.fn> };
@@ -76,44 +77,40 @@ const mockProduct = {
   supplierId: SUP_ID,
   name: "High Grade Flour 25kg",
   externalUrl: "https://flourco.nz/products/hg-flour-25kg",
-  currentPrice: 4500,
-  basePrice: 0,
-  basePriceUpdatedAt: null,
-  basePriceScrapedUserCount: 0,
+  referencePrice: 4500,
+  lastScrapedAt: null,
+  metadata: {},
 };
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-// ─── recomputeBasePrice ───────────────────────────────────────────────────────
+// ─── recomputeReferencePrice ──────────────────────────────────────────────────
 
-describe("recomputeBasePrice", () => {
-  it("sets basePrice to the maximum observed price", async () => {
-    mockPrisma.supplierPriceObservation.findMany.mockResolvedValue([
+describe("recomputeReferencePrice", () => {
+  it("sets referencePrice to the maximum of all price records", async () => {
+    mockPrisma.supplierPriceRecord.findMany.mockResolvedValue([
       { observedPrice: 1000 },
       { observedPrice: 1200 },
       { observedPrice: 900 },
     ]);
     mockPrisma.supplierProduct.update.mockResolvedValue({});
 
-    await recomputeBasePrice(PRODUCT_ID);
+    await recomputeReferencePrice(PRODUCT_ID);
 
     expect(mockPrisma.supplierProduct.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: PRODUCT_ID },
-        data: expect.objectContaining({
-          basePrice: 1200,
-          basePriceScrapedUserCount: 3,
-        }),
+        data: expect.objectContaining({ referencePrice: 1200 }),
       })
     );
   });
 
-  it("does nothing when there are no observations", async () => {
-    mockPrisma.supplierPriceObservation.findMany.mockResolvedValue([]);
+  it("does nothing when there are no price records", async () => {
+    mockPrisma.supplierPriceRecord.findMany.mockResolvedValue([]);
 
-    await recomputeBasePrice(PRODUCT_ID);
+    await recomputeReferencePrice(PRODUCT_ID);
 
     expect(mockPrisma.supplierProduct.update).not.toHaveBeenCalled();
   });
@@ -131,7 +128,7 @@ describe("scrapeForUser", () => {
     expect(result.results).toHaveLength(0);
   });
 
-  it("scrapes products linked to user recipes and upserts observations", async () => {
+  it("scrapes products and creates SupplierPriceRecord rows (no upsert)", async () => {
     mockPrisma.supplierCredential.findMany.mockResolvedValue([
       { id: CRED_ID_A, supplierId: SUP_ID, loginUrl: null, username: "u", passwordEnc: "enc" },
     ]);
@@ -149,30 +146,62 @@ describe("scrapeForUser", () => {
       currency: "NZD",
       unit: null,
     });
-    mockPrisma.supplierPriceObservation.findFirst.mockResolvedValue(null);
-    mockPrisma.supplierPriceObservation.upsert.mockResolvedValue({});
-    // For recomputeBasePrice
-    mockPrisma.supplierPriceObservation.findMany.mockResolvedValue([{ observedPrice: 4800 }]);
+    mockPrisma.supplierPriceRecord.findFirst.mockResolvedValue(null); // no previous record
+    mockPrisma.supplierPriceRecord.create.mockResolvedValue({ id: "pr-1" });
+    // recomputeReferencePrice
+    mockPrisma.supplierPriceRecord.findMany.mockResolvedValue([{ observedPrice: 4800 }]);
     mockPrisma.supplierProduct.update.mockResolvedValue({});
     mockPrisma.supplierProduct.findFirst.mockResolvedValue({
       ...mockProduct,
-      basePrice: 4800,
+      referencePrice: 4800,
     });
 
     const result = await scrapeForUser(TENANT, USER_A);
 
     expect(result.scraped).toBe(1);
     expect(result.results[0].observedPrice).toBe(4800);
-    expect(result.results[0].newBasePrice).toBe(4800);
-    expect(mockPrisma.supplierPriceObservation.upsert).toHaveBeenCalledWith(
+    expect(result.results[0].newReferencePrice).toBe(4800);
+    // Must use create, not upsert
+    expect(mockPrisma.supplierPriceRecord.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        create: expect.objectContaining({
+        data: expect.objectContaining({
           supplierProductId: PRODUCT_ID,
-          userId: USER_A,
+          tenantId: TENANT,
           observedPrice: 4800,
+          source: "SCRAPED",
         }),
       })
     );
+  });
+
+  it("tracks previous observed price for change reporting", async () => {
+    mockPrisma.supplierCredential.findMany.mockResolvedValue([
+      { id: CRED_ID_A, supplierId: SUP_ID, loginUrl: null, username: "u", passwordEnc: "enc" },
+    ]);
+    mockPrisma.supplierProduct.findMany.mockResolvedValue([
+      { ...mockProduct, externalUrl: "https://flourco.nz/p1" },
+    ]);
+    mockGetDecryptedCredential.mockResolvedValue({ username: "u", password: "p", loginUrl: null });
+    mockCredentialedScraper.scrapeWithCredential.mockResolvedValue({
+      price: 4800, name: null, currency: null, unit: null,
+    });
+    // Previous record exists
+    mockPrisma.supplierPriceRecord.findFirst.mockResolvedValue({ observedPrice: 4200 });
+    mockPrisma.supplierPriceRecord.create.mockResolvedValue({ id: "pr-1" });
+    mockPrisma.supplierPriceRecord.findMany.mockResolvedValue([
+      { observedPrice: 4200 },
+      { observedPrice: 4800 },
+    ]);
+    mockPrisma.supplierProduct.update.mockResolvedValue({});
+    mockPrisma.supplierProduct.findFirst.mockResolvedValue({
+      ...mockProduct,
+      referencePrice: 4800,
+    });
+
+    const result = await scrapeForUser(TENANT, USER_A);
+
+    expect(result.results[0].previousObservedPrice).toBe(4200);
+    expect(result.results[0].observedPrice).toBe(4800);
   });
 
   it("skips products with no price returned", async () => {
@@ -191,6 +220,7 @@ describe("scrapeForUser", () => {
 
     expect(result.scraped).toBe(0);
     expect(result.skipped).toBe(1);
+    expect(mockPrisma.supplierPriceRecord.create).not.toHaveBeenCalled();
   });
 
   it("counts failed scrapes without throwing", async () => {
@@ -210,23 +240,21 @@ describe("scrapeForUser", () => {
   });
 });
 
-// ─── base price accumulation across users ─────────────────────────────────────
+// ─── reference price accumulation across tenants ──────────────────────────────
 
-describe("base price across multiple users", () => {
-  it("base price becomes the maximum of all user observations", async () => {
-    // Simulate user A observes 1000, user B observes 1200
-    // After both scrape, recomputeBasePrice should yield 1200
-    mockPrisma.supplierPriceObservation.findMany.mockResolvedValue([
-      { observedPrice: 1000 }, // user A
-      { observedPrice: 1200 }, // user B
+describe("reference price across multiple tenants", () => {
+  it("referencePrice is the max across all tenant price records", async () => {
+    mockPrisma.supplierPriceRecord.findMany.mockResolvedValue([
+      { observedPrice: 1000 },
+      { observedPrice: 1200 },
     ]);
     mockPrisma.supplierProduct.update.mockResolvedValue({});
 
-    await recomputeBasePrice(PRODUCT_ID);
+    await recomputeReferencePrice(PRODUCT_ID);
 
     expect(mockPrisma.supplierProduct.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ basePrice: 1200 }),
+        data: expect.objectContaining({ referencePrice: 1200 }),
       })
     );
   });
@@ -250,50 +278,61 @@ describe("scrapeAllUsersForProduct", () => {
     await expect(scrapeAllUsersForProduct(TENANT, PRODUCT_ID)).rejects.toThrow("no externalUrl");
   });
 
-  it("scrapes for each user and returns updated base price", async () => {
+  it("scrapes for each user and returns updated reference price", async () => {
     mockPrisma.supplierProduct.findFirst
-      .mockResolvedValueOnce(mockProduct) // initial lookup
-      .mockResolvedValueOnce({ ...mockProduct, basePrice: 4800 }); // after scraping
+      .mockResolvedValueOnce(mockProduct)
+      .mockResolvedValueOnce({ ...mockProduct, referencePrice: 4800 });
 
     mockPrisma.supplierCredential.findMany
-      // Called inside scrapeAllUsersForProduct for listing credentials
       .mockResolvedValueOnce([
         { id: CRED_ID_A, userId: USER_A },
         { id: CRED_ID_B, userId: USER_B },
       ])
-      // Called inside each scrapeForUser call
-      .mockResolvedValue([]);
+      .mockResolvedValue([]); // return empty for each scrapeForUser call
 
     const result = await scrapeAllUsersForProduct(TENANT, PRODUCT_ID);
 
     expect(result.userCount).toBe(2);
-    expect(result.newBasePrice).toBe(4800);
+    expect(result.newReferencePrice).toBe(4800);
   });
 });
 
-// ─── getBasePriceInfo ─────────────────────────────────────────────────────────
+// ─── getReferencePriceInfo (and backward-compat alias getBasePriceInfo) ──────
 
-describe("getBasePriceInfo", () => {
-  it("returns base price info with observation count", async () => {
+describe("getReferencePriceInfo", () => {
+  it("returns reference price info with record count", async () => {
     mockPrisma.supplierProduct.findFirst.mockResolvedValue({
       id: PRODUCT_ID,
-      basePrice: 1200,
-      basePriceUpdatedAt: new Date("2026-01-15"),
-      basePriceScrapedUserCount: 2,
+      referencePrice: 1200,
+      lastScrapedAt: new Date("2026-01-15"),
     });
-    mockPrisma.supplierPriceObservation.count.mockResolvedValue(2);
+    mockPrisma.supplierPriceRecord.count.mockResolvedValue(3);
 
-    const result = await getBasePriceInfo(TENANT, PRODUCT_ID);
+    const result = await getReferencePriceInfo(TENANT, PRODUCT_ID);
 
-    expect(result.basePrice).toBe(1200);
-    expect(result.basePriceScrapedUserCount).toBe(2);
-    expect(result.observationCount).toBe(2);
-    expect(result.basePriceUpdatedAt).toBe("2026-01-15T00:00:00.000Z");
+    expect(result.referencePrice).toBe(1200);
+    expect(result.priceRecordCount).toBe(3);
+    expect(result.lastScrapedAt).toBe("2026-01-15T00:00:00.000Z");
   });
 
   it("throws if product not found", async () => {
     mockPrisma.supplierProduct.findFirst.mockResolvedValue(null);
 
-    await expect(getBasePriceInfo(TENANT, "missing")).rejects.toThrow("not found");
+    await expect(getReferencePriceInfo(TENANT, "missing")).rejects.toThrow("not found");
+  });
+});
+
+describe("getBasePriceInfo (backward-compat alias)", () => {
+  it("is an alias for getReferencePriceInfo", async () => {
+    mockPrisma.supplierProduct.findFirst.mockResolvedValue({
+      id: PRODUCT_ID,
+      referencePrice: 800,
+      lastScrapedAt: null,
+    });
+    mockPrisma.supplierPriceRecord.count.mockResolvedValue(1);
+
+    const result = await getBasePriceInfo(TENANT, PRODUCT_ID);
+
+    expect(result.referencePrice).toBe(800);
   });
 });

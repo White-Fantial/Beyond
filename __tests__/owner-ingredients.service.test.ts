@@ -44,11 +44,7 @@ const mockIngredient = {
   name: "Bread Flour",
   description: null,
   category: null,
-  purchaseUnit: "KG",
-  purchaseQty: 1,
   unit: "GRAM",
-  unitCost: 5,
-  currency: "USD",
   isActive: true,
   createdByUserId: null,
   notes: null,
@@ -64,7 +60,6 @@ const mockPlatformIngredient = {
   storeId: null,
   name: "Salt",
   category: "Seasoning",
-  unitCost: 100,
 };
 
 beforeEach(() => {
@@ -139,7 +134,6 @@ describe("getIngredient", () => {
     const result = await getIngredient(TENANT, "ing-1");
 
     expect(result.id).toBe("ing-1");
-    expect(result.purchaseUnit).toBe("KG");
     expect(result.unit).toBe("GRAM");
   });
 
@@ -159,60 +153,40 @@ describe("createIngredient", () => {
     const result = await createIngredient(TENANT, {
       storeId: STORE,
       name: "Bread Flour",
-      purchaseUnit: "KG",
-      purchaseQty: 20,
       unit: "GRAM",
-      unitCost: 5,
     });
 
     expect(result.name).toBe("Bread Flour");
-    expect(result.unitCost).toBe(5);
     expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
+          scope: "STORE",
           tenantId: TENANT,
           storeId: STORE,
-          purchaseUnit: "KG",
-          purchaseQty: 20,
           unit: "GRAM",
-          unitCost: 5,
         }),
       })
     );
   });
 
-  it("defaults purchaseQty to 1 when not provided", async () => {
-    mockPrisma.ingredient.create.mockResolvedValue(mockIngredient);
+  it("stores optional category and notes", async () => {
+    mockPrisma.ingredient.create.mockResolvedValue({
+      ...mockIngredient,
+      category: "Grains",
+      notes: "Premium flour",
+    });
 
     await createIngredient(TENANT, {
       storeId: STORE,
-      name: "Salt",
-      purchaseUnit: "KG",
+      name: "Bread Flour",
       unit: "GRAM",
-      unitCost: 1,
+      category: "Grains",
+      notes: "Premium flour",
     });
 
     expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ purchaseQty: 1 }),
-      })
-    );
-  });
-
-  it("defaults currency to USD", async () => {
-    mockPrisma.ingredient.create.mockResolvedValue(mockIngredient);
-
-    await createIngredient(TENANT, {
-      storeId: STORE,
-      name: "Salt",
-      purchaseUnit: "KG",
-      unit: "GRAM",
-      unitCost: 1,
-    });
-
-    expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ currency: "USD" }),
+        data: expect.objectContaining({ category: "Grains", notes: "Premium flour" }),
       })
     );
   });
@@ -221,47 +195,41 @@ describe("createIngredient", () => {
 // ─── updateIngredient ─────────────────────────────────────────────────────────
 
 describe("updateIngredient", () => {
-  it("updates ingredient fields", async () => {
+  it("updates ingredient name", async () => {
     mockPrisma.ingredient.findFirst.mockResolvedValue(mockIngredient);
     mockPrisma.ingredient.update.mockResolvedValue({
       ...mockIngredient,
-      unitCost: 10,
+      name: "Premium Bread Flour",
     });
 
-    const result = await updateIngredient(TENANT, "ing-1", { unitCost: 10 });
+    const result = await updateIngredient(TENANT, "ing-1", { name: "Premium Bread Flour" });
 
-    expect(result.unitCost).toBe(10);
+    expect(result.name).toBe("Premium Bread Flour");
     expect(mockPrisma.ingredient.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "ing-1" },
-        data: expect.objectContaining({ unitCost: 10 }),
+        data: expect.objectContaining({ name: "Premium Bread Flour" }),
       })
     );
   });
 
-  it("persists purchaseQty when provided", async () => {
+  it("updates recipe unit", async () => {
     mockPrisma.ingredient.findFirst.mockResolvedValue(mockIngredient);
     mockPrisma.ingredient.update.mockResolvedValue({
       ...mockIngredient,
-      purchaseQty: 20,
-      unitCost: 175,
+      unit: "KG",
     });
 
-    const result = await updateIngredient(TENANT, "ing-1", { purchaseQty: 20, unitCost: 175 });
+    const result = await updateIngredient(TENANT, "ing-1", { unit: "KG" });
 
-    expect(result.purchaseQty).toBe(20);
-    expect(mockPrisma.ingredient.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ purchaseQty: 20 }),
-      })
-    );
+    expect(result.unit).toBe("KG");
   });
 
   it("throws if ingredient not found", async () => {
     mockPrisma.ingredient.findFirst.mockResolvedValue(null);
 
     await expect(
-      updateIngredient(TENANT, "missing", { unitCost: 10 })
+      updateIngredient(TENANT, "missing", { name: "X" })
     ).rejects.toThrow("not found");
   });
 });
@@ -296,21 +264,20 @@ describe("deleteIngredient", () => {
 // ─── importPlatformIngredient ─────────────────────────────────────────────────
 
 describe("importPlatformIngredient", () => {
-  it("creates a STORE-scope copy of a platform ingredient with owner's price", async () => {
+  it("creates a STORE-scope copy of a platform ingredient", async () => {
     mockPrisma.ingredient.findFirst.mockResolvedValue(mockPlatformIngredient);
     const expectedRow = {
       ...mockIngredient,
       id: "new-ing",
       name: "Salt",
       category: "Seasoning",
-      unitCost: 50000,
     };
     mockPrisma.ingredient.create.mockResolvedValue(expectedRow);
 
-    const result = await importPlatformIngredient(TENANT, STORE, "plat-1", 50000);
+    const result = await importPlatformIngredient(TENANT, STORE, "plat-1");
 
     expect(result.name).toBe("Salt");
-    expect(result.unitCost).toBe(50000);
+    expect(result.category).toBe("Seasoning");
     expect(mockPrisma.ingredient.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ id: "plat-1", scope: "PLATFORM" }),
@@ -323,25 +290,28 @@ describe("importPlatformIngredient", () => {
           tenantId: TENANT,
           storeId: STORE,
           name: "Salt",
-          unitCost: 50000,
+          category: "Seasoning",
         }),
       })
     );
   });
 
-  it("uses the owner's unitCost, not the platform's default cost", async () => {
-    mockPrisma.ingredient.findFirst.mockResolvedValue(mockPlatformIngredient);
-    const ownUnitCost = 999999;
+  it("copies unit from platform ingredient", async () => {
+    mockPrisma.ingredient.findFirst.mockResolvedValue({
+      ...mockPlatformIngredient,
+      unit: "KG",
+    });
     mockPrisma.ingredient.create.mockResolvedValue({
       ...mockIngredient,
-      unitCost: ownUnitCost,
+      unit: "KG",
     });
 
-    await importPlatformIngredient(TENANT, STORE, "plat-1", ownUnitCost);
+    const result = await importPlatformIngredient(TENANT, STORE, "plat-1");
 
+    expect(result.unit).toBe("KG");
     expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ unitCost: ownUnitCost }),
+        data: expect.objectContaining({ unit: "KG" }),
       })
     );
   });
@@ -350,7 +320,7 @@ describe("importPlatformIngredient", () => {
     mockPrisma.ingredient.findFirst.mockResolvedValue(null);
 
     await expect(
-      importPlatformIngredient(TENANT, STORE, "missing", 100)
+      importPlatformIngredient(TENANT, STORE, "missing")
     ).rejects.toThrow("not found");
   });
 });

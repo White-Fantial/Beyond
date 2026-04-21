@@ -6,10 +6,6 @@ interface Props {
   items: Ingredient[];
 }
 
-function formatCost(minor: number) {
-  return `$${(minor / 100000).toFixed(6)}`;
-}
-
 export default function IngredientTable({ items }: Props) {
   if (items.length === 0) {
     return (
@@ -27,9 +23,7 @@ export default function IngredientTable({ items }: Props) {
             <tr className="text-xs text-gray-500 bg-gray-50 border-b border-gray-100">
               <th className="px-5 py-3 text-left font-medium">Name</th>
               <th className="px-5 py-3 text-left font-medium">Category</th>
-              <th className="px-5 py-3 text-left font-medium">Purchase Unit</th>
               <th className="px-5 py-3 text-left font-medium">Recipe Unit</th>
-              <th className="px-5 py-3 text-right font-medium">Unit Cost (ex-GST)</th>
               <th className="px-5 py-3 text-left font-medium">Notes</th>
               <th className="px-5 py-3" />
             </tr>
@@ -48,13 +42,6 @@ export default function IngredientTable({ items }: Props) {
                   )}
                 </td>
                 <td className="px-5 py-3 text-gray-600">
-                  {INGREDIENT_UNIT_LABELS[item.purchaseUnit] ?? item.purchaseUnit}
-                </td>
-                <td className="px-5 py-3 text-gray-600">
-                  {INGREDIENT_UNIT_LABELS[item.unit] ?? item.unit}
-                </td>
-                <td className="px-5 py-3 text-right text-gray-700">
-                  {formatCost(item.unitCost)}&nbsp;/&nbsp;
                   {INGREDIENT_UNIT_LABELS[item.unit] ?? item.unit}
                 </td>
                 <td className="px-5 py-3 text-gray-500 truncate max-w-xs">
