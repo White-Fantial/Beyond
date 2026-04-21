@@ -75,9 +75,9 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">레시피 관리</h1>
+          <h1 className="text-xl font-bold text-gray-900">Recipe Management</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            전체 {total}개의 레시피
+            {total} recipe{total !== 1 ? "s" : ""} total
           </p>
         </div>
       </div>
@@ -87,13 +87,13 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
 
       {/* Store filter */}
       <form method="GET" className="flex items-center gap-3">
-        <label className="text-xs text-gray-500 font-medium">스토어 필터:</label>
+        <label className="text-xs text-gray-500 font-medium">Store filter:</label>
         <select
           name="storeId"
           defaultValue={selectedStoreId}
           className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
         >
-          <option value="">전체 스토어</option>
+          <option value="">All stores</option>
           {stores.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name} ({s.tenant?.displayName ?? s.tenantId})
@@ -104,14 +104,14 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
           type="submit"
           className="px-3 py-1.5 text-xs font-medium text-white bg-gray-700 rounded-lg hover:bg-gray-800 transition"
         >
-          필터 적용
+          Apply filter
         </button>
         {selectedStoreId && (
           <Link
             href="/admin/recipes"
             className="px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
           >
-            초기화
+            Clear
           </Link>
         )}
       </form>
@@ -121,10 +121,10 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">레시피명</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">스토어</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">수율</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">등록일</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500">Recipe Name</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500 hidden sm:table-cell">Store</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Yield</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-500 hidden lg:table-cell">Created</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -132,7 +132,7 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
             {recipes.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
-                  등록된 레시피가 없습니다.
+                  No recipes found.
                 </td>
               </tr>
             ) : (
@@ -152,18 +152,18 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
               href={`?storeId=${selectedStoreId}&page=${page - 1}`}
               className="px-3 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
             >
-              이전
+              Previous
             </a>
           )}
           <span className="text-gray-500">
-            {page} / {Math.ceil(total / pageSize)} 페이지
+            Page {page} of {Math.ceil(total / pageSize)}
           </span>
           {page < Math.ceil(total / pageSize) && (
             <a
               href={`?storeId=${selectedStoreId}&page=${page + 1}`}
               className="px-3 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
             >
-              다음
+              Next
             </a>
           )}
         </div>
