@@ -1,5 +1,6 @@
 import { requireOwnerPortalAccess } from "@/lib/owner/auth-guard";
 import OwnerSidebar from "@/components/layout/OwnerSidebar";
+import OwnerMain from "@/components/layout/OwnerMain";
 import WorkspaceSwitcher from "@/components/layout/WorkspaceSwitcher";
 
 export default async function OwnerLayout({ children }: { children: React.ReactNode }) {
@@ -16,7 +17,7 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
           </div>
           <div className="text-sm font-medium text-gray-700">{ctx.name}</div>
         </header>
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+        <OwnerMain>{children}</OwnerMain>
       </div>
     </div>
   );
