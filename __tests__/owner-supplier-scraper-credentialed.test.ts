@@ -40,7 +40,6 @@ import {
   scrapeForUser,
   scrapeAllUsersForProduct,
   getReferencePriceInfo,
-  getBasePriceInfo,
 } from "@/services/owner/owner-supplier-scraper.service";
 
 const mockPrisma = prisma as unknown as {
@@ -319,20 +318,5 @@ describe("getReferencePriceInfo", () => {
     mockPrisma.supplierProduct.findFirst.mockResolvedValue(null);
 
     await expect(getReferencePriceInfo(TENANT, "missing")).rejects.toThrow("not found");
-  });
-});
-
-describe("getBasePriceInfo (backward-compat alias)", () => {
-  it("is an alias for getReferencePriceInfo", async () => {
-    mockPrisma.supplierProduct.findFirst.mockResolvedValue({
-      id: PRODUCT_ID,
-      referencePrice: 800,
-      lastScrapedAt: null,
-    });
-    mockPrisma.supplierPriceRecord.count.mockResolvedValue(1);
-
-    const result = await getBasePriceInfo(TENANT, PRODUCT_ID);
-
-    expect(result.referencePrice).toBe(800);
   });
 });

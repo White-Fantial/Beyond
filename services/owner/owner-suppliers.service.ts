@@ -1,14 +1,9 @@
 /**
- * Owner Suppliers Service — Cost Management Phase 3 (updated for platform suppliers).
+ * Owner Suppliers Service — updated for platform-only supplier model.
  *
- * Manage suppliers, their products, and links to ingredients.
- * All functions scoped to tenantId / storeId where appropriate.
- *
- * As of the platform supplier redesign:
- * - PLATFORM suppliers are admin-managed and visible to all owners (read-only browse).
- * - STORE suppliers are legacy tenant-managed (backward compat).
- * - listAvailableSuppliers() returns both PLATFORM and the tenant's own STORE suppliers.
- * - linkIngredientToSupplierProduct() allows linking to PLATFORM supplier products.
+ * PLATFORM suppliers are admin-managed and visible to all owners (read-only browse).
+ * Owners attach credentials to platform suppliers and link their ingredients to
+ * supplier products. There is no STORE-scope supplier creation from the owner side.
  */
 import { prisma } from "@/lib/prisma";
 import type {
@@ -17,10 +12,6 @@ import type {
   SupplierProduct,
   IngredientSupplierLink,
   SupplierListResult,
-  CreateSupplierInput,
-  UpdateSupplierInput,
-  UpsertSupplierProductInput,
-  UpdateSupplierProductInput,
   SupplierFilters,
 } from "@/types/owner-suppliers";
 import type { IngredientUnit } from "@/types/owner-ingredients";
@@ -87,46 +78,10 @@ function toSupplierProduct(row: RawSupplierProduct): SupplierProduct {
   };
 }
 
-// ─── Supplier CRUD ────────────────────────────────────────────────────────────
+// ─── Supplier list / detail ───────────────────────────────────────────────────
 
 /**
- * List all STORE-scope suppliers for the given tenant (legacy path).
- * Use listAvailableSuppliers() for owner browse which includes PLATFORM suppliers.
- */
-export async function listSuppliers(
-  tenantId: string,
-  filters: SupplierFilters = {}
-): Promise<SupplierListResult> {
-  const { storeId, page = 1, pageSize = 20 } = filters;
-
-  const where = {
-    tenantId,
-    deletedAt: null,
-    ...(storeId ? { storeId } : {}),
-  };
-
-  const [rows, total] = await Promise.all([
-    prisma.supplier.findMany({
-      where,
-      include: { _count: { select: { products: true } } },
-      orderBy: { name: "asc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-    prisma.supplier.count({ where }),
-  ]);
-
-  return {
-    items: rows.map((r) => toSupplier(r as RawSupplier)),
-    total,
-    page,
-    pageSize,
-  };
-}
-
-/**
- * List available suppliers for an owner: PLATFORM suppliers + the tenant's own STORE suppliers.
- * Owners use this to browse and select suppliers to attach credentials to.
+ * List available suppliers for an owner: PLATFORM suppliers (visible to all owners).
  */
 export async function listAvailableSuppliers(
   tenantId: string,
@@ -165,7 +120,6 @@ export async function getSupplierDetail(
   tenantId: string,
   supplierId: string
 ): Promise<SupplierDetail> {
-  // Allow access to PLATFORM suppliers or the tenant's own STORE suppliers
   const row = await prisma.supplier.findFirst({
     where: {
       id: supplierId,
@@ -190,72 +144,12 @@ export async function getSupplierDetail(
   };
 }
 
-export async function createSupplier(
-  tenantId: string,
-  input: CreateSupplierInput
-): Promise<Supplier> {
-  const row = await prisma.supplier.create({
-    data: {
-      scope: "STORE",
-      tenantId,
-      storeId: input.storeId,
-      name: input.name,
-      websiteUrl: input.websiteUrl ?? null,
-      contactEmail: input.contactEmail ?? null,
-      contactPhone: input.contactPhone ?? null,
-      notes: input.notes ?? null,
-    },
-    include: { _count: { select: { products: true } } },
-  });
-  return toSupplier(row as RawSupplier);
-}
-
-export async function updateSupplier(
-  tenantId: string,
-  supplierId: string,
-  input: UpdateSupplierInput
-): Promise<Supplier> {
-  const existing = await prisma.supplier.findFirst({
-    where: { id: supplierId, tenantId, deletedAt: null },
-  });
-  if (!existing) throw new Error(`Supplier ${supplierId} not found`);
-
-  const row = await prisma.supplier.update({
-    where: { id: supplierId },
-    data: {
-      ...(input.name !== undefined ? { name: input.name } : {}),
-      ...(input.websiteUrl !== undefined ? { websiteUrl: input.websiteUrl } : {}),
-      ...(input.contactEmail !== undefined ? { contactEmail: input.contactEmail } : {}),
-      ...(input.contactPhone !== undefined ? { contactPhone: input.contactPhone } : {}),
-      ...(input.notes !== undefined ? { notes: input.notes } : {}),
-    },
-    include: { _count: { select: { products: true } } },
-  });
-  return toSupplier(row as RawSupplier);
-}
-
-export async function deleteSupplier(
-  tenantId: string,
-  supplierId: string
-): Promise<void> {
-  const existing = await prisma.supplier.findFirst({
-    where: { id: supplierId, tenantId, deletedAt: null },
-  });
-  if (!existing) throw new Error(`Supplier ${supplierId} not found`);
-
-  await prisma.supplier.update({
-    where: { id: supplierId },
-    data: { deletedAt: new Date() },
-  });
-}
-
-// ─── Supplier Product CRUD ────────────────────────────────────────────────────
+// ─── Supplier Product list ────────────────────────────────────────────────────
 
 export async function listSupplierProducts(
   tenantId: string,
   supplierId: string
 ): Promise<SupplierProduct[]> {
-  // Allow access to PLATFORM or the tenant's own STORE suppliers
   const supplier = await prisma.supplier.findFirst({
     where: {
       id: supplierId,
@@ -272,82 +166,12 @@ export async function listSupplierProducts(
   return rows.map((r) => toSupplierProduct(r as RawSupplierProduct));
 }
 
-export async function createSupplierProduct(
-  tenantId: string,
-  supplierId: string,
-  input: UpsertSupplierProductInput
-): Promise<SupplierProduct> {
-  const supplier = await prisma.supplier.findFirst({
-    where: { id: supplierId, tenantId, deletedAt: null },
-  });
-  if (!supplier) throw new Error(`Supplier ${supplierId} not found`);
-
-  const row = await prisma.supplierProduct.create({
-    data: {
-      supplierId,
-      name: input.name,
-      externalUrl: input.externalUrl ?? null,
-      unit: input.unit,
-    },
-  });
-  return toSupplierProduct(row as RawSupplierProduct);
-}
-
-export async function updateSupplierProduct(
-  tenantId: string,
-  supplierId: string,
-  productId: string,
-  input: UpdateSupplierProductInput
-): Promise<SupplierProduct> {
-  const supplier = await prisma.supplier.findFirst({
-    where: { id: supplierId, tenantId, deletedAt: null },
-  });
-  if (!supplier) throw new Error(`Supplier ${supplierId} not found`);
-
-  const existing = await prisma.supplierProduct.findFirst({
-    where: { id: productId, supplierId, deletedAt: null },
-  });
-  if (!existing) throw new Error(`SupplierProduct ${productId} not found`);
-
-  const row = await prisma.supplierProduct.update({
-    where: { id: productId },
-    data: {
-      ...(input.name !== undefined ? { name: input.name } : {}),
-      ...(input.externalUrl !== undefined ? { externalUrl: input.externalUrl } : {}),
-      ...(input.unit !== undefined ? { unit: input.unit } : {}),
-    },
-  });
-  return toSupplierProduct(row as RawSupplierProduct);
-}
-
-export async function deleteSupplierProduct(
-  tenantId: string,
-  supplierId: string,
-  productId: string
-): Promise<void> {
-  const supplier = await prisma.supplier.findFirst({
-    where: { id: supplierId, tenantId, deletedAt: null },
-  });
-  if (!supplier) throw new Error(`Supplier ${supplierId} not found`);
-
-  const existing = await prisma.supplierProduct.findFirst({
-    where: { id: productId, supplierId, deletedAt: null },
-  });
-  if (!existing) throw new Error(`SupplierProduct ${productId} not found`);
-
-  await prisma.supplierProduct.update({
-    where: { id: productId },
-    data: { deletedAt: new Date() },
-  });
-}
-
 // ─── Ingredient ↔ SupplierProduct Links ──────────────────────────────────────
 
 export async function getIngredientLinks(
   tenantId: string,
   ingredientId: string
 ): Promise<IngredientSupplierLink[]> {
-  // Verify ingredient belongs to tenant
   const ingredient = await prisma.ingredient.findFirst({
     where: { id: ingredientId, tenantId, deletedAt: null },
   });
@@ -383,13 +207,11 @@ export async function linkIngredientToSupplierProduct(
   supplierProductId: string,
   isPreferred = false
 ): Promise<IngredientSupplierLink> {
-  // Verify ingredient belongs to tenant
   const ingredient = await prisma.ingredient.findFirst({
     where: { id: ingredientId, tenantId, deletedAt: null },
   });
   if (!ingredient) throw new Error(`Ingredient ${ingredientId} not found`);
 
-  // Verify supplier product belongs to a PLATFORM supplier OR to the tenant's own STORE supplier
   const supplierProduct = await prisma.supplierProduct.findFirst({
     where: {
       id: supplierProductId,
@@ -403,7 +225,6 @@ export async function linkIngredientToSupplierProduct(
   });
   if (!supplierProduct) throw new Error(`SupplierProduct ${supplierProductId} not found`);
 
-  // If marking as preferred, unset other preferred links for this ingredient
   if (isPreferred) {
     await prisma.ingredientSupplierLink.updateMany({
       where: { ingredientId, isPreferred: true },

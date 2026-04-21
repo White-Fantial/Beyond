@@ -15,8 +15,7 @@
  *   are NOT protected by any source lock — they are valid Beyond-side changes.
  * - TODO Phase 2: add conflict-resolution policy before syncing again overwrites Beyond edits.
  *
- * Matching is done by origin keys (originConnectionId + originExternalRef), with
- * fallback to legacy keys (sourceOfTruthConnectionId + source*Ref) for backward compat.
+ * Matching is done by origin keys (originConnectionId + originExternalRef).
  *
  * Never matches by name.
  */
@@ -226,8 +225,8 @@ export async function runLoyverseFullCatalogSync(
     const existing = await prisma.catalogCategory.findFirst({
       where: {
         storeId,
-        sourceOfTruthConnectionId: connectionId,
-        sourceCategoryRef: parsed.externalId,
+        originConnectionId: connectionId,
+        originExternalRef: parsed.externalId,
         deletedAt: null,
       },
     });
@@ -253,8 +252,6 @@ export async function runLoyverseFullCatalogSync(
           originConnectionId: connectionId,
           originExternalRef: parsed.externalId,
           importedAt: now,
-          sourceOfTruthConnectionId: connectionId,
-          sourceCategoryRef: parsed.externalId,
           name: parsed.normalizedName,
           updatedAt: now,
         },
@@ -275,8 +272,8 @@ export async function runLoyverseFullCatalogSync(
     const existingGroup = await prisma.catalogModifierGroup.findFirst({
       where: {
         storeId,
-        sourceOfTruthConnectionId: connectionId,
-        sourceModifierGroupRef: parsed.externalId,
+        originConnectionId: connectionId,
+        originExternalRef: parsed.externalId,
         deletedAt: null,
       },
     });
@@ -304,8 +301,6 @@ export async function runLoyverseFullCatalogSync(
           originConnectionId: connectionId,
           originExternalRef: parsed.externalId,
           importedAt: now,
-          sourceOfTruthConnectionId: connectionId,
-          sourceModifierGroupRef: parsed.externalId,
           name: parsed.normalizedName,
           updatedAt: now,
         },
@@ -321,8 +316,8 @@ export async function runLoyverseFullCatalogSync(
       const existingOpt = await prisma.catalogModifierOption.findFirst({
         where: {
           storeId,
-          sourceOfTruthConnectionId: connectionId,
-          sourceModifierOptionRef: opt.externalId,
+          originConnectionId: connectionId,
+          originExternalRef: opt.externalId,
           deletedAt: null,
         },
       });
@@ -350,8 +345,6 @@ export async function runLoyverseFullCatalogSync(
             originConnectionId: connectionId,
             originExternalRef: opt.externalId,
             importedAt: now,
-            sourceOfTruthConnectionId: connectionId,
-            sourceModifierOptionRef: opt.externalId,
             name: opt.normalizedName,
             priceDeltaAmount: opt.normalizedPriceAmount,
             updatedAt: now,
@@ -379,8 +372,8 @@ export async function runLoyverseFullCatalogSync(
     const existing = await prisma.catalogProduct.findFirst({
       where: {
         storeId,
-        sourceOfTruthConnectionId: connectionId,
-        sourceProductRef: parsed.externalId,
+        originConnectionId: connectionId,
+        originExternalRef: parsed.externalId,
         deletedAt: null,
       },
     });
@@ -409,8 +402,6 @@ export async function runLoyverseFullCatalogSync(
           originConnectionId: connectionId,
           originExternalRef: parsed.externalId,
           importedAt: now,
-          sourceOfTruthConnectionId: connectionId,
-          sourceProductRef: parsed.externalId,
           name: parsed.normalizedName,
           basePriceAmount: parsed.normalizedPriceAmount,
           updatedAt: now,
@@ -535,21 +526,21 @@ export async function runLoyverseFullCatalogSync(
   const internalModifierOptions = await prisma.catalogModifierOption.findMany({
     where: {
       storeId,
-      sourceOfTruthConnectionId: connectionId,
+      originConnectionId: connectionId,
       deletedAt: null,
     },
-    select: { id: true, sourceModifierOptionRef: true, modifierGroupId: true },
+    select: { id: true, originExternalRef: true, modifierGroupId: true },
   });
 
   for (const opt of internalModifierOptions) {
-    if (!opt.sourceModifierOptionRef) continue;
+    if (!opt.originExternalRef) continue;
     const { created, updated } = await upsertMapping({
       tenantId,
       storeId,
       connectionId,
       entityType: "MODIFIER_OPTION",
       internalEntityId: opt.id,
-      externalEntityId: opt.sourceModifierOptionRef,
+      externalEntityId: opt.originExternalRef,
       now,
     });
     result.mappings.created += created;

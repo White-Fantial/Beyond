@@ -2,18 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { SupplierDetail, UpsertSupplierProductInput } from "@/types/owner-suppliers";
-import type { IngredientUnit } from "@/types/owner-ingredients";
+import type { SupplierDetail } from "@/types/owner-suppliers";
+import type { SupplierCredential } from "@/types/owner-supplier-credentials";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
+import SupplierCredentialPanel from "./SupplierCredentialPanel";
 
 interface Props {
   supplier: SupplierDetail;
+  credential: SupplierCredential | null;
 }
 
-const UNITS = Object.keys(INGREDIENT_UNIT_LABELS) as IngredientUnit[];
-
 function formatPrice(minor: number) {
-  return `$${(minor / 100).toFixed(2)}`;
+  return `$${(minor / 100000).toFixed(2)}`;
 }
 
 function formatDate(iso: string | null) {
@@ -27,47 +27,12 @@ function formatDate(iso: string | null) {
   });
 }
 
-export default function SupplierDetailView({ supplier }: Props) {
+export default function SupplierDetailView({ supplier, credential }: Props) {
   const router = useRouter();
-  const [productName, setProductName] = useState("");
-  const [productUrl, setProductUrl] = useState("");
-  const [productUnit, setProductUnit] = useState<IngredientUnit>("EACH");
-  const [addingProduct, setAddingProduct] = useState(false);
-  const [productError, setProductError] = useState<string | null>(null);
   const [scrapingAll, setScrapingAll] = useState(false);
   const [scrapeResults, setScrapeResults] = useState<string | null>(null);
   const [scrapingProductId, setScrapingProductId] = useState<string | null>(null);
   const [productScrapeError, setProductScrapeError] = useState<string | null>(null);
-
-  async function handleAddProduct(e: React.FormEvent) {
-    e.preventDefault();
-    setProductError(null);
-    setAddingProduct(true);
-    try {
-      const body: UpsertSupplierProductInput = {
-        name: productName,
-        externalUrl: productUrl || undefined,
-        unit: productUnit,
-      };
-      const res = await fetch(`/api/owner/suppliers/${supplier.id}/products`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setProductError(data.error ?? "Failed to add product");
-        return;
-      }
-      setProductName("");
-      setProductUrl("");
-      router.refresh();
-    } catch {
-      setProductError("Network error. Please try again.");
-    } finally {
-      setAddingProduct(false);
-    }
-  }
 
   async function handleScrapeAll() {
     setScrapingAll(true);
@@ -121,13 +86,15 @@ export default function SupplierDetailView({ supplier }: Props) {
       <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-900">Supplier Info</h2>
-          <button
-            onClick={handleScrapeAll}
-            disabled={scrapingAll || supplier.products.length === 0}
-            className="px-3 py-1.5 text-xs font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition"
-          >
-            {scrapingAll ? "Scraping…" : "🔄 Scrape All Prices"}
-          </button>
+          {supplier.products.length > 0 && (
+            <button
+              onClick={handleScrapeAll}
+              disabled={scrapingAll}
+              className="px-3 py-1.5 text-xs font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition"
+            >
+              {scrapingAll ? "Scraping…" : "🔄 Scrape All Prices"}
+            </button>
+          )}
         </div>
         {scrapeResults && (
           <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
@@ -171,62 +138,16 @@ export default function SupplierDetailView({ supplier }: Props) {
         </dl>
       </div>
 
-      {/* Add product form */}
-      <form
-        onSubmit={handleAddProduct}
-        className="bg-white rounded-xl border border-gray-200 p-5 space-y-4"
-      >
-        <h2 className="text-sm font-semibold text-gray-900">Add Product</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          <div className="sm:col-span-1">
-            <label className="block text-xs font-medium text-gray-600 mb-1">
-              Product Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={productName}
-              onChange={(e) => setProductName(e.target.value)}
-              placeholder="High Grade Flour 25kg"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
-          </div>
-          <div className="sm:col-span-1">
-            <label className="block text-xs font-medium text-gray-600 mb-1">Product URL</label>
-            <input
-              type="url"
-              value={productUrl}
-              onChange={(e) => setProductUrl(e.target.value)}
-              placeholder="https://supplier.com/product"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Unit</label>
-            <select
-              value={productUnit}
-              onChange={(e) => setProductUnit(e.target.value as IngredientUnit)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            >
-              {UNITS.map((u) => (
-                <option key={u} value={u}>
-                  {INGREDIENT_UNIT_LABELS[u]} ({u})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        {productError && <p className="text-sm text-red-600">{productError}</p>}
-        <button
-          type="submit"
-          disabled={addingProduct}
-          className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition"
-        >
-          {addingProduct ? "Adding…" : "Add Product"}
-        </button>
-      </form>
+      {/* Credential management */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+        <h2 className="text-sm font-semibold text-gray-900">My Credentials</h2>
+        <p className="text-xs text-gray-500">
+          Register your supplier login to enable personalised price scraping.
+        </p>
+        <SupplierCredentialPanel supplierId={supplier.id} credential={credential} />
+      </div>
 
-      {/* Products table */}
+      {/* Products table (read-only — admin-managed) */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -240,7 +161,7 @@ export default function SupplierDetailView({ supplier }: Props) {
             <thead>
               <tr className="text-xs text-gray-500 border-b border-gray-100">
                 <th className="px-5 py-3 text-left font-medium">Product</th>
-                <th className="px-5 py-3 text-right font-medium">Price</th>
+                <th className="px-5 py-3 text-right font-medium">Reference Price</th>
                 <th className="px-5 py-3 text-left font-medium">Unit</th>
                 <th className="px-5 py-3 text-left font-medium">Last Scraped</th>
                 <th className="px-5 py-3" />
@@ -263,7 +184,7 @@ export default function SupplierDetailView({ supplier }: Props) {
                     )}
                   </td>
                   <td className="px-5 py-3 text-right font-medium text-gray-900">
-                    <div>{formatPrice(product.referencePrice)}</div>
+                    {formatPrice(product.referencePrice)}
                   </td>
                   <td className="px-5 py-3 text-gray-600">
                     {INGREDIENT_UNIT_LABELS[product.unit] ?? product.unit}

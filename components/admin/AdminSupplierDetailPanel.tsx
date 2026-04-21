@@ -160,12 +160,12 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
           </div>
-          <div className="sm:col-span-2">
+          <div className="sm:col-span-2 lg:col-span-4">
             <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
             <textarea
+              rows={2}
               value={editNotes}
               onChange={(e) => setEditNotes(e.target.value)}
-              rows={2}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
           </div>
@@ -290,7 +290,7 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
                   </td>
                   <td className="px-5 py-3 text-gray-600">{p.unit}</td>
                   <td className="px-5 py-3 text-right text-gray-700">
-                    ${(p.referencePrice / 100000).toFixed(2)}
+                   ${(p.referencePrice / 100000).toFixed(2)}
                   </td>
                   <td className="px-5 py-3 text-right">
                     <button
