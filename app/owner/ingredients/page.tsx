@@ -2,6 +2,7 @@ import { requireAuth } from "@/lib/auth/permissions";
 import { listIngredients } from "@/services/owner/owner-ingredients.service";
 import IngredientTable from "@/components/owner/ingredients/IngredientTable";
 import AddIngredientForm from "@/components/owner/ingredients/AddIngredientForm";
+import ImportPlatformIngredientPanel from "@/components/owner/ingredients/ImportPlatformIngredientPanel";
 
 export default async function OwnerIngredientsPage() {
   const ctx = await requireAuth();
@@ -20,6 +21,7 @@ export default async function OwnerIngredientsPage() {
             {result.total} ingredient{result.total !== 1 ? "s" : ""}
           </p>
         </div>
+        <ImportPlatformIngredientPanel storeId={storeId} />
       </div>
       <AddIngredientForm storeId={storeId} />
       <IngredientTable items={result.items} />

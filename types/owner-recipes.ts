@@ -98,4 +98,6 @@ export interface CopyMarketplaceRecipeInput {
   storeId: string;
   /** Optional override for the recipe name; defaults to the marketplace recipe's title. */
   name?: string;
+  /** If provided, the copied recipe is immediately linked to this catalog product. */
+  catalogProductId?: string;
 }

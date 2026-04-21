@@ -192,7 +192,25 @@ describe("copyMarketplaceRecipeToOwner", () => {
     expect(createCall.data.marketplaceSourceId).toBe(MARKETPLACE_RECIPE_ID);
   });
 
-  it("copies ingredient IDs from the marketplace recipe", async () => {
+  it("links the copied recipe to a product when catalogProductId is provided", async () => {
+    const PRODUCT_ID = "product-abc";
+    mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue(mockMarketplaceRecipeBasic);
+    mockPrisma.recipe.create.mockResolvedValue({
+      ...mockCreatedRecipeRow,
+      catalogProductId: PRODUCT_ID,
+    });
+
+    const result = await copyMarketplaceRecipeToOwner(TENANT_ID, USER_ID, MARKETPLACE_RECIPE_ID, {
+      storeId: STORE_ID,
+      catalogProductId: PRODUCT_ID,
+    });
+
+    const createCall = mockPrisma.recipe.create.mock.calls[0][0];
+    expect(createCall.data.catalogProductId).toBe(PRODUCT_ID);
+    expect(result.catalogProductId).toBe(PRODUCT_ID);
+  });
+
+  it("sets catalogProductId to null when not provided", async () => {
     mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue(mockMarketplaceRecipeBasic);
     mockPrisma.recipe.create.mockResolvedValue(mockCreatedRecipeRow);
 
@@ -201,9 +219,6 @@ describe("copyMarketplaceRecipeToOwner", () => {
     });
 
     const createCall = mockPrisma.recipe.create.mock.calls[0][0];
-    expect(createCall.data.ingredients.create).toHaveLength(1);
-    expect(createCall.data.ingredients.create[0].ingredientId).toBe("ing-1");
-    expect(createCall.data.ingredients.create[0].quantity).toBe(200);
-    expect(createCall.data.ingredients.create[0].unit).toBe("GRAM");
+    expect(createCall.data.catalogProductId).toBeNull();
   });
 });

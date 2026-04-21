@@ -156,3 +156,74 @@ export async function deleteIngredient(
     data: { deletedAt: new Date() },
   });
 }
+
+/**
+ * Import a PLATFORM-scope ingredient into a store's ingredient list.
+ *
+ * Creates a new STORE-scope Ingredient that mirrors the platform ingredient's
+ * name, description, category, purchaseUnit, and unit — but uses the owner's
+ * own unitCost (price), because each owner may pay a different price for the
+ * same ingredient from the same supplier.
+ */
+export async function importPlatformIngredient(
+  tenantId: string,
+  storeId: string,
+  platformIngredientId: string,
+  unitCost: number
+): Promise<Ingredient> {
+  const platform = await prisma.ingredient.findFirst({
+    where: { id: platformIngredientId, scope: "PLATFORM", deletedAt: null },
+  });
+  if (!platform) {
+    throw new Error(`Platform ingredient ${platformIngredientId} not found`);
+  }
+
+  const row = await prisma.ingredient.create({
+    data: {
+      scope: "STORE",
+      tenantId,
+      storeId,
+      name: platform.name,
+      description: platform.description,
+      category: platform.category,
+      purchaseUnit: platform.purchaseUnit,
+      unit: platform.unit,
+      unitCost,
+      currency: platform.currency,
+      notes: platform.notes,
+    },
+  });
+  return toIngredient(row);
+}
+
+/**
+ * Search platform (PLATFORM-scope) ingredients by name keyword and/or category.
+ * Returns paginated results so owners can browse and import platform ingredients.
+ */
+export async function searchPlatformIngredients(
+  filters: { q?: string; category?: string; page?: number; pageSize?: number } = {}
+): Promise<IngredientListResult> {
+  const { q, category, page = 1, pageSize = 30 } = filters;
+
+  const where = {
+    scope: "PLATFORM" as const,
+    isActive: true,
+    deletedAt: null,
+    ...(category ? { category } : {}),
+    ...(q?.trim()
+      ? { name: { contains: q.trim(), mode: "insensitive" as const } }
+      : {}),
+  };
+
+  const [rows, total] = await Promise.all([
+    prisma.ingredient.findMany({
+      where,
+      orderBy: [{ category: "asc" }, { name: "asc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    prisma.ingredient.count({ where }),
+  ]);
+
+  return { items: rows.map(toIngredient), total, page, pageSize };
+}
