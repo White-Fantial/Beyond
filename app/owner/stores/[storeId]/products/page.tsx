@@ -177,14 +177,14 @@ export default async function StoreProductsPage({ params, searchParams }: Props)
                               href={`/owner/stores/${storeId}/products/${p.id}`}
                               className="text-xs font-medium px-1.5 py-0.5 rounded bg-green-100 text-green-700 hover:bg-green-200"
                             >
-                              있음 ({p.recipeCount})
+                              Has recipe ({p.recipeCount})
                             </Link>
                           ) : (
                             <Link
                               href={`/owner/stores/${storeId}/products/${p.id}`}
                               className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 hover:bg-amber-100"
                             >
-                              없음
+                              No recipe
                             </Link>
                           )}
                         </td>
