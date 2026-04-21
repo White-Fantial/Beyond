@@ -2,11 +2,11 @@
 
 import { usePathname } from "next/navigation";
 import StoreSidebar from "./StoreSidebar";
+import { extractOwnerStoreId } from "@/lib/utils/route-helpers";
 
 export default function OwnerMain({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const storeMatch = pathname.match(/^\/owner\/stores\/([^/]+)/);
-  const activeStoreId = storeMatch?.[1] ?? null;
+  const activeStoreId = extractOwnerStoreId(pathname);
 
   if (activeStoreId) {
     return (

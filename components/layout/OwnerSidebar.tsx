@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { extractOwnerStoreId } from "@/lib/utils/route-helpers";
 
 interface NavItem {
   href: string;
@@ -219,8 +220,7 @@ export default function OwnerSidebar() {
   const pathname = usePathname();
 
   // Detect store context: /owner/stores/[storeId] or /owner/stores/[storeId]/*
-  const storeMatch = pathname.match(/^\/owner\/stores\/([^/]+)/);
-  const activeStoreId = storeMatch?.[1] ?? null;
+  const activeStoreId = extractOwnerStoreId(pathname);
 
   if (activeStoreId) {
     return <CollapsedSidebar pathname={pathname} />;
