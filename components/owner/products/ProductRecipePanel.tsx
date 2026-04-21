@@ -50,7 +50,7 @@ export default function ProductRecipePanel({ storeId, productId, recipes }: Prop
                 </div>
               </div>
               <div className="p-5">
-                <RecipeCostBreakdown detail={recipe} />
+                <RecipeCostBreakdown detail={recipe} canEdit />
               </div>
             </div>
           ))}
