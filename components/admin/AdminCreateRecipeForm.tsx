@@ -34,15 +34,15 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
     setError(null);
     const qty = parseInt(yieldQty, 10);
     if (!storeId) {
-      setError("스토어를 선택해주세요.");
+      setError("Please select a store.");
       return;
     }
     if (!name.trim()) {
-      setError("레시피 이름을 입력해주세요.");
+      setError("Please enter a recipe name.");
       return;
     }
     if (!qty || qty < 1) {
-      setError("수율 수량은 1 이상이어야 합니다.");
+      setError("Yield quantity must be at least 1.");
       return;
     }
     setSubmitting(true);
@@ -61,7 +61,7 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? "레시피 생성에 실패했습니다.");
+        setError(data.error ?? "Failed to create recipe.");
         return;
       }
       // Reset form and refresh
@@ -73,7 +73,7 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
       setOpen(false);
       router.refresh();
     } catch {
-      setError("네트워크 오류가 발생했습니다.");
+      setError("A network error occurred.");
     } finally {
       setSubmitting(false);
     }
@@ -85,7 +85,7 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
         onClick={() => setOpen(true)}
         className="px-4 py-2 bg-red-700 text-white text-sm font-medium rounded-lg hover:bg-red-800 transition"
       >
-        + 레시피 등록
+        + Add Recipe
       </button>
     );
   }
@@ -96,20 +96,20 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
       className="bg-white rounded-xl border border-gray-200 p-5 space-y-4"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-900">레시피 등록</h2>
+        <h2 className="text-sm font-semibold text-gray-900">Add Recipe</h2>
         <button
           type="button"
           onClick={() => setOpen(false)}
           className="text-xs text-gray-400 hover:text-gray-600"
         >
-          닫기
+          Close
         </button>
       </div>
 
       {/* Store selector */}
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">
-          스토어 <span className="text-red-500">*</span>
+          Store <span className="text-red-500">*</span>
         </label>
         <select
           required
@@ -117,7 +117,7 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
           onChange={(e) => setStoreId(e.target.value)}
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
         >
-          <option value="">스토어 선택…</option>
+          <option value="">Select a store…</option>
           {stores.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name} ({s.tenant?.displayName ?? s.tenantId})
@@ -129,20 +129,20 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="sm:col-span-1">
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            레시피 이름 <span className="text-red-500">*</span>
+            Recipe Name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="클래식 베이글"
+            placeholder="Classic Bagel"
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            수율 수량 <span className="text-red-500">*</span>
+            Yield Qty <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
@@ -155,7 +155,7 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            수율 단위 <span className="text-red-500">*</span>
+            Yield Unit <span className="text-red-500">*</span>
           </label>
           <select
             required
@@ -173,12 +173,12 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">메모 (선택)</label>
+        <label className="block text-xs font-medium text-gray-600 mb-1">Notes (optional)</label>
         <input
           type="text"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="추가 설명…"
+          placeholder="Additional notes…"
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
         />
       </div>
@@ -191,14 +191,14 @@ export default function AdminCreateRecipeForm({ stores }: Props) {
           disabled={submitting}
           className="px-5 py-2 bg-red-700 text-white text-sm font-medium rounded-lg hover:bg-red-800 disabled:opacity-50 transition"
         >
-          {submitting ? "등록 중…" : "레시피 등록"}
+          {submitting ? "Creating…" : "Add Recipe"}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
           className="px-5 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition"
         >
-          취소
+          Cancel
         </button>
       </div>
     </form>
