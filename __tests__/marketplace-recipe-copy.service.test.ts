@@ -14,6 +14,10 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
+vi.mock("@/services/owner/owner-supplier-prices.service", () => ({
+  resolveEffectiveCostsBulk: vi.fn().mockResolvedValue(new Map()),
+}));
+
 import { prisma } from "@/lib/prisma";
 import { copyMarketplaceRecipeToOwner } from "@/services/owner/owner-recipes.service";
 
@@ -28,19 +32,18 @@ const USER_ID = "user-buyer-1";
 const STORE_ID = "store-1";
 const MARKETPLACE_RECIPE_ID = "mrecipe-1";
 
-const mockIngredient = {
-  id: "ing-1",
-  name: "밀가루",
+const mockIngredientShape = {
+  name: "Flour",
   unit: "GRAM",
-  unitCost: 10,
+  supplierLinks: [],
 };
 
 const mockMarketplaceRecipeBasic = {
   id: MARKETPLACE_RECIPE_ID,
   type: "BASIC",
   status: "PUBLISHED",
-  title: "기본 파스타",
-  description: "맛있는 파스타 레시피",
+  title: "Basic Pasta",
+  description: "Tasty pasta recipe",
   yieldQty: 2,
   yieldUnit: "SERVING",
   deletedAt: null,
@@ -49,7 +52,7 @@ const mockMarketplaceRecipeBasic = {
       ingredientId: "ing-1",
       quantity: { toNumber: () => 200 },
       unit: "GRAM",
-      ingredient: { name: "밀가루", unit: "GRAM", unitCost: 10 },
+      ingredient: mockIngredientShape,
     },
   ],
 };
@@ -58,8 +61,8 @@ const mockMarketplaceRecipePremium = {
   ...mockMarketplaceRecipeBasic,
   id: "mrecipe-premium-1",
   type: "PREMIUM",
-  title: "프리미엄 김치찌개",
-  description: "비법 레시피",
+  title: "Premium Kimchi Stew",
+  description: "Secret recipe",
 };
 
 const mockCreatedRecipeRow = {
@@ -68,10 +71,10 @@ const mockCreatedRecipeRow = {
   storeId: STORE_ID,
   catalogProductId: null,
   tenantCatalogProductId: null,
-  name: "기본 파스타",
+  name: "Basic Pasta",
   yieldQty: 2,
   yieldUnit: "SERVING",
-  notes: "맛있는 파스타 레시피",
+  notes: "Tasty pasta recipe",
   marketplaceSourceId: MARKETPLACE_RECIPE_ID,
   createdAt: new Date("2026-04-19"),
   updatedAt: new Date("2026-04-19"),
@@ -83,7 +86,7 @@ const mockCreatedRecipeRow = {
       ingredientId: "ing-1",
       quantity: { toNumber: () => 200 },
       unit: "GRAM",
-      ingredient: { name: "밀가루", unit: "GRAM", unitCost: 10 },
+      ingredient: mockIngredientShape,
     },
   ],
 };
@@ -106,10 +109,10 @@ describe("copyMarketplaceRecipeToOwner", () => {
     expect(mockPrisma.marketplaceRecipePurchase.findFirst).not.toHaveBeenCalled();
     expect(mockPrisma.recipe.create).toHaveBeenCalledOnce();
     expect(result.marketplaceSourceId).toBe(MARKETPLACE_RECIPE_ID);
-    expect(result.name).toBe("기본 파스타");
+    expect(result.name).toBe("Basic Pasta");
     expect(result.yieldQty).toBe(2);
     expect(result.yieldUnit).toBe("SERVING");
-    expect(result.notes).toBe("맛있는 파스타 레시피");
+    expect(result.notes).toBe("Tasty pasta recipe");
     expect(result.storeId).toBe(STORE_ID);
     expect(result.tenantId).toBe(TENANT_ID);
     expect(result.ingredients).toHaveLength(1);
@@ -119,17 +122,17 @@ describe("copyMarketplaceRecipeToOwner", () => {
     mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue(mockMarketplaceRecipeBasic);
     mockPrisma.recipe.create.mockResolvedValue({
       ...mockCreatedRecipeRow,
-      name: "나만의 파스타",
+      name: "My Custom Pasta",
     });
 
     const result = await copyMarketplaceRecipeToOwner(TENANT_ID, USER_ID, MARKETPLACE_RECIPE_ID, {
       storeId: STORE_ID,
-      name: "나만의 파스타",
+      name: "My Custom Pasta",
     });
 
     const createCall = mockPrisma.recipe.create.mock.calls[0][0];
-    expect(createCall.data.name).toBe("나만의 파스타");
-    expect(result.name).toBe("나만의 파스타");
+    expect(createCall.data.name).toBe("My Custom Pasta");
+    expect(result.name).toBe("My Custom Pasta");
   });
 
   it("copies a PREMIUM recipe when the user has a valid purchase", async () => {
@@ -143,9 +146,9 @@ describe("copyMarketplaceRecipeToOwner", () => {
     mockPrisma.recipe.create.mockResolvedValue({
       ...mockCreatedRecipeRow,
       id: "recipe-premium-copy-1",
-      name: "프리미엄 김치찌개",
+      name: "Premium Kimchi Stew",
       marketplaceSourceId: "mrecipe-premium-1",
-      notes: "비법 레시피",
+      notes: "Secret recipe",
     });
 
     const result = await copyMarketplaceRecipeToOwner(TENANT_ID, USER_ID, "mrecipe-premium-1", {

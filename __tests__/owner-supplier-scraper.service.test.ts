@@ -10,11 +10,9 @@ vi.mock("@/lib/prisma", () => ({
     supplier: {
       findFirst: vi.fn(),
     },
-    ingredientSupplierLink: {
-      findFirst: vi.fn(),
-    },
-    ingredient: {
-      update: vi.fn(),
+    supplierPriceRecord: {
+      findMany: vi.fn(),
+      count: vi.fn(),
     },
   },
 }));
@@ -28,6 +26,8 @@ import { getScraperForUrl } from "@/lib/supplier-scraper";
 import {
   scrapeSupplierProduct,
   scrapeAllSupplierProducts,
+  recomputeReferencePrice,
+  getReferencePriceInfo,
 } from "@/services/owner/owner-supplier-scraper.service";
 
 const mockPrisma = prisma as unknown as {
@@ -39,11 +39,9 @@ const mockPrisma = prisma as unknown as {
   supplier: {
     findFirst: ReturnType<typeof vi.fn>;
   };
-  ingredientSupplierLink: {
-    findFirst: ReturnType<typeof vi.fn>;
-  };
-  ingredient: {
-    update: ReturnType<typeof vi.fn>;
+  supplierPriceRecord: {
+    findMany: ReturnType<typeof vi.fn>;
+    count: ReturnType<typeof vi.fn>;
   };
 };
 
@@ -56,7 +54,7 @@ const mockProduct = {
   supplierId: "sup-1",
   name: "High Grade Flour 25kg",
   externalUrl: "https://flourco.nz/products/hg-flour-25kg",
-  currentPrice: 4500,
+  referencePrice: 4500,
   unit: "KG",
   lastScrapedAt: null,
   metadata: {},
@@ -71,14 +69,13 @@ beforeEach(() => {
 // ─── scrapeSupplierProduct ────────────────────────────────────────────────────
 
 describe("scrapeSupplierProduct", () => {
-  it("scrapes a product and updates its price", async () => {
+  it("scrapes a product and updates referencePrice", async () => {
     mockPrisma.supplierProduct.findFirst.mockResolvedValue(mockProduct);
     mockPrisma.supplierProduct.update.mockResolvedValue({
       ...mockProduct,
-      currentPrice: 4800,
+      referencePrice: 4800,
       lastScrapedAt: new Date(),
     });
-    mockPrisma.ingredientSupplierLink.findFirst.mockResolvedValue(null);
 
     mockGetScraperForUrl.mockReturnValue({
       scrape: vi.fn().mockResolvedValue({
@@ -97,7 +94,7 @@ describe("scrapeSupplierProduct", () => {
     expect(mockPrisma.supplierProduct.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "sp-1" },
-        data: expect.objectContaining({ currentPrice: 4800 }),
+        data: expect.objectContaining({ referencePrice: 4800 }),
       })
     );
   });
@@ -105,12 +102,11 @@ describe("scrapeSupplierProduct", () => {
   it("marks changed=false when price is unchanged", async () => {
     mockPrisma.supplierProduct.findFirst.mockResolvedValue(mockProduct);
     mockPrisma.supplierProduct.update.mockResolvedValue(mockProduct);
-    mockPrisma.ingredientSupplierLink.findFirst.mockResolvedValue(null);
 
     mockGetScraperForUrl.mockReturnValue({
       scrape: vi.fn().mockResolvedValue({
         name: "HG Flour",
-        price: 4500, // same as currentPrice
+        price: 4500,
         currency: "NZD",
         unit: null,
       }),
@@ -122,19 +118,12 @@ describe("scrapeSupplierProduct", () => {
     expect(result.newPrice).toBe(4500);
   });
 
-  it("updates preferred ingredient unitCost when price changes", async () => {
+  it("does NOT update ingredient unitCost (pricing moved to supplier price tables)", async () => {
     mockPrisma.supplierProduct.findFirst.mockResolvedValue(mockProduct);
     mockPrisma.supplierProduct.update.mockResolvedValue({
       ...mockProduct,
-      currentPrice: 4800,
+      referencePrice: 4800,
     });
-    mockPrisma.ingredientSupplierLink.findFirst.mockResolvedValue({
-      id: "link-1",
-      ingredientId: "ing-1",
-      supplierProductId: "sp-1",
-      isPreferred: true,
-    });
-    mockPrisma.ingredient.update.mockResolvedValue({ id: "ing-1" });
 
     mockGetScraperForUrl.mockReturnValue({
       scrape: vi.fn().mockResolvedValue({ price: 4800, name: null, currency: null, unit: null }),
@@ -142,26 +131,8 @@ describe("scrapeSupplierProduct", () => {
 
     await scrapeSupplierProduct(TENANT, "sp-1");
 
-    expect(mockPrisma.ingredient.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "ing-1" },
-        data: { unitCost: 4800 },
-      })
-    );
-  });
-
-  it("does not update ingredient when price is unchanged", async () => {
-    mockPrisma.supplierProduct.findFirst.mockResolvedValue(mockProduct);
-    mockPrisma.supplierProduct.update.mockResolvedValue(mockProduct);
-    mockPrisma.ingredientSupplierLink.findFirst.mockResolvedValue(null);
-
-    mockGetScraperForUrl.mockReturnValue({
-      scrape: vi.fn().mockResolvedValue({ price: 4500, name: null, currency: null, unit: null }),
-    });
-
-    await scrapeSupplierProduct(TENANT, "sp-1");
-
-    expect(mockPrisma.ingredient.update).not.toHaveBeenCalled();
+    // ingredient.update should never be called
+    expect(mockPrisma.supplierProduct.update).toHaveBeenCalledTimes(1);
   });
 
   it("throws when product has no externalUrl", async () => {
@@ -189,16 +160,14 @@ describe("scrapeAllSupplierProducts", () => {
     mockPrisma.supplier.findFirst.mockResolvedValue({ id: "sup-1", tenantId: TENANT });
     mockPrisma.supplierProduct.findMany.mockResolvedValue([
       mockProduct,
-      { ...mockProduct, id: "sp-2", externalUrl: null }, // no URL — should skip
+      { ...mockProduct, id: "sp-2", externalUrl: null }, // no URL — skip
     ]);
 
-    // For the first product
     mockPrisma.supplierProduct.findFirst.mockResolvedValue(mockProduct);
     mockPrisma.supplierProduct.update.mockResolvedValue({
       ...mockProduct,
-      currentPrice: 4800,
+      referencePrice: 4800,
     });
-    mockPrisma.ingredientSupplierLink.findFirst.mockResolvedValue(null);
 
     mockGetScraperForUrl.mockReturnValue({
       scrape: vi.fn().mockResolvedValue({ price: 4800, name: null, currency: null, unit: null }),
@@ -206,7 +175,6 @@ describe("scrapeAllSupplierProducts", () => {
 
     const results = await scrapeAllSupplierProducts(TENANT, "sup-1");
 
-    // Only 1 result because sp-2 has no URL
     expect(results).toHaveLength(1);
   });
 
@@ -223,13 +191,11 @@ describe("scrapeAllSupplierProducts", () => {
       { ...mockProduct, id: "sp-2", externalUrl: "https://flourco.nz/sp-2" },
     ]);
 
-    // First call throws, second succeeds
     mockPrisma.supplierProduct.findFirst
-      .mockResolvedValueOnce(mockProduct) // sp-1
+      .mockResolvedValueOnce(mockProduct)
       .mockResolvedValueOnce({ ...mockProduct, id: "sp-2", externalUrl: "https://flourco.nz/sp-2" });
 
     mockPrisma.supplierProduct.update.mockResolvedValue(mockProduct);
-    mockPrisma.ingredientSupplierLink.findFirst.mockResolvedValue(null);
 
     mockGetScraperForUrl
       .mockReturnValueOnce({
@@ -241,7 +207,61 @@ describe("scrapeAllSupplierProducts", () => {
 
     const results = await scrapeAllSupplierProducts(TENANT, "sup-1");
 
-    // Only the successful scrape is returned
     expect(results).toHaveLength(1);
+  });
+});
+
+// ─── recomputeReferencePrice ──────────────────────────────────────────────────
+
+describe("recomputeReferencePrice", () => {
+  it("sets referencePrice to the MAX of all price records", async () => {
+    mockPrisma.supplierPriceRecord.findMany.mockResolvedValue([
+      { observedPrice: 4500 },
+      { observedPrice: 6000 },
+      { observedPrice: 5200 },
+    ]);
+    mockPrisma.supplierProduct.update.mockResolvedValue({ id: "sp-1", referencePrice: 6000 });
+
+    await recomputeReferencePrice("sp-1");
+
+    expect(mockPrisma.supplierProduct.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "sp-1" },
+        data: expect.objectContaining({ referencePrice: 6000 }),
+      })
+    );
+  });
+
+  it("does nothing when no price records exist", async () => {
+    mockPrisma.supplierPriceRecord.findMany.mockResolvedValue([]);
+
+    await recomputeReferencePrice("sp-1");
+
+    expect(mockPrisma.supplierProduct.update).not.toHaveBeenCalled();
+  });
+});
+
+// ─── getReferencePriceInfo ────────────────────────────────────────────────────
+
+describe("getReferencePriceInfo", () => {
+  it("returns reference price info for a product", async () => {
+    mockPrisma.supplierProduct.findFirst.mockResolvedValue({
+      id: "sp-1",
+      referencePrice: 4500,
+      lastScrapedAt: new Date("2026-01-15"),
+    });
+    mockPrisma.supplierPriceRecord.count.mockResolvedValue(3);
+
+    const result = await getReferencePriceInfo(TENANT, "sp-1");
+
+    expect(result.referencePrice).toBe(4500);
+    expect(result.priceRecordCount).toBe(3);
+    expect(typeof result.lastScrapedAt).toBe("string");
+  });
+
+  it("throws if product not found", async () => {
+    mockPrisma.supplierProduct.findFirst.mockResolvedValue(null);
+
+    await expect(getReferencePriceInfo(TENANT, "missing")).rejects.toThrow("not found");
   });
 });

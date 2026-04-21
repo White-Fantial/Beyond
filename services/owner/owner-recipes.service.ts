@@ -1,9 +1,16 @@
 /**
- * Owner Recipes Service — Cost Management Phase 2.
+ * Owner Recipes Service — Cost Management Phase 2 (revised).
  *
  * Manage product recipes and calculate ingredient costs. All functions scoped to tenantId.
+ *
+ * Cost resolution for each recipe ingredient (4-step priority):
+ *   1. Owner's active contract price (SupplierContractPrice, effectiveTo IS NULL)
+ *   2. Owner's latest price record (SupplierPriceRecord, most recent)
+ *   3. Platform-wide referencePrice on SupplierProduct (maintained by scraper)
+ *   4. 0 — unresolved (displayed as "unknown cost" in the UI)
  */
 import { prisma } from "@/lib/prisma";
+import { resolveEffectiveCostsBulk } from "./owner-supplier-prices.service";
 import type {
   Recipe,
   RecipeDetail,
@@ -66,25 +73,81 @@ type RawRecipeIngredient = {
   ingredient: {
     name: string;
     unit: string;
-    unitCost: number;
+    supplierLinks?: Array<{
+      isPreferred: boolean;
+      supplierProduct: {
+        id: string;
+        referencePrice: number;
+      };
+    }>;
   };
 };
 
-function toRecipeIngredient(row: RawRecipeIngredient): RecipeIngredient {
+/**
+ * Build a RecipeIngredient using pre-resolved cost data.
+ * costMap: supplierProductId → effectiveCost (millicents per recipe unit)
+ */
+function toRecipeIngredientWithCost(
+  row: RawRecipeIngredient,
+  costMap: Map<string, { price: number; resolved: boolean }>
+): RecipeIngredient {
   const qty =
     typeof row.quantity === "object" ? row.quantity.toNumber() : row.quantity;
-  const lineCost = Math.round(qty * row.ingredient.unitCost / 1000);
+
+  const preferredLink = row.ingredient.supplierLinks?.find((l) => l.isPreferred);
+  let effectiveCost = 0;
+  if (preferredLink) {
+    const resolved = costMap.get(preferredLink.supplierProduct.id);
+    effectiveCost = resolved?.price ?? 0;
+  }
+
+  const lineCost = Math.round((qty * effectiveCost) / 1000);
+
   return {
     id: row.id,
     recipeId: row.recipeId,
     ingredientId: row.ingredientId,
     ingredientName: row.ingredient.name,
     ingredientUnit: row.ingredient.unit as IngredientUnit,
-    ingredientUnitCost: row.ingredient.unitCost,
+    ingredientUnitCost: effectiveCost,
     quantity: qty,
     unit: row.unit as IngredientUnit,
     lineCost,
   };
+}
+
+const ingredientInclude = {
+  ingredient: {
+    select: {
+      name: true,
+      unit: true,
+      supplierLinks: {
+        where: { isPreferred: true },
+        take: 1,
+        select: {
+          isPreferred: true,
+          supplierProduct: {
+            select: { id: true, referencePrice: true },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
+/**
+ * Resolve costs for all ingredients in a set of raw recipe ingredient rows.
+ */
+async function resolveCosts(
+  tenantId: string,
+  ingredients: RawRecipeIngredient[]
+): Promise<Map<string, { price: number; resolved: boolean }>> {
+  const productIds: string[] = [];
+  for (const ri of ingredients) {
+    const link = ri.ingredient.supplierLinks?.find((l) => l.isPreferred);
+    if (link) productIds.push(link.supplierProduct.id);
+  }
+  return resolveEffectiveCostsBulk(tenantId, [...new Set(productIds)]);
 }
 
 function computeCosts(
@@ -150,9 +213,7 @@ export async function getRecipe(
     include: {
       catalogProduct: { select: { name: true, basePriceAmount: true } },
       ingredients: {
-        include: {
-          ingredient: { select: { name: true, unit: true, unitCost: true } },
-        },
+        include: ingredientInclude,
         orderBy: { createdAt: "asc" },
       },
     },
@@ -160,8 +221,10 @@ export async function getRecipe(
   if (!row) throw new Error(`Recipe ${recipeId} not found`);
 
   const recipe = toRecipe(row as RawRecipe);
-  const ingredients = (row.ingredients as RawRecipeIngredient[]).map(
-    toRecipeIngredient
+  const rawIngredients = row.ingredients as RawRecipeIngredient[];
+  const costMap = await resolveCosts(tenantId, rawIngredients);
+  const ingredients = rawIngredients.map((ri) =>
+    toRecipeIngredientWithCost(ri, costMap)
   );
   return computeCosts(recipe, ingredients);
 }
@@ -192,16 +255,16 @@ export async function createRecipe(
     include: {
       catalogProduct: { select: { name: true, basePriceAmount: true } },
       ingredients: {
-        include: {
-          ingredient: { select: { name: true, unit: true, unitCost: true } },
-        },
+        include: ingredientInclude,
       },
     },
   });
 
   const recipe = toRecipe(row as RawRecipe);
-  const ingredients = (row.ingredients as RawRecipeIngredient[]).map(
-    toRecipeIngredient
+  const rawIngredients = row.ingredients as RawRecipeIngredient[];
+  const costMap = await resolveCosts(tenantId, rawIngredients);
+  const ingredients = rawIngredients.map((ri) =>
+    toRecipeIngredientWithCost(ri, costMap)
   );
   return computeCosts(recipe, ingredients);
 }
@@ -242,16 +305,16 @@ export async function updateRecipe(
     include: {
       catalogProduct: { select: { name: true, basePriceAmount: true } },
       ingredients: {
-        include: {
-          ingredient: { select: { name: true, unit: true, unitCost: true } },
-        },
+        include: ingredientInclude,
       },
     },
   });
 
   const recipe = toRecipe(row as RawRecipe);
-  const ingredients = (row.ingredients as RawRecipeIngredient[]).map(
-    toRecipeIngredient
+  const rawIngredients = row.ingredients as RawRecipeIngredient[];
+  const costMap = await resolveCosts(tenantId, rawIngredients);
+  const ingredients = rawIngredients.map((ri) =>
+    toRecipeIngredientWithCost(ri, costMap)
   );
   return computeCosts(recipe, ingredients);
 }
@@ -277,12 +340,6 @@ export async function deleteRecipe(
  * Access rules:
  *   - BASIC marketplace recipe: any authenticated tenant user may copy.
  *   - PREMIUM marketplace recipe: user must have a valid purchase record.
- *
- * The resulting Recipe has `marketplaceSourceId` set to preserve the link to the
- * original marketplace recipe. The owner may freely edit their copy afterwards.
- *
- * Ingredients are referenced by the same PLATFORM-scope Ingredient IDs used in the
- * marketplace recipe, so cost data is still available from the start.
  */
 export async function copyMarketplaceRecipeToOwner(
   tenantId: string,
@@ -290,12 +347,11 @@ export async function copyMarketplaceRecipeToOwner(
   marketplaceRecipeId: string,
   input: CopyMarketplaceRecipeInput
 ): Promise<RecipeDetail> {
-  // 1. Fetch the marketplace recipe with its steps and ingredients
+  // 1. Fetch the marketplace recipe with its ingredients
   const source = await prisma.marketplaceRecipe.findFirst({
     where: { id: marketplaceRecipeId, deletedAt: null },
     include: {
       ingredients: {
-        include: { ingredient: { select: { name: true, unit: true, unitCost: true } } },
         orderBy: { createdAt: "asc" },
       },
     },
@@ -312,7 +368,7 @@ export async function copyMarketplaceRecipeToOwner(
     }
   }
 
-  // 3. Create the owner recipe, preserving the link to the source
+  // 3. Create the owner recipe
   type RawMarketplaceIngredient = {
     ingredientId: string;
     quantity: { toNumber: () => number } | number;
@@ -344,60 +400,60 @@ export async function copyMarketplaceRecipeToOwner(
     include: {
       catalogProduct: { select: { name: true, basePriceAmount: true } },
       ingredients: {
-        include: {
-          ingredient: { select: { name: true, unit: true, unitCost: true } },
-        },
+        include: ingredientInclude,
         orderBy: { createdAt: "asc" },
       },
     },
   });
 
   const recipe = toRecipe(row as RawRecipe);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ingredients = ((row as any).ingredients as RawRecipeIngredient[]).map(toRecipeIngredient);
+  const rawIngredients = row.ingredients as RawRecipeIngredient[];
+  const costMap = await resolveCosts(tenantId, rawIngredients);
+  const ingredients = rawIngredients.map((ri) =>
+    toRecipeIngredientWithCost(ri, costMap)
+  );
   return computeCosts(recipe, ingredients);
 }
 
 /**
- * Get a recipe with cost calculation personalised for a specific user.
- *
- * Unit-cost priority per ingredient:
- *   1. User's own observed price (from SupplierPriceObservation) — most accurate
- *   2. Global base price (max across all users) — conservative safe default
- *   3. Ingredient's stored unitCost — legacy fallback
- */
-/**
  * List all recipes linked to a specific CatalogProduct within a store.
- * Used by the product detail page to show the product's recipe(s).
  */
 export async function getProductRecipes(
   storeId: string,
-  catalogProductId: string
+  catalogProductId: string,
+  tenantId?: string
 ): Promise<RecipeDetail[]> {
   const rows = await prisma.recipe.findMany({
     where: { storeId, catalogProductId, deletedAt: null },
     include: {
       catalogProduct: { select: { name: true, basePriceAmount: true } },
       ingredients: {
-        include: {
-          ingredient: { select: { name: true, unit: true, unitCost: true } },
-        },
+        include: ingredientInclude,
         orderBy: { createdAt: "asc" },
       },
     },
     orderBy: { name: "asc" },
   });
 
-  return rows.map((row) => {
-    const recipe = toRecipe(row as RawRecipe);
-    const ingredients = (row.ingredients as RawRecipeIngredient[]).map(toRecipeIngredient);
-    return computeCosts(recipe, ingredients);
-  });
+  return Promise.all(
+    rows.map(async (row) => {
+      const recipe = toRecipe(row as RawRecipe);
+      const rawIngredients = row.ingredients as RawRecipeIngredient[];
+      const effectiveTenantId = tenantId ?? row.tenantId;
+      if (!effectiveTenantId) {
+        throw new Error(`Cannot resolve costs: recipe ${row.id} has no tenantId`);
+      }
+      const costMap = await resolveCosts(effectiveTenantId, rawIngredients);
+      const ingredients = rawIngredients.map((ri) =>
+        toRecipeIngredientWithCost(ri, costMap)
+      );
+      return computeCosts(recipe, ingredients);
+    })
+  );
 }
 
 /**
  * List all recipes linked to a TenantCatalogProduct, across all stores.
- * Used by the global product catalog detail page.
  */
 export async function getTenantProductRecipes(
   tenantId: string,
@@ -408,121 +464,35 @@ export async function getTenantProductRecipes(
     include: {
       catalogProduct: { select: { name: true, basePriceAmount: true } },
       ingredients: {
-        include: {
-          ingredient: { select: { name: true, unit: true, unitCost: true } },
-        },
+        include: ingredientInclude,
         orderBy: { createdAt: "asc" },
       },
     },
     orderBy: [{ storeId: "asc" }, { name: "asc" }],
   });
 
-  return rows.map((row) => {
-    const recipe = toRecipe(row as RawRecipe);
-    const ingredients = (row.ingredients as RawRecipeIngredient[]).map(toRecipeIngredient);
-    return computeCosts(recipe, ingredients);
-  });
+  return Promise.all(
+    rows.map(async (row) => {
+      const recipe = toRecipe(row as RawRecipe);
+      const rawIngredients = row.ingredients as RawRecipeIngredient[];
+      const costMap = await resolveCosts(tenantId, rawIngredients);
+      const ingredients = rawIngredients.map((ri) =>
+        toRecipeIngredientWithCost(ri, costMap)
+      );
+      return computeCosts(recipe, ingredients);
+    })
+  );
 }
 
+/**
+ * Get a recipe with cost calculation for a specific user.
+ * Pricing is now tenant-scoped (not user-scoped), so userId is kept for
+ * API compatibility but does not affect cost resolution.
+ */
 export async function getRecipeForUser(
   tenantId: string,
   recipeId: string,
-  userId: string
+  _userId: string
 ): Promise<RecipeDetail> {
-  const row = await prisma.recipe.findFirst({
-    where: { id: recipeId, tenantId, deletedAt: null },
-    include: {
-      catalogProduct: { select: { name: true, basePriceAmount: true } },
-      ingredients: {
-        include: {
-          ingredient: {
-            select: {
-              name: true,
-              unit: true,
-              unitCost: true,
-              supplierLinks: {
-                where: { isPreferred: true },
-                take: 1,
-                include: {
-                  supplierProduct: {
-                    select: {
-                      id: true,
-                      basePrice: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: "asc" },
-      },
-    },
-  });
-  if (!row) throw new Error(`Recipe ${recipeId} not found`);
-
-  // Collect supplier product IDs to fetch per-user observations in bulk
-  const productIds: string[] = [];
-  for (const ri of row.ingredients) {
-    const ing = ri.ingredient as {
-      supplierLinks: { supplierProduct: { id: string } }[];
-    };
-    if (ing.supplierLinks.length > 0) {
-      productIds.push(ing.supplierLinks[0].supplierProduct.id);
-    }
-  }
-
-  // Fetch user's observations for these products
-  const observations = await prisma.supplierPriceObservation.findMany({
-    where: { supplierProductId: { in: productIds }, userId },
-    select: { supplierProductId: true, observedPrice: true },
-  });
-  const obsByProductId = new Map(observations.map((o) => [o.supplierProductId, o.observedPrice]));
-
-  const recipe = toRecipe(row as RawRecipe);
-
-  // Build personalised ingredients list
-  const ingredients: RecipeIngredient[] = (
-    row.ingredients as (RawRecipeIngredient & {
-      ingredient: {
-        supplierLinks: {
-          supplierProduct: { id: string; basePrice: number };
-        }[];
-      };
-    })[]
-  ).map((ri) => {
-    const qty = typeof ri.quantity === "object" ? ri.quantity.toNumber() : ri.quantity;
-
-    // Determine effective unit cost using priority order
-    let effectiveCost = ri.ingredient.unitCost; // fallback
-
-    const preferredLink = ri.ingredient.supplierLinks?.[0];
-    if (preferredLink) {
-      const productId = preferredLink.supplierProduct.id;
-      const basePrice = preferredLink.supplierProduct.basePrice;
-
-      const userObserved = obsByProductId.get(productId);
-      if (userObserved !== undefined) {
-        effectiveCost = userObserved; // priority 1: user's own price (even if 0)
-      } else if (basePrice > 0) {
-        effectiveCost = basePrice; // priority 2: global base price
-      }
-    }
-
-    const lineCost = Math.round(qty * effectiveCost / 1000);
-
-    return {
-      id: ri.id,
-      recipeId: ri.recipeId,
-      ingredientId: ri.ingredientId,
-      ingredientName: ri.ingredient.name,
-      ingredientUnit: ri.ingredient.unit as IngredientUnit,
-      ingredientUnitCost: effectiveCost,
-      quantity: qty,
-      unit: ri.unit as IngredientUnit,
-      lineCost,
-    };
-  });
-
-  return computeCosts(recipe, ingredients);
+  return getRecipe(tenantId, recipeId);
 }

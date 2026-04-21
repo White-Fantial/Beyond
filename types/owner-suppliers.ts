@@ -19,10 +19,8 @@ export interface SupplierProduct {
   supplierId: string;
   name: string;
   externalUrl: string | null;
-  currentPrice: number; // minor currency units
-  basePrice: number; // max across all user observations
-  basePriceUpdatedAt: string | null;
-  basePriceScrapedUserCount: number;
+  /** Platform-wide aggregate reference price (max across all tenants), maintained by scraper. */
+  referencePrice: number; // millicents (1/100000 dollar)
   unit: IngredientUnit;
   lastScrapedAt: string | null;
   metadata: Record<string, unknown>;
@@ -71,14 +69,12 @@ export interface UpdateSupplierInput {
 export interface UpsertSupplierProductInput {
   name: string;
   externalUrl?: string;
-  currentPrice: number;
   unit: IngredientUnit;
 }
 
 export interface UpdateSupplierProductInput {
   name?: string;
   externalUrl?: string | null;
-  currentPrice?: number;
   unit?: IngredientUnit;
 }
 

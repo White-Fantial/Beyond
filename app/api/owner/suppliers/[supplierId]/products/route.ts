@@ -32,12 +32,6 @@ export async function POST(req: Request, { params }: Params) {
   if (!body.name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
-  if (body.currentPrice === undefined || body.currentPrice < 0) {
-    return NextResponse.json(
-      { error: "currentPrice must be a non-negative integer (minor units)" },
-      { status: 400 }
-    );
-  }
 
   try {
     const product = await createSupplierProduct(tenantId, supplierId, body);

@@ -5,18 +5,13 @@ import { importPlatformIngredient } from "@/services/owner/owner-ingredients.ser
 interface ImportBody {
   platformIngredientId: string;
   storeId: string;
-  /** Owner's own unit cost in millicents (1/100000 dollar) */
-  unitCost: number;
-  /** How many purchase units the owner bought at the given price */
-  purchaseQty?: number;
 }
 
 /**
  * POST /api/owner/platform-ingredients/import
  *
- * Creates a STORE-scope copy of a PLATFORM ingredient with the owner's own
- * price (unitCost). Per-user pricing is intentional: the same ingredient may
- * cost different amounts for different stores / suppliers.
+ * Creates a STORE-scope copy of a PLATFORM ingredient.
+ * Pricing is set separately via SupplierContractPrice or SupplierPriceRecord.
  */
 export async function POST(req: NextRequest) {
   const ctx = await requireAuth();
@@ -33,20 +28,12 @@ export async function POST(req: NextRequest) {
   if (!body.storeId?.trim()) {
     return NextResponse.json({ error: "storeId is required" }, { status: 400 });
   }
-  if (body.unitCost === undefined || body.unitCost < 0) {
-    return NextResponse.json(
-      { error: "unitCost must be a non-negative integer (millicents: 1/100000 dollar)" },
-      { status: 400 }
-    );
-  }
 
   try {
     const ingredient = await importPlatformIngredient(
       tenantId,
       body.storeId,
-      body.platformIngredientId,
-      body.unitCost,
-      body.purchaseQty
+      body.platformIngredientId
     );
     return NextResponse.json({ data: ingredient }, { status: 201 });
   } catch (err) {
