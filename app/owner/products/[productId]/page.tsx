@@ -41,9 +41,6 @@ export default async function TenantProductDetailPage({ params }: Props) {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-semibold text-gray-800">Recipe &amp; Cost</h2>
-          <span className="text-xs text-gray-400">
-            Recipes are stored per-store. Select a store below to manage.
-          </span>
         </div>
         <TenantProductRecipeSection
           tenantProductId={productId}

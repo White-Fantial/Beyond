@@ -20,6 +20,10 @@ function formatCost(minor: number) {
   return `$${(minor / 100).toFixed(4)}`;
 }
 
+function formatUnitCost(millicents: number) {
+  return `$${(millicents / 100000).toFixed(4)}`;
+}
+
 function formatCostRounded(minor: number) {
   return `$${(minor / 100).toFixed(2)}`;
 }
@@ -173,7 +177,7 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
                       {INGREDIENT_UNIT_LABELS[ing.unit] ?? ing.unit}
                     </td>
                     <td className="px-5 py-3 text-right text-gray-600">
-                      {formatCost(ing.ingredientUnitCost)}/
+                      {formatUnitCost(ing.ingredientUnitCost)}/
                       {INGREDIENT_UNIT_LABELS[ing.ingredientUnit] ?? ing.ingredientUnit}
                     </td>
                     <td className="px-5 py-3 text-right font-medium text-gray-900">
