@@ -5,7 +5,20 @@ import {
   listPlatformIngredients,
   createPlatformIngredient,
 } from "@/services/marketplace/platform-ingredients.service";
-import type { CreateIngredientInput, IngredientFilters } from "@/types/owner-ingredients";
+import type { IngredientFilters, IngredientUnit } from "@/types/owner-ingredients";
+import { getUnitConversionFactor } from "@/types/owner-ingredients";
+
+interface CreatePlatformIngredientBody {
+  name: string;
+  description?: string;
+  category?: string;
+  purchaseUnit: IngredientUnit;
+  purchaseQty: number;
+  unit: IngredientUnit;
+  /** Purchase price in dollars (USD). unitCost is derived server-side. */
+  purchasePrice: number;
+  currency?: string;
+}
 
 export async function GET(req: NextRequest) {
   // Admins, moderators, and providers can list ingredients
@@ -45,7 +58,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = (await req.json()) as Pick<CreateIngredientInput, "name" | "description" | "category" | "purchaseUnit" | "purchaseQty" | "unit" | "unitCost" | "currency">;
+  const body = (await req.json()) as CreatePlatformIngredientBody;
 
   if (!body.name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
@@ -56,16 +69,30 @@ export async function POST(req: NextRequest) {
   if (!body.unit) {
     return NextResponse.json({ error: "unit is required" }, { status: 400 });
   }
-  if (body.unitCost === undefined || body.unitCost < 0) {
+  if (!isFinite(body.purchasePrice) || body.purchasePrice <= 0) {
+    return NextResponse.json({ error: "purchasePrice must be a positive number (dollars)" }, { status: 400 });
+  }
+  if (!isFinite(body.purchaseQty) || body.purchaseQty <= 0) {
+    return NextResponse.json({ error: "purchaseQty must be a positive number" }, { status: 400 });
+  }
+  const conversionFactor = getUnitConversionFactor(body.purchaseUnit, body.unit);
+  if (conversionFactor === undefined) {
     return NextResponse.json(
-      { error: "unitCost must be a non-negative integer (millicents: 1/100000 dollar)" },
+      { error: `Cannot convert purchaseUnit (${body.purchaseUnit}) to recipe unit (${body.unit})` },
       { status: 400 }
     );
   }
-  if (body.purchaseQty !== undefined && body.purchaseQty <= 0) {
-    return NextResponse.json({ error: "purchaseQty must be a positive number" }, { status: 400 });
-  }
+  const unitCost = Math.round((body.purchasePrice / (body.purchaseQty * conversionFactor)) * 100000);
 
-  const ingredient = await createPlatformIngredient(ctx.userId, body);
+  const ingredient = await createPlatformIngredient(ctx.userId, {
+    name: body.name,
+    description: body.description,
+    category: body.category,
+    purchaseUnit: body.purchaseUnit,
+    purchaseQty: body.purchaseQty,
+    unit: body.unit,
+    unitCost,
+    currency: body.currency,
+  });
   return NextResponse.json({ data: ingredient }, { status: 201 });
 }

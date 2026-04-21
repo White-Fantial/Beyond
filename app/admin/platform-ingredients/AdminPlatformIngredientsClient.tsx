@@ -34,7 +34,7 @@ function calcUnitCostMillicents(
 ): number | null {
   const price = parseFloat(purchasePrice);
   const qty = parseFloat(purchaseQty);
-  if (!isFinite(price) || !isFinite(qty) || qty <= 0 || price < 0) return null;
+  if (!isFinite(price) || !isFinite(qty) || qty <= 0 || price <= 0) return null;
   const factor = getUnitConversionFactor(purchaseUnit, unit);
   if (factor === undefined) return null;
   const totalRecipeUnits = qty * factor;
@@ -103,8 +103,7 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) return;
-    const unitCost = calcUnitCostMillicents(form.purchasePrice, form.purchaseQty, form.purchaseUnit, form.unit);
-    if (unitCost === null) {
+    if (addUnitCost === null) {
       setError("Cannot calculate unit cost — check purchase quantity, price, and unit compatibility.");
       return;
     }
@@ -121,7 +120,7 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
           purchaseUnit: form.purchaseUnit,
           purchaseQty: parseFloat(form.purchaseQty),
           unit: form.unit,
-          unitCost,
+          purchasePrice: parseFloat(form.purchasePrice),
           currency: form.currency,
         }),
       });
@@ -138,8 +137,7 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
   }
 
   async function handleSaveEdit(id: string) {
-    const unitCost = calcUnitCostMillicents(editForm.purchasePrice, editForm.purchaseQty, editForm.purchaseUnit, editForm.unit);
-    if (unitCost === null) {
+    if (editUnitCost === null) {
       setError("Cannot calculate unit cost — check purchase quantity, price, and unit compatibility.");
       return;
     }
@@ -156,7 +154,7 @@ export default function AdminPlatformIngredientsClient({ initialItems }: Props) 
           purchaseUnit: editForm.purchaseUnit,
           purchaseQty: parseFloat(editForm.purchaseQty),
           unit: editForm.unit,
-          unitCost,
+          purchasePrice: parseFloat(editForm.purchasePrice),
           currency: editForm.currency,
         }),
       });
