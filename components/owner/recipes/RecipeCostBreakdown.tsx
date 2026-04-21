@@ -109,7 +109,7 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
       {/* Selling price GST toggle */}
       {rawPrice !== null && (
         <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
-          <span className="text-xs text-gray-500 font-medium">판매가격:</span>
+          <span className="text-xs text-gray-500 font-medium">Selling Price:</span>
           <span className="text-sm font-semibold text-gray-800">
             {formatCostRounded(rawPrice)}
           </span>
@@ -125,7 +125,7 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
               onChange={(e) => setSellingPriceGstIncluded(e.target.checked)}
               className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
             />
-            <span className="text-xs text-gray-600 select-none">GST 포함 가격</span>
+            <span className="text-xs text-gray-600 select-none">Price includes GST</span>
           </label>
         </div>
       )}
