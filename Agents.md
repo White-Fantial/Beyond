@@ -46,6 +46,12 @@ Beyond is a multi-tenant food & beverage platform with the following portals:
 - Tests are located in `__tests__/` and must be kept up to date with any service changes.
 - Do not remove or skip existing tests.
 
+## List Navigation and Edit UX
+
+- **Clicking a title or primary attribute in any list must navigate to that item's detail page.** Do not open a modal or expand inline — always route to a dedicated detail page (e.g., `/owner/products/[productId]`).
+- **Edit / modify actions in any list must navigate to a dedicated edit page** (e.g., `/owner/products/[productId]/edit`). Do not perform inline editing directly inside the list row.
+- These rules apply across all portals: Owner Portal, Admin Console, Marketplace, and Customer App.
+
 ## Build Verification
 
 - **After every code change, always run `npm run build` to verify the build succeeds before finalizing.**
