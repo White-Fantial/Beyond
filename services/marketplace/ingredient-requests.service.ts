@@ -258,23 +258,29 @@ export async function reviewIngredientRequest(
   const tempId = (existing as unknown as RawRequest).tempIngredientId;
 
   if (input.status === "APPROVED") {
-    // Auto-create the PLATFORM ingredient from request data
-    const platformIngredient = await prisma.ingredient.create({
-      data: {
-        scope: "PLATFORM",
-        tenantId: null,
-        storeId: null,
-        name: existing.name,
-        description: existing.description ?? null,
-        category: existing.category ?? null,
-        unit: existing.unit as IngredientUnit,
-        notes: existing.notes ?? null,
-        createdByUserId: reviewedByUserId,
-        isActive: true,
-      },
-    });
+    let resolvedId: string;
 
-    const resolvedId = input.resolvedIngredientId ?? platformIngredient.id;
+    if (input.resolvedIngredientId) {
+      // Approve & Edit flow: admin already created the ingredient externally
+      resolvedId = input.resolvedIngredientId;
+    } else {
+      // Auto-create the PLATFORM ingredient from request data
+      const platformIngredient = await prisma.ingredient.create({
+        data: {
+          scope: "PLATFORM",
+          tenantId: null,
+          storeId: null,
+          name: existing.name,
+          description: existing.description ?? null,
+          category: existing.category ?? null,
+          unit: existing.unit as IngredientUnit,
+          notes: existing.notes ?? null,
+          createdByUserId: reviewedByUserId,
+          isActive: true,
+        },
+      });
+      resolvedId = platformIngredient.id;
+    }
 
     // Migrate temp ingredient references if a temp ingredient exists
     if (tempId) {
