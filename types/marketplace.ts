@@ -26,19 +26,19 @@ export const MARKETPLACE_RECIPE_STATUS_LABELS: Record<
   MarketplaceRecipeStatus,
   string
 > = {
-  DRAFT: "초안",
-  PENDING_REVIEW: "검토 대기",
-  CHANGE_REQUESTED: "수정 요청",
-  APPROVED: "승인됨",
-  PUBLISHED: "게시됨",
-  REJECTED: "반려됨",
-  ARCHIVED: "보관됨",
+  DRAFT: "Draft",
+  PENDING_REVIEW: "Pending Review",
+  CHANGE_REQUESTED: "Changes Requested",
+  APPROVED: "Approved",
+  PUBLISHED: "Published",
+  REJECTED: "Rejected",
+  ARCHIVED: "Archived",
 };
 
 export const RECIPE_DIFFICULTY_LABELS: Record<RecipeDifficulty, string> = {
-  EASY: "쉬움",
-  MEDIUM: "보통",
-  HARD: "어려움",
+  EASY: "Easy",
+  MEDIUM: "Medium",
+  HARD: "Hard",
 };
 
 // ─── MarketplaceRecipe ────────────────────────────────────────────────────────
