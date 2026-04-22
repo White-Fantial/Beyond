@@ -12,25 +12,28 @@ interface Params {
   params: Promise<{ recipeId: string }>;
 }
 
-async function resolveTenantId(recipeId: string): Promise<string | null> {
+/** Returns the recipe row if found, or null if not found / already deleted. */
+async function resolveRecipe(
+  recipeId: string
+): Promise<{ tenantId: string | null } | null> {
   const row = await prisma.recipe.findFirst({
     where: { id: recipeId, deletedAt: null },
     select: { tenantId: true },
   });
-  return row?.tenantId ?? null;
+  return row ?? null;
 }
 
 export async function GET(_req: NextRequest, { params }: Params) {
   await requirePlatformAdmin();
   const { recipeId } = await params;
 
-  const tenantId = await resolveTenantId(recipeId);
-  if (!tenantId) {
+  const row = await resolveRecipe(recipeId);
+  if (!row) {
     return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
   }
 
   try {
-    const recipe = await getRecipe(tenantId, recipeId);
+    const recipe = await getRecipe(row.tenantId as string, recipeId);
     return NextResponse.json({ data: recipe });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Not found";
@@ -42,15 +45,15 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   await requirePlatformAdmin();
   const { recipeId } = await params;
 
-  const tenantId = await resolveTenantId(recipeId);
-  if (!tenantId) {
+  const row = await resolveRecipe(recipeId);
+  if (!row) {
     return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
   }
 
   const body = (await req.json()) as UpdateRecipeInput;
 
   try {
-    const recipe = await updateRecipe(tenantId, recipeId, body);
+    const recipe = await updateRecipe(row.tenantId as string, recipeId, body);
     return NextResponse.json({ data: recipe });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Update failed";
@@ -62,13 +65,13 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   await requirePlatformAdmin();
   const { recipeId } = await params;
 
-  const tenantId = await resolveTenantId(recipeId);
-  if (!tenantId) {
+  const row = await resolveRecipe(recipeId);
+  if (!row) {
     return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
   }
 
   try {
-    await deleteRecipe(tenantId, recipeId);
+    await deleteRecipe(row.tenantId as string, recipeId);
     return NextResponse.json({ data: { deleted: true } });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Delete failed";
