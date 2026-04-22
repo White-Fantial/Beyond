@@ -481,7 +481,6 @@ export interface TenantProductRow {
   description: string | null;
   shortDescription: string | null;
   basePriceAmount: number;
-  currency: string;
   imageUrl: string | null;
   displayOrder: number;
   isActive: boolean;
@@ -508,7 +507,6 @@ export interface StoreProductSelectionRow {
     description: string | null;
     shortDescription: string | null;
     basePriceAmount: number;
-    currency: string;
     imageUrl: string | null;
   };
 }

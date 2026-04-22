@@ -253,3 +253,131 @@ export async function deletePlatformSupplierProduct(
     data: { deletedAt: new Date() },
   });
 }
+
+export async function getPlatformSupplierProduct(
+  supplierId: string,
+  productId: string
+): Promise<SupplierProduct> {
+  const row = await prisma.supplierProduct.findFirst({
+    where: { id: productId, supplierId, deletedAt: null },
+  });
+  if (!row) throw new Error(`SupplierProduct ${productId} not found`);
+  return toProduct(row as RawSupplierProduct);
+}
+
+// ─── Platform-level ingredient ↔ SupplierProduct links ──────────────────────
+
+const platformLinkInclude = {
+  supplierProduct: {
+    select: {
+      name: true,
+      referencePrice: true,
+      lastScrapedAt: true,
+      supplier: { select: { name: true } },
+    },
+  },
+} as const;
+
+type RawLink = {
+  id: string;
+  ingredientId: string;
+  supplierProductId: string;
+  tenantId: string | null;
+  isPreferred: boolean;
+  createdAt: Date;
+  supplierProduct: {
+    name: string;
+    referencePrice: number;
+    lastScrapedAt: Date | null;
+    supplier: { name: string };
+  };
+};
+
+function toPlatformIngredientLink(r: RawLink) {
+  return {
+    id: r.id,
+    ingredientId: r.ingredientId,
+    supplierProductId: r.supplierProductId,
+    tenantId: r.tenantId,
+    supplierProductName: r.supplierProduct.name,
+    supplierName: r.supplierProduct.supplier.name,
+    isPreferred: r.isPreferred,
+    referencePrice: r.supplierProduct.referencePrice,
+    lastScrapedAt: r.supplierProduct.lastScrapedAt?.toISOString() ?? null,
+    createdAt: r.createdAt.toISOString(),
+  };
+}
+
+export type PlatformIngredientLink = ReturnType<typeof toPlatformIngredientLink>;
+
+export async function getPlatformIngredientLinks(
+  ingredientId: string
+): Promise<PlatformIngredientLink[]> {
+  const rows = await prisma.ingredientSupplierLink.findMany({
+    where: { ingredientId, tenantId: null },
+    include: platformLinkInclude,
+    orderBy: { createdAt: "asc" },
+  });
+  return rows.map(toPlatformIngredientLink);
+}
+
+export async function addPlatformIngredientLink(
+  ingredientId: string,
+  supplierProductId: string
+): Promise<PlatformIngredientLink> {
+  const ingredient = await prisma.ingredient.findFirst({
+    where: { id: ingredientId, scope: "PLATFORM", deletedAt: null },
+  });
+  if (!ingredient) throw new Error(`PlatformIngredient ${ingredientId} not found`);
+
+  const supplierProduct = await prisma.supplierProduct.findFirst({
+    where: { id: supplierProductId, deletedAt: null },
+  });
+  if (!supplierProduct) throw new Error(`SupplierProduct ${supplierProductId} not found`);
+
+  // Upsert: if the platform-level link already exists, return it as-is
+  const existing = await prisma.ingredientSupplierLink.findFirst({
+    where: { ingredientId, supplierProductId, tenantId: null },
+    include: platformLinkInclude,
+  });
+  if (existing) return toPlatformIngredientLink(existing as RawLink);
+
+  const row = await prisma.ingredientSupplierLink.create({
+    data: { ingredientId, supplierProductId, tenantId: null, isPreferred: false },
+    include: platformLinkInclude,
+  });
+  return toPlatformIngredientLink(row as RawLink);
+}
+
+export async function removePlatformIngredientLink(linkId: string): Promise<void> {
+  const link = await prisma.ingredientSupplierLink.findFirst({
+    where: { id: linkId, tenantId: null },
+  });
+  if (!link) throw new Error(`PlatformIngredientLink ${linkId} not found`);
+  await prisma.ingredientSupplierLink.delete({ where: { id: linkId } });
+}
+
+// ─── Search platform supplier products ───────────────────────────────────────
+
+export async function searchPlatformSupplierProducts(
+  query: string,
+  limit = 20
+): Promise<(SupplierProduct & { supplierName: string })[]> {
+  const rows = await prisma.supplierProduct.findMany({
+    where: {
+      deletedAt: null,
+      supplier: { scope: "PLATFORM", deletedAt: null },
+      ...(query.trim()
+        ? { name: { contains: query.trim(), mode: "insensitive" } }
+        : {}),
+    },
+    include: { supplier: { select: { name: true } } },
+    orderBy: { name: "asc" },
+    take: limit,
+  });
+
+  return rows.map((r) => ({
+    ...toProduct(r as RawSupplierProduct),
+    supplierName: (r as typeof r & { supplier: { name: string } }).supplier.name,
+  }));
+}

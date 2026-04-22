@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type {
   SupplierDetail,
   UpsertSupplierProductInput,
@@ -221,7 +222,7 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Price (USD) *
+                  Reference Price ($) *
                 </label>
                 <input
                   type="number"
@@ -276,7 +277,14 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
               {supplier.products.map((p) => (
                 <tr key={p.id} className="hover:bg-gray-50">
                   <td className="px-5 py-3">
-                    <div className="font-medium text-gray-900">{p.name}</div>
+                    <div className="font-medium">
+                      <Link
+                        href={`/admin/suppliers/${supplier.id}/products/${p.id}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {p.name}
+                      </Link>
+                    </div>
                     {p.externalUrl && (
                       <a
                         href={p.externalUrl}
@@ -293,6 +301,12 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
                    ${(p.referencePrice / 100000).toFixed(2)}
                   </td>
                   <td className="px-5 py-3 text-right">
+                    <Link
+                      href={`/admin/suppliers/${supplier.id}/products/${p.id}/edit`}
+                      className="text-blue-600 hover:text-blue-800 text-xs font-medium mr-3"
+                    >
+                      Edit
+                    </Link>
                     <button
                       onClick={() => handleDeleteProduct(p.id)}
                       className="text-red-500 hover:text-red-700 text-xs font-medium"

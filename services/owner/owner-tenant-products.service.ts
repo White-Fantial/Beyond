@@ -115,7 +115,6 @@ export async function listTenantProducts(tenantId: string): Promise<TenantProduc
     description: p.description,
     shortDescription: p.shortDescription,
     basePriceAmount: p.basePriceAmount,
-    currency: p.currency,
     imageUrl: p.imageUrl,
     displayOrder: p.displayOrder,
     isActive: p.isActive,
@@ -146,7 +145,6 @@ export async function getTenantProduct(
     description: p.description,
     shortDescription: p.shortDescription,
     basePriceAmount: p.basePriceAmount,
-    currency: p.currency,
     imageUrl: p.imageUrl,
     displayOrder: p.displayOrder,
     isActive: p.isActive,
@@ -166,7 +164,6 @@ export interface CreateTenantProductInput {
     description?: string | null;
     shortDescription?: string | null;
     basePriceAmount?: number;
-    currency?: string;
     imageUrl?: string | null;
     displayOrder?: number;
     isActive?: boolean;
@@ -185,7 +182,6 @@ export async function createTenantProduct(input: CreateTenantProductInput): Prom
       description: data.description ?? null,
       shortDescription: data.shortDescription ?? null,
       basePriceAmount: data.basePriceAmount ?? 0,
-      currency: data.currency ?? "USD",
       imageUrl: data.imageUrl ?? null,
       displayOrder: data.displayOrder ?? 0,
       isActive: data.isActive ?? true,
@@ -214,7 +210,6 @@ export async function createTenantProduct(input: CreateTenantProductInput): Prom
     description: product.description,
     shortDescription: product.shortDescription,
     basePriceAmount: product.basePriceAmount,
-    currency: product.currency,
     imageUrl: product.imageUrl,
     displayOrder: product.displayOrder,
     isActive: product.isActive,
@@ -324,7 +319,6 @@ export async function listStoreProductSelections(
       description: s.tenantProduct.description,
       shortDescription: s.tenantProduct.shortDescription,
       basePriceAmount: s.tenantProduct.basePriceAmount,
-      currency: s.tenantProduct.currency,
       imageUrl: s.tenantProduct.imageUrl,
     },
   }));
@@ -391,7 +385,6 @@ export async function selectProductForStore(
       description: selection.tenantProduct.description,
       shortDescription: selection.tenantProduct.shortDescription,
       basePriceAmount: selection.tenantProduct.basePriceAmount,
-      currency: selection.tenantProduct.currency,
       imageUrl: selection.tenantProduct.imageUrl,
     },
   };
@@ -473,7 +466,6 @@ export async function updateStoreProductSelection(
       description: updated.tenantProduct.description,
       shortDescription: updated.tenantProduct.shortDescription,
       basePriceAmount: updated.tenantProduct.basePriceAmount,
-      currency: updated.tenantProduct.currency,
       imageUrl: updated.tenantProduct.imageUrl,
     },
   };
