@@ -43,7 +43,6 @@ type RawRecipe = {
   estimatedCostPrice: number;
   recommendedPrice: number;
   salePrice: number;
-  instructions: string | null;
   publishedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -351,7 +350,6 @@ export async function createMarketplaceRecipe(
       currency: input.currency ?? "USD",
       recommendedPrice: input.recommendedPrice ?? 0,
       salePrice: input.type === "BASIC" ? 0 : (input.salePrice ?? 0),
-      instructions: input.instructions ?? null,
       publishedAt: initialStatus === "PUBLISHED" ? new Date() : null,
       ingredients: {
         create: ingredientInputs
