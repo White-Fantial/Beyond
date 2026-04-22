@@ -1,15 +1,18 @@
 /**
- * Supplier Scraper registry — Phase 4.
+ * Supplier Scraper registry — Phase 4 + E.
  *
  * Returns the appropriate scraper for a given URL.
- * Custom scrapers for specific domains can be registered here.
+ * Domain-specific adapters are checked first; GenericScraper is the fallback.
  */
 import type { SupplierScraper } from "./base";
 import { GenericScraper } from "./generic";
+import { FoodstuffsScraper } from "./adapters/foodstuffs";
+import { CountdownScraper } from "./adapters/countdown";
 
 const scrapers: SupplierScraper[] = [
-  // Add domain-specific scrapers here before GenericScraper.
-  // Example: new FoodstuffsScraper(), new CountdownScraper(), etc.
+  new FoodstuffsScraper(),
+  new CountdownScraper(),
+  // Add more domain-specific scrapers here before GenericScraper.
 ];
 
 const genericScraper = new GenericScraper();
@@ -22,4 +25,4 @@ export function getScraperForUrl(url: string): SupplierScraper {
 }
 
 export { type SupplierScraper } from "./base";
-export type { ScrapedProduct } from "./base";
+export type { ScrapedProduct, SessionContext, SupplierCredentialPayload } from "./base";

@@ -93,7 +93,8 @@ type RawRecipeIngredient = {
 
 /**
  * Build a RecipeIngredient using pre-resolved cost data.
- * costMap: supplierProductId → effectiveCost (millicents per recipe unit)
+ * costMap: supplierProductId → effectiveCost (millicents per recipe unit).
+ * Uses preferred link first; falls back to cheapest by referencePrice.
  */
 function toRecipeIngredientWithCost(
   row: RawRecipeIngredient,
@@ -102,11 +103,23 @@ function toRecipeIngredientWithCost(
   const qty =
     typeof row.quantity === "object" ? row.quantity.toNumber() : row.quantity;
 
-  const preferredLink = row.ingredient.supplierLinks?.find((l) => l.isPreferred);
+  const links = row.ingredient.supplierLinks ?? [];
+  const preferredLink = links.find((l) => l.isPreferred);
+
+  // Cheapest fallback: pick the link whose resolved cost is lowest (or referencePrice if unresolved)
   let effectiveCost = 0;
   if (preferredLink) {
-    const resolved = costMap.get(preferredLink.supplierProduct.id);
-    effectiveCost = resolved?.price ?? 0;
+    effectiveCost = costMap.get(preferredLink.supplierProduct.id)?.price ?? 0;
+  } else if (links.length > 0) {
+    let cheapestPrice = Infinity;
+    for (const link of links) {
+      const resolved = costMap.get(link.supplierProduct.id);
+      const price = resolved?.price ?? link.supplierProduct.referencePrice;
+      if (price > 0 && price < cheapestPrice) {
+        cheapestPrice = price;
+      }
+    }
+    effectiveCost = cheapestPrice === Infinity ? 0 : cheapestPrice;
   }
 
   const lineCost = Math.round((qty * effectiveCost) / 1000);
@@ -129,9 +142,8 @@ const ingredientInclude = {
     select: {
       name: true,
       unit: true,
+      // Fetch ALL links (not just preferred) so we can compute cheapest fallback
       supplierLinks: {
-        where: { isPreferred: true },
-        take: 1,
         select: {
           isPreferred: true,
           supplierProduct: {
@@ -150,10 +162,12 @@ async function resolveCosts(
   tenantId: string,
   ingredients: RawRecipeIngredient[]
 ): Promise<Map<string, { price: number; resolved: boolean }>> {
+  // Collect ALL supplier product IDs (not just preferred) so cheapest fallback works
   const productIds: string[] = [];
   for (const ri of ingredients) {
-    const link = ri.ingredient.supplierLinks?.find((l) => l.isPreferred);
-    if (link) productIds.push(link.supplierProduct.id);
+    for (const link of ri.ingredient.supplierLinks ?? []) {
+      productIds.push(link.supplierProduct.id);
+    }
   }
   return resolveEffectiveCostsBulk(tenantId, [...new Set(productIds)]);
 }

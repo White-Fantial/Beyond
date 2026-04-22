@@ -31,6 +31,8 @@ export default function SupplierCredentialPanel({ supplierId, credential }: Prop
   const [verifying, setVerifying] = useState(false);
   const [verifyMessage, setVerifyMessage] = useState<{ msg: string; ok: boolean } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [scraping, setScraping] = useState(false);
+  const [scrapeResult, setScrapeResult] = useState<string | null>(null);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -96,6 +98,29 @@ export default function SupplierCredentialPanel({ supplierId, credential }: Prop
     }
   }
 
+  async function handleScrapeNow() {
+    setScraping(true);
+    setScrapeResult(null);
+    try {
+      const res = await fetch(`/api/owner/suppliers/${supplierId}/scrape`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setScrapeResult(`Error: ${data.error ?? "Scrape failed"}`);
+        return;
+      }
+      const results = data.data as { changed: boolean }[];
+      const changed = results.filter((r) => r.changed).length;
+      setScrapeResult(`Scraped ${results.length} product(s). ${changed} price(s) updated.`);
+      router.refresh();
+    } catch {
+      setScrapeResult("Network error.");
+    } finally {
+      setScraping(false);
+    }
+  }
+
   if (credential && !showForm) {
     return (
       <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 space-y-3">
@@ -144,6 +169,19 @@ export default function SupplierCredentialPanel({ supplierId, credential }: Prop
           </div>
         </div>
         <p className="text-xs text-gray-400">Last verified: {formatDate(credential.lastVerified)}</p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleScrapeNow}
+            disabled={scraping}
+            className="px-3 py-1.5 bg-brand-50 border border-brand-200 text-brand-700 text-xs font-medium rounded-lg hover:bg-brand-100 disabled:opacity-50 transition"
+          >
+            {scraping ? "Scraping…" : "▶ Run Scrape Now"}
+          </button>
+          {scrapeResult && (
+            <span className="text-xs text-gray-600">{scrapeResult}</span>
+          )}
+        </div>
       </div>
     );
   }

@@ -11,6 +11,7 @@ vi.mock("@/lib/prisma", () => ({
       findFirst: vi.fn(),
     },
     supplierPriceRecord: {
+      findFirst: vi.fn(),
       findMany: vi.fn(),
       count: vi.fn(),
     },
@@ -40,6 +41,7 @@ const mockPrisma = prisma as unknown as {
     findFirst: ReturnType<typeof vi.fn>;
   };
   supplierPriceRecord: {
+    findFirst: ReturnType<typeof vi.fn>;
     findMany: ReturnType<typeof vi.fn>;
     count: ReturnType<typeof vi.fn>;
   };
@@ -214,12 +216,9 @@ describe("scrapeAllSupplierProducts", () => {
 // ─── recomputeReferencePrice ──────────────────────────────────────────────────
 
 describe("recomputeReferencePrice", () => {
-  it("sets referencePrice to the MAX of all price records", async () => {
-    mockPrisma.supplierPriceRecord.findMany.mockResolvedValue([
-      { observedPrice: 4500 },
-      { observedPrice: 6000 },
-      { observedPrice: 5200 },
-    ]);
+  it("sets referencePrice to the latest platform-scraped price record", async () => {
+    // First findFirst call — platform price record
+    mockPrisma.supplierPriceRecord.findFirst.mockResolvedValueOnce({ observedPrice: 6000 });
     mockPrisma.supplierProduct.update.mockResolvedValue({ id: "sp-1", referencePrice: 6000 });
 
     await recomputeReferencePrice("sp-1");
@@ -232,8 +231,25 @@ describe("recomputeReferencePrice", () => {
     );
   });
 
+  it("falls back to latest any-tenant record when no platform record exists", async () => {
+    // First findFirst — no platform record
+    mockPrisma.supplierPriceRecord.findFirst.mockResolvedValueOnce(null);
+    // Second findFirst — latest any-tenant record
+    mockPrisma.supplierPriceRecord.findFirst.mockResolvedValueOnce({ observedPrice: 4500 });
+    mockPrisma.supplierProduct.update.mockResolvedValue({ id: "sp-1", referencePrice: 4500 });
+
+    await recomputeReferencePrice("sp-1");
+
+    expect(mockPrisma.supplierProduct.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "sp-1" },
+        data: expect.objectContaining({ referencePrice: 4500 }),
+      })
+    );
+  });
+
   it("does nothing when no price records exist", async () => {
-    mockPrisma.supplierPriceRecord.findMany.mockResolvedValue([]);
+    mockPrisma.supplierPriceRecord.findFirst.mockResolvedValue(null);
 
     await recomputeReferencePrice("sp-1");
 

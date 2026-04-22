@@ -12,9 +12,41 @@ export interface ScrapedProduct {
   unit: string | null;
 }
 
+/** Opaque session context returned by login(), passed to credentialed methods. */
+export interface SessionContext {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+}
+
+/** Credential payload passed to login(). */
+export interface SupplierCredentialPayload {
+  username: string;
+  password: string;
+  loginUrl?: string;
+}
+
 export interface SupplierScraper {
   /** Returns true if this scraper can handle the given URL. */
   canHandle(url: string): boolean;
+
   /** Fetches and parses the product page at `url`. */
   scrape(url: string): Promise<ScrapedProduct>;
+
+  /**
+   * Authenticate with the supplier and return a session context.
+   * Optional — only implemented by scrapers that support authenticated access.
+   */
+  login?(credential: SupplierCredentialPayload): Promise<SessionContext>;
+
+  /**
+   * Fetch the authenticated user's complete product list.
+   * Optional — requires a valid session obtained via `login()`.
+   */
+  fetchProductList?(session: SessionContext): Promise<ScrapedProduct[]>;
+
+  /**
+   * Parse a raw HTML product page into a ScrapedProduct.
+   * Optional — useful for suppliers where the HTML can be fetched externally.
+   */
+  parseProductPage?(html: string): ScrapedProduct;
 }
