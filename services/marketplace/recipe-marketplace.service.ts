@@ -169,6 +169,14 @@ export async function listMarketplaceRecipes(
       : {}),
   };
 
+  // Platform recipes (admin-created, tenantId=null) are included unless a
+  // type or filter that doesn't apply to them is set (e.g. PREMIUM-only, or a
+  // cuisineTag / difficulty / providerId filter).
+  const includePlatform =
+    type === undefined || type === "BASIC"
+      ? cuisineTag === undefined && difficulty === undefined && providerId === undefined
+      : false;
+
   const [rows, total] = await Promise.all([
     prisma.marketplaceRecipe.findMany({
       where,
@@ -180,9 +188,62 @@ export async function listMarketplaceRecipes(
     prisma.marketplaceRecipe.count({ where }),
   ]);
 
+  const marketplaceItems = rows.map((r) => ({
+    ...toRecipe(r as RawRecipe),
+    sourceType: "MARKETPLACE" as const,
+  }));
+
+  if (!includePlatform) {
+    return { items: marketplaceItems, total, page, pageSize };
+  }
+
+  // Also query platform-level Recipe records (tenantId=null) as free recipes
+  const platformWhere = {
+    tenantId: null,
+    storeId: null,
+    deletedAt: null,
+    ...(q?.trim()
+      ? { name: { contains: q.trim(), mode: "insensitive" as const } }
+      : {}),
+  };
+  const platformRows = await prisma.recipe.findMany({
+    where: platformWhere,
+    orderBy: { createdAt: "desc" },
+  });
+
+  const platformItems: MarketplaceRecipe[] = platformRows.map((r) => ({
+    id: `platform:${r.id}`,
+    type: "BASIC" as MarketplaceRecipeType,
+    status: "PUBLISHED" as MarketplaceRecipeStatus,
+    title: r.name,
+    description: r.notes,
+    thumbnailUrl: null,
+    providerId: null,
+    providerName: null,
+    createdByUserId: "",
+    yieldQty: r.yieldQty,
+    yieldUnit: r.yieldUnit as RecipeYieldUnit,
+    servings: null,
+    cuisineTag: null,
+    difficulty: null,
+    prepTimeMinutes: null,
+    cookTimeMinutes: null,
+    currency: "USD",
+    estimatedCostPrice: 0,
+    recommendedPrice: 0,
+    salePrice: 0,
+    publishedAt: r.createdAt.toISOString(),
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
+    sourceType: "PLATFORM" as const,
+  }));
+
+  // Platform recipes come first so they are prominent in the list
+  const allItems = [...platformItems, ...marketplaceItems];
+
   return {
-    items: rows.map((r) => toRecipe(r as RawRecipe)),
-    total,
+    items: allItems,
+    total: total + platformItems.length,
     page,
     pageSize,
   };

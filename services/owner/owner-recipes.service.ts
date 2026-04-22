@@ -440,6 +440,69 @@ export async function copyMarketplaceRecipeToOwner(
 }
 
 /**
+ * Copy a platform-level Recipe (tenantId=null) into the owner's store.
+ * Platform recipes are free admin-curated templates visible in the marketplace search.
+ */
+export async function copyPlatformRecipeToOwner(
+  tenantId: string,
+  platformRecipeId: string,
+  input: CopyMarketplaceRecipeInput
+): Promise<RecipeDetail> {
+  const source = await prisma.recipe.findFirst({
+    where: { id: platformRecipeId, tenantId: null, storeId: null, deletedAt: null },
+    include: {
+      ingredients: { orderBy: { createdAt: "asc" } },
+    },
+  });
+  if (!source) throw new Error(`Platform recipe ${platformRecipeId} not found`);
+
+  type RawRecipeIngredientRaw = {
+    ingredientId: string;
+    quantity: { toNumber: () => number } | number;
+    unit: string;
+  };
+  const ingredientsToCreate = (source.ingredients as RawRecipeIngredientRaw[]).map(
+    (i) => ({
+      ingredientId: i.ingredientId,
+      quantity: typeof i.quantity === "object" ? i.quantity.toNumber() : i.quantity,
+      unit: i.unit as IngredientUnit,
+    })
+  );
+
+  const row = await prisma.recipe.create({
+    data: {
+      tenantId,
+      storeId: input.storeId,
+      name: input.name?.trim() || source.name,
+      yieldQty: source.yieldQty,
+      yieldUnit: source.yieldUnit as RecipeYieldUnit,
+      notes: source.notes ?? null,
+      instructions: source.instructions ?? null,
+      catalogProductId: input.catalogProductId ?? null,
+      tenantCatalogProductId: input.tenantCatalogProductId ?? null,
+      ingredients: {
+        create: ingredientsToCreate,
+      },
+    },
+    include: {
+      catalogProduct: { select: { name: true, basePriceAmount: true } },
+      ingredients: {
+        include: ingredientInclude,
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  const recipe = toRecipe(row as RawRecipe);
+  const rawIngredients = row.ingredients as RawRecipeIngredient[];
+  const costMap = await resolveCosts(tenantId, rawIngredients);
+  const ingredients = rawIngredients.map((ri) =>
+    toRecipeIngredientWithCost(ri, costMap)
+  );
+  return computeCosts(recipe, ingredients);
+}
+
+/**
  * List all recipes linked to a specific CatalogProduct within a store.
  */
 export async function getProductRecipes(

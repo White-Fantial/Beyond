@@ -88,6 +88,8 @@ export interface MarketplaceRecipe {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** "MARKETPLACE" for MarketplaceRecipe records; "PLATFORM" for admin-created platform Recipe records. */
+  sourceType?: "MARKETPLACE" | "PLATFORM";
 }
 
 export interface MarketplaceRecipeDetail extends MarketplaceRecipe {
