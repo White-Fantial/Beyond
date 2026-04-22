@@ -512,7 +512,7 @@ function CreateRecipePanel({
               🧩 Product Components (optional)
             </label>
             <p className="text-xs text-gray-400 mt-0.5">
-              Use other products as sub-components (e.g. "Bulgogi" as filling).
+              Use other products as sub-components (e.g. &ldquo;Bulgogi&rdquo; as filling).
             </p>
           </div>
           <button
