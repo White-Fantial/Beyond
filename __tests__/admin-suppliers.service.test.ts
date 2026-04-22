@@ -70,6 +70,7 @@ const mockProduct = {
   name: "All Purpose Flour 25kg",
   externalUrl: null,
   referencePrice: 3500000,
+  purchaseQty: 25,
   unit: "KG",
   lastScrapedAt: null,
   metadata: {},
@@ -224,12 +225,32 @@ describe("createPlatformSupplierProduct", () => {
     const result = await createPlatformSupplierProduct(SUP_ID, {
       name: "All Purpose Flour 25kg",
       referencePrice: 3500000,
+      purchaseQty: 25,
       unit: "KG",
     });
 
     expect(result.name).toBe("All Purpose Flour 25kg");
     expect(result.referencePrice).toBe(3500000);
+    expect(result.purchaseQty).toBe(25);
     expect(result.unit).toBe("KG");
+  });
+
+  it("defaults purchaseQty to 1 when not provided", async () => {
+    mockPrisma.supplier.findFirst.mockResolvedValue(mockPlatformSupplier);
+    mockPrisma.supplierProduct.create.mockResolvedValue({ ...mockProduct, purchaseQty: 1 });
+
+    const result = await createPlatformSupplierProduct(SUP_ID, {
+      name: "Salt EACH",
+      referencePrice: 500000,
+      unit: "EACH",
+    });
+
+    expect(result.purchaseQty).toBe(1);
+    expect(mockPrisma.supplierProduct.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ purchaseQty: 1 }),
+      })
+    );
   });
 
   it("throws when supplier not found", async () => {
@@ -261,6 +282,26 @@ describe("updatePlatformSupplierProduct", () => {
     });
 
     expect(result.referencePrice).toBe(4000000);
+  });
+
+  it("updates purchaseQty", async () => {
+    mockPrisma.supplier.findFirst.mockResolvedValue(mockPlatformSupplier);
+    mockPrisma.supplierProduct.findFirst.mockResolvedValue(mockProduct);
+    mockPrisma.supplierProduct.update.mockResolvedValue({
+      ...mockProduct,
+      purchaseQty: 50,
+    });
+
+    const result = await updatePlatformSupplierProduct(SUP_ID, PROD_ID, {
+      purchaseQty: 50,
+    });
+
+    expect(result.purchaseQty).toBe(50);
+    expect(mockPrisma.supplierProduct.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ purchaseQty: 50 }),
+      })
+    );
   });
 });
 

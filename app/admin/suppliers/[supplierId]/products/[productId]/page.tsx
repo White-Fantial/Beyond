@@ -57,6 +57,20 @@ export default async function AdminSupplierProductDetailPage({ params }: Props) 
               </dd>
             </div>
             <div>
+              <dt className="text-xs font-medium text-gray-500">Purchase Qty</dt>
+              <dd className="mt-0.5 text-sm text-gray-900">
+                {product.purchaseQty} {INGREDIENT_UNIT_LABELS[product.unit] ?? product.unit}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium text-gray-500">Unit Cost</dt>
+              <dd className="mt-0.5 text-sm text-gray-900 font-semibold">
+                {product.purchaseQty > 0
+                  ? `$${(product.referencePrice / product.purchaseQty / 100000).toFixed(4)} / ${product.unit}`
+                  : "—"}
+              </dd>
+            </div>
+            <div>
               <dt className="text-xs font-medium text-gray-500">Unit</dt>
               <dd className="mt-0.5 text-sm text-gray-900">
                 {INGREDIENT_UNIT_LABELS[product.unit] ?? product.unit} ({product.unit})

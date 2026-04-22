@@ -24,6 +24,8 @@ export interface SupplierProduct {
   externalUrl: string | null;
   /** Platform-wide aggregate reference price (max across all tenants), maintained by scraper. */
   referencePrice: number; // millicents (1/100000 dollar)
+  /** Number of units in one purchased package (e.g. 500 for a 500g bag). Used to calculate unit cost. */
+  purchaseQty: number;
   unit: IngredientUnit;
   lastScrapedAt: string | null;
   metadata: Record<string, unknown>;
@@ -86,6 +88,7 @@ export interface UpsertSupplierProductInput {
   name: string;
   externalUrl?: string;
   referencePrice?: number; // millicents (1/100000 dollar)
+  purchaseQty?: number;
   unit: IngredientUnit;
 }
 
@@ -93,6 +96,7 @@ export interface UpdateSupplierProductInput {
   name?: string;
   externalUrl?: string | null;
   referencePrice?: number; // millicents (1/100000 dollar)
+  purchaseQty?: number;
   unit?: IngredientUnit;
 }
 

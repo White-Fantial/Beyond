@@ -21,6 +21,7 @@ export default function AdminSupplierProductEditForm({ supplierId, product }: Pr
     name: product.name,
     externalUrl: product.externalUrl ?? "",
     referencePrice: (product.referencePrice / 100000).toFixed(2),
+    purchaseQty: String(product.purchaseQty),
     unit: product.unit,
   });
   const [saving, setSaving] = useState(false);
@@ -40,6 +41,7 @@ export default function AdminSupplierProductEditForm({ supplierId, product }: Pr
             name: form.name.trim(),
             externalUrl: form.externalUrl.trim() || null,
             referencePrice: Math.round(parseFloat(form.referencePrice) * 100000),
+            purchaseQty: parseFloat(form.purchaseQty) || 1,
             unit: form.unit,
           }),
         }
@@ -87,6 +89,20 @@ export default function AdminSupplierProductEditForm({ supplierId, product }: Pr
               step="0.01"
               value={form.referencePrice}
               onChange={(e) => setForm((f) => ({ ...f, referencePrice: e.target.value }))}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Purchase Qty <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              required
+              min="0.0001"
+              step="any"
+              value={form.purchaseQty}
+              onChange={(e) => setForm((f) => ({ ...f, purchaseQty: e.target.value }))}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
           </div>
