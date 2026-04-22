@@ -31,7 +31,11 @@ export default function UserListTable({ items, emptyMessage }: UserListTableProp
         <tbody className="divide-y divide-gray-100 bg-white">
           {items.map((u) => (
             <tr key={u.id} className="hover:bg-gray-50">
-              <td className="px-4 py-3 font-medium text-gray-900 max-w-[140px] truncate">{u.name}</td>
+              <td className="px-4 py-3 font-medium text-gray-900 max-w-[140px] truncate">
+                <Link href={`/admin/users/${u.id}`} className="text-blue-600 hover:underline">
+                  {u.name}
+                </Link>
+              </td>
               <td className="px-4 py-3 text-gray-500 max-w-[180px] truncate">{u.email}</td>
               <td className="px-4 py-3 hidden sm:table-cell">
                 <StatusBadge value={u.platformRole} />

@@ -44,7 +44,9 @@ export default function ProviderRecipeList({ recipes }: ProviderRecipeListProps)
           {recipes.map((r) => (
             <tr key={r.id} className="hover:bg-gray-50">
               <td className="px-4 py-3">
-                <p className="font-medium text-gray-900">{r.title}</p>
+                <Link href={`/marketplace/${r.id}`} className="font-medium text-blue-600 hover:underline">
+                  {r.title}
+                </Link>
                 {r.cuisineTag && (
                   <p className="text-xs text-gray-400">{r.cuisineTag}</p>
                 )}

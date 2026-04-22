@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Ingredient } from "@/types/owner-ingredients";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
 
@@ -34,7 +35,11 @@ export default function IngredientTable({ items, pendingTempIds }: Props) {
               const isPending = pendingTempIds?.has(item.id) ?? false;
               return (
                 <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3 font-medium text-gray-900">{item.name}</td>
+                  <td className="px-5 py-3 font-medium">
+                    <Link href={`/owner/ingredients/${item.id}`} className="text-brand-700 hover:text-brand-900 hover:underline">
+                      {item.name}
+                    </Link>
+                  </td>
                   <td className="px-5 py-3">
                     {item.category ? (
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">

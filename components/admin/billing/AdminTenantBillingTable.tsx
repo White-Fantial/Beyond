@@ -26,7 +26,7 @@ export default function AdminTenantBillingTable({ items }: Props) {
             <th className="text-right pb-2 pr-3">User</th>
             <th className="text-right pb-2 pr-3">Integrations</th>
             <th className="text-center pb-2 pr-3">Over Limit</th>
-            <th className="text-right pb-2 pr-3">Period종료</th>
+            <th className="text-right pb-2 pr-3">Period End</th>
             <th className="text-right pb-2"></th>
           </tr>
         </thead>
@@ -34,7 +34,9 @@ export default function AdminTenantBillingTable({ items }: Props) {
           {items.map((item) => (
             <tr key={item.tenantId} className="border-b border-gray-50 last:border-0 hover:bg-gray-50">
               <td className="py-2 pr-3">
-                <div className="font-medium text-gray-900">{item.tenantDisplayName}</div>
+                <Link href={`/admin/billing/tenants/${item.tenantId}`} className="font-medium text-blue-600 hover:underline">
+                  {item.tenantDisplayName}
+                </Link>
                 <div className="text-xs text-gray-400 font-mono">{item.tenantSlug}</div>
               </td>
               <td className="py-2 pr-3">
@@ -53,7 +55,7 @@ export default function AdminTenantBillingTable({ items }: Props) {
               <td className="py-2 pr-3 text-center">
                 {item.isOverLimit ? (
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200">
-                    초과
+                    Over
                   </span>
                 ) : (
                   <span className="text-gray-300 text-xs">—</span>
@@ -61,9 +63,9 @@ export default function AdminTenantBillingTable({ items }: Props) {
               </td>
               <td className="py-2 pr-3 text-right text-xs text-gray-500">
                 {item.currentPeriodEnd
-                  ? new Date(item.currentPeriodEnd).toLocaleDateString("ko-KR")
+                  ? new Date(item.currentPeriodEnd).toLocaleDateString("en-US")
                   : item.trialEnd
-                  ? new Date(item.trialEnd).toLocaleDateString("ko-KR")
+                  ? new Date(item.trialEnd).toLocaleDateString("en-US")
                   : "—"}
               </td>
               <td className="py-2 text-right">

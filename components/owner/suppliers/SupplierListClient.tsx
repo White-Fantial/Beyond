@@ -101,7 +101,9 @@ function SupplierRow({ supplier, credential, isExpanded, onToggle }: RowProps) {
     <>
       <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
         <td className="px-5 py-3">
-          <div className="font-medium text-gray-900">{supplier.name}</div>
+          <Link href={`/owner/suppliers/${supplier.id}`} className="font-medium text-brand-700 hover:text-brand-900 hover:underline">
+            {supplier.name}
+          </Link>
           {supplier.websiteUrl && (
             <a
               href={supplier.websiteUrl}

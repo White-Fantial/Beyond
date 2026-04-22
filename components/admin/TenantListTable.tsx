@@ -33,7 +33,9 @@ export default function TenantListTable({ items, emptyMessage }: TenantListTable
           {items.map((t) => (
             <tr key={t.id} className="hover:bg-gray-50">
               <td className="px-4 py-3 font-medium text-gray-900 max-w-[160px] truncate">
-                {t.displayName}
+                <Link href={`/admin/tenants/${t.id}`} className="text-blue-600 hover:underline">
+                  {t.displayName}
+                </Link>
               </td>
               <td className="px-4 py-3 text-gray-500 font-mono text-xs">{t.slug}</td>
               <td className="px-4 py-3">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import type { OwnerTeamMember } from "@/types/owner";
 
 // ─── Badge configs ────────────────────────────────────────────────────────────
@@ -377,7 +378,12 @@ export default function TeamMembersClient({ initialMembers }: Props) {
                   return (
                     <tr key={m.membershipId} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900 truncate max-w-[160px]">{m.name}</div>
+                        <Link
+                          href={`/owner/team/${m.membershipId}`}
+                          className="font-medium text-brand-700 hover:text-brand-900 hover:underline block truncate max-w-[160px]"
+                        >
+                          {m.name}
+                        </Link>
                       </td>
                       <td className="px-4 py-3 text-gray-600 text-xs truncate max-w-[180px]">
                         {m.email}
