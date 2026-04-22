@@ -107,7 +107,8 @@ export default async function AdminSupplierProductDetailPage({ params }: Props) 
         </div>
       </div>
     );
-  } catch {
-    notFound();
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("not found")) notFound();
+    throw err;
   }
 }

@@ -37,7 +37,8 @@ export default async function AdminSupplierEditPage({ params }: Props) {
         <AdminSupplierEditForm supplier={supplier} />
       </div>
     );
-  } catch {
-    notFound();
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("not found")) notFound();
+    throw err;
   }
 }
