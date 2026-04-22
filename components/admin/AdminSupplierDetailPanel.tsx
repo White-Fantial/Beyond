@@ -31,6 +31,7 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
   const [productName, setProductName] = useState("");
   const [productUrl, setProductUrl] = useState("");
   const [productPrice, setProductPrice] = useState("");
+  const [productQty, setProductQty] = useState("1");
   const [productUnit, setProductUnit] = useState<string>("EACH");
   const [savingProduct, setSavingProduct] = useState(false);
   const [productError, setProductError] = useState<string | null>(null);
@@ -83,6 +84,7 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
         name: productName,
         externalUrl: productUrl || undefined,
         referencePrice: Math.round(parseFloat(productPrice) * 100000),
+        purchaseQty: parseFloat(productQty) || 1,
         unit: productUnit as UpsertSupplierProductInput["unit"],
       };
       const res = await fetch(`/api/admin/suppliers/${supplier.id}/products`, {
@@ -98,6 +100,7 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
       setProductName("");
       setProductUrl("");
       setProductPrice("");
+      setProductQty("1");
       setProductUnit("EACH");
       setShowProductForm(false);
       router.refresh();
@@ -236,6 +239,21 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
                 />
               </div>
               <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Qty *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="0.0001"
+                  step="any"
+                  value={productQty}
+                  onChange={(e) => setProductQty(e.target.value)}
+                  placeholder="25"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none"
+                />
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Unit *</label>
                 <select
                   value={productUnit}
@@ -268,54 +286,65 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
             <thead>
               <tr className="text-xs text-gray-500 bg-gray-50 border-b border-gray-100">
                 <th className="px-5 py-3 text-left font-medium">Product</th>
-                <th className="px-5 py-3 text-left font-medium">Unit</th>
+                <th className="px-5 py-3 text-left font-medium">Package</th>
                 <th className="px-5 py-3 text-right font-medium">Price</th>
+                <th className="px-5 py-3 text-right font-medium">Unit Cost</th>
                 <th className="px-5 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {supplier.products.map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50">
-                  <td className="px-5 py-3">
-                    <div className="font-medium">
+              {supplier.products.map((p) => {
+                const unitCost = p.purchaseQty > 0
+                  ? p.referencePrice / p.purchaseQty / 100000
+                  : 0;
+                return (
+                  <tr key={p.id} className="hover:bg-gray-50">
+                    <td className="px-5 py-3">
+                      <div className="font-medium">
+                        <Link
+                          href={`/admin/suppliers/${supplier.id}/products/${p.id}`}
+                          className="text-blue-600 hover:underline"
+                        >
+                          {p.name}
+                        </Link>
+                      </div>
+                      {p.externalUrl && (
+                        <a
+                          href={p.externalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          {p.externalUrl}
+                        </a>
+                      )}
+                    </td>
+                    <td className="px-5 py-3 text-gray-600">
+                      {p.purchaseQty} {p.unit}
+                    </td>
+                    <td className="px-5 py-3 text-right text-gray-700">
+                      ${(p.referencePrice / 100000).toFixed(2)}
+                    </td>
+                    <td className="px-5 py-3 text-right text-gray-500 text-xs">
+                      ${unitCost.toFixed(4)}/{p.unit}
+                    </td>
+                    <td className="px-5 py-3 text-right">
                       <Link
-                        href={`/admin/suppliers/${supplier.id}/products/${p.id}`}
-                        className="text-blue-600 hover:underline"
+                        href={`/admin/suppliers/${supplier.id}/products/${p.id}/edit`}
+                        className="text-blue-600 hover:text-blue-800 text-xs font-medium mr-3"
                       >
-                        {p.name}
+                        Edit
                       </Link>
-                    </div>
-                    {p.externalUrl && (
-                      <a
-                        href={p.externalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-600 hover:underline"
+                      <button
+                        onClick={() => handleDeleteProduct(p.id)}
+                        className="text-red-500 hover:text-red-700 text-xs font-medium"
                       >
-                        {p.externalUrl}
-                      </a>
-                    )}
-                  </td>
-                  <td className="px-5 py-3 text-gray-600">{p.unit}</td>
-                  <td className="px-5 py-3 text-right text-gray-700">
-                   ${(p.referencePrice / 100000).toFixed(2)}
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <Link
-                      href={`/admin/suppliers/${supplier.id}/products/${p.id}/edit`}
-                      className="text-blue-600 hover:text-blue-800 text-xs font-medium mr-3"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => handleDeleteProduct(p.id)}
-                      className="text-red-500 hover:text-red-700 text-xs font-medium"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

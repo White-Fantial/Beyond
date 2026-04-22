@@ -3713,6 +3713,7 @@ model SupplierProduct {
   name                      String
   externalUrl               String?
   referencePrice            Int            @default(0) // millicents — platform-wide aggregate (max across all tenants) maintained by scraper
+  purchaseQty               Float          @default(1) // how many units come in one package (e.g. 500 for a 500g bag)
   unit                      IngredientUnit @default(EACH)
   lastScrapedAt             DateTime?
   metadata                  Json           @default("{}")
