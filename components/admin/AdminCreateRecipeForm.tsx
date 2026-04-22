@@ -27,7 +27,11 @@ interface IngredientRow {
   unit: IngredientUnit;
 }
 
-export default function AdminCreateRecipeForm() {
+interface Props {
+  pageMode?: boolean;
+}
+
+export default function AdminCreateRecipeForm({ pageMode = false }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -47,9 +51,10 @@ export default function AdminCreateRecipeForm() {
   // Recipe categories
   const [categories, setCategories] = useState<RecipeCategory[]>([]);
 
-  // Load platform ingredients and categories when the form is opened
+  // In page mode, load data immediately on mount; in inline mode, load when accordion opens
+  const shouldLoad = pageMode || open;
   useEffect(() => {
-    if (!open) return;
+    if (!shouldLoad) return;
     setLoadingIngredients(true);
     Promise.all([
       fetch("/api/admin/platform-ingredients?pageSize=200")
@@ -67,7 +72,8 @@ export default function AdminCreateRecipeForm() {
         })
         .catch(() => {}),
     ]).finally(() => setLoadingIngredients(false));
-  }, [open]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldLoad]);
 
   function addIngredientRow() {
     if (platformIngredients.length === 0) return;
@@ -128,16 +134,20 @@ export default function AdminCreateRecipeForm() {
         setError(data.error ?? "Failed to create recipe.");
         return;
       }
-      // Reset form and refresh
-      setName("");
-      setYieldQty("1");
-      setYieldUnit("EACH");
-      setNotes("");
-      setInstructions("");
-      setCategoryId("");
-      setIngredientRows([]);
-      setOpen(false);
-      router.refresh();
+      if (pageMode) {
+        router.push("/admin/recipes");
+      } else {
+        // Reset form and refresh inline
+        setName("");
+        setYieldQty("1");
+        setYieldUnit("EACH");
+        setNotes("");
+        setInstructions("");
+        setCategoryId("");
+        setIngredientRows([]);
+        setOpen(false);
+        router.refresh();
+      }
     } catch {
       setError("A network error occurred.");
     } finally {
@@ -145,7 +155,7 @@ export default function AdminCreateRecipeForm() {
     }
   }
 
-  if (!open) {
+  if (!pageMode && !open) {
     return (
       <button
         onClick={() => setOpen(true)}
@@ -163,13 +173,15 @@ export default function AdminCreateRecipeForm() {
     >
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-900">Add Recipe</h2>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="text-xs text-gray-400 hover:text-gray-600"
-        >
-          Close
-        </button>
+        {!pageMode && (
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="text-xs text-gray-400 hover:text-gray-600"
+          >
+            Close
+          </button>
+        )}
       </div>
 
       {/* Name + Yield */}
@@ -353,7 +365,7 @@ export default function AdminCreateRecipeForm() {
         </button>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={() => pageMode ? router.push("/admin/recipes") : setOpen(false)}
           className="px-5 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition"
         >
           Cancel

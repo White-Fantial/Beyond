@@ -1,7 +1,7 @@
 import { requireAuth } from "@/lib/auth/permissions";
 import { listRecipes } from "@/services/owner/owner-recipes.service";
 import RecipeTable from "@/components/owner/recipes/RecipeTable";
-import CreateRecipeForm from "@/components/owner/recipes/CreateRecipeForm";
+import Link from "next/link";
 
 export default async function OwnerRecipesPage() {
   const ctx = await requireAuth();
@@ -19,8 +19,13 @@ export default async function OwnerRecipesPage() {
             {result.total} recipe{result.total !== 1 ? "s" : ""}
           </p>
         </div>
+        <Link
+          href="/owner/recipes/new"
+          className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition"
+        >
+          + New Recipe
+        </Link>
       </div>
-      <CreateRecipeForm storeId={storeId} />
       <RecipeTable items={result.items} />
     </div>
   );

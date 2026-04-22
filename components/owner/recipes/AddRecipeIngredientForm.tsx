@@ -52,11 +52,11 @@ export default function AddRecipeIngredientForm({
     setError(null);
     const qty = parseFloat(quantity);
     if (!ingredientId) {
-      setError("재료를 선택해주세요.");
+      setError("Please select an ingredient.");
       return;
     }
     if (!qty || qty <= 0) {
-      setError("수량은 0보다 커야 합니다.");
+      setError("Quantity must be greater than 0.");
       return;
     }
 
@@ -84,13 +84,13 @@ export default function AddRecipeIngredientForm({
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? "재료 추가에 실패했습니다.");
+        setError(data.error ?? "Failed to add ingredient.");
         return;
       }
       router.refresh();
       onClose();
     } catch {
-      setError("네트워크 오류가 발생했습니다.");
+      setError("A network error occurred. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -98,14 +98,14 @@ export default function AddRecipeIngredientForm({
 
   return (
     <div className="border-t border-gray-100 bg-gray-50 px-5 py-4">
-      <h4 className="text-xs font-semibold text-gray-700 mb-3">재료 추가</h4>
+      <h4 className="text-xs font-semibold text-gray-700 mb-3">Add Ingredient</h4>
       {loadingIngredients ? (
-        <p className="text-xs text-gray-400">재료 목록 불러오는 중…</p>
+        <p className="text-xs text-gray-400">Loading ingredients…</p>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
           <div className="flex-1 min-w-[160px]">
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              재료 <span className="text-red-500">*</span>
+              Ingredient <span className="text-red-500">*</span>
             </label>
             <select
               required
@@ -113,7 +113,7 @@ export default function AddRecipeIngredientForm({
               onChange={(e) => setIngredientId(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             >
-              <option value="">재료 선택…</option>
+              <option value="">Select ingredient…</option>
               {ingredients.map((ing) => (
                 <option key={ing.id} value={ing.id}>
                   {ing.name} ({INGREDIENT_UNIT_LABELS[ing.unit] ?? ing.unit})
@@ -123,7 +123,7 @@ export default function AddRecipeIngredientForm({
           </div>
           <div className="w-24">
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              수량 <span className="text-red-500">*</span>
+              Qty <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -136,7 +136,7 @@ export default function AddRecipeIngredientForm({
             />
           </div>
           <div className="w-28">
-            <label className="block text-xs font-medium text-gray-600 mb-1">단위</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Unit</label>
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value as IngredientUnit)}
@@ -155,14 +155,14 @@ export default function AddRecipeIngredientForm({
               disabled={submitting}
               className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition"
             >
-              {submitting ? "추가 중…" : "추가"}
+              {submitting ? "Adding…" : "Add"}
             </button>
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition"
             >
-              취소
+              Cancel
             </button>
           </div>
           {error && (

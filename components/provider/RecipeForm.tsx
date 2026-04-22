@@ -10,6 +10,10 @@ import type {
 } from "@/types/marketplace";
 import type { Ingredient } from "@/types/owner-ingredients";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
+import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
+import type { RecipeYieldUnit } from "@/types/owner-recipes";
+
+const YIELD_UNITS = Object.keys(RECIPE_YIELD_UNIT_LABELS) as RecipeYieldUnit[];
 
 interface RecipeFormProps {
   mode: "create" | "edit";
@@ -37,16 +41,15 @@ export default function RecipeForm({
   const [servings, setServings] = useState(initial?.servings ?? 1);
   const [prepTime, setPrepTime] = useState(initial?.prepTimeMinutes ?? 0);
   const [cookTime, setCookTime] = useState(initial?.cookTimeMinutes ?? 0);
-  const [yieldQty] = useState(initial?.yieldQty ?? 1);
-  const [yieldUnit] = useState(
-    initial?.yieldUnit ?? "EACH"
+  const [yieldQty, setYieldQty] = useState(initial?.yieldQty ?? 1);
+  const [yieldUnit, setYieldUnit] = useState<RecipeYieldUnit>(
+    (initial?.yieldUnit as RecipeYieldUnit) ?? "EACH"
   );
   const [recommendedPrice, setRecommendedPrice] = useState(
     initial?.recommendedPrice ?? 0
   );
   const [salePrice, setSalePrice] = useState(initial?.salePrice ?? 0);
   const [currency] = useState(initial?.currency ?? "USD");
-
   const [instructions, setInstructions] = useState(initial?.instructions ?? "");
 
   const [ingredients, setIngredients] = useState<
@@ -60,7 +63,7 @@ export default function RecipeForm({
     })) ?? []
   );
 
-  // ── Ingredient helpers ───────────────────────────────────────────────────────
+  // ── Ingredient helpers ───────────────────────────────────────────────────
 
   function addIngredient() {
     if (platformIngredients.length === 0) return;
@@ -106,7 +109,7 @@ export default function RecipeForm({
           prepTimeMinutes: prepTime || undefined,
           cookTimeMinutes: cookTime || undefined,
           yieldQty,
-          yieldUnit: yieldUnit as "EACH" | "BATCH" | "SERVING" | "GRAM" | "KG" | "ML" | "LITER",
+          yieldUnit,
           recommendedPrice,
           salePrice,
           currency,
@@ -268,6 +271,39 @@ export default function RecipeForm({
             />
           </div>
         </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Yield Qty <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              min={1}
+              required
+              value={yieldQty}
+              onChange={(e) => setYieldQty(Number(e.target.value))}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Yield Unit <span className="text-red-500">*</span>
+            </label>
+            <select
+              required
+              value={yieldUnit}
+              onChange={(e) => setYieldUnit(e.target.value as RecipeYieldUnit)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            >
+              {YIELD_UNITS.map((u) => (
+                <option key={u} value={u}>
+                  {RECIPE_YIELD_UNIT_LABELS[u]}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Pricing */}
@@ -383,9 +419,9 @@ export default function RecipeForm({
         <textarea
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
-          rows={8}
+          rows={6}
           placeholder="Describe the cooking steps…"
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-y"
         />
       </div>
 

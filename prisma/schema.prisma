@@ -3866,6 +3866,8 @@ model MarketplaceRecipe {
   recommendedPrice   Int     @default(0) // provider's suggested price
   salePrice          Int     @default(0) // actual listed price (0 for BASIC)
 
+  instructions String?   // free-text cooking method / steps
+
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

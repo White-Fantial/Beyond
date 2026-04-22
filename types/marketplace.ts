@@ -28,7 +28,7 @@ export const MARKETPLACE_RECIPE_STATUS_LABELS: Record<
 > = {
   DRAFT: "Draft",
   PENDING_REVIEW: "Pending Review",
-  CHANGE_REQUESTED: "Change Requested",
+  CHANGE_REQUESTED: "Changes Requested",
   APPROVED: "Approved",
   PUBLISHED: "Published",
   REJECTED: "Rejected",
@@ -76,6 +76,7 @@ export interface MarketplaceRecipe {
   estimatedCostPrice: number;
   recommendedPrice: number;
   salePrice: number;
+  instructions: string | null;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
