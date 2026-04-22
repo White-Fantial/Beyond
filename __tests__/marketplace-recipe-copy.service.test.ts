@@ -44,6 +44,7 @@ const mockMarketplaceRecipeBasic = {
   status: "PUBLISHED",
   title: "Basic Pasta",
   description: "Tasty pasta recipe",
+  instructions: "Boil water.\n\nAdd pasta and cook for 10 minutes.",
   yieldQty: 2,
   yieldUnit: "SERVING",
   deletedAt: null,
@@ -71,10 +72,12 @@ const mockCreatedRecipeRow = {
   storeId: STORE_ID,
   catalogProductId: null,
   tenantCatalogProductId: null,
+  categoryId: null,
   name: "Basic Pasta",
   yieldQty: 2,
   yieldUnit: "SERVING",
   notes: "Tasty pasta recipe",
+  instructions: "Boil water.\n\nAdd pasta and cook for 10 minutes.",
   marketplaceSourceId: MARKETPLACE_RECIPE_ID,
   createdAt: new Date("2026-04-19"),
   updatedAt: new Date("2026-04-19"),
@@ -242,5 +245,18 @@ describe("copyMarketplaceRecipeToOwner", () => {
     const createCall = mockPrisma.recipe.create.mock.calls[0][0];
     expect(createCall.data.tenantCatalogProductId).toBe(TENANT_PRODUCT_ID);
     expect(result.tenantCatalogProductId).toBe(TENANT_PRODUCT_ID);
+  });
+
+  it("copies instructions from the marketplace recipe to the owner recipe", async () => {
+    mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue(mockMarketplaceRecipeBasic);
+    mockPrisma.recipe.create.mockResolvedValue(mockCreatedRecipeRow);
+
+    const result = await copyMarketplaceRecipeToOwner(TENANT_ID, USER_ID, MARKETPLACE_RECIPE_ID, {
+      storeId: STORE_ID,
+    });
+
+    const createCall = mockPrisma.recipe.create.mock.calls[0][0];
+    expect(createCall.data.instructions).toBe("Boil water.\n\nAdd pasta and cook for 10 minutes.");
+    expect(result.instructions).toBe("Boil water.\n\nAdd pasta and cook for 10 minutes.");
   });
 });
