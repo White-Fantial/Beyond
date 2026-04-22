@@ -456,12 +456,12 @@ export async function copyPlatformRecipeToOwner(
   });
   if (!source) throw new Error(`Platform recipe ${platformRecipeId} not found`);
 
-  type RawRecipeIngredientRaw = {
+  type RawPlatformIngredient = {
     ingredientId: string;
     quantity: { toNumber: () => number } | number;
     unit: string;
   };
-  const ingredientsToCreate = (source.ingredients as RawRecipeIngredientRaw[]).map(
+  const ingredientsToCreate = (source.ingredients as RawPlatformIngredient[]).map(
     (i) => ({
       ingredientId: i.ingredientId,
       quantity: typeof i.quantity === "object" ? i.quantity.toNumber() : i.quantity,

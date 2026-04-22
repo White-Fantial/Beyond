@@ -170,8 +170,8 @@ export async function listMarketplaceRecipes(
   };
 
   // Platform recipes (admin-created, tenantId=null) are included unless a
-  // type or filter that doesn't apply to them is set (e.g. PREMIUM-only, or a
-  // cuisineTag / difficulty / providerId filter).
+  // type or filter that doesn't apply to them is set (i.e. PREMIUM-only
+  // request, or a cuisineTag / difficulty / providerId filter).
   // Platform recipes are only included on the first page to avoid duplicates
   // across paginated results (they are prepended before marketplace items).
   const includePlatform =
