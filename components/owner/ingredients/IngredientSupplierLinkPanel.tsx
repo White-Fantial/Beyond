@@ -247,6 +247,7 @@ export default function IngredientSupplierLinkPanel({
                     type="button"
                     onClick={() => handleSetPreferred(link)}
                     disabled={togglingId === link.id}
+                    aria-label={`Set ${link.supplierProductName} as preferred`}
                     className="text-xs text-brand-600 hover:text-brand-800 font-medium disabled:opacity-50"
                   >
                     {togglingId === link.id ? "Setting…" : "Set Preferred"}
@@ -257,6 +258,7 @@ export default function IngredientSupplierLinkPanel({
                     type="button"
                     onClick={() => handleDelete(link.id)}
                     disabled={deletingId === link.id}
+                    aria-label={`Remove ${link.supplierProductName}`}
                     className="text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-50"
                   >
                     {deletingId === link.id ? "Removing…" : "Remove"}
