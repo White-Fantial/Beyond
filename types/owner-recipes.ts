@@ -31,6 +31,19 @@ export interface RecipeIngredient {
   lineCost: number; // computed: quantity × ingredientUnitCost (minor units)
 }
 
+/** A TenantCatalogProduct used as a sub-component in a recipe. */
+export interface RecipeProductComponent {
+  id: string;
+  recipeId: string;
+  tenantProductId: string;
+  tenantProductName: string;
+  /** Cost per unit of the sub-product, resolved from its own recipe (millicents per yield unit). 0 if unresolved. */
+  tenantProductCostPerUnit: number;
+  quantity: number;
+  unit: IngredientUnit;
+  lineCost: number; // computed: quantity × tenantProductCostPerUnit (minor units)
+}
+
 export interface Recipe {
   id: string;
   tenantId: string | null;
@@ -53,6 +66,7 @@ export interface Recipe {
 
 export interface RecipeDetail extends Recipe {
   ingredients: RecipeIngredient[];
+  productComponents: RecipeProductComponent[];
   totalCost: number;       // Σ lineCost (minor units)
   costPerUnit: number;     // totalCost / yieldQty (minor units)
   marginAmount: number | null;  // catalogProductPrice - costPerUnit (minor units)
@@ -72,6 +86,12 @@ export interface RecipeIngredientInput {
   unit: IngredientUnit;
 }
 
+export interface RecipeProductComponentInput {
+  tenantProductId: string;
+  quantity: number;
+  unit: IngredientUnit;
+}
+
 export interface CreateRecipeInput {
   storeId?: string;
   catalogProductId?: string;
@@ -83,6 +103,7 @@ export interface CreateRecipeInput {
   notes?: string;
   instructions?: string;
   ingredients: RecipeIngredientInput[];
+  productComponents?: RecipeProductComponentInput[];
 }
 
 export interface UpdateRecipeInput {
@@ -94,6 +115,7 @@ export interface UpdateRecipeInput {
   notes?: string;
   instructions?: string;
   ingredients?: RecipeIngredientInput[];
+  productComponents?: RecipeProductComponentInput[];
 }
 
 export interface RecipeFilters {

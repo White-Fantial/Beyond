@@ -2,7 +2,7 @@
 
 import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { RecipeDetail } from "@/types/owner-recipes";
+import type { RecipeDetail, RecipeProductComponent } from "@/types/owner-recipes";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
 import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
 import AddRecipeIngredientForm from "./AddRecipeIngredientForm";
@@ -243,6 +243,50 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
           />
         )}
       </div>
+
+      {/* Product component breakdown */}
+      {detail.productComponents.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              🧩 Product Components
+            </h3>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-xs text-gray-500 border-b border-gray-100">
+                <th className="px-5 py-3 text-left font-medium">Product</th>
+                <th className="px-5 py-3 text-right font-medium">Qty</th>
+                <th className="px-5 py-3 text-left font-medium">Unit</th>
+                <th className="px-5 py-3 text-right font-medium">Cost / Unit</th>
+                <th className="px-5 py-3 text-right font-medium">Line Cost</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {detail.productComponents.map((comp: RecipeProductComponent) => (
+                <tr key={comp.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-5 py-3 text-gray-900 flex items-center gap-1.5">
+                    <span className="text-base">🧩</span>
+                    {comp.tenantProductName}
+                  </td>
+                  <td className="px-5 py-3 text-right text-gray-700">{comp.quantity}</td>
+                  <td className="px-5 py-3 text-gray-600">
+                    {INGREDIENT_UNIT_LABELS[comp.unit] ?? comp.unit}
+                  </td>
+                  <td className="px-5 py-3 text-right text-gray-600">
+                    {comp.tenantProductCostPerUnit > 0
+                      ? formatCost(comp.tenantProductCostPerUnit)
+                      : <span className="text-gray-400 text-xs">unresolved</span>}
+                  </td>
+                  <td className="px-5 py-3 text-right font-medium text-gray-900">
+                    {formatCost(comp.lineCost)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {detail.notes && (
         <div className="bg-white rounded-xl border border-gray-200 p-4">

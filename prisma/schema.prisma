@@ -1354,6 +1354,7 @@ model TenantCatalogProduct {
   storeSelections StoreProductSelection[]
   recipes         Recipe[]
   modifierGroups  TenantProductModifierGroup[]
+  usedInComponents RecipeProductComponent[]
 
   @@index([tenantId, isActive, displayOrder])
   @@index([tenantId, name])
@@ -3589,6 +3590,7 @@ model Recipe {
   tenantCatalogProduct TenantCatalogProduct? @relation(fields: [tenantCatalogProductId], references: [id], onDelete: SetNull)
   category             RecipeCategory?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   ingredients          RecipeIngredient[]
+  productComponents    RecipeProductComponent[]
 
   @@index([tenantId, storeId])
   @@index([storeId, catalogProductId])
@@ -3614,6 +3616,27 @@ model RecipeIngredient {
   @@index([recipeId])
   @@index([ingredientId])
   @@map("recipe_ingredients")
+}
+
+/// Links a TenantCatalogProduct as a sub-product component of a recipe.
+/// Allows owners to compose complex products (e.g. a sandwich using a "Bulgogi" product as filling).
+/// quantity + unit specify how much of the sub-product is used (by count or by weight).
+model RecipeProductComponent {
+  id              String         @id @default(uuid())
+  recipeId        String
+  tenantProductId String
+  quantity        Decimal        @default(1) @db.Decimal(12, 4)
+  unit            IngredientUnit @default(EACH)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  recipe        Recipe              @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  tenantProduct TenantCatalogProduct @relation(fields: [tenantProductId], references: [id], onDelete: Restrict)
+
+  @@unique([recipeId, tenantProductId])
+  @@index([recipeId])
+  @@index([tenantProductId])
+  @@map("recipe_product_components")
 }
 
 /// Scope for a supplier record.
