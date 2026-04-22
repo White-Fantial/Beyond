@@ -414,6 +414,7 @@ export async function copyMarketplaceRecipeToOwner(
       yieldQty: source.yieldQty,
       yieldUnit: source.yieldUnit as RecipeYieldUnit,
       notes: source.description ?? null,
+      instructions: (source as unknown as { instructions: string | null }).instructions ?? null,
       marketplaceSourceId: source.id,
       catalogProductId: input.catalogProductId ?? null,
       tenantCatalogProductId: input.tenantCatalogProductId ?? null,
@@ -459,21 +460,26 @@ export async function getProductRecipes(
     orderBy: { name: "asc" },
   });
 
-  return Promise.all(
-    rows.map(async (row) => {
-      const recipe = toRecipe(row as RawRecipe);
-      const rawIngredients = row.ingredients as RawRecipeIngredient[];
-      const effectiveTenantId = tenantId ?? row.tenantId;
-      if (!effectiveTenantId) {
-        throw new Error(`Cannot resolve costs: recipe ${row.id} has no tenantId`);
-      }
-      const costMap = await resolveCosts(effectiveTenantId, rawIngredients);
-      const ingredients = rawIngredients.map((ri) =>
-        toRecipeIngredientWithCost(ri, costMap)
-      );
-      return computeCosts(recipe, ingredients);
-    })
+  if (rows.length === 0) return [];
+
+  // Resolve costs in one bulk call instead of one per recipe (N+1 fix)
+  const effectiveTenantId = tenantId ?? rows[0].tenantId;
+  if (!effectiveTenantId) {
+    throw new Error(`Cannot resolve costs: recipes in store ${storeId} have no tenantId`);
+  }
+  const allRawIngredients = rows.flatMap(
+    (row) => row.ingredients as RawRecipeIngredient[]
   );
+  const costMap = await resolveCosts(effectiveTenantId, allRawIngredients);
+
+  return rows.map((row) => {
+    const recipe = toRecipe(row as RawRecipe);
+    const rawIngredients = row.ingredients as RawRecipeIngredient[];
+    const ingredients = rawIngredients.map((ri) =>
+      toRecipeIngredientWithCost(ri, costMap)
+    );
+    return computeCosts(recipe, ingredients);
+  });
 }
 
 /**
@@ -495,15 +501,20 @@ export async function getTenantProductRecipes(
     orderBy: [{ storeId: "asc" }, { name: "asc" }],
   });
 
-  return Promise.all(
-    rows.map(async (row) => {
-      const recipe = toRecipe(row as RawRecipe);
-      const rawIngredients = row.ingredients as RawRecipeIngredient[];
-      const costMap = await resolveCosts(tenantId, rawIngredients);
-      const ingredients = rawIngredients.map((ri) =>
-        toRecipeIngredientWithCost(ri, costMap)
-      );
-      return computeCosts(recipe, ingredients);
-    })
+  if (rows.length === 0) return [];
+
+  // Resolve costs in one bulk call instead of one per recipe (N+1 fix)
+  const allRawIngredients = rows.flatMap(
+    (row) => row.ingredients as RawRecipeIngredient[]
   );
+  const costMap = await resolveCosts(tenantId, allRawIngredients);
+
+  return rows.map((row) => {
+    const recipe = toRecipe(row as RawRecipe);
+    const rawIngredients = row.ingredients as RawRecipeIngredient[];
+    const ingredients = rawIngredients.map((ri) =>
+      toRecipeIngredientWithCost(ri, costMap)
+    );
+    return computeCosts(recipe, ingredients);
+  });
 }

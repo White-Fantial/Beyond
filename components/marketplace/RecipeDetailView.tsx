@@ -43,7 +43,7 @@ export default function RecipeDetailView({
                 : "bg-amber-100 text-amber-700"
             }`}
           >
-            {recipe.type === "BASIC" ? "무료" : "프리미엄"}
+            {recipe.type === "BASIC" ? "Free" : "Premium"}
           </span>
         </div>
 
@@ -64,12 +64,12 @@ export default function RecipeDetailView({
           )}
           {recipe.servings && (
             <span className="bg-gray-100 px-3 py-1 rounded-full">
-              {recipe.servings}인분
+              {recipe.servings} servings
             </span>
           )}
           {totalMinutes > 0 && (
             <span className="bg-gray-100 px-3 py-1 rounded-full">
-              총 {totalMinutes}분
+              {totalMinutes} min total
             </span>
           )}
         </div>
@@ -80,21 +80,21 @@ export default function RecipeDetailView({
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-amber-700 font-medium">판매가</p>
+              <p className="text-sm text-amber-700 font-medium">Sale Price</p>
               <p className="text-2xl font-bold text-amber-900">
-                {recipe.salePrice.toLocaleString("en-US", { style: "currency", currency: "USD" })}
+                {(recipe.salePrice / 100000).toLocaleString("en-US", { style: "currency", currency: "USD" })}
               </p>
             </div>
             <div className="text-right text-sm text-amber-600">
-              <p>원가: {recipe.estimatedCostPrice.toLocaleString("en-US", { style: "currency", currency: "USD" })}</p>
-              <p>권장가: {recipe.recommendedPrice.toLocaleString("en-US", { style: "currency", currency: "USD" })}</p>
+              <p>Cost: {(recipe.estimatedCostPrice / 100000).toLocaleString("en-US", { style: "currency", currency: "USD" })}</p>
+              <p>Suggested: {(recipe.recommendedPrice / 100000).toLocaleString("en-US", { style: "currency", currency: "USD" })}</p>
             </div>
           </div>
 
           {!access.hasAccess && (
             <div className="mt-4">
               <p className="text-sm text-amber-700 mb-3">
-                이 프리미엄 레시피의 전체 내용을 보려면 구매가 필요합니다.
+                Purchase this premium recipe to view the full content.
               </p>
               <button
                 className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-6 py-2 rounded-lg text-sm"
@@ -105,7 +105,7 @@ export default function RecipeDetailView({
                   window.location.reload();
                 }}
               >
-                구매하기 ({recipe.salePrice.toLocaleString("en-US", { style: "currency", currency: "USD" })})
+                Purchase ({(recipe.salePrice / 100000).toLocaleString("en-US", { style: "currency", currency: "USD" })})
               </button>
             </div>
           )}
@@ -115,13 +115,13 @@ export default function RecipeDetailView({
       {/* Ingredients */}
       <div className="bg-white rounded-lg border border-gray-200 p-5">
         <h2 className="text-base font-semibold text-gray-900 mb-4">
-          재료 ({recipe.ingredientCount}가지)
+          Ingredients ({recipe.ingredientCount})
         </h2>
 
         {!access.hasAccess && recipe.type === "PREMIUM" ? (
           <div className="text-center py-8 text-gray-400">
             <p className="text-2xl mb-2">🔒</p>
-            <p className="text-sm">구매 후 재료 목록을 확인할 수 있습니다.</p>
+            <p className="text-sm">Purchase to view ingredients.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -150,47 +150,29 @@ export default function RecipeDetailView({
         )}
       </div>
 
-      {/* Steps */}
+      {/* Instructions */}
       <div className="bg-white rounded-lg border border-gray-200 p-5">
         <h2 className="text-base font-semibold text-gray-900 mb-4">
-          만드는 과정
+          Instructions
         </h2>
 
         {!access.hasAccess && recipe.type === "PREMIUM" ? (
           <div className="text-center py-8 text-gray-400">
             <p className="text-2xl mb-2">🔒</p>
-            <p className="text-sm">구매 후 조리 과정을 확인할 수 있습니다.</p>
+            <p className="text-sm">Purchase to view instructions.</p>
           </div>
+        ) : recipe.instructions ? (
+          <p className="text-sm text-gray-700 whitespace-pre-line">{recipe.instructions}</p>
         ) : (
-          <ol className="space-y-6">
-            {recipe.steps.map((step) => (
-              <li key={step.id} className="flex gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center text-sm font-bold">
-                  {step.stepNumber}
-                </div>
-                <div className="flex-1 pt-1">
-                  <p className="text-sm text-gray-700">{step.instruction}</p>
-                  {step.durationMinutes && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      ⏱ {step.durationMinutes}분
-                    </p>
-                  )}
-                  {step.imageUrl && (
-                    <div className="mt-2 rounded-lg overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={step.imageUrl}
-                        alt={`Step ${step.stepNumber}`}
-                        className="max-h-48 object-cover rounded-lg"
-                      />
-                    </div>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ol>
+          <p className="text-sm text-gray-400 italic">No instructions provided.</p>
         )}
       </div>
     </div>
   );
+}
+
+
+interface RecipeDetailViewProps {
+  recipe: MarketplaceRecipeDetail;
+  access: RecipeAccessResult;
 }

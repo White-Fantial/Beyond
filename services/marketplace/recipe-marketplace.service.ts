@@ -10,7 +10,6 @@ import type {
   MarketplaceRecipeDetail,
   MarketplaceRecipeListResult,
   MarketplaceRecipeIngredientItem,
-  MarketplaceRecipeStep,
   CreateMarketplaceRecipeInput,
   UpdateMarketplaceRecipeInput,
   MarketplaceRecipeFilters,
@@ -39,6 +38,7 @@ type RawRecipe = {
   difficulty: string | null;
   prepTimeMinutes: number | null;
   cookTimeMinutes: number | null;
+  instructions: string | null;
   currency: string;
   estimatedCostPrice: number;
   recommendedPrice: number;
@@ -47,15 +47,6 @@ type RawRecipe = {
   createdAt: Date;
   updatedAt: Date;
   provider?: { name: string } | null;
-};
-
-type RawStep = {
-  id: string;
-  recipeId: string;
-  stepNumber: number;
-  instruction: string;
-  imageUrl: string | null;
-  durationMinutes: number | null;
 };
 
 type RawIngredient = {
@@ -97,17 +88,6 @@ function toRecipe(row: RawRecipe): MarketplaceRecipe {
   };
 }
 
-function toStep(row: RawStep): MarketplaceRecipeStep {
-  return {
-    id: row.id,
-    recipeId: row.recipeId,
-    stepNumber: row.stepNumber,
-    instruction: row.instruction,
-    imageUrl: row.imageUrl,
-    durationMinutes: row.durationMinutes,
-  };
-}
-
 function toIngredientItem(row: RawIngredient): MarketplaceRecipeIngredientItem {
   const qty =
     typeof row.quantity === "object" ? row.quantity.toNumber() : row.quantity;
@@ -135,6 +115,42 @@ async function recomputeCostPrice(
     data: { estimatedCostPrice: totalCost },
   });
 }
+
+/**
+ * Fetch the referencePrice for a set of ingredient IDs from their supplier products.
+ * Returns a Map<ingredientId, referencePrice>.
+ */
+async function fetchIngredientReferencePrices(
+  ingredientIds: string[]
+): Promise<Map<string, number>> {
+  if (ingredientIds.length === 0) return new Map();
+
+  const links = await prisma.ingredientSupplierLink.findMany({
+    where: {
+      ingredientId: { in: ingredientIds },
+      isPreferred: true,
+    },
+    select: {
+      ingredientId: true,
+      supplierProduct: { select: { referencePrice: true } },
+    },
+  });
+
+  const map = new Map<string, number>();
+  for (const link of links) {
+    if (!map.has(link.ingredientId)) {
+      map.set(link.ingredientId, link.supplierProduct.referencePrice);
+    }
+  }
+  return map;
+}
+
+const ingredientInclude = {
+  ingredients: {
+    include: { ingredient: { select: { name: true } } },
+    orderBy: { createdAt: "asc" as const },
+  },
+} as const;
 
 // ─── Public functions ─────────────────────────────────────────────────────────
 
@@ -195,19 +211,12 @@ export async function getMarketplaceRecipe(
     where: { id, deletedAt: null },
     include: {
       provider: { select: { name: true } },
-      steps: { orderBy: { stepNumber: "asc" } },
-      ingredients: {
-        include: {
-          ingredient: { select: { name: true } },
-        },
-        orderBy: { createdAt: "asc" },
-      },
+      ...ingredientInclude,
     },
   });
   if (!row) throw new Error(`MarketplaceRecipe ${id} not found`);
 
   const recipe = toRecipe(row as RawRecipe);
-  const steps = (row.steps as RawStep[]).map(toStep);
   const ingredients = (row.ingredients as RawIngredient[]).map(
     toIngredientItem
   );
@@ -220,7 +229,7 @@ export async function getMarketplaceRecipe(
 
   return {
     ...recipe,
-    steps,
+    instructions: (row as unknown as { instructions: string | null }).instructions ?? null,
     ingredients,
     ingredientCount: ingredients.length,
   };
@@ -235,21 +244,21 @@ export async function createMarketplaceRecipe(
   const initialStatus: MarketplaceRecipeStatus =
     input.type === "BASIC" ? "PUBLISHED" : "DRAFT";
 
-  // Snapshot ingredient costs at creation time
+  // Snapshot ingredient costs at creation time using referencePrice
   const ingredientInputs = input.ingredients ?? [];
   const ingredientIds = ingredientInputs.map((i) => i.ingredientId);
 
-  const ingredientCosts =
+  const [validIngredients, referencePriceMap] = await Promise.all([
     ingredientIds.length > 0
-      ? await prisma.ingredient.findMany({
+      ? prisma.ingredient.findMany({
           where: { id: { in: ingredientIds }, scope: "PLATFORM", deletedAt: null },
           select: { id: true },
         })
-      : [];
+      : Promise.resolve([]),
+    fetchIngredientReferencePrices(ingredientIds),
+  ]);
 
-  const costMap = new Map(
-    ingredientCosts.map((pi) => [pi.id, 0])
-  );
+  const validIds = new Set(validIngredients.map((pi) => pi.id));
 
   const row = await prisma.marketplaceRecipe.create({
     data: {
@@ -267,40 +276,30 @@ export async function createMarketplaceRecipe(
       difficulty: input.difficulty ?? null,
       prepTimeMinutes: input.prepTimeMinutes ?? null,
       cookTimeMinutes: input.cookTimeMinutes ?? null,
+      instructions: input.instructions ?? null,
       currency: input.currency ?? "USD",
       recommendedPrice: input.recommendedPrice ?? 0,
       salePrice: input.type === "BASIC" ? 0 : (input.salePrice ?? 0),
       publishedAt: initialStatus === "PUBLISHED" ? new Date() : null,
-      steps: {
-        create: (input.steps ?? []).map((s) => ({
-          stepNumber: s.stepNumber,
-          instruction: s.instruction,
-          imageUrl: s.imageUrl ?? null,
-          durationMinutes: s.durationMinutes ?? null,
-        })),
-      },
       ingredients: {
-        create: ingredientInputs.map((i) => ({
-          ingredientId: i.ingredientId,
-          quantity: i.quantity,
-          unit: i.unit,
-          notes: i.notes ?? null,
-          unitCostSnapshot: costMap.get(i.ingredientId) ?? 0,
-        })),
+        create: ingredientInputs
+          .filter((i) => validIds.has(i.ingredientId))
+          .map((i) => ({
+            ingredientId: i.ingredientId,
+            quantity: i.quantity,
+            unit: i.unit,
+            notes: i.notes ?? null,
+            unitCostSnapshot: referencePriceMap.get(i.ingredientId) ?? 0,
+          })),
       },
     },
     include: {
       provider: { select: { name: true } },
-      steps: { orderBy: { stepNumber: "asc" } },
-      ingredients: {
-        include: { ingredient: { select: { name: true } } },
-        orderBy: { createdAt: "asc" },
-      },
+      ...ingredientInclude,
     },
   });
 
   const recipe = toRecipe(row as RawRecipe);
-  const steps = (row.steps as RawStep[]).map(toStep);
   const ingredients = (row.ingredients as RawIngredient[]).map(
     toIngredientItem
   );
@@ -311,7 +310,12 @@ export async function createMarketplaceRecipe(
     recipe.estimatedCostPrice = totalCost;
   }
 
-  return { ...recipe, steps, ingredients, ingredientCount: ingredients.length };
+  return {
+    ...recipe,
+    instructions: input.instructions ?? null,
+    ingredients,
+    ingredientCount: ingredients.length,
+  };
 }
 
 export async function updateMarketplaceRecipe(
@@ -323,27 +327,31 @@ export async function updateMarketplaceRecipe(
   });
   if (!existing) throw new Error(`MarketplaceRecipe ${id} not found`);
 
-  // Snapshot ingredient costs
+  // Snapshot ingredient costs using referencePrice
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let ingredientCreate: any[] | undefined;
 
   if (input.ingredients !== undefined) {
     const ingredientIds = input.ingredients.map((i) => i.ingredientId);
-    const ingredients =
+    const [validIngredients, referencePriceMap] = await Promise.all([
       ingredientIds.length > 0
-        ? await prisma.ingredient.findMany({
+        ? prisma.ingredient.findMany({
             where: { id: { in: ingredientIds }, scope: "PLATFORM", deletedAt: null },
             select: { id: true },
           })
-        : [];
-    const validIds = new Set(ingredients.map((pi) => pi.id));
-    ingredientCreate = input.ingredients.map((i) => ({
-      ingredient: { connect: { id: i.ingredientId } },
-      quantity: i.quantity,
-      unit: i.unit,
-      notes: i.notes ?? null,
-      unitCostSnapshot: validIds.has(i.ingredientId) ? 0 : 0,
-    }));
+        : Promise.resolve([]),
+      fetchIngredientReferencePrices(ingredientIds),
+    ]);
+    const validIds = new Set(validIngredients.map((pi) => pi.id));
+    ingredientCreate = input.ingredients
+      .filter((i) => validIds.has(i.ingredientId))
+      .map((i) => ({
+        ingredient: { connect: { id: i.ingredientId } },
+        quantity: i.quantity,
+        unit: i.unit,
+        notes: i.notes ?? null,
+        unitCostSnapshot: referencePriceMap.get(i.ingredientId) ?? 0,
+      }));
   }
 
   const row = await prisma.marketplaceRecipe.update({
@@ -376,18 +384,8 @@ export async function updateMarketplaceRecipe(
         ? { recommendedPrice: input.recommendedPrice }
         : {}),
       ...(input.salePrice !== undefined ? { salePrice: input.salePrice } : {}),
-      ...(input.steps !== undefined
-        ? {
-            steps: {
-              deleteMany: {},
-              create: input.steps.map((s) => ({
-                stepNumber: s.stepNumber,
-                instruction: s.instruction,
-                imageUrl: s.imageUrl ?? null,
-                durationMinutes: s.durationMinutes ?? null,
-              })),
-            },
-          }
+      ...(input.instructions !== undefined
+        ? { instructions: input.instructions }
         : {}),
       ...(ingredientCreate !== undefined
         ? {
@@ -400,16 +398,11 @@ export async function updateMarketplaceRecipe(
     },
     include: {
       provider: { select: { name: true } },
-      steps: { orderBy: { stepNumber: "asc" } },
-      ingredients: {
-        include: { ingredient: { select: { name: true } } },
-        orderBy: { createdAt: "asc" },
-      },
+      ...ingredientInclude,
     },
   });
 
   const recipe = toRecipe(row as RawRecipe);
-  const steps = (row.steps as RawStep[]).map(toStep);
   const ingredients = (row.ingredients as RawIngredient[]).map(
     toIngredientItem
   );
@@ -422,7 +415,12 @@ export async function updateMarketplaceRecipe(
     );
   }
 
-  return { ...recipe, steps, ingredients, ingredientCount: ingredients.length };
+  return {
+    ...recipe,
+    instructions: (row as unknown as { instructions: string | null }).instructions ?? null,
+    ingredients,
+    ingredientCount: ingredients.length,
+  };
 }
 
 export async function deleteMarketplaceRecipe(id: string): Promise<void> {
@@ -435,3 +433,4 @@ export async function deleteMarketplaceRecipe(id: string): Promise<void> {
     data: { deletedAt: new Date() },
   });
 }
+
