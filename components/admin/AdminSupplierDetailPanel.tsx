@@ -240,7 +240,7 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Qty *
+                  Purchase Qty *
                 </label>
                 <input
                   type="number"
