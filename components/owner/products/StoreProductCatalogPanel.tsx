@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { StoreProductSelectionRow, TenantProductRow } from "@/types/owner";
 
-function formatPrice(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount / 100000);
+function formatPrice(amount: number) {
+  return `$${(amount / 100000).toFixed(2)}`;
 }
 
 interface Props {
@@ -155,7 +155,7 @@ export default function StoreProductCatalogPanel({
                   )}
                 </td>
                 <td className="px-4 py-3 text-right text-gray-600">
-                  {formatPrice(p.basePriceAmount, p.currency)}
+                  {formatPrice(p.basePriceAmount)}
                 </td>
                 <td className="px-4 py-3 text-center">
                   <button
@@ -201,7 +201,7 @@ export default function StoreProductCatalogPanel({
                 )}
               </td>
               <td className="px-4 py-3 text-right text-gray-500">
-                {formatPrice(s.product.basePriceAmount, s.product.currency)}
+                {formatPrice(s.product.basePriceAmount)}
               </td>
               <td className="px-4 py-3 text-right">
                 {editingPrice === s.tenantProductId ? (
@@ -239,7 +239,7 @@ export default function StoreProductCatalogPanel({
                     {s.customPriceAmount !== null ? (
                       <>
                         <span className="text-gray-900 font-medium">
-                          {formatPrice(s.effectivePriceAmount, s.product.currency)}
+                          {formatPrice(s.effectivePriceAmount)}
                           <span className="ml-1 text-xs text-blue-500">(custom)</span>
                         </span>
                         <button

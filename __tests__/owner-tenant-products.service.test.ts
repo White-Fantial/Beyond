@@ -88,7 +88,6 @@ const mockProduct = {
   description: "Strong coffee",
   shortDescription: "Coffee",
   basePriceAmount: 500000,
-  currency: "USD",
   imageUrl: null,
   displayOrder: 0,
   isActive: true,
@@ -117,7 +116,6 @@ const mockSelection = {
     description: "Strong coffee",
     shortDescription: "Coffee",
     basePriceAmount: 500000,
-    currency: "USD",
     imageUrl: null,
   },
 };
@@ -369,7 +367,6 @@ describe("createTenantProduct", () => {
         description: "Strong coffee",
         shortDescription: "Coffee",
         basePriceAmount: 500000,
-        currency: "USD",
         categoryId: "cat-1",
       },
     });
@@ -395,22 +392,6 @@ describe("createTenantProduct", () => {
     expect(mockPrisma.tenantCatalogProduct.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ basePriceAmount: 0 }),
-      })
-    );
-  });
-
-  it("defaults currency to USD", async () => {
-    mockPrisma.tenantCatalogProduct.create.mockResolvedValue(mockProduct);
-
-    await createTenantProduct({
-      tenantId: TENANT,
-      actorUserId: ACTOR,
-      data: { name: "Espresso" },
-    });
-
-    expect(mockPrisma.tenantCatalogProduct.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ currency: "USD" }),
       })
     );
   });

@@ -1340,7 +1340,6 @@ model TenantCatalogProduct {
   description      String?
   shortDescription String?
   basePriceAmount  Int      @default(0)
-  currency         String   @default("USD")
   imageUrl         String?
   displayOrder     Int      @default(0)
   isActive         Boolean  @default(true)

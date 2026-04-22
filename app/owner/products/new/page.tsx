@@ -16,7 +16,6 @@ export default function NewTenantProductPage() {
     description: "",
     shortDescription: "",
     basePriceAmount: "",
-    currency: "USD",
     internalNote: "",
     categoryId: "",
   });
@@ -47,7 +46,6 @@ export default function NewTenantProductPage() {
           basePriceAmount: form.basePriceAmount
             ? Math.round(parseFloat(form.basePriceAmount) * 100000)
             : 0,
-          currency: form.currency,
           internalNote: form.internalNote.trim() || null,
           categoryId: form.categoryId || null,
         }),
@@ -145,8 +143,7 @@ export default function NewTenantProductPage() {
             />
           </div>
 
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Base Price ($)
               </label>
@@ -159,20 +156,6 @@ export default function NewTenantProductPage() {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400"
                 placeholder="0.00"
               />
-            </div>
-            <div className="w-28">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-              <select
-                value={form.currency}
-                onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400"
-              >
-                <option value="USD">USD</option>
-                <option value="NZD">NZD</option>
-                <option value="AUD">AUD</option>
-                <option value="GBP">GBP</option>
-                <option value="EUR">EUR</option>
-              </select>
             </div>
           </div>
 
