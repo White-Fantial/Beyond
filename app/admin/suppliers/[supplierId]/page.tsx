@@ -1,6 +1,6 @@
 import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
 import { getPlatformSupplierDetail } from "@/services/admin/admin-suppliers.service";
-import AdminSupplierProductsPanel from "@/components/admin/AdminSupplierDetailPanel";
+import AdminSupplierDetailPanel from "@/components/admin/AdminSupplierDetailPanel";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -76,7 +76,7 @@ export default async function AdminSupplierDetailPage({ params }: Props) {
         </div>
 
         {/* Products management */}
-        <AdminSupplierProductsPanel supplier={supplier} />
+        <AdminSupplierDetailPanel supplier={supplier} />
       </div>
     );
   } catch {
