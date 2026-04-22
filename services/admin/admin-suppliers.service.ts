@@ -293,7 +293,7 @@ type RawLink = {
   };
 };
 
-function toLinkRow(r: RawLink) {
+function toPlatformIngredientLink(r: RawLink) {
   return {
     id: r.id,
     ingredientId: r.ingredientId,
@@ -308,7 +308,7 @@ function toLinkRow(r: RawLink) {
   };
 }
 
-export type PlatformIngredientLink = ReturnType<typeof toLinkRow>;
+export type PlatformIngredientLink = ReturnType<typeof toPlatformIngredientLink>;
 
 export async function getPlatformIngredientLinks(
   ingredientId: string
@@ -318,7 +318,7 @@ export async function getPlatformIngredientLinks(
     include: platformLinkInclude,
     orderBy: { createdAt: "asc" },
   });
-  return rows.map(toLinkRow);
+  return rows.map(toPlatformIngredientLink);
 }
 
 export async function addPlatformIngredientLink(
@@ -340,13 +340,13 @@ export async function addPlatformIngredientLink(
     where: { ingredientId, supplierProductId, tenantId: null },
     include: platformLinkInclude,
   });
-  if (existing) return toLinkRow(existing as RawLink);
+  if (existing) return toPlatformIngredientLink(existing as RawLink);
 
   const row = await prisma.ingredientSupplierLink.create({
     data: { ingredientId, supplierProductId, tenantId: null, isPreferred: false },
     include: platformLinkInclude,
   });
-  return toLinkRow(row as RawLink);
+  return toPlatformIngredientLink(row as RawLink);
 }
 
 export async function removePlatformIngredientLink(linkId: string): Promise<void> {

@@ -15,6 +15,7 @@ interface Props {
 
 export default function AdminSupplierProductEditForm({ supplierId, product }: Props) {
   const router = useRouter();
+  const productDetailPath = `/admin/suppliers/${supplierId}/products/${product.id}`;
 
   const [form, setForm] = useState({
     name: product.name,
@@ -45,7 +46,7 @@ export default function AdminSupplierProductEditForm({ supplierId, product }: Pr
       );
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to save");
-      router.push(`/admin/suppliers/${supplierId}/products/${product.id}`);
+      router.push(productDetailPath);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -123,7 +124,7 @@ export default function AdminSupplierProductEditForm({ supplierId, product }: Pr
             {saving ? "Saving…" : "Save Changes"}
           </button>
           <Link
-            href={`/admin/suppliers/${supplierId}/products/${product.id}`}
+            href={productDetailPath}
             className="px-5 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50"
           >
             Cancel

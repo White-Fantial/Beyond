@@ -24,6 +24,7 @@ const UNITS = Object.keys(INGREDIENT_UNIT_LABELS) as IngredientUnit[];
 
 export default function AdminIngredientEditForm({ ingredient, initialLinks }: Props) {
   const router = useRouter();
+  const ingredientDetailPath = `/admin/platform-ingredients/${ingredient.id}`;
 
   const [form, setForm] = useState({
     name: ingredient.name,
@@ -83,7 +84,7 @@ export default function AdminIngredientEditForm({ ingredient, initialLinks }: Pr
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Failed to save");
-      router.push(`/admin/platform-ingredients/${ingredient.id}`);
+      router.push(ingredientDetailPath);
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -221,7 +222,7 @@ export default function AdminIngredientEditForm({ ingredient, initialLinks }: Pr
               {saving ? "Saving…" : "Save Changes"}
             </button>
             <Link
-              href={`/admin/platform-ingredients/${ingredient.id}`}
+              href={ingredientDetailPath}
               className="px-5 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50"
             >
               Cancel
