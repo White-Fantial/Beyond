@@ -33,7 +33,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   }
 
   try {
-    const recipe = await getRecipe(row.tenantId as string, recipeId);
+    const recipe = await getRecipe(row.tenantId, recipeId);
     return NextResponse.json({ data: recipe });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Not found";
@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const body = (await req.json()) as UpdateRecipeInput;
 
   try {
-    const recipe = await updateRecipe(row.tenantId as string, recipeId, body);
+    const recipe = await updateRecipe(row.tenantId, recipeId, body);
     return NextResponse.json({ data: recipe });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Update failed";
@@ -71,7 +71,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   }
 
   try {
-    await deleteRecipe(row.tenantId as string, recipeId);
+    await deleteRecipe(row.tenantId, recipeId);
     return NextResponse.json({ data: { deleted: true } });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Delete failed";

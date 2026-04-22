@@ -234,7 +234,7 @@ const productComponentInclude = {
  * Resolve costs for all ingredients in a set of raw recipe ingredient rows.
  */
 async function resolveCosts(
-  tenantId: string,
+  tenantId: string | null,
   ingredients: RawRecipeIngredient[]
 ): Promise<Map<string, { price: number; resolved: boolean }>> {
   // Collect ALL supplier product IDs (not just preferred) so cheapest fallback works
@@ -253,7 +253,7 @@ async function resolveCosts(
  * Returns a map: tenantProductId → costPerUnit (minor units / yield unit).
  */
 async function resolveProductComponentCosts(
-  tenantId: string,
+  tenantId: string | null,
   components: RawRecipeProductComponent[]
 ): Promise<Map<string, number>> {
   const result = new Map<string, number>();
@@ -402,7 +402,7 @@ export async function listRecipes(
 }
 
 export async function getRecipe(
-  tenantId: string,
+  tenantId: string | null,
   recipeId: string
 ): Promise<RecipeDetail> {
   const row = await prisma.recipe.findFirst({
@@ -511,7 +511,7 @@ export async function createRecipe(
 }
 
 export async function updateRecipe(
-  tenantId: string,
+  tenantId: string | null,
   recipeId: string,
   input: UpdateRecipeInput
 ): Promise<RecipeDetail> {
@@ -594,7 +594,7 @@ export async function updateRecipe(
 }
 
 export async function deleteRecipe(
-  tenantId: string,
+  tenantId: string | null,
   recipeId: string
 ): Promise<void> {
   const existing = await prisma.recipe.findFirst({
