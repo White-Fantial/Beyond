@@ -8,10 +8,16 @@ import type { SupplierScraper } from "./base";
 import { GenericScraper } from "./generic";
 import { FoodstuffsScraper } from "./adapters/foodstuffs";
 import { CountdownScraper } from "./adapters/countdown";
+import { BifoldScraper } from "./adapters/bifold";
+import { ServiceFoodScraper } from "./adapters/service-food";
+import { AnchorScraper } from "./adapters/anchor";
 
 const scrapers: SupplierScraper[] = [
   new FoodstuffsScraper(),
   new CountdownScraper(),
+  new BifoldScraper(),
+  new ServiceFoodScraper(),
+  new AnchorScraper(),
   // Add more domain-specific scrapers here before GenericScraper.
 ];
 
