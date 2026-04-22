@@ -81,7 +81,7 @@ export default function StoreProductCatalogPanel({
     setError(null);
     try {
       const dollarValue = parseFloat(priceInput);
-      if (isNaN(dollarValue) || dollarValue < 0) throw new Error("Invalid price");
+      if (isNaN(dollarValue) || dollarValue < 0) throw new Error("Price must be a positive number");
       const customPriceAmount = Math.round(dollarValue * 100000);
       const res = await fetch(
         `/api/owner/stores/${storeId}/product-selections/${tenantProductId}`,

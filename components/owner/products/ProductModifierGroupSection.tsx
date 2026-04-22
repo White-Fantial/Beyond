@@ -6,12 +6,7 @@ import type {
   TenantModifierGroupRow,
   TenantProductModifierGroupRow,
 } from "@/types/owner";
-
-function formatPrice(amount: number) {
-  if (amount === 0) return "Free";
-  const sign = amount > 0 ? "+" : "";
-  return `${sign}$${(Math.abs(amount) / 100000).toFixed(2)}`;
-}
+import { formatPriceDelta, formatSelectionRange } from "@/lib/utils/modifier-format";
 
 interface Props {
   tenantProductId: string;
@@ -183,9 +178,7 @@ export default function ProductModifierGroupSection({
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-gray-500 text-xs">
-                      {l.modifierGroup.selectionMin === 0 && !l.modifierGroup.selectionMax
-                        ? "Any"
-                        : `${l.modifierGroup.selectionMin}–${l.modifierGroup.selectionMax ?? "∞"}`}
+                      {formatSelectionRange(l.modifierGroup.selectionMin, l.modifierGroup.selectionMax)}
                     </td>
                     <td className="px-4 py-2.5 text-center text-gray-500">
                       {l.modifierGroup.options.length}
@@ -211,7 +204,7 @@ export default function ProductModifierGroupSection({
                             >
                               {opt.name}
                               {opt.priceDeltaAmount !== 0 && (
-                                <span className="ml-1 text-gray-400">{formatPrice(opt.priceDeltaAmount)}</span>
+                                <span className="ml-1 text-gray-400">{formatPriceDelta(opt.priceDeltaAmount)}</span>
                               )}
                               {opt.isDefault && (
                                 <span className="ml-1 text-blue-500">★</span>

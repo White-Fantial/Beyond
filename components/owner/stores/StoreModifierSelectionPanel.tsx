@@ -3,12 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { StoreModifierGroupSelectionRow } from "@/types/owner";
-
-function formatPrice(amount: number) {
-  if (amount === 0) return "Free";
-  const sign = amount > 0 ? "+" : "";
-  return `${sign}$${(Math.abs(amount) / 100000).toFixed(2)}`;
-}
+import { formatPriceDelta, formatSelectionRange } from "@/lib/utils/modifier-format";
 
 interface Props {
   storeId: string;
@@ -187,9 +182,7 @@ export default function StoreModifierSelectionPanel({ storeId, initialSelections
                     <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Required</span>
                   )}
                   <span className="text-xs text-gray-400">
-                    {s.selectionMin === 0 && !s.selectionMax
-                      ? "Any selection"
-                      : `${s.selectionMin}–${s.selectionMax ?? "∞"} selections`}
+                    {formatSelectionRange(s.selectionMin, s.selectionMax)}
                   </span>
                   <span className="text-xs text-gray-400">
                     {s.options.length} option{s.options.length !== 1 ? "s" : ""}
@@ -207,7 +200,7 @@ export default function StoreModifierSelectionPanel({ storeId, initialSelections
                 {s.options.map((opt) => (
                   <div key={opt.id} className="flex items-center gap-3 px-8 py-2 text-sm">
                     <span className="flex-1 text-gray-700">{opt.name}</span>
-                    <span className="text-gray-400 text-xs">{formatPrice(opt.priceDeltaAmount)}</span>
+                    <span className="text-gray-400 text-xs">{formatPriceDelta(opt.priceDeltaAmount)}</span>
                     {opt.isDefault && (
                       <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Default</span>
                     )}

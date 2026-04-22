@@ -3,12 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TenantModifierGroupRow, TenantModifierOptionRow } from "@/types/owner";
-
-function formatPrice(amount: number) {
-  if (amount === 0) return "Free";
-  const sign = amount > 0 ? "+" : "";
-  return `${sign}$${(Math.abs(amount) / 100000).toFixed(2)}`;
-}
+import { formatPriceDelta, formatSelectionRange } from "@/lib/utils/modifier-format";
 
 interface Props {
   initialGroups: TenantModifierGroupRow[];
@@ -217,9 +212,7 @@ export default function TenantModifierManagerPage({ initialGroups }: Props) {
                         <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Required</span>
                       )}
                       <span className="text-xs text-gray-400">
-                        {group.selectionMin === 0 && !group.selectionMax
-                          ? "Any"
-                          : `${group.selectionMin}–${group.selectionMax ?? "∞"}`}
+                        {formatSelectionRange(group.selectionMin, group.selectionMax)}
                       </span>
                     </button>
                   )}
@@ -280,7 +273,7 @@ export default function TenantModifierManagerPage({ initialGroups }: Props) {
                         {group.options.map((opt) => (
                           <tr key={opt.id} className="hover:bg-gray-50">
                             <td className="px-4 py-2.5 text-gray-800">{opt.name}</td>
-                            <td className="px-4 py-2.5 text-right text-gray-600">{formatPrice(opt.priceDeltaAmount)}</td>
+                            <td className="px-4 py-2.5 text-right text-gray-600">{formatPriceDelta(opt.priceDeltaAmount)}</td>
                             <td className="px-4 py-2.5 text-center">
                               {opt.isDefault && (
                                 <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Default</span>
