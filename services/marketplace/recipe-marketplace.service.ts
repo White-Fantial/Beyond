@@ -48,7 +48,6 @@ type RawRecipe = {
   updatedAt: Date;
   provider?: { name: string } | null;
 };
-
 type RawIngredient = {
   id: string;
   recipeId: string;
@@ -229,7 +228,7 @@ export async function getMarketplaceRecipe(
 
   return {
     ...recipe,
-    instructions: (row as unknown as { instructions: string | null }).instructions ?? null,
+    instructions: (row as RawRecipe).instructions ?? null,
     ingredients,
     ingredientCount: ingredients.length,
   };
@@ -417,7 +416,7 @@ export async function updateMarketplaceRecipe(
 
   return {
     ...recipe,
-    instructions: (row as unknown as { instructions: string | null }).instructions ?? null,
+    instructions: (row as RawRecipe).instructions ?? null,
     ingredients,
     ingredientCount: ingredients.length,
   };

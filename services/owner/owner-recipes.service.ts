@@ -414,7 +414,7 @@ export async function copyMarketplaceRecipeToOwner(
       yieldQty: source.yieldQty,
       yieldUnit: source.yieldUnit as RecipeYieldUnit,
       notes: source.description ?? null,
-      instructions: (source as unknown as { instructions: string | null }).instructions ?? null,
+      instructions: source.instructions ?? null,
       marketplaceSourceId: source.id,
       catalogProductId: input.catalogProductId ?? null,
       tenantCatalogProductId: input.tenantCatalogProductId ?? null,

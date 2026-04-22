@@ -170,9 +170,3 @@ export default function RecipeDetailView({
     </div>
   );
 }
-
-
-interface RecipeDetailViewProps {
-  recipe: MarketplaceRecipeDetail;
-  access: RecipeAccessResult;
-}

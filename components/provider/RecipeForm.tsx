@@ -421,11 +421,3 @@ export default function RecipeForm({
     </form>
   );
 }
-
-
-interface RecipeFormProps {
-  mode: "create" | "edit";
-  initial?: MarketplaceRecipeDetail;
-  platformIngredients: Ingredient[];
-  recipeId?: string;
-}
