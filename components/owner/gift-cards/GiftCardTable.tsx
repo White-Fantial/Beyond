@@ -40,8 +40,8 @@ export default function GiftCardTable({ items }: Props) {
           <tbody className="divide-y divide-gray-100">
             {items.map((card) => (
               <tr key={card.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-5 py-3 font-mono text-gray-900">
-                  <Link href={`/owner/gift-cards/${card.id}`} className="text-brand-700 hover:text-brand-900 hover:underline font-mono">
+                <td className="px-5 py-3">
+                  <Link href={`/owner/gift-cards/${card.id}`} className="font-mono text-brand-700 hover:text-brand-900 hover:underline">
                     {card.code}
                   </Link>
                 </td>

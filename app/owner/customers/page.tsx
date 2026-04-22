@@ -163,8 +163,11 @@ export default async function CustomersPage({ searchParams }: Props) {
                 {result.customers.map((c) => (
                   <tr key={c.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
-                      <Link href={`/owner/customers/${c.id}`} className="font-medium text-brand-700 hover:text-brand-900 hover:underline truncate max-w-[180px] block">
-                        {c.name ?? <span className="text-gray-400 italic">Unknown</span>}
+                      <Link
+                        href={`/owner/customers/${c.id}`}
+                        className={`font-medium hover:underline truncate max-w-[180px] block ${c.name ? "text-brand-700 hover:text-brand-900" : "text-gray-400 italic"}`}
+                      >
+                        {c.name ?? "Unknown"}
                       </Link>
                       {c.email && (
                         <div className="text-xs text-gray-500 truncate max-w-[180px]">{c.email}</div>
