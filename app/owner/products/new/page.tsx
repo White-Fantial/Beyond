@@ -144,19 +144,18 @@ export default function NewTenantProductPage() {
           </div>
 
           <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Base Price ($)
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.basePriceAmount}
-                onChange={(e) => setForm((f) => ({ ...f, basePriceAmount: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400"
-                placeholder="0.00"
-              />
-            </div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Base Price ($)
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.basePriceAmount}
+              onChange={(e) => setForm((f) => ({ ...f, basePriceAmount: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400"
+              placeholder="0.00"
+            />
           </div>
 
           <div>

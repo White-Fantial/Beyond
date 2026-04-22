@@ -2,8 +2,8 @@ import { requireOwnerPortalAccess } from "@/lib/owner/auth-guard";
 import { listTenantProducts } from "@/services/owner/owner-tenant-products.service";
 import Link from "next/link";
 
-function formatPrice(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount / 100000);
+function formatPrice(amount: number) {
+  return `$${(amount / 100000).toFixed(2)}`;
 }
 
 export default async function OwnerProductsPage() {
@@ -92,7 +92,7 @@ export default async function OwnerProductsPage() {
                       {p.description ?? <span className="text-gray-300">-</span>}
                     </td>
                     <td className="px-4 py-3 text-right text-gray-700 font-medium">
-                      {formatPrice(p.basePriceAmount, p.currency)}
+                      {formatPrice(p.basePriceAmount)}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${p.selectionCount > 0 ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-400"}`}>
