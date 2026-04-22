@@ -55,15 +55,6 @@ export interface MarketplaceRecipeIngredientItem {
   lineCost: number; // quantity × ingredient.unitCost (live — always reflects current ingredient price)
 }
 
-export interface MarketplaceRecipeStep {
-  id: string;
-  recipeId: string;
-  stepNumber: number;
-  instruction: string;
-  imageUrl: string | null;
-  durationMinutes: number | null;
-}
-
 export interface MarketplaceRecipe {
   id: string;
   type: MarketplaceRecipeType;
@@ -94,7 +85,7 @@ export interface MarketplaceRecipe {
 }
 
 export interface MarketplaceRecipeDetail extends MarketplaceRecipe {
-  steps: MarketplaceRecipeStep[];
+  instructions: string | null;
   ingredients: MarketplaceRecipeIngredientItem[];
   ingredientCount: number;
 }
@@ -113,13 +104,6 @@ export interface MarketplaceRecipeIngredientInput {
   notes?: string;
 }
 
-export interface MarketplaceRecipeStepInput {
-  stepNumber: number;
-  instruction: string;
-  imageUrl?: string;
-  durationMinutes?: number;
-}
-
 export interface CreateMarketplaceRecipeInput {
   type: MarketplaceRecipeType;
   title: string;
@@ -136,7 +120,6 @@ export interface CreateMarketplaceRecipeInput {
   recommendedPrice?: number;
   salePrice?: number;
   instructions?: string;
-  steps?: MarketplaceRecipeStepInput[];
   ingredients?: MarketplaceRecipeIngredientInput[];
 }
 
@@ -155,7 +138,6 @@ export interface UpdateMarketplaceRecipeInput {
   recommendedPrice?: number;
   salePrice?: number;
   instructions?: string;
-  steps?: MarketplaceRecipeStepInput[];
   ingredients?: MarketplaceRecipeIngredientInput[];
 }
 

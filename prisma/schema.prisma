@@ -3594,6 +3594,7 @@ model Recipe {
   @@index([storeId, catalogProductId])
   @@index([tenantId, tenantCatalogProductId])
   @@index([categoryId])
+  @@index([marketplaceSourceId])
   @@map("recipes")
 }
 
@@ -3856,6 +3857,9 @@ model MarketplaceRecipe {
   prepTimeMinutes    Int?
   cookTimeMinutes    Int?
 
+  // Instructions
+  instructions String?             // free-text cooking method / steps
+
   // Pricing (minor currency units)
   currency           String  @default("USD")
   estimatedCostPrice Int     @default(0) // auto-computed from ingredients
@@ -3872,7 +3876,6 @@ model MarketplaceRecipe {
   provider    User?  @relation("MarketplaceRecipeProvider", fields: [providerId], references: [id], onDelete: SetNull)
   createdBy   User   @relation("MarketplaceRecipeCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
 
-  steps       MarketplaceRecipeStep[]
   ingredients MarketplaceRecipeIngredient[]
   reviews     MarketplaceRecipeReview[]
   purchases   MarketplaceRecipePurchase[]
@@ -3880,25 +3883,8 @@ model MarketplaceRecipe {
   @@index([status])
   @@index([type, status])
   @@index([providerId])
+  @@index([deletedAt])
   @@map("marketplace_recipes")
-}
-
-/// An ordered step in a marketplace recipe's cooking instructions.
-model MarketplaceRecipeStep {
-  id              String   @id @default(uuid())
-  recipeId        String
-  stepNumber      Int
-  instruction     String
-  imageUrl        String?
-  durationMinutes Int?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  recipe MarketplaceRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-
-  @@unique([recipeId, stepNumber])
-  @@index([recipeId])
-  @@map("marketplace_recipe_steps")
 }
 
 /// Ingredient line item in a marketplace recipe (references unified Ingredient with scope=PLATFORM).

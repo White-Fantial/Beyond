@@ -12,7 +12,7 @@ vi.mock("@/lib/prisma", () => ({
     ingredient: {
       findMany: vi.fn(),
     },
-    recipe: {
+    ingredientSupplierLink: {
       findMany: vi.fn(),
     },
   },
@@ -38,7 +38,7 @@ const mockPrisma = prisma as unknown as {
   ingredient: {
     findMany: ReturnType<typeof vi.fn>;
   };
-  recipe: {
+  ingredientSupplierLink: {
     findMany: ReturnType<typeof vi.fn>;
   };
 };
@@ -50,18 +50,19 @@ const mockRecipeRow = {
   id: "recipe-1",
   type: "PREMIUM",
   status: "DRAFT",
-  title: "김치찌개",
-  description: "맛있는 김치찌개",
+  title: "Kimchi Stew",
+  description: "Delicious kimchi stew",
   thumbnailUrl: null,
   providerId: PROVIDER_ID,
   createdByUserId: CREATOR_ID,
   yieldQty: 4,
   yieldUnit: "SERVING",
   servings: 4,
-  cuisineTag: "한식",
+  cuisineTag: "Korean",
   difficulty: "EASY",
   prepTimeMinutes: 10,
   cookTimeMinutes: 20,
+  instructions: "Chop the kimchi.\n\nSimmer everything together.",
   currency: "USD",
   estimatedCostPrice: 0,
   recommendedPrice: 5000,
@@ -69,16 +70,7 @@ const mockRecipeRow = {
   publishedAt: null,
   createdAt: new Date("2026-01-01"),
   updatedAt: new Date("2026-01-01"),
-  provider: { name: "레시피 제공자" },
-};
-
-const mockStep = {
-  id: "step-1",
-  recipeId: "recipe-1",
-  stepNumber: 1,
-  instruction: "김치를 썬다",
-  imageUrl: null,
-  durationMinutes: 5,
+  provider: { name: "Recipe Provider" },
 };
 
 const mockIngredientRow = {
@@ -89,13 +81,12 @@ const mockIngredientRow = {
   unit: "GRAM",
   notes: null,
   unitCostSnapshot: 10000,
-  ingredient: { name: "김치", unitCost: 10000 },
+  ingredient: { name: "Kimchi", unitCost: 10000 },
 };
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Default: no platform recipes — individual tests override as needed
-  mockPrisma.recipe.findMany.mockResolvedValue([]);
+  mockPrisma.ingredientSupplierLink.findMany.mockResolvedValue([]);
 });
 
 // ─── listMarketplaceRecipes ───────────────────────────────────────────────────
@@ -109,8 +100,8 @@ describe("listMarketplaceRecipes", () => {
 
     expect(result.items).toHaveLength(1);
     expect(result.total).toBe(1);
-    expect(result.items[0].title).toBe("김치찌개");
-    expect(result.items[0].providerName).toBe("레시피 제공자");
+    expect(result.items[0].title).toBe("Kimchi Stew");
+    expect(result.items[0].providerName).toBe("Recipe Provider");
   });
 
   it("filters by type and status", async () => {
@@ -139,37 +130,34 @@ describe("listMarketplaceRecipes", () => {
 // ─── getMarketplaceRecipe ─────────────────────────────────────────────────────
 
 describe("getMarketplaceRecipe", () => {
-  it("returns recipe with steps and ingredients", async () => {
+  it("returns recipe with instructions and ingredients", async () => {
     mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue({
       ...mockRecipeRow,
-      steps: [mockStep],
       ingredients: [mockIngredientRow],
     });
     mockPrisma.marketplaceRecipe.update.mockResolvedValue(mockRecipeRow);
 
     const result = await getMarketplaceRecipe("recipe-1");
 
-    expect(result.title).toBe("김치찌개");
-    expect(result.steps).toHaveLength(1);
-    expect(result.steps[0].instruction).toBe("김치를 썬다");
+    expect(result.title).toBe("Kimchi Stew");
+    expect(result.instructions).toBe("Chop the kimchi.\n\nSimmer everything together.");
     expect(result.ingredients).toHaveLength(1);
-    expect(result.ingredients[0].ingredientName).toBe("김치");
+    expect(result.ingredients[0].ingredientName).toBe("Kimchi");
     expect(result.ingredients[0].lineCost).toBe(3000); // 300 * 10000 / 1000
     expect(result.ingredientCount).toBe(1);
   });
 
-  it("uses live ingredient.unitCost even when unitCostSnapshot differs", async () => {
-    const staleSnapshot = 10000;
-    const liveUnitCost = 20000; // price has gone up since recipe was saved
+  it("recomputes estimatedCostPrice when it differs from the snapshot-based line costs", async () => {
+    const snapshot = 10000;
+    const storedEstimate = 0; // stored value is stale / wrong
     mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue({
       ...mockRecipeRow,
-      estimatedCostPrice: Math.round(300 * staleSnapshot / 1000), // stale: 3000
-      steps: [],
+      estimatedCostPrice: storedEstimate,
       ingredients: [
         {
           ...mockIngredientRow,
-          unitCostSnapshot: staleSnapshot,
-          ingredient: { name: "Kimchi", unitCost: liveUnitCost },
+          unitCostSnapshot: snapshot,
+          ingredient: { name: "Kimchi" },
         },
       ],
     });
@@ -177,17 +165,17 @@ describe("getMarketplaceRecipe", () => {
 
     const result = await getMarketplaceRecipe("recipe-1");
 
-    // lineCost must use the live unitCost, not the snapshot
-    expect(result.ingredients[0].lineCost).toBe(6000); // 300 * 20000 / 1000
-    // unitCostSnapshot preserves the historical value
-    expect(result.ingredients[0].unitCostSnapshot).toBe(staleSnapshot);
-    // estimatedCostPrice updated to live total
-    expect(result.estimatedCostPrice).toBe(6000);
-    // DB should have been updated with the live cost
+    // lineCost uses unitCostSnapshot: 300 * 10000 / 1000 = 3000
+    expect(result.ingredients[0].lineCost).toBe(3000);
+    // unitCostSnapshot is preserved as-is
+    expect(result.ingredients[0].unitCostSnapshot).toBe(snapshot);
+    // estimatedCostPrice updated to match lineCost sum
+    expect(result.estimatedCostPrice).toBe(3000);
+    // DB should have been updated
     expect(mockPrisma.marketplaceRecipe.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "recipe-1" },
-        data: expect.objectContaining({ estimatedCostPrice: 6000 }),
+        data: expect.objectContaining({ estimatedCostPrice: 3000 }),
       })
     );
   });
@@ -208,21 +196,20 @@ describe("createMarketplaceRecipe", () => {
     mockPrisma.ingredient.findMany.mockResolvedValue([]);
     mockPrisma.marketplaceRecipe.create.mockResolvedValue({
       ...mockRecipeRow,
-      steps: [],
       ingredients: [],
     });
     mockPrisma.marketplaceRecipe.update.mockResolvedValue(mockRecipeRow);
 
     const result = await createMarketplaceRecipe(CREATOR_ID, PROVIDER_ID, {
       type: "PREMIUM",
-      title: "김치찌개",
+      title: "Kimchi Stew",
       yieldQty: 4,
       yieldUnit: "SERVING",
       salePrice: 4500,
       recommendedPrice: 5000,
     });
 
-    expect(result.title).toBe("김치찌개");
+    expect(result.title).toBe("Kimchi Stew");
     expect(mockPrisma.marketplaceRecipe.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -230,6 +217,31 @@ describe("createMarketplaceRecipe", () => {
           status: "DRAFT",
           providerId: PROVIDER_ID,
           createdByUserId: CREATOR_ID,
+        }),
+      })
+    );
+  });
+
+  it("saves instructions when provided", async () => {
+    mockPrisma.ingredient.findMany.mockResolvedValue([]);
+    mockPrisma.marketplaceRecipe.create.mockResolvedValue({
+      ...mockRecipeRow,
+      ingredients: [],
+    });
+    mockPrisma.marketplaceRecipe.update.mockResolvedValue(mockRecipeRow);
+
+    await createMarketplaceRecipe(CREATOR_ID, PROVIDER_ID, {
+      type: "PREMIUM",
+      title: "Kimchi Stew",
+      yieldQty: 4,
+      yieldUnit: "SERVING",
+      instructions: "Step 1\n\nStep 2",
+    });
+
+    expect(mockPrisma.marketplaceRecipe.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          instructions: "Step 1\n\nStep 2",
         }),
       })
     );
@@ -244,7 +256,6 @@ describe("createMarketplaceRecipe", () => {
       providerId: null,
       salePrice: 0,
       publishedAt: new Date(),
-      steps: [],
       ingredients: [],
     };
     mockPrisma.marketplaceRecipe.create.mockResolvedValue(basicRow);
@@ -252,7 +263,7 @@ describe("createMarketplaceRecipe", () => {
 
     const result = await createMarketplaceRecipe(CREATOR_ID, null, {
       type: "BASIC",
-      title: "기본 파스타",
+      title: "Basic Pasta",
       yieldQty: 2,
       yieldUnit: "SERVING",
     });
@@ -270,15 +281,18 @@ describe("createMarketplaceRecipe", () => {
     );
   });
 
-  it("snapshots ingredient unit costs at creation time", async () => {
-    mockPrisma.ingredient.findMany.mockResolvedValue([
-      { id: "pi-1", unitCost: 15000 },
+  it("snapshots ingredient unit costs using referencePrice at creation time", async () => {
+    mockPrisma.ingredient.findMany.mockResolvedValue([{ id: "pi-1" }]);
+    mockPrisma.ingredientSupplierLink.findMany.mockResolvedValue([
+      {
+        ingredientId: "pi-1",
+        supplierProduct: { referencePrice: 15000 },
+      },
     ]);
     const withIngredient = {
       ...mockRecipeRow,
-      steps: [],
       ingredients: [
-        { ...mockIngredientRow, unitCostSnapshot: 15000, ingredient: { name: "김치", unitCost: 15000 } },
+        { ...mockIngredientRow, unitCostSnapshot: 15000, ingredient: { name: "Kimchi", unitCost: 15000 } },
       ],
     };
     mockPrisma.marketplaceRecipe.create.mockResolvedValue(withIngredient);
@@ -286,7 +300,7 @@ describe("createMarketplaceRecipe", () => {
 
     await createMarketplaceRecipe(CREATOR_ID, PROVIDER_ID, {
       type: "PREMIUM",
-      title: "테스트",
+      title: "Test Recipe",
       yieldQty: 1,
       yieldUnit: "EACH",
       ingredients: [{ ingredientId: "pi-1", quantity: 100, unit: "GRAM" }],
@@ -313,16 +327,34 @@ describe("updateMarketplaceRecipe", () => {
     mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue(mockRecipeRow);
     mockPrisma.marketplaceRecipe.update.mockResolvedValue({
       ...mockRecipeRow,
-      title: "부대찌개",
-      steps: [],
+      title: "Army Stew",
       ingredients: [],
     });
 
     const result = await updateMarketplaceRecipe("recipe-1", {
-      title: "부대찌개",
+      title: "Army Stew",
     });
 
-    expect(result.title).toBe("부대찌개");
+    expect(result.title).toBe("Army Stew");
+  });
+
+  it("updates instructions", async () => {
+    mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue(mockRecipeRow);
+    mockPrisma.marketplaceRecipe.update.mockResolvedValue({
+      ...mockRecipeRow,
+      instructions: "Updated instructions.",
+      ingredients: [],
+    });
+
+    await updateMarketplaceRecipe("recipe-1", {
+      instructions: "Updated instructions.",
+    });
+
+    expect(mockPrisma.marketplaceRecipe.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ instructions: "Updated instructions." }),
+      })
+    );
   });
 
   it("throws when recipe not found", async () => {
@@ -370,7 +402,7 @@ describe("listMarketplaceRecipes — keyword search", () => {
     mockPrisma.marketplaceRecipe.findMany.mockResolvedValue([mockRecipeRow]);
     mockPrisma.marketplaceRecipe.count.mockResolvedValue(1);
 
-    await listMarketplaceRecipes({ q: "김치" });
+    await listMarketplaceRecipes({ q: "kimchi" });
 
     expect(mockPrisma.marketplaceRecipe.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -378,13 +410,13 @@ describe("listMarketplaceRecipes — keyword search", () => {
           OR: expect.arrayContaining([
             expect.objectContaining({
               title: expect.objectContaining({
-                contains: "김치",
+                contains: "kimchi",
                 mode: "insensitive",
               }),
             }),
             expect.objectContaining({
               description: expect.objectContaining({
-                contains: "김치",
+                contains: "kimchi",
                 mode: "insensitive",
               }),
             }),
@@ -419,7 +451,7 @@ describe("listMarketplaceRecipes — keyword search", () => {
     mockPrisma.marketplaceRecipe.count.mockResolvedValue(0);
 
     await listMarketplaceRecipes({
-      q: "파스타",
+      q: "pasta",
       type: "BASIC",
       status: "PUBLISHED",
     });
@@ -431,7 +463,7 @@ describe("listMarketplaceRecipes — keyword search", () => {
           status: "PUBLISHED",
           OR: expect.arrayContaining([
             expect.objectContaining({
-              title: expect.objectContaining({ contains: "파스타" }),
+              title: expect.objectContaining({ contains: "pasta" }),
             }),
           ]),
         }),
@@ -443,7 +475,7 @@ describe("listMarketplaceRecipes — keyword search", () => {
     mockPrisma.marketplaceRecipe.findMany.mockResolvedValue([]);
     mockPrisma.marketplaceRecipe.count.mockResolvedValue(0);
 
-    const result = await listMarketplaceRecipes({ q: "존재하지않는키워드" });
+    const result = await listMarketplaceRecipes({ q: "nonexistentkeyword" });
 
     expect(result.items).toHaveLength(0);
     expect(result.total).toBe(0);
