@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { MarketplaceRecipe, MarketplaceRecipeType } from "@/types/marketplace";
-import type { RecipeYieldUnit } from "@/types/owner-recipes";
+import type { RecipeYieldUnit, RecipeProductComponentInput } from "@/types/owner-recipes";
 import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
 import type { IngredientUnit } from "@/types/owner-ingredients";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
@@ -206,6 +206,17 @@ interface IngredientRow {
   unit: IngredientUnit;
 }
 
+interface TenantProduct {
+  id: string;
+  name: string;
+}
+
+interface ProductComponentRow {
+  tenantProductId: string;
+  quantity: number;
+  unit: IngredientUnit;
+}
+
 function CreateRecipePanel({
   storeId,
   catalogProductId,
@@ -230,6 +241,10 @@ function CreateRecipePanel({
   const [storeIngredients, setStoreIngredients] = useState<StoreIngredient[]>([]);
   const [loadingIngredients, setLoadingIngredients] = useState(true);
 
+  const [productComponentRows, setProductComponentRows] = useState<ProductComponentRow[]>([]);
+  const [tenantProducts, setTenantProducts] = useState<TenantProduct[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+
   // Load store-scope ingredients on mount
   useEffect(() => {
     fetch(`/api/owner/ingredients?storeId=${encodeURIComponent(storeId)}&pageSize=200`)
@@ -239,6 +254,11 @@ function CreateRecipePanel({
       })
       .catch(() => {})
       .finally(() => setLoadingIngredients(false));
+    fetch(`/api/owner/tenant-products`)
+      .then((r) => r.json())
+      .then((json) => setTenantProducts(json.data ?? []))
+      .catch(() => {})
+      .finally(() => setLoadingProducts(false));
   }, [storeId]);
 
   function addIngredientRow() {
@@ -264,6 +284,29 @@ function CreateRecipePanel({
     );
   }
 
+  function addProductComponentRow() {
+    if (tenantProducts.length === 0) return;
+    const first = tenantProducts[0];
+    setProductComponentRows((prev) => [
+      ...prev,
+      { tenantProductId: first.id, quantity: 1, unit: "EACH" as IngredientUnit },
+    ]);
+  }
+
+  function removeProductComponentRow(idx: number) {
+    setProductComponentRows((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function updateProductComponentRow(
+    idx: number,
+    field: keyof ProductComponentRow,
+    value: string | number
+  ) {
+    setProductComponentRows((prev) =>
+      prev.map((row, i) => (i === idx ? { ...row, [field]: value } : row))
+    );
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -274,6 +317,11 @@ function CreateRecipePanel({
     }
     setSubmitting(true);
     try {
+      const productComponents: RecipeProductComponentInput[] = productComponentRows.map((r) => ({
+        tenantProductId: r.tenantProductId,
+        quantity: r.quantity,
+        unit: r.unit,
+      }));
       const res = await fetch("/api/owner/recipes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -291,6 +339,7 @@ function CreateRecipePanel({
             quantity: r.quantity,
             unit: r.unit,
           })),
+          productComponents: productComponents.length > 0 ? productComponents : undefined,
         }),
       });
       if (!res.ok) {
@@ -446,6 +495,87 @@ function CreateRecipePanel({
               <button
                 type="button"
                 onClick={() => removeIngredientRow(idx)}
+                className="text-red-400 hover:text-red-600 text-lg pb-1"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Product Components */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <label className="block text-xs font-medium text-gray-600">
+              🧩 Product Components (optional)
+            </label>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Use other products as sub-components (e.g. "Bulgogi" as filling).
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={addProductComponentRow}
+            disabled={loadingProducts || tenantProducts.length === 0}
+            className="text-xs text-brand-600 hover:text-brand-800 font-medium disabled:opacity-40"
+          >
+            {loadingProducts ? "Loading…" : "+ Add Product"}
+          </button>
+        </div>
+
+        {!loadingProducts && tenantProducts.length === 0 && (
+          <p className="text-xs text-gray-400">
+            No products found. Add products to your catalog first.
+          </p>
+        )}
+
+        <div className="space-y-2">
+          {productComponentRows.map((row, idx) => (
+            <div key={idx} className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="block text-xs text-gray-500 mb-1">Product</label>
+                <select
+                  value={row.tenantProductId}
+                  onChange={(e) => updateProductComponentRow(idx, "tenantProductId", e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  {tenantProducts.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="w-24">
+                <label className="block text-xs text-gray-500 mb-1">Qty</label>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.1}
+                  value={row.quantity}
+                  onChange={(e) => updateProductComponentRow(idx, "quantity", Number(e.target.value))}
+                  className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+              <div className="w-24">
+                <label className="block text-xs text-gray-500 mb-1">Unit</label>
+                <select
+                  value={row.unit}
+                  onChange={(e) => updateProductComponentRow(idx, "unit", e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  {Object.entries(INGREDIENT_UNIT_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={() => removeProductComponentRow(idx)}
                 className="text-red-400 hover:text-red-600 text-lg pb-1"
               >
                 ×

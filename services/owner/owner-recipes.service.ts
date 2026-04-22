@@ -8,6 +8,12 @@
  *   2. Owner's latest price record (SupplierPriceRecord, most recent)
  *   3. Platform-wide referencePrice on SupplierProduct (maintained by scraper)
  *   4. 0 — unresolved (displayed as "unknown cost" in the UI)
+ *
+ * Product components (RecipeProductComponent) allow a TenantCatalogProduct to be
+ * used as a sub-component in another product's recipe (e.g. "Bulgogi" used as
+ * filling in "Bulgogi Sandwich").  Their cost is derived from the sub-product's
+ * own recipe costPerUnit.  Circular references (A → B → A) are detected and
+ * rejected with a clear error.
  */
 import { prisma } from "@/lib/prisma";
 import { resolveEffectiveCostsBulk } from "./owner-supplier-prices.service";
@@ -15,6 +21,7 @@ import type {
   Recipe,
   RecipeDetail,
   RecipeIngredient,
+  RecipeProductComponent,
   RecipeListResult,
   CreateRecipeInput,
   UpdateRecipeInput,
@@ -91,6 +98,25 @@ type RawRecipeIngredient = {
   };
 };
 
+type RawRecipeProductComponent = {
+  id: string;
+  recipeId: string;
+  tenantProductId: string;
+  quantity: { toNumber: () => number } | number;
+  unit: string;
+  tenantProduct: {
+    id: string;
+    name: string;
+    tenantId: string;
+    recipes: Array<{
+      tenantCatalogProductId: string | null;
+      yieldQty: number;
+      yieldUnit: string;
+      ingredients: RawRecipeIngredient[];
+    }>;
+  };
+};
+
 /**
  * Build a RecipeIngredient using pre-resolved cost data.
  * costMap: supplierProductId → effectiveCost (millicents per recipe unit).
@@ -137,6 +163,31 @@ function toRecipeIngredientWithCost(
   };
 }
 
+/**
+ * Map a raw product component row to RecipeProductComponent.
+ * costPerUnit comes from the sub-product's own recipe (pre-computed).
+ */
+function toRecipeProductComponent(
+  row: RawRecipeProductComponent,
+  costPerUnitMap: Map<string, number>
+): RecipeProductComponent {
+  const qty =
+    typeof row.quantity === "object" ? row.quantity.toNumber() : row.quantity;
+  const costPerUnit = costPerUnitMap.get(row.tenantProductId) ?? 0;
+  const lineCost = Math.round(qty * costPerUnit);
+
+  return {
+    id: row.id,
+    recipeId: row.recipeId,
+    tenantProductId: row.tenantProductId,
+    tenantProductName: row.tenantProduct.name,
+    tenantProductCostPerUnit: costPerUnit,
+    quantity: qty,
+    unit: row.unit as IngredientUnit,
+    lineCost,
+  };
+}
+
 const ingredientInclude = {
   ingredient: {
     select: {
@@ -150,6 +201,30 @@ const ingredientInclude = {
             select: { id: true, referencePrice: true },
           },
         },
+      },
+    },
+  },
+} as const;
+
+/** Include shape for product components — brings in enough data to resolve cost. */
+const productComponentInclude = {
+  tenantProduct: {
+    select: {
+      id: true,
+      name: true,
+      tenantId: true,
+      recipes: {
+        where: { deletedAt: null },
+        select: {
+          tenantCatalogProductId: true,
+          yieldQty: true,
+          yieldUnit: true,
+          ingredients: {
+            include: ingredientInclude,
+          },
+        },
+        orderBy: { createdAt: "asc" as const },
+        take: 1,
       },
     },
   },
@@ -172,11 +247,56 @@ async function resolveCosts(
   return resolveEffectiveCostsBulk(tenantId, [...new Set(productIds)]);
 }
 
+/**
+ * For each product component, compute the sub-product's costPerUnit by resolving
+ * its own recipe's ingredient costs.
+ * Returns a map: tenantProductId → costPerUnit (minor units / yield unit).
+ */
+async function resolveProductComponentCosts(
+  tenantId: string,
+  components: RawRecipeProductComponent[]
+): Promise<Map<string, number>> {
+  const result = new Map<string, number>();
+  if (components.length === 0) return result;
+
+  // Gather all ingredient rows from all sub-product recipes in one bulk call
+  const allIngredients: RawRecipeIngredient[] = [];
+  for (const comp of components) {
+    for (const recipe of comp.tenantProduct.recipes ?? []) {
+      allIngredients.push(...(recipe.ingredients as RawRecipeIngredient[]));
+    }
+  }
+
+  const costMap = await resolveCosts(tenantId, allIngredients);
+
+  for (const comp of components) {
+    const recipes = comp.tenantProduct.recipes ?? [];
+    if (recipes.length === 0) {
+      result.set(comp.tenantProductId, 0);
+      continue;
+    }
+    const recipe = recipes[0];
+    const rawIngs = recipe.ingredients as RawRecipeIngredient[];
+    const totalCost = rawIngs.reduce((sum, ri) => {
+      const mapped = toRecipeIngredientWithCost(ri, costMap);
+      return sum + mapped.lineCost;
+    }, 0);
+    const costPerUnit =
+      recipe.yieldQty > 0 ? Math.round(totalCost / recipe.yieldQty) : 0;
+    result.set(comp.tenantProductId, costPerUnit);
+  }
+
+  return result;
+}
+
 function computeCosts(
   recipe: Recipe,
-  ingredients: RecipeIngredient[]
+  ingredients: RecipeIngredient[],
+  productComponents: RecipeProductComponent[]
 ): RecipeDetail {
-  const totalCost = ingredients.reduce((sum, i) => sum + i.lineCost, 0);
+  const totalCost =
+    ingredients.reduce((sum, i) => sum + i.lineCost, 0) +
+    productComponents.reduce((sum, c) => sum + c.lineCost, 0);
   const costPerUnit =
     recipe.yieldQty > 0 ? Math.round(totalCost / recipe.yieldQty) : 0;
 
@@ -188,7 +308,62 @@ function computeCosts(
       Math.round((marginAmount / recipe.catalogProductPrice) * 10000) / 100;
   }
 
-  return { ...recipe, ingredients, totalCost, costPerUnit, marginAmount, marginPercent };
+  return { ...recipe, ingredients, productComponents, totalCost, costPerUnit, marginAmount, marginPercent };
+}
+
+// ─── Circular-reference detection ────────────────────────────────────────────
+
+/**
+ * Detect if adding `newComponentProductIds` to the recipe for `ownerProductId`
+ * would create a circular dependency.
+ *
+ * DFS through each new component's product recipe tree.
+ * If `ownerProductId` appears anywhere in the tree, it is circular.
+ *
+ * @param ownerProductId  The tenantProductId that owns the recipe being saved.
+ * @param newComponentProductIds  The tenantProductIds being added as components.
+ * @param maxDepth  Guard against extremely deep nesting (default 10).
+ */
+async function detectCircularComponents(
+  ownerProductId: string,
+  newComponentProductIds: string[],
+  maxDepth = 10
+): Promise<void> {
+  const visited = new Set<string>();
+
+  async function dfs(productId: string, depth: number): Promise<void> {
+    if (depth > maxDepth) {
+      throw new Error(
+        `Product component nesting exceeds the maximum depth of ${maxDepth} levels`
+      );
+    }
+    if (productId === ownerProductId) {
+      throw new Error(
+        "Circular reference detected: a product cannot be a component of itself (directly or indirectly)"
+      );
+    }
+    if (visited.has(productId)) return;
+    visited.add(productId);
+
+    const recipes = await prisma.recipe.findMany({
+      where: { tenantCatalogProductId: productId, deletedAt: null },
+      select: {
+        productComponents: {
+          select: { tenantProductId: true },
+        },
+      },
+    });
+
+    for (const recipe of recipes) {
+      for (const comp of recipe.productComponents) {
+        await dfs(comp.tenantProductId, depth + 1);
+      }
+    }
+  }
+
+  for (const componentId of newComponentProductIds) {
+    await dfs(componentId, 0);
+  }
 }
 
 // ─── Public functions ─────────────────────────────────────────────────────────
@@ -238,17 +413,30 @@ export async function getRecipe(
         include: ingredientInclude,
         orderBy: { createdAt: "asc" },
       },
+      productComponents: {
+        include: productComponentInclude,
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
   if (!row) throw new Error(`Recipe ${recipeId} not found`);
 
   const recipe = toRecipe(row as RawRecipe);
   const rawIngredients = row.ingredients as RawRecipeIngredient[];
-  const costMap = await resolveCosts(tenantId, rawIngredients);
+  const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
+
+  const [costMap, componentCostMap] = await Promise.all([
+    resolveCosts(tenantId, rawIngredients),
+    resolveProductComponentCosts(tenantId, rawComponents),
+  ]);
+
   const ingredients = rawIngredients.map((ri) =>
     toRecipeIngredientWithCost(ri, costMap)
   );
-  return computeCosts(recipe, ingredients);
+  const productComponents = rawComponents.map((c) =>
+    toRecipeProductComponent(c, componentCostMap)
+  );
+  return computeCosts(recipe, ingredients, productComponents);
 }
 
 export async function createRecipe(
@@ -256,6 +444,15 @@ export async function createRecipe(
   input: CreateRecipeInput
 ): Promise<RecipeDetail> {
   if (!input.storeId) throw new Error("storeId is required");
+
+  // Circular-reference check (only relevant when the recipe is for a specific product)
+  if (input.tenantCatalogProductId && input.productComponents?.length) {
+    await detectCircularComponents(
+      input.tenantCatalogProductId,
+      input.productComponents.map((c) => c.tenantProductId)
+    );
+  }
+
   const row = await prisma.recipe.create({
     data: {
       tenantId,
@@ -274,22 +471,43 @@ export async function createRecipe(
           unit: i.unit,
         })),
       },
+      productComponents: input.productComponents?.length
+        ? {
+            create: input.productComponents.map((c) => ({
+              tenantProductId: c.tenantProductId,
+              quantity: c.quantity,
+              unit: c.unit,
+            })),
+          }
+        : undefined,
     },
     include: {
       catalogProduct: { select: { name: true, basePriceAmount: true } },
       ingredients: {
         include: ingredientInclude,
       },
+      productComponents: {
+        include: productComponentInclude,
+      },
     },
   });
 
   const recipe = toRecipe(row as RawRecipe);
   const rawIngredients = row.ingredients as RawRecipeIngredient[];
-  const costMap = await resolveCosts(tenantId, rawIngredients);
+  const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
+
+  const [costMap, componentCostMap] = await Promise.all([
+    resolveCosts(tenantId, rawIngredients),
+    resolveProductComponentCosts(tenantId, rawComponents),
+  ]);
+
   const ingredients = rawIngredients.map((ri) =>
     toRecipeIngredientWithCost(ri, costMap)
   );
-  return computeCosts(recipe, ingredients);
+  const productComponents = rawComponents.map((c) =>
+    toRecipeProductComponent(c, componentCostMap)
+  );
+  return computeCosts(recipe, ingredients, productComponents);
 }
 
 export async function updateRecipe(
@@ -301,6 +519,14 @@ export async function updateRecipe(
     where: { id: recipeId, tenantId, deletedAt: null },
   });
   if (!existing) throw new Error(`Recipe ${recipeId} not found`);
+
+  // Circular-reference check when updating product components
+  if (existing.tenantCatalogProductId && input.productComponents?.length) {
+    await detectCircularComponents(
+      existing.tenantCatalogProductId,
+      input.productComponents.map((c) => c.tenantProductId)
+    );
+  }
 
   const row = await prisma.recipe.update({
     where: { id: recipeId },
@@ -325,22 +551,46 @@ export async function updateRecipe(
             },
           }
         : {}),
+      ...(input.productComponents !== undefined
+        ? {
+            productComponents: {
+              deleteMany: {},
+              create: input.productComponents.map((c) => ({
+                tenantProductId: c.tenantProductId,
+                quantity: c.quantity,
+                unit: c.unit,
+              })),
+            },
+          }
+        : {}),
     },
     include: {
       catalogProduct: { select: { name: true, basePriceAmount: true } },
       ingredients: {
         include: ingredientInclude,
       },
+      productComponents: {
+        include: productComponentInclude,
+      },
     },
   });
 
   const recipe = toRecipe(row as RawRecipe);
   const rawIngredients = row.ingredients as RawRecipeIngredient[];
-  const costMap = await resolveCosts(tenantId, rawIngredients);
+  const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
+
+  const [costMap, componentCostMap] = await Promise.all([
+    resolveCosts(tenantId, rawIngredients),
+    resolveProductComponentCosts(tenantId, rawComponents),
+  ]);
+
   const ingredients = rawIngredients.map((ri) =>
     toRecipeIngredientWithCost(ri, costMap)
   );
-  return computeCosts(recipe, ingredients);
+  const productComponents = rawComponents.map((c) =>
+    toRecipeProductComponent(c, componentCostMap)
+  );
+  return computeCosts(recipe, ingredients, productComponents);
 }
 
 export async function deleteRecipe(
@@ -428,16 +678,26 @@ export async function copyMarketplaceRecipeToOwner(
         include: ingredientInclude,
         orderBy: { createdAt: "asc" },
       },
+      productComponents: {
+        include: productComponentInclude,
+      },
     },
   });
 
   const recipe = toRecipe(row as RawRecipe);
   const rawIngredients = row.ingredients as RawRecipeIngredient[];
-  const costMap = await resolveCosts(tenantId, rawIngredients);
+  const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
+  const [costMap, componentCostMap] = await Promise.all([
+    resolveCosts(tenantId, rawIngredients),
+    resolveProductComponentCosts(tenantId, rawComponents),
+  ]);
   const ingredients = rawIngredients.map((ri) =>
     toRecipeIngredientWithCost(ri, costMap)
   );
-  return computeCosts(recipe, ingredients);
+  const productComponents = rawComponents.map((c) =>
+    toRecipeProductComponent(c, componentCostMap)
+  );
+  return computeCosts(recipe, ingredients, productComponents);
 }
 
 /**
@@ -491,16 +751,26 @@ export async function copyPlatformRecipeToOwner(
         include: ingredientInclude,
         orderBy: { createdAt: "asc" },
       },
+      productComponents: {
+        include: productComponentInclude,
+      },
     },
   });
 
   const recipe = toRecipe(row as RawRecipe);
   const rawIngredients = row.ingredients as RawRecipeIngredient[];
-  const costMap = await resolveCosts(tenantId, rawIngredients);
+  const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
+  const [costMap, componentCostMap] = await Promise.all([
+    resolveCosts(tenantId, rawIngredients),
+    resolveProductComponentCosts(tenantId, rawComponents),
+  ]);
   const ingredients = rawIngredients.map((ri) =>
     toRecipeIngredientWithCost(ri, costMap)
   );
-  return computeCosts(recipe, ingredients);
+  const productComponents = rawComponents.map((c) =>
+    toRecipeProductComponent(c, componentCostMap)
+  );
+  return computeCosts(recipe, ingredients, productComponents);
 }
 
 /**
@@ -519,29 +789,44 @@ export async function getProductRecipes(
         include: ingredientInclude,
         orderBy: { createdAt: "asc" },
       },
+      productComponents: {
+        include: productComponentInclude,
+        orderBy: { createdAt: "asc" },
+      },
     },
     orderBy: { name: "asc" },
   });
 
   if (rows.length === 0) return [];
 
-  // Resolve costs in one bulk call instead of one per recipe (N+1 fix)
   const effectiveTenantId = tenantId ?? rows[0].tenantId;
   if (!effectiveTenantId) {
     throw new Error(`Cannot resolve costs: recipes in store ${storeId} have no tenantId`);
   }
+
   const allRawIngredients = rows.flatMap(
     (row) => row.ingredients as RawRecipeIngredient[]
   );
-  const costMap = await resolveCosts(effectiveTenantId, allRawIngredients);
+  const allRawComponents = rows.flatMap(
+    (row) => row.productComponents as unknown as RawRecipeProductComponent[]
+  );
+
+  const [costMap, componentCostMap] = await Promise.all([
+    resolveCosts(effectiveTenantId, allRawIngredients),
+    resolveProductComponentCosts(effectiveTenantId, allRawComponents),
+  ]);
 
   return rows.map((row) => {
     const recipe = toRecipe(row as RawRecipe);
     const rawIngredients = row.ingredients as RawRecipeIngredient[];
+    const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
     const ingredients = rawIngredients.map((ri) =>
       toRecipeIngredientWithCost(ri, costMap)
     );
-    return computeCosts(recipe, ingredients);
+    const productComponents = rawComponents.map((c) =>
+      toRecipeProductComponent(c, componentCostMap)
+    );
+    return computeCosts(recipe, ingredients, productComponents);
   });
 }
 
@@ -560,24 +845,38 @@ export async function getTenantProductRecipes(
         include: ingredientInclude,
         orderBy: { createdAt: "asc" },
       },
+      productComponents: {
+        include: productComponentInclude,
+        orderBy: { createdAt: "asc" },
+      },
     },
     orderBy: [{ storeId: "asc" }, { name: "asc" }],
   });
 
   if (rows.length === 0) return [];
 
-  // Resolve costs in one bulk call instead of one per recipe (N+1 fix)
   const allRawIngredients = rows.flatMap(
     (row) => row.ingredients as RawRecipeIngredient[]
   );
-  const costMap = await resolveCosts(tenantId, allRawIngredients);
+  const allRawComponents = rows.flatMap(
+    (row) => row.productComponents as unknown as RawRecipeProductComponent[]
+  );
+
+  const [costMap, componentCostMap] = await Promise.all([
+    resolveCosts(tenantId, allRawIngredients),
+    resolveProductComponentCosts(tenantId, allRawComponents),
+  ]);
 
   return rows.map((row) => {
     const recipe = toRecipe(row as RawRecipe);
     const rawIngredients = row.ingredients as RawRecipeIngredient[];
+    const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
     const ingredients = rawIngredients.map((ri) =>
       toRecipeIngredientWithCost(ri, costMap)
     );
-    return computeCosts(recipe, ingredients);
+    const productComponents = rawComponents.map((c) =>
+      toRecipeProductComponent(c, componentCostMap)
+    );
+    return computeCosts(recipe, ingredients, productComponents);
   });
 }
