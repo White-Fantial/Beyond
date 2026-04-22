@@ -2,4 +2,4 @@
 -- alongside the price, enabling unit-cost calculations (referencePrice / purchaseQty per unit).
 
 ALTER TABLE "supplier_products"
-  ADD COLUMN "purchase_qty" DOUBLE PRECISION NOT NULL DEFAULT 1;
+  ADD COLUMN "purchaseQty" DOUBLE PRECISION NOT NULL DEFAULT 1;
