@@ -28,6 +28,12 @@ export default async function OwnerProductsPage() {
             Manage Categories
           </Link>
           <Link
+            href="/owner/products/modifiers"
+            className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Manage Modifiers
+          </Link>
+          <Link
             href="/owner/products/new"
             className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
           >

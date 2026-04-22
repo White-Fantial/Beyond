@@ -24,6 +24,9 @@ export default function StoreProductCatalogPanel({
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Inline price editing state: maps tenantProductId -> draft dollar string
+  const [editingPrice, setEditingPrice] = useState<string | null>(null);
+  const [priceInput, setPriceInput] = useState("");
 
   async function handleDeselect(tenantProductId: string) {
     if (!confirm("Remove this product from the store?")) return;
@@ -59,6 +62,65 @@ export default function StoreProductCatalogPanel({
         const json = await res.json();
         throw new Error(json.error ?? "Failed to add product");
       }
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  function startEditPrice(tenantProductId: string, currentCustom: number | null, basePrice: number) {
+    setEditingPrice(tenantProductId);
+    const displayAmount = currentCustom !== null ? currentCustom : basePrice;
+    setPriceInput((displayAmount / 100000).toFixed(2));
+  }
+
+  async function handleSavePrice(tenantProductId: string) {
+    setLoading(tenantProductId);
+    setError(null);
+    try {
+      const dollarValue = parseFloat(priceInput);
+      if (isNaN(dollarValue) || dollarValue < 0) throw new Error("Price must be a positive number");
+      const customPriceAmount = Math.round(dollarValue * 100000);
+      const res = await fetch(
+        `/api/owner/stores/${storeId}/product-selections/${tenantProductId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ customPriceAmount }),
+        }
+      );
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error ?? "Failed to update price");
+      }
+      setEditingPrice(null);
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleClearPrice(tenantProductId: string) {
+    setLoading(tenantProductId);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/owner/stores/${storeId}/product-selections/${tenantProductId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ customPriceAmount: null }),
+        }
+      );
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.error ?? "Failed to clear price");
+      }
+      setEditingPrice(null);
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
@@ -142,13 +204,69 @@ export default function StoreProductCatalogPanel({
                 {formatPrice(s.product.basePriceAmount, s.product.currency)}
               </td>
               <td className="px-4 py-3 text-right">
-                {s.customPriceAmount !== null ? (
-                  <span className="text-gray-900 font-medium">
-                    {formatPrice(s.effectivePriceAmount, s.product.currency)}
-                    <span className="ml-1 text-xs text-blue-500">(custom)</span>
-                  </span>
+                {editingPrice === s.tenantProductId ? (
+                  <div className="flex items-center justify-end gap-1.5">
+                    <span className="text-gray-500 text-xs">$</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={priceInput}
+                      onChange={(e) => setPriceInput(e.target.value)}
+                      className="w-24 rounded border border-gray-300 px-2 py-0.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-brand-500"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSavePrice(s.tenantProductId);
+                        if (e.key === "Escape") setEditingPrice(null);
+                      }}
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => handleSavePrice(s.tenantProductId)}
+                      disabled={loading === s.tenantProductId}
+                      className="text-xs px-2 py-0.5 bg-brand-600 text-white rounded hover:bg-brand-700 disabled:opacity-50"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingPrice(null)}
+                      className="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-500 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 ) : (
-                  <span className="text-gray-400 text-xs">uses catalog</span>
+                  <div className="flex items-center justify-end gap-2">
+                    {s.customPriceAmount !== null ? (
+                      <>
+                        <span className="text-gray-900 font-medium">
+                          {formatPrice(s.effectivePriceAmount, s.product.currency)}
+                          <span className="ml-1 text-xs text-blue-500">(custom)</span>
+                        </span>
+                        <button
+                          onClick={() => handleClearPrice(s.tenantProductId)}
+                          disabled={loading === s.tenantProductId}
+                          title="Reset to catalog price"
+                          className="text-xs text-gray-400 hover:text-red-500 disabled:opacity-50"
+                        >
+                          ✕
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-gray-400 text-xs">uses catalog</span>
+                    )}
+                    <button
+                      onClick={() =>
+                        startEditPrice(
+                          s.tenantProductId,
+                          s.customPriceAmount,
+                          s.product.basePriceAmount
+                        )
+                      }
+                      className="text-xs text-brand-600 hover:text-brand-800 font-medium"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 )}
               </td>
               <td className="px-4 py-3 text-center">
@@ -176,3 +294,4 @@ export default function StoreProductCatalogPanel({
     </div>
   );
 }
+

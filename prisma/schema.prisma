@@ -1325,7 +1325,8 @@ model TenantProductCategory {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  products TenantCatalogProduct[]
+  products         TenantCatalogProduct[]
+  storeSelections  StoreCategorySelection[]
 
   @@unique([tenantId, name])
   @@index([tenantId, displayOrder])
@@ -1349,14 +1350,114 @@ model TenantCatalogProduct {
   updatedAt        DateTime @updatedAt
   deletedAt        DateTime?
 
-  category        TenantProductCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  category        TenantProductCategory?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   storeSelections StoreProductSelection[]
   recipes         Recipe[]
+  modifierGroups  TenantProductModifierGroup[]
 
   @@index([tenantId, isActive, displayOrder])
   @@index([tenantId, name])
   @@index([categoryId])
   @@map("tenant_catalog_products")
+}
+
+/// Tenant-level modifier group (shared across all stores in a tenant).
+model TenantModifierGroup {
+  id            String    @id @default(uuid())
+  tenantId      String
+  name          String
+  description   String?
+  selectionMin  Int       @default(0)
+  selectionMax  Int?
+  isRequired    Boolean   @default(false)
+  displayOrder  Int       @default(0)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  options         TenantModifierOption[]
+  productLinks    TenantProductModifierGroup[]
+  storeSelections StoreModifierGroupSelection[]
+
+  @@index([tenantId, isActive, displayOrder])
+  @@index([tenantId, name])
+  @@map("tenant_modifier_groups")
+}
+
+/// An option within a TenantModifierGroup.
+model TenantModifierOption {
+  id                    String    @id @default(uuid())
+  tenantId              String
+  tenantModifierGroupId String
+  name                  String
+  priceDeltaAmount      Int       @default(0)
+  currency              String    @default("USD")
+  displayOrder          Int       @default(0)
+  isDefault             Boolean   @default(false)
+  isActive              Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  deletedAt             DateTime?
+
+  modifierGroup TenantModifierGroup @relation(fields: [tenantModifierGroupId], references: [id], onDelete: Cascade)
+
+  @@index([tenantModifierGroupId, isActive, displayOrder])
+  @@map("tenant_modifier_options")
+}
+
+/// Links a TenantModifierGroup to a TenantCatalogProduct, with a display order.
+model TenantProductModifierGroup {
+  id                    String   @id @default(uuid())
+  tenantId              String
+  tenantProductId       String
+  tenantModifierGroupId String
+  displayOrder          Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  tenantProduct TenantCatalogProduct @relation(fields: [tenantProductId], references: [id], onDelete: Cascade)
+  modifierGroup TenantModifierGroup  @relation(fields: [tenantModifierGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantProductId, tenantModifierGroupId])
+  @@index([tenantProductId, displayOrder])
+  @@map("tenant_product_modifier_groups")
+}
+
+/// Per-store override for a tenant-level category: enabled/disabled + order override.
+model StoreCategorySelection {
+  id                   String   @id @default(uuid())
+  tenantId             String
+  storeId              String
+  tenantCategoryId     String
+  isEnabled            Boolean  @default(true)
+  displayOrderOverride Int?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  tenantCategory TenantProductCategory @relation(fields: [tenantCategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, tenantCategoryId])
+  @@index([tenantId, storeId])
+  @@map("store_category_selections")
+}
+
+/// Per-store override for a tenant-level modifier group: enabled/disabled + order override.
+model StoreModifierGroupSelection {
+  id                    String   @id @default(uuid())
+  tenantId              String
+  storeId               String
+  tenantModifierGroupId String
+  isEnabled             Boolean  @default(true)
+  displayOrderOverride  Int?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  modifierGroup TenantModifierGroup @relation(fields: [tenantModifierGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, tenantModifierGroupId])
+  @@index([tenantId, storeId])
+  @@map("store_modifier_group_selections")
 }
 
 /// Records which stores have selected a TenantCatalogProduct to sell,

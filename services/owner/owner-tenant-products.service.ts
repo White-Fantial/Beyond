@@ -7,7 +7,7 @@
  */
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
-import type { TenantProductRow, TenantProductCategoryRow, StoreProductSelectionRow } from "@/types/owner";
+import type { TenantProductRow, TenantProductCategoryRow, StoreProductSelectionRow, StoreCategorySelectionRow } from "@/types/owner";
 
 // ─── Tenant-level product categories ──────────────────────────────────────────
 
@@ -424,3 +424,155 @@ export async function deselectProductFromStore(
     metadata: { tenantProductId },
   });
 }
+
+export async function updateStoreProductSelection(
+  tenantId: string,
+  storeId: string,
+  tenantProductId: string,
+  actorUserId: string,
+  data: { customPriceAmount?: number | null; isActive?: boolean }
+): Promise<StoreProductSelectionRow> {
+  const selection = await prisma.storeProductSelection.findUnique({
+    where: { storeId_tenantProductId: { storeId, tenantProductId } },
+    include: { tenantProduct: true },
+  });
+  if (!selection || selection.tenantId !== tenantId) {
+    throw new Error("Product selection not found");
+  }
+
+  const updated = await prisma.storeProductSelection.update({
+    where: { storeId_tenantProductId: { storeId, tenantProductId } },
+    data: {
+      ...(data.customPriceAmount !== undefined ? { customPriceAmount: data.customPriceAmount } : {}),
+      ...(data.isActive !== undefined ? { isActive: data.isActive } : {}),
+    },
+    include: { tenantProduct: true },
+  });
+
+  await logAuditEvent({
+    tenantId,
+    storeId,
+    actorUserId,
+    action: "STORE_PRODUCT_SELECTION_UPDATED",
+    targetType: "StoreProductSelection",
+    targetId: updated.id,
+    metadata: { tenantProductId, fields: Object.keys(data) },
+  });
+
+  return {
+    id: updated.id,
+    storeId: updated.storeId,
+    tenantProductId: updated.tenantProductId,
+    effectivePriceAmount: updated.customPriceAmount ?? updated.tenantProduct.basePriceAmount,
+    customPriceAmount: updated.customPriceAmount,
+    isActive: updated.isActive,
+    displayOrder: updated.displayOrder,
+    selectedAt: updated.selectedAt.toISOString(),
+    product: {
+      name: updated.tenantProduct.name,
+      description: updated.tenantProduct.description,
+      shortDescription: updated.tenantProduct.shortDescription,
+      basePriceAmount: updated.tenantProduct.basePriceAmount,
+      currency: updated.tenantProduct.currency,
+      imageUrl: updated.tenantProduct.imageUrl,
+    },
+  };
+}
+
+// ─── Store Category Selections ────────────────────────────────────────────────
+
+export async function listStoreCategorySelections(
+  storeId: string,
+  tenantId: string
+): Promise<StoreCategorySelectionRow[]> {
+  const [allCategories, selections] = await Promise.all([
+    prisma.tenantProductCategory.findMany({
+      where: { tenantId },
+      orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
+    }),
+    prisma.storeCategorySelection.findMany({
+      where: { storeId, tenantId },
+    }),
+  ]);
+
+  const selectionMap = new Map(selections.map((s) => [s.tenantCategoryId, s]));
+
+  return allCategories
+    .map((cat) => {
+      const sel = selectionMap.get(cat.id);
+      const effectiveDisplayOrder = sel?.displayOrderOverride ?? cat.displayOrder;
+      return {
+        tenantCategoryId: cat.id,
+        name: cat.name,
+        effectiveDisplayOrder,
+        displayOrderOverride: sel?.displayOrderOverride ?? null,
+        isEnabled: sel?.isEnabled ?? true,
+        selectionId: sel?.id ?? null,
+      };
+    })
+    .sort((a, b) => a.effectiveDisplayOrder - b.effectiveDisplayOrder);
+}
+
+export async function upsertStoreCategorySelection(
+  storeId: string,
+  tenantId: string,
+  tenantCategoryId: string,
+  actorUserId: string,
+  data: { isEnabled?: boolean; displayOrderOverride?: number | null }
+): Promise<void> {
+  await prisma.tenantProductCategory.findFirstOrThrow({
+    where: { id: tenantCategoryId, tenantId },
+  });
+  await prisma.storeCategorySelection.upsert({
+    where: { storeId_tenantCategoryId: { storeId, tenantCategoryId } },
+    create: {
+      tenantId,
+      storeId,
+      tenantCategoryId,
+      isEnabled: data.isEnabled ?? true,
+      displayOrderOverride: data.displayOrderOverride ?? null,
+    },
+    update: {
+      ...(data.isEnabled !== undefined ? { isEnabled: data.isEnabled } : {}),
+      ...(data.displayOrderOverride !== undefined
+        ? { displayOrderOverride: data.displayOrderOverride }
+        : {}),
+    },
+  });
+  await logAuditEvent({
+    tenantId,
+    storeId,
+    actorUserId,
+    action: "STORE_CATEGORY_SELECTION_UPDATED",
+    targetType: "StoreCategorySelection",
+    targetId: tenantCategoryId,
+    metadata: { storeId, tenantCategoryId, ...data },
+  });
+}
+
+export async function reorderStoreCategorySelections(
+  storeId: string,
+  tenantId: string,
+  actorUserId: string,
+  orderedCategoryIds: string[]
+): Promise<void> {
+  await prisma.$transaction(
+    orderedCategoryIds.map((tenantCategoryId, idx) =>
+      prisma.storeCategorySelection.upsert({
+        where: { storeId_tenantCategoryId: { storeId, tenantCategoryId } },
+        create: { tenantId, storeId, tenantCategoryId, displayOrderOverride: idx },
+        update: { displayOrderOverride: idx },
+      })
+    )
+  );
+  await logAuditEvent({
+    tenantId,
+    storeId,
+    actorUserId,
+    action: "STORE_CATEGORY_SELECTIONS_REORDERED",
+    targetType: "Store",
+    targetId: storeId,
+    metadata: { orderedCategoryIds },
+  });
+}
+

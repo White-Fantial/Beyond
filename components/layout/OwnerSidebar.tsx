@@ -28,7 +28,9 @@ const customersItems: NavItem[] = [
 ];
 
 const costItems: NavItem[] = [
-  { href: "/owner/products", label: "Products", icon: "📦" },
+  { href: "/owner/products", label: "Products", icon: "📦", exact: true },
+  { href: "/owner/products/categories", label: "Categories", icon: "🗂️" },
+  { href: "/owner/products/modifiers", label: "Modifiers", icon: "🔧" },
   { href: "/owner/ingredients", label: "Ingredients", icon: "🥕" },
   { href: "/owner/ingredient-requests", label: "Ingredient Requests", icon: "🌿" },
   { href: "/owner/suppliers", label: "Suppliers", icon: "🚚" },
