@@ -30,7 +30,9 @@ export default function WebhookEndpointTable({ items }: Props) {
             {items.map((ep) => (
               <tr key={ep.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-5 py-3 font-mono text-xs text-gray-700 max-w-xs truncate">
-                  {ep.url}
+                  <Link href={`/owner/webhooks/${ep.id}`} className="text-brand-700 hover:text-brand-900 hover:underline">
+                    {ep.url}
+                  </Link>
                 </td>
                 <td className="px-5 py-3">
                   <div className="flex flex-wrap gap-1">

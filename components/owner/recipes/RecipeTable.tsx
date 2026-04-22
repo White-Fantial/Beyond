@@ -34,7 +34,11 @@ export default function RecipeTable({ items }: Props) {
           <tbody className="divide-y divide-gray-100">
             {items.map((recipe) => (
               <tr key={recipe.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-5 py-3 font-medium text-gray-900">{recipe.name}</td>
+                <td className="px-5 py-3 font-medium">
+                  <Link href={`/owner/recipes/${recipe.id}`} className="text-brand-700 hover:text-brand-900 hover:underline">
+                    {recipe.name}
+                  </Link>
+                </td>
                 <td className="px-5 py-3 text-gray-600">
                   {recipe.catalogProductName ? (
                     <span>

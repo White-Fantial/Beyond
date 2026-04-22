@@ -138,7 +138,9 @@ export default function AdminPlatformSupplierPanel({ initialResult }: Props) {
               {initialResult.items.map((s) => (
                 <tr key={s.id} className="hover:bg-gray-50">
                   <td className="px-5 py-3">
-                    <div className="font-medium text-gray-900">{s.name}</div>
+                    <Link href={`/admin/suppliers/${s.id}`} className="font-medium text-blue-600 hover:underline">
+                      {s.name}
+                    </Link>
                     {s.websiteUrl && (
                       <a
                         href={s.websiteUrl}

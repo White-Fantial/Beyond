@@ -38,10 +38,12 @@ export default function AdminFeatureFlagTable({ flags }: Props) {
             >
               <td className="px-4 py-3 font-mono text-xs text-gray-700">{flag.key}</td>
               <td className="px-4 py-3 text-gray-900 font-medium">
-                {flag.name}
+                <Link href={`/admin/feature-flags/${flag.key}`} className="text-blue-600 hover:underline">
+                  {flag.name}
+                </Link>
                 {flag.isExperiment && (
                   <span className="ml-1.5 text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">
-                    실험
+                    Experiment
                   </span>
                 )}
               </td>
@@ -61,7 +63,7 @@ export default function AdminFeatureFlagTable({ flags }: Props) {
                   href={`/admin/feature-flags/${flag.key}`}
                   className="text-xs text-blue-600 hover:underline"
                 >
-                  상세 →
+                  Details →
                 </Link>
               </td>
             </tr>

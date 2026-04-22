@@ -31,7 +31,11 @@ export default function StoreListTable({ items, emptyMessage }: StoreListTablePr
         <tbody className="divide-y divide-gray-100 bg-white">
           {items.map((s) => (
             <tr key={s.id} className="hover:bg-gray-50">
-              <td className="px-4 py-3 font-medium text-gray-900 max-w-[160px] truncate">{s.name}</td>
+              <td className="px-4 py-3 font-medium text-gray-900 max-w-[160px] truncate">
+                <Link href={`/admin/stores/${s.id}`} className="text-blue-600 hover:underline">
+                  {s.name}
+                </Link>
+              </td>
               <td className="px-4 py-3 text-gray-500 font-mono text-xs hidden sm:table-cell">{s.code}</td>
               <td className="px-4 py-3 text-gray-500 max-w-[140px] truncate">
                 <Link
