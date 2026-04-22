@@ -169,6 +169,18 @@ export async function listMarketplaceRecipes(
       : {}),
   };
 
+  // Platform recipes (admin-created, tenantId=null) are included unless a
+  // type or filter that doesn't apply to them is set (i.e. PREMIUM-only
+  // request, or a cuisineTag / difficulty / providerId filter).
+  // Platform recipes are only included on the first page to avoid duplicates
+  // across paginated results (they are prepended before marketplace items).
+  const includePlatform =
+    page === 1 &&
+    (type === undefined || type === "BASIC") &&
+    cuisineTag === undefined &&
+    difficulty === undefined &&
+    providerId === undefined;
+
   const [rows, total] = await Promise.all([
     prisma.marketplaceRecipe.findMany({
       where,
@@ -180,9 +192,66 @@ export async function listMarketplaceRecipes(
     prisma.marketplaceRecipe.count({ where }),
   ]);
 
+  const marketplaceItems = rows.map((r) => ({
+    ...toRecipe(r as RawRecipe),
+    sourceType: "MARKETPLACE" as const,
+  }));
+
+  if (!includePlatform) {
+    return { items: marketplaceItems, total, page, pageSize };
+  }
+
+  // Also query platform-level Recipe records (tenantId=null) as free recipes.
+  // Platform recipe IDs are stored as "platform:{uuid}" so they cannot collide
+  // with MarketplaceRecipe IDs (which are plain UUIDs).
+  const platformWhere = {
+    tenantId: null,
+    storeId: null,
+    deletedAt: null,
+    ...(q?.trim()
+      ? { name: { contains: q.trim(), mode: "insensitive" as const } }
+      : {}),
+  };
+  const platformRows = await prisma.recipe.findMany({
+    where: platformWhere,
+    orderBy: { createdAt: "desc" },
+  });
+
+  const platformItems: MarketplaceRecipe[] = platformRows.map((r) => ({
+    // "platform:{uuid}" prefix guarantees no collision with plain-UUID marketplace IDs
+    id: `platform:${r.id}`,
+    type: "BASIC" as MarketplaceRecipeType,
+    status: "PUBLISHED" as MarketplaceRecipeStatus,
+    title: r.name,
+    description: r.notes,
+    thumbnailUrl: null,
+    providerId: null,
+    providerName: null,
+    createdByUserId: null,
+    yieldQty: r.yieldQty,
+    yieldUnit: r.yieldUnit as RecipeYieldUnit,
+    servings: null,
+    cuisineTag: null,
+    difficulty: null,
+    prepTimeMinutes: null,
+    cookTimeMinutes: null,
+    currency: "USD",
+    estimatedCostPrice: 0,
+    recommendedPrice: 0,
+    salePrice: 0,
+    publishedAt: r.createdAt.toISOString(),
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
+    sourceType: "PLATFORM" as const,
+  }));
+
+  // Platform recipes are prepended so they appear prominently.
+  // Total reflects all available items across both sources.
+  const allItems = [...platformItems, ...marketplaceItems];
+
   return {
-    items: rows.map((r) => toRecipe(r as RawRecipe)),
-    total,
+    items: allItems,
+    total: total + platformItems.length,
     page,
     pageSize,
   };

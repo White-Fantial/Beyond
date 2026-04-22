@@ -73,7 +73,7 @@ export interface MarketplaceRecipe {
   thumbnailUrl: string | null;
   providerId: string | null;
   providerName: string | null;
-  createdByUserId: string;
+  createdByUserId: string | null;
   yieldQty: number;
   yieldUnit: RecipeYieldUnit;
   servings: number | null;
@@ -88,6 +88,8 @@ export interface MarketplaceRecipe {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** "MARKETPLACE" for MarketplaceRecipe records; "PLATFORM" for admin-created platform Recipe records. */
+  sourceType?: "MARKETPLACE" | "PLATFORM";
 }
 
 export interface MarketplaceRecipeDetail extends MarketplaceRecipe {

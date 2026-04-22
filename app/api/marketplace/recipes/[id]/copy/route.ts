@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth/permissions";
-import { copyMarketplaceRecipeToOwner } from "@/services/owner/owner-recipes.service";
+import { copyMarketplaceRecipeToOwner, copyPlatformRecipeToOwner } from "@/services/owner/owner-recipes.service";
 import type { CopyMarketplaceRecipeInput } from "@/types/owner-recipes";
 
 interface RouteContext {
@@ -10,7 +10,8 @@ interface RouteContext {
 /**
  * POST /api/marketplace/recipes/[id]/copy
  *
- * Copies a marketplace recipe into the authenticated user's owner recipe list.
+ * Copies a marketplace recipe (or a platform-level Recipe when id is "platform:{id}")
+ * into the authenticated user's owner recipe list.
  * BASIC recipes may be copied by any authenticated tenant user.
  * PREMIUM recipes require a valid purchase record.
  *
@@ -35,6 +36,13 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
   }
 
   try {
+    // Handle platform recipe (admin-created Recipe with tenantId=null)
+    if (id.startsWith("platform:")) {
+      const platformRecipeId = id.slice("platform:".length);
+      const recipe = await copyPlatformRecipeToOwner(tenantId, platformRecipeId, body);
+      return NextResponse.json({ data: recipe }, { status: 201 });
+    }
+
     const recipe = await copyMarketplaceRecipeToOwner(
       tenantId,
       ctx.userId,

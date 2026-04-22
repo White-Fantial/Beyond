@@ -12,6 +12,9 @@ vi.mock("@/lib/prisma", () => ({
     ingredient: {
       findMany: vi.fn(),
     },
+    recipe: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -33,6 +36,9 @@ const mockPrisma = prisma as unknown as {
     count: ReturnType<typeof vi.fn>;
   };
   ingredient: {
+    findMany: ReturnType<typeof vi.fn>;
+  };
+  recipe: {
     findMany: ReturnType<typeof vi.fn>;
   };
 };
@@ -88,6 +94,8 @@ const mockIngredientRow = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: no platform recipes — individual tests override as needed
+  mockPrisma.recipe.findMany.mockResolvedValue([]);
 });
 
 // ─── listMarketplaceRecipes ───────────────────────────────────────────────────
