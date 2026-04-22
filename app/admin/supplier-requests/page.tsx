@@ -116,19 +116,25 @@ export default async function AdminSupplierRequestsPage({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <span
-                    className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                      statusColors[req.status]
-                    }`}
-                  >
-                    {SUPPLIER_REQUEST_STATUS_LABELS[req.status]}
-                  </span>
-                  {req.status === "PENDING" && (
-                    <SupplierRequestReviewPanel requestId={req.id} />
-                  )}
-                </div>
+                <span
+                  className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${
+                    statusColors[req.status]
+                  }`}
+                >
+                  {SUPPLIER_REQUEST_STATUS_LABELS[req.status]}
+                </span>
               </div>
+
+              {req.status === "PENDING" && (
+                <SupplierRequestReviewPanel
+                  requestId={req.id}
+                  requestName={req.name}
+                  requestWebsite={req.websiteUrl}
+                  requestEmail={req.contactEmail}
+                  requestPhone={req.contactPhone}
+                  requestNotes={req.notes}
+                />
+              )}
             </div>
           ))}
         </div>

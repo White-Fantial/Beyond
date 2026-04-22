@@ -150,7 +150,8 @@ export async function getSupplierRequest(id: string): Promise<SupplierRequest> {
 /**
  * Review a supplier request (moderator / admin action).
  *
- * - APPROVED: resolvedSupplierId must point to the PLATFORM supplier that satisfies the request.
+ * - APPROVED: if resolvedSupplierId is provided, links to that existing PLATFORM supplier.
+ *   Otherwise, auto-creates a new PLATFORM supplier from the request's data.
  * - DUPLICATE: resolvedSupplierId must point to the existing PLATFORM supplier.
  * - REJECTED: no resolvedSupplierId required.
  */
@@ -167,20 +168,36 @@ export async function reviewSupplierRequest(
     );
   }
 
-  if (
-    (input.status === "APPROVED" || input.status === "DUPLICATE") &&
-    !input.resolvedSupplierId
-  ) {
+  if (input.status === "DUPLICATE" && !input.resolvedSupplierId) {
     throw new Error(
-      "resolvedSupplierId is required when approving or marking as duplicate"
+      "resolvedSupplierId is required when marking as duplicate"
     );
+  }
+
+  let resolvedSupplierId = input.resolvedSupplierId ?? null;
+
+  // Auto-create a PLATFORM supplier when approving without an existing supplier ID
+  if (input.status === "APPROVED" && !resolvedSupplierId) {
+    const newSupplier = await prisma.supplier.create({
+      data: {
+        scope: "PLATFORM",
+        tenantId: null,
+        storeId: null,
+        name: existing.name,
+        websiteUrl: existing.websiteUrl ?? null,
+        contactEmail: existing.contactEmail ?? null,
+        contactPhone: existing.contactPhone ?? null,
+        notes: existing.notes ?? null,
+      },
+    });
+    resolvedSupplierId = newSupplier.id;
   }
 
   const row = await prisma.supplierRequest.update({
     where: { id },
     data: {
       status: input.status,
-      resolvedSupplierId: input.resolvedSupplierId ?? null,
+      resolvedSupplierId,
       reviewedByUserId,
       reviewNotes: input.reviewNotes?.trim() ?? null,
     },

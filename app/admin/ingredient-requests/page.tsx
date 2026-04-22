@@ -17,7 +17,7 @@ export default async function AdminIngredientRequestsPage({
 
   const isModOrAdmin = ctx?.isPlatformAdmin || ctx?.isPlatformModerator;
   if (!isModOrAdmin) {
-    return <div>접근 권한이 없습니다.</div>;
+    return <div>Access denied.</div>;
   }
 
   const { status: statusParam } = await searchParams;
@@ -42,9 +42,9 @@ export default async function AdminIngredientRequestsPage({
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">재료 추가 요청</h1>
+        <h1 className="text-xl font-bold text-gray-900">Ingredient Requests</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          사용자가 요청한 신규 재료를 검토하고 플랫폼 카탈로그에 등록하세요.
+          Review owner-submitted ingredient requests and add them to the platform catalogue.
         </p>
       </div>
 
@@ -69,7 +69,7 @@ export default async function AdminIngredientRequestsPage({
         <div className="text-center py-12 text-gray-400">
           <p className="text-4xl mb-3">📭</p>
           <p className="text-sm">
-            {INGREDIENT_REQUEST_STATUS_LABELS[status]} 요청이 없습니다.
+            No {INGREDIENT_REQUEST_STATUS_LABELS[status].toLowerCase()} requests.
           </p>
         </div>
       ) : (
@@ -102,38 +102,50 @@ export default async function AdminIngredientRequestsPage({
                       &ldquo;{req.notes}&rdquo;
                     </p>
                   )}
+                  {req.tempIngredientId && (
+                    <p className="text-xs text-blue-500 mt-0.5">
+                      Temp ingredient created — recipe references will be migrated on approval.
+                    </p>
+                  )}
                   <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">
-                    <span>요청자: {req.requestedByName}</span>
+                    <span>Requested by: {req.requestedByName}</span>
                     <span>
-                      {new Date(req.createdAt).toLocaleDateString("ko-KR")}
+                      {new Date(req.createdAt).toLocaleDateString("en-US")}
                     </span>
                   </div>
                   {req.reviewNotes && (
                     <p className="mt-1 text-xs text-gray-500">
-                      검토 메모: {req.reviewNotes}
+                      Review notes: {req.reviewNotes}
                     </p>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <span
-                    className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                      statusColors[req.status]
-                    }`}
-                  >
-                    {INGREDIENT_REQUEST_STATUS_LABELS[req.status]}
-                  </span>
-                  {req.status === "PENDING" && (
-                    <IngredientRequestReviewPanel requestId={req.id} />
-                  )}
-                </div>
+                <span
+                  className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${
+                    statusColors[req.status]
+                  }`}
+                >
+                  {INGREDIENT_REQUEST_STATUS_LABELS[req.status]}
+                </span>
               </div>
+
+              {req.status === "PENDING" && (
+                <IngredientRequestReviewPanel
+                  requestId={req.id}
+                  requestName={req.name}
+                  requestDescription={req.description}
+                  requestCategory={req.category}
+                  requestUnit={req.unit}
+                  requestNotes={req.notes}
+                />
+              )}
             </div>
           ))}
         </div>
       )}
 
-      <div className="mt-4 text-xs text-gray-400">총 {result.total}건</div>
+      <div className="mt-4 text-xs text-gray-400">Total: {result.total}</div>
     </div>
   );
 }
+

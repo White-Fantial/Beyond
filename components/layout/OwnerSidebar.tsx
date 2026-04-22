@@ -30,6 +30,7 @@ const customersItems: NavItem[] = [
 const costItems: NavItem[] = [
   { href: "/owner/products", label: "Products", icon: "📦" },
   { href: "/owner/ingredients", label: "Ingredients", icon: "🥕" },
+  { href: "/owner/ingredient-requests", label: "Ingredient Requests", icon: "🌿" },
   { href: "/owner/suppliers", label: "Suppliers", icon: "🚚" },
   { href: "/owner/supplier-requests", label: "Request Supplier", icon: "📨" },
 ];
