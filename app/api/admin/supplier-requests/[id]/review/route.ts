@@ -26,6 +26,13 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
     );
   }
 
+  if (body.status === "DUPLICATE" && !body.resolvedSupplierId) {
+    return NextResponse.json(
+      { error: "resolvedSupplierId is required when marking as duplicate" },
+      { status: 400 }
+    );
+  }
+
   try {
     const result = await reviewSupplierRequest(id, ctx.userId, body);
     return NextResponse.json({ data: result });

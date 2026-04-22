@@ -3424,6 +3424,7 @@ model Ingredient {
   supplierLinks          IngredientSupplierLink[]
   marketplaceIngredients MarketplaceRecipeIngredient[]
   ingredientRequests     IngredientRequest[]          @relation("IngredientRequestResolved")
+  tempIngredientRequests IngredientRequest[]          @relation("IngredientRequestTemp")
 
   @@index([scope, isActive])
   @@index([scope, category])
@@ -3853,6 +3854,7 @@ model MarketplaceRecipePurchase {
 model IngredientRequest {
   id                     String                  @id @default(uuid())
   requestedByUserId      String
+  tenantId               String?                 // tenant that submitted the request (owner context)
   name                   String                  // requested ingredient name
   description            String?
   category               String?
@@ -3860,6 +3862,7 @@ model IngredientRequest {
   notes                  String?                 // requester's usage context
   status                 IngredientRequestStatus @default(PENDING)
   resolvedIngredientId   String?                 // set on APPROVED or DUPLICATE — points to Ingredient (scope=PLATFORM)
+  tempIngredientId       String?                 // auto-created STORE-scope Ingredient for immediate use while pending
   reviewedByUserId       String?
   reviewNotes            String?
   createdAt              DateTime                @default(now())
@@ -3868,9 +3871,11 @@ model IngredientRequest {
   requestedBy        User        @relation("IngredientRequestedBy", fields: [requestedByUserId], references: [id], onDelete: Restrict)
   reviewedBy         User?       @relation("IngredientRequestReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
   resolvedIngredient Ingredient? @relation("IngredientRequestResolved", fields: [resolvedIngredientId], references: [id], onDelete: SetNull)
+  tempIngredient     Ingredient? @relation("IngredientRequestTemp", fields: [tempIngredientId], references: [id], onDelete: SetNull)
 
   @@index([status])
   @@index([requestedByUserId])
+  @@index([tenantId])
   @@map("ingredient_requests")
 }
 

@@ -9,6 +9,9 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
     },
+    supplier: {
+      create: vi.fn(),
+    },
   },
 }));
 
@@ -29,6 +32,9 @@ const mockPrisma = prisma as unknown as {
     findUnique: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
   };
+  supplier: {
+    create: ReturnType<typeof vi.fn>;
+  };
 };
 
 const USER_ID = "user-1";
@@ -36,6 +42,7 @@ const TENANT_ID = "tenant-1";
 const MODERATOR_ID = "mod-1";
 const REQUEST_ID = "req-1";
 const SUPPLIER_ID = "sup-1";
+const NEW_SUPPLIER_ID = "sup-new";
 
 const mockRow = {
   id: REQUEST_ID,
@@ -183,7 +190,7 @@ describe("getSupplierRequest", () => {
 // ─── reviewSupplierRequest ────────────────────────────────────────────────────
 
 describe("reviewSupplierRequest", () => {
-  it("approves a PENDING request with resolvedSupplierId", async () => {
+  it("approves a PENDING request with an existing resolvedSupplierId", async () => {
     mockPrisma.supplierRequest.findUnique.mockResolvedValue(mockRow);
     mockPrisma.supplierRequest.update.mockResolvedValue({
       ...mockRow,
@@ -201,12 +208,49 @@ describe("reviewSupplierRequest", () => {
 
     expect(result.status).toBe("APPROVED");
     expect(result.resolvedSupplierId).toBe(SUPPLIER_ID);
+    // Should not auto-create supplier when ID is already provided
+    expect(mockPrisma.supplier.create).not.toHaveBeenCalled();
     expect(mockPrisma.supplierRequest.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           status: "APPROVED",
           resolvedSupplierId: SUPPLIER_ID,
           reviewedByUserId: MODERATOR_ID,
+        }),
+      })
+    );
+  });
+
+  it("auto-creates a PLATFORM supplier when approving without resolvedSupplierId", async () => {
+    mockPrisma.supplierRequest.findUnique.mockResolvedValue(mockRow);
+    mockPrisma.supplier.create.mockResolvedValue({ id: NEW_SUPPLIER_ID });
+    mockPrisma.supplierRequest.update.mockResolvedValue({
+      ...mockRow,
+      status: "APPROVED",
+      resolvedSupplierId: NEW_SUPPLIER_ID,
+      reviewedByUserId: MODERATOR_ID,
+    });
+
+    const result = await reviewSupplierRequest(REQUEST_ID, MODERATOR_ID, {
+      status: "APPROVED",
+    });
+
+    expect(result.status).toBe("APPROVED");
+    expect(mockPrisma.supplier.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          scope: "PLATFORM",
+          name: "Premium Foods Ltd",
+          tenantId: null,
+          storeId: null,
+        }),
+      })
+    );
+    expect(mockPrisma.supplierRequest.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "APPROVED",
+          resolvedSupplierId: NEW_SUPPLIER_ID,
         }),
       })
     );
@@ -227,6 +271,7 @@ describe("reviewSupplierRequest", () => {
     });
 
     expect(result.status).toBe("REJECTED");
+    expect(mockPrisma.supplier.create).not.toHaveBeenCalled();
   });
 
   it("marks as DUPLICATE with resolvedSupplierId", async () => {
@@ -266,14 +311,6 @@ describe("reviewSupplierRequest", () => {
     ).rejects.toThrow("has already been reviewed");
   });
 
-  it("throws when APPROVED without resolvedSupplierId", async () => {
-    mockPrisma.supplierRequest.findUnique.mockResolvedValue(mockRow);
-
-    await expect(
-      reviewSupplierRequest(REQUEST_ID, MODERATOR_ID, { status: "APPROVED" })
-    ).rejects.toThrow("resolvedSupplierId is required");
-  });
-
   it("throws when DUPLICATE without resolvedSupplierId", async () => {
     mockPrisma.supplierRequest.findUnique.mockResolvedValue(mockRow);
 
@@ -282,3 +319,4 @@ describe("reviewSupplierRequest", () => {
     ).rejects.toThrow("resolvedSupplierId is required");
   });
 });
+

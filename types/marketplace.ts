@@ -219,16 +219,17 @@ export const INGREDIENT_REQUEST_STATUS_LABELS: Record<
   IngredientRequestStatus,
   string
 > = {
-  PENDING: "검토 대기",
-  APPROVED: "승인됨",
-  REJECTED: "반려됨",
-  DUPLICATE: "중복",
+  PENDING: "Pending Review",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+  DUPLICATE: "Duplicate",
 };
 
 export interface IngredientRequest {
   id: string;
   requestedByUserId: string;
   requestedByName: string;
+  tenantId: string | null;
   name: string;
   description: string | null;
   category: string | null;
@@ -236,6 +237,7 @@ export interface IngredientRequest {
   notes: string | null;
   status: IngredientRequestStatus;
   resolvedIngredientId: string | null;
+  tempIngredientId: string | null;
   reviewedByUserId: string | null;
   reviewNotes: string | null;
   createdAt: string;
@@ -255,6 +257,7 @@ export interface CreateIngredientRequestInput {
   category?: string;
   unit?: string;
   notes?: string;
+  tenantId?: string;
 }
 
 export interface ReviewIngredientRequestInput {

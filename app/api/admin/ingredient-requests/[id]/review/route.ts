@@ -26,6 +26,13 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
     );
   }
 
+  if (body.status === "DUPLICATE" && !body.resolvedIngredientId) {
+    return NextResponse.json(
+      { error: "resolvedIngredientId is required when marking as duplicate" },
+      { status: 400 }
+    );
+  }
+
   try {
     const result = await reviewIngredientRequest(id, ctx.userId, body);
     return NextResponse.json({ data: result });
