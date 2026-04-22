@@ -168,39 +168,85 @@ export async function listSupplierProducts(
 
 // ─── Ingredient ↔ SupplierProduct Links ──────────────────────────────────────
 
+/**
+ * Helper to serialise a link row from DB into the API type.
+ */
+function toLinkRow(r: {
+  id: string;
+  ingredientId: string;
+  supplierProductId: string;
+  tenantId: string | null;
+  isPreferred: boolean;
+  createdAt: Date;
+  supplierProduct: {
+    name: string;
+    referencePrice: number;
+    lastScrapedAt: Date | null;
+    supplier: { name: string };
+  };
+}): IngredientSupplierLink {
+  return {
+    id: r.id,
+    ingredientId: r.ingredientId,
+    supplierProductId: r.supplierProductId,
+    tenantId: r.tenantId,
+    supplierProductName: r.supplierProduct.name,
+    supplierName: r.supplierProduct.supplier.name,
+    isPreferred: r.isPreferred,
+    referencePrice: r.supplierProduct.referencePrice,
+    lastScrapedAt: r.supplierProduct.lastScrapedAt?.toISOString() ?? null,
+    createdAt: r.createdAt.toISOString(),
+  };
+}
+
+const linkInclude = {
+  supplierProduct: {
+    select: {
+      name: true,
+      referencePrice: true,
+      lastScrapedAt: true,
+      supplier: { select: { name: true } },
+    },
+  },
+} as const;
+
+/**
+ * Returns all supplier-product links visible to a tenant for a given ingredient.
+ * Includes both platform-level links (tenantId=null) and this tenant's own links.
+ * Works for both STORE-scope (tenant-owned) and PLATFORM-scope ingredients.
+ */
 export async function getIngredientLinks(
   tenantId: string,
   ingredientId: string
 ): Promise<IngredientSupplierLink[]> {
   const ingredient = await prisma.ingredient.findFirst({
-    where: { id: ingredientId, tenantId, deletedAt: null },
+    where: {
+      id: ingredientId,
+      deletedAt: null,
+      OR: [{ tenantId }, { scope: "PLATFORM" }],
+    },
   });
   if (!ingredient) throw new Error(`Ingredient ${ingredientId} not found`);
 
   const rows = await prisma.ingredientSupplierLink.findMany({
-    where: { ingredientId },
-    include: {
-      supplierProduct: {
-        select: {
-          name: true,
-          supplier: { select: { name: true } },
-        },
-      },
+    where: {
+      ingredientId,
+      OR: [{ tenantId: null }, { tenantId }],
     },
+    include: linkInclude,
     orderBy: { createdAt: "asc" },
   });
 
-  return rows.map((r) => ({
-    id: r.id,
-    ingredientId: r.ingredientId,
-    supplierProductId: r.supplierProductId,
-    supplierProductName: r.supplierProduct.name,
-    supplierName: r.supplierProduct.supplier.name,
-    isPreferred: r.isPreferred,
-    createdAt: r.createdAt.toISOString(),
-  }));
+  return rows.map(toLinkRow);
 }
 
+/**
+ * Create a tenant-specific supplier-product link for an ingredient.
+ * Owner-created links always carry the tenant's own tenantId so platform
+ * links (tenantId=null, admin-managed) remain separate.
+ * If isPreferred=true, clears any existing preferred link for this
+ * (ingredientId, tenantId) pair first.
+ */
 export async function linkIngredientToSupplierProduct(
   tenantId: string,
   ingredientId: string,
@@ -208,7 +254,11 @@ export async function linkIngredientToSupplierProduct(
   isPreferred = false
 ): Promise<IngredientSupplierLink> {
   const ingredient = await prisma.ingredient.findFirst({
-    where: { id: ingredientId, tenantId, deletedAt: null },
+    where: {
+      id: ingredientId,
+      deletedAt: null,
+      OR: [{ tenantId }, { scope: "PLATFORM" }],
+    },
   });
   if (!ingredient) throw new Error(`Ingredient ${ingredientId} not found`);
 
@@ -226,45 +276,77 @@ export async function linkIngredientToSupplierProduct(
   if (!supplierProduct) throw new Error(`SupplierProduct ${supplierProductId} not found`);
 
   if (isPreferred) {
+    // Clear existing preferred within this tenant's scope
     await prisma.ingredientSupplierLink.updateMany({
-      where: { ingredientId, isPreferred: true },
+      where: { ingredientId, tenantId, isPreferred: true },
       data: { isPreferred: false },
     });
   }
 
-  const row = await prisma.ingredientSupplierLink.upsert({
-    where: {
-      ingredientId_supplierProductId: { ingredientId, supplierProductId },
-    },
-    create: { ingredientId, supplierProductId, isPreferred },
-    update: { isPreferred },
-    include: {
-      supplierProduct: {
-        select: { name: true, supplier: { select: { name: true } } },
-      },
-    },
+  // Find existing tenant-specific link for this (ingredient, product, tenant) triple
+  const existing = await prisma.ingredientSupplierLink.findFirst({
+    where: { ingredientId, supplierProductId, tenantId },
   });
 
-  return {
-    id: row.id,
-    ingredientId: row.ingredientId,
-    supplierProductId: row.supplierProductId,
-    supplierProductName: row.supplierProduct.name,
-    supplierName: row.supplierProduct.supplier.name,
-    isPreferred: row.isPreferred,
-    createdAt: row.createdAt.toISOString(),
-  };
+  let row;
+  if (existing) {
+    row = await prisma.ingredientSupplierLink.update({
+      where: { id: existing.id },
+      data: { isPreferred },
+      include: linkInclude,
+    });
+  } else {
+    row = await prisma.ingredientSupplierLink.create({
+      data: { ingredientId, supplierProductId, tenantId, isPreferred },
+      include: linkInclude,
+    });
+  }
+
+  return toLinkRow(row);
+}
+
+/**
+ * Toggle isPreferred for an existing link.
+ * When setting preferred=true, clears the previous preferred link
+ * within the same (ingredientId, tenantId) scope.
+ */
+export async function setLinkPreferred(
+  tenantId: string,
+  linkId: string,
+  isPreferred: boolean
+): Promise<IngredientSupplierLink> {
+  const link = await prisma.ingredientSupplierLink.findFirst({
+    where: {
+      id: linkId,
+      OR: [{ tenantId }, { tenantId: null }],
+    },
+    include: linkInclude,
+  });
+  if (!link) throw new Error(`IngredientSupplierLink ${linkId} not found`);
+
+  if (isPreferred) {
+    await prisma.ingredientSupplierLink.updateMany({
+      where: { ingredientId: link.ingredientId, tenantId, isPreferred: true },
+      data: { isPreferred: false },
+    });
+  }
+
+  const updated = await prisma.ingredientSupplierLink.update({
+    where: { id: linkId },
+    data: { isPreferred },
+    include: linkInclude,
+  });
+
+  return toLinkRow(updated);
 }
 
 export async function unlinkIngredientFromSupplierProduct(
   tenantId: string,
   linkId: string
 ): Promise<void> {
+  // Allow deleting tenant-specific links (tenantId=tenantId) only
   const link = await prisma.ingredientSupplierLink.findFirst({
-    where: {
-      id: linkId,
-      ingredient: { tenantId, deletedAt: null },
-    },
+    where: { id: linkId, tenantId },
   });
   if (!link) throw new Error(`IngredientSupplierLink ${linkId} not found`);
 

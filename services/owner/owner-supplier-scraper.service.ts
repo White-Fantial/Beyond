@@ -1,14 +1,15 @@
 /**
- * Owner Supplier Scraper Service — Cost Management Phase 4 & 5 (revised).
+ * Owner Supplier Scraper Service — Cost Management Phase 4, 5, & D.
  *
  * Phase 4: Fetches current prices from supplier product URLs and updates the database.
  * Phase 5: Per-user credentialed scraping and reference-price computation.
+ * Phase D: Platform-level scheduled scraping — stores observations under PLATFORM_SCRAPER_TENANT_ID.
  *
  * Reference price logic:
  *   Each user's credential is used to scrape their in-use supplier products.
  *   Observed prices are stored as SupplierPriceRecord rows (append-only, per-tenant).
- *   The maximum observed price across all tenants is stored as referencePrice on
- *   SupplierProduct. Owners without credentials see this referencePrice as a fallback.
+ *   The platform scraper (no credentials) stores its observations under PLATFORM_SCRAPER_TENANT_ID.
+ *   The most recent platform-scraped price is used as a fallback for owners without credentials.
  */
 import { prisma } from "@/lib/prisma";
 import { getScraperForUrl } from "@/lib/supplier-scraper";
@@ -16,6 +17,9 @@ import { credentialedScraper } from "@/lib/supplier-scraper/credentialed";
 import { getDecryptedCredential } from "./owner-supplier-credentials.service";
 import type { ScrapeResult } from "@/types/owner-suppliers";
 import type { UserScrapeResult, UserScrapeRunResult, ReferencePriceInfo } from "@/types/owner-supplier-credentials";
+
+/** Sentinel tenantId used for platform-level (unauthenticated) price observations. */
+export const PLATFORM_SCRAPER_TENANT_ID = "PLATFORM_SCRAPER";
 
 // ─── Phase 4: unauthenticated scraping ────────────────────────────────────────
 
@@ -30,7 +34,10 @@ export async function scrapeSupplierProduct(
     where: {
       id: supplierProductId,
       deletedAt: null,
-      supplier: { tenantId, deletedAt: null },
+      supplier: {
+        deletedAt: null,
+        OR: [{ scope: "PLATFORM" }, { tenantId }],
+      },
     },
   });
   if (!product) throw new Error(`SupplierProduct ${supplierProductId} not found`);
@@ -77,7 +84,11 @@ export async function scrapeAllSupplierProducts(
   supplierId: string
 ): Promise<ScrapeResult[]> {
   const supplier = await prisma.supplier.findFirst({
-    where: { id: supplierId, tenantId, deletedAt: null },
+    where: {
+      id: supplierId,
+      deletedAt: null,
+      OR: [{ scope: "PLATFORM" }, { tenantId }],
+    },
   });
   if (!supplier) throw new Error(`Supplier ${supplierId} not found`);
 
@@ -105,26 +116,39 @@ export async function scrapeAllSupplierProducts(
 // ─── Phase 5: per-user credentialed scraping & reference price ─────────────────
 
 /**
- * Recompute the referencePrice for a supplier product as the MAX of all
- * SupplierPriceRecord rows for that product (across all tenants).
+ * Recompute the referencePrice for a supplier product.
+ * Uses the most recent platform-scraped price record (tenantId = PLATFORM_SCRAPER_TENANT_ID).
+ * Falls back to the most recent price record across all tenants if no platform record exists.
  */
 export async function recomputeReferencePrice(supplierProductId: string): Promise<void> {
-  const records = await prisma.supplierPriceRecord.findMany({
-    where: { supplierProductId },
+  // Prefer the latest platform-scraped price as the reference
+  const platformRecord = await prisma.supplierPriceRecord.findFirst({
+    where: { supplierProductId, tenantId: PLATFORM_SCRAPER_TENANT_ID },
+    orderBy: { observedAt: "desc" },
     select: { observedPrice: true },
   });
 
-  if (records.length === 0) return;
+  if (platformRecord) {
+    await prisma.supplierProduct.update({
+      where: { id: supplierProductId },
+      data: { referencePrice: platformRecord.observedPrice, lastScrapedAt: new Date() },
+    });
+    return;
+  }
 
-  const maxPrice = Math.max(...records.map((r) => r.observedPrice));
-
-  await prisma.supplierProduct.update({
-    where: { id: supplierProductId },
-    data: {
-      referencePrice: maxPrice,
-      lastScrapedAt: new Date(),
-    },
+  // Fallback: latest record from any tenant
+  const anyRecord = await prisma.supplierPriceRecord.findFirst({
+    where: { supplierProductId },
+    orderBy: { observedAt: "desc" },
+    select: { observedPrice: true },
   });
+
+  if (anyRecord) {
+    await prisma.supplierProduct.update({
+      where: { id: supplierProductId },
+      data: { referencePrice: anyRecord.observedPrice, lastScrapedAt: new Date() },
+    });
+  }
 }
 
 /**
@@ -270,7 +294,14 @@ export async function scrapeAllUsersForProduct(
   supplierProductId: string
 ): Promise<{ userCount: number; newReferencePrice: number }> {
   const product = await prisma.supplierProduct.findFirst({
-    where: { id: supplierProductId, deletedAt: null, supplier: { tenantId, deletedAt: null } },
+    where: {
+      id: supplierProductId,
+      deletedAt: null,
+      supplier: {
+        deletedAt: null,
+        OR: [{ scope: "PLATFORM" }, { tenantId }],
+      },
+    },
     select: { id: true, supplierId: true, externalUrl: true },
   });
   if (!product) throw new Error(`SupplierProduct ${supplierProductId} not found`);
@@ -313,7 +344,14 @@ export async function getReferencePriceInfo(
   supplierProductId: string
 ): Promise<ReferencePriceInfo> {
   const product = await prisma.supplierProduct.findFirst({
-    where: { id: supplierProductId, deletedAt: null, supplier: { tenantId, deletedAt: null } },
+    where: {
+      id: supplierProductId,
+      deletedAt: null,
+      supplier: {
+        deletedAt: null,
+        OR: [{ scope: "PLATFORM" }, { tenantId }],
+      },
+    },
     select: {
       id: true,
       referencePrice: true,
@@ -332,4 +370,109 @@ export async function getReferencePriceInfo(
     lastScrapedAt: product.lastScrapedAt?.toISOString() ?? null,
     priceRecordCount,
   };
+}
+
+// ─── Phase D: platform-level scheduled scraping ────────────────────────────────
+
+/**
+ * Scrape ALL PLATFORM supplier products (unauthenticated).
+ * Price observations are stored under PLATFORM_SCRAPER_TENANT_ID.
+ * The referencePrice on each product is updated to the latest scraped value.
+ *
+ * Designed for use in cron jobs — returns a summary of the scrape run.
+ */
+export async function scrapeAllPlatformProducts(): Promise<{
+  total: number;
+  scraped: number;
+  changed: number;
+  failed: number;
+}> {
+  const products = await prisma.supplierProduct.findMany({
+    where: {
+      deletedAt: null,
+      externalUrl: { not: null },
+      supplier: { scope: "PLATFORM", deletedAt: null },
+    },
+    select: { id: true, externalUrl: true, referencePrice: true },
+  });
+
+  let scraped = 0;
+  let changed = 0;
+  let failed = 0;
+  const scrapedAt = new Date();
+
+  for (const product of products) {
+    if (!product.externalUrl) continue;
+    try {
+      const scraper = getScraperForUrl(product.externalUrl);
+      const result = await scraper.scrape(product.externalUrl);
+
+      if (result.price === null) continue;
+
+      const priceChanged = result.price !== product.referencePrice;
+
+      await prisma.supplierPriceRecord.create({
+        data: {
+          supplierProductId: product.id,
+          tenantId: PLATFORM_SCRAPER_TENANT_ID,
+          observedPrice: result.price,
+          source: "SCRAPED",
+          observedAt: scrapedAt,
+        },
+      });
+
+      await prisma.supplierProduct.update({
+        where: { id: product.id },
+        data: { referencePrice: result.price, lastScrapedAt: scrapedAt },
+      });
+
+      scraped++;
+      if (priceChanged) changed++;
+    } catch (err) {
+      console.error(
+        `[platform-scraper] Failed to scrape product ${product.id}:`,
+        err instanceof Error ? err.message : String(err)
+      );
+      failed++;
+    }
+  }
+
+  return { total: products.length, scraped, changed, failed };
+}
+
+/**
+ * Scrape credentialed prices for ALL tenants that have active credentials.
+ * Designed for use in cron jobs.
+ */
+export async function scrapeAllTenantsCredentialed(): Promise<{
+  tenants: number;
+  totalScraped: number;
+  totalFailed: number;
+}> {
+  const credentials = await prisma.supplierCredential.findMany({
+    where: { deletedAt: null, isActive: true },
+    select: { tenantId: true, userId: true },
+    distinct: ["tenantId", "userId"],
+  });
+
+  let totalScraped = 0;
+  let totalFailed = 0;
+  const tenantUserPairs = credentials.map((c) => ({ tenantId: c.tenantId, userId: c.userId }));
+
+  for (const { tenantId, userId } of tenantUserPairs) {
+    try {
+      const result = await scrapeForUser(tenantId, userId);
+      totalScraped += result.scraped;
+      totalFailed += result.failed;
+    } catch (err) {
+      console.error(
+        `[credentialed-scraper] Failed for tenant ${tenantId} user ${userId}:`,
+        err instanceof Error ? err.message : String(err)
+      );
+      totalFailed++;
+    }
+  }
+
+  const uniqueTenants = new Set(tenantUserPairs.map((p) => p.tenantId)).size;
+  return { tenants: uniqueTenants, totalScraped, totalFailed };
 }

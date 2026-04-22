@@ -77,7 +77,10 @@ async function verifySupplierProductAccess(
     where: {
       id: supplierProductId,
       deletedAt: null,
-      supplier: { tenantId, deletedAt: null },
+      supplier: {
+        deletedAt: null,
+        OR: [{ scope: "PLATFORM" }, { tenantId }],
+      },
     },
   });
   if (!product) throw new Error(`SupplierProduct ${supplierProductId} not found`);

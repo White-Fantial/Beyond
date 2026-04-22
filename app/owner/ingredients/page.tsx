@@ -3,6 +3,7 @@ import { listIngredients } from "@/services/owner/owner-ingredients.service";
 import { getTenantIngredientRequests } from "@/services/marketplace/ingredient-requests.service";
 import IngredientTable from "@/components/owner/ingredients/IngredientTable";
 import ImportPlatformIngredientPanel from "@/components/owner/ingredients/ImportPlatformIngredientPanel";
+import PlatformIngredientRegistrationPanel from "@/components/owner/ingredients/PlatformIngredientRegistrationPanel";
 import RequestIngredientPanel from "@/components/owner/ingredients/RequestIngredientPanel";
 import { INGREDIENT_REQUEST_STATUS_LABELS } from "@/types/marketplace";
 import type { IngredientRequestStatus } from "@/types/marketplace";
@@ -41,6 +42,7 @@ export default async function OwnerIngredientsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <PlatformIngredientRegistrationPanel />
           <ImportPlatformIngredientPanel storeId={storeId} />
           <RequestIngredientPanel />
         </div>

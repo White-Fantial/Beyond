@@ -88,12 +88,9 @@ beforeEach(() => {
 // ─── recomputeReferencePrice ──────────────────────────────────────────────────
 
 describe("recomputeReferencePrice", () => {
-  it("sets referencePrice to the maximum of all price records", async () => {
-    mockPrisma.supplierPriceRecord.findMany.mockResolvedValue([
-      { observedPrice: 1000 },
-      { observedPrice: 1200 },
-      { observedPrice: 900 },
-    ]);
+  it("sets referencePrice to the latest platform-scraped price", async () => {
+    // First findFirst — platform record found
+    mockPrisma.supplierPriceRecord.findFirst.mockResolvedValueOnce({ observedPrice: 1200 });
     mockPrisma.supplierProduct.update.mockResolvedValue({});
 
     await recomputeReferencePrice(PRODUCT_ID);
@@ -106,8 +103,23 @@ describe("recomputeReferencePrice", () => {
     );
   });
 
+  it("falls back to latest any-tenant record when no platform record exists", async () => {
+    mockPrisma.supplierPriceRecord.findFirst.mockResolvedValueOnce(null); // no platform record
+    mockPrisma.supplierPriceRecord.findFirst.mockResolvedValueOnce({ observedPrice: 900 }); // fallback
+    mockPrisma.supplierProduct.update.mockResolvedValue({});
+
+    await recomputeReferencePrice(PRODUCT_ID);
+
+    expect(mockPrisma.supplierProduct.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: PRODUCT_ID },
+        data: expect.objectContaining({ referencePrice: 900 }),
+      })
+    );
+  });
+
   it("does nothing when there are no price records", async () => {
-    mockPrisma.supplierPriceRecord.findMany.mockResolvedValue([]);
+    mockPrisma.supplierPriceRecord.findFirst.mockResolvedValue(null);
 
     await recomputeReferencePrice(PRODUCT_ID);
 
@@ -242,11 +254,9 @@ describe("scrapeForUser", () => {
 // ─── reference price accumulation across tenants ──────────────────────────────
 
 describe("reference price across multiple tenants", () => {
-  it("referencePrice is the max across all tenant price records", async () => {
-    mockPrisma.supplierPriceRecord.findMany.mockResolvedValue([
-      { observedPrice: 1000 },
-      { observedPrice: 1200 },
-    ]);
+  it("referencePrice uses the latest platform-scraped record", async () => {
+    // Latest platform record
+    mockPrisma.supplierPriceRecord.findFirst.mockResolvedValueOnce({ observedPrice: 1200 });
     mockPrisma.supplierProduct.update.mockResolvedValue({});
 
     await recomputeReferencePrice(PRODUCT_ID);

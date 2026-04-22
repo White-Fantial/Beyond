@@ -6,6 +6,7 @@ import type { SupplierDetail } from "@/types/owner-suppliers";
 import type { SupplierCredential } from "@/types/owner-supplier-credentials";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
 import SupplierCredentialPanel from "./SupplierCredentialPanel";
+import SupplierPriceHistoryPanel from "./SupplierPriceHistoryPanel";
 
 interface Props {
   supplier: SupplierDetail;
@@ -147,7 +148,7 @@ export default function SupplierDetailView({ supplier, credential }: Props) {
         <SupplierCredentialPanel supplierId={supplier.id} credential={credential} />
       </div>
 
-      {/* Products table (read-only — admin-managed) */}
+      {/* Products list (read-only — admin-managed) */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -157,56 +158,46 @@ export default function SupplierDetailView({ supplier, credential }: Props) {
         {supplier.products.length === 0 ? (
           <div className="p-6 text-center text-sm text-gray-400">No products yet.</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-xs text-gray-500 border-b border-gray-100">
-                <th className="px-5 py-3 text-left font-medium">Product</th>
-                <th className="px-5 py-3 text-right font-medium">Reference Price</th>
-                <th className="px-5 py-3 text-left font-medium">Unit</th>
-                <th className="px-5 py-3 text-left font-medium">Last Scraped</th>
-                <th className="px-5 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {supplier.products.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3">
-                    <div className="font-medium text-gray-900">{product.name}</div>
+          <div className="divide-y divide-gray-100">
+            {supplier.products.map((product) => (
+              <div key={product.id}>
+                <div className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm text-gray-900">{product.name}</span>
+                      <span className="text-xs text-gray-500">
+                        {INGREDIENT_UNIT_LABELS[product.unit] ?? product.unit}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
+                      <span className="font-medium text-gray-900">{formatPrice(product.referencePrice)}</span>
+                      <span>Last scraped: {formatDate(product.lastScrapedAt)}</span>
+                    </div>
                     {product.externalUrl && (
                       <a
                         href={product.externalUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-brand-600 hover:underline truncate block max-w-xs"
+                        className="text-xs text-brand-600 hover:underline truncate block max-w-xs mt-0.5"
                       >
                         {product.externalUrl}
                       </a>
                     )}
-                  </td>
-                  <td className="px-5 py-3 text-right font-medium text-gray-900">
-                    {formatPrice(product.referencePrice)}
-                  </td>
-                  <td className="px-5 py-3 text-gray-600">
-                    {INGREDIENT_UNIT_LABELS[product.unit] ?? product.unit}
-                  </td>
-                  <td className="px-5 py-3 text-gray-500 text-xs">
-                    {formatDate(product.lastScrapedAt)}
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    {product.externalUrl && (
-                      <button
-                        onClick={() => handleScrapeProduct(product.id)}
-                        disabled={scrapingProductId === product.id}
-                        className="text-brand-600 hover:text-brand-800 text-xs font-medium disabled:opacity-50"
-                      >
-                        {scrapingProductId === product.id ? "Scraping…" : "Scrape"}
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                  {product.externalUrl && (
+                    <button
+                      onClick={() => handleScrapeProduct(product.id)}
+                      disabled={scrapingProductId === product.id}
+                      className="text-brand-600 hover:text-brand-800 text-xs font-medium disabled:opacity-50 shrink-0"
+                    >
+                      {scrapingProductId === product.id ? "Scraping…" : "Scrape"}
+                    </button>
+                  )}
+                </div>
+                <SupplierPriceHistoryPanel product={product} />
+              </div>
+            ))}
+          </div>
         )}
         {productScrapeError && (
           <p className="mt-2 text-sm text-red-600 px-5 py-2">{productScrapeError}</p>

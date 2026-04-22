@@ -37,7 +37,12 @@ export interface IngredientSupplierLink {
   supplierProductId: string;
   supplierProductName: string;
   supplierName: string;
+  /** null = platform-level link; set = owner-specific override */
+  tenantId: string | null;
   isPreferred: boolean;
+  /** Current reference price in millicents for display */
+  referencePrice: number;
+  lastScrapedAt: string | null;
   createdAt: string;
 }
 
