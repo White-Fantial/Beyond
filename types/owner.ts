@@ -512,3 +512,65 @@ export interface StoreProductSelectionRow {
     imageUrl: string | null;
   };
 }
+
+// ─── Tenant Modifier Groups ───────────────────────────────────────────────────
+
+export interface TenantModifierOptionRow {
+  id: string;
+  tenantId: string;
+  tenantModifierGroupId: string;
+  name: string;
+  priceDeltaAmount: number;
+  currency: string;
+  displayOrder: number;
+  isDefault: boolean;
+  isActive: boolean;
+}
+
+export interface TenantModifierGroupRow {
+  id: string;
+  tenantId: string;
+  name: string;
+  description: string | null;
+  selectionMin: number;
+  selectionMax: number | null;
+  isRequired: boolean;
+  displayOrder: number;
+  isActive: boolean;
+  options: TenantModifierOptionRow[];
+}
+
+export interface TenantProductModifierGroupRow {
+  id: string;
+  tenantProductId: string;
+  tenantModifierGroupId: string;
+  displayOrder: number;
+  modifierGroup: TenantModifierGroupRow;
+}
+
+// ─── Store Category / Modifier Selections ─────────────────────────────────────
+
+export interface StoreCategorySelectionRow {
+  tenantCategoryId: string;
+  name: string;
+  /** Effective display order: override if set, otherwise tenant displayOrder */
+  effectiveDisplayOrder: number;
+  displayOrderOverride: number | null;
+  isEnabled: boolean;
+  selectionId: string | null;
+}
+
+export interface StoreModifierGroupSelectionRow {
+  tenantModifierGroupId: string;
+  name: string;
+  description: string | null;
+  selectionMin: number;
+  selectionMax: number | null;
+  isRequired: boolean;
+  options: TenantModifierOptionRow[];
+  /** Effective display order: override if set, otherwise tenant displayOrder */
+  effectiveDisplayOrder: number;
+  displayOrderOverride: number | null;
+  isEnabled: boolean;
+  selectionId: string | null;
+}
