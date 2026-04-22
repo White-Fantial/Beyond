@@ -17,15 +17,6 @@ const UNITS = ["GRAM", "KG", "ML", "LITER", "EACH", "DOZEN", "OZ", "LB"] as cons
 export default function AdminSupplierDetailPanel({ supplier }: Props) {
   const router = useRouter();
 
-  // Edit supplier state
-  const [editName, setEditName] = useState(supplier.name);
-  const [editWebsite, setEditWebsite] = useState(supplier.websiteUrl ?? "");
-  const [editEmail, setEditEmail] = useState(supplier.contactEmail ?? "");
-  const [editPhone, setEditPhone] = useState(supplier.contactPhone ?? "");
-  const [editNotes, setEditNotes] = useState(supplier.notes ?? "");
-  const [savingSupplier, setSavingSupplier] = useState(false);
-  const [supplierError, setSupplierError] = useState<string | null>(null);
-
   // New product state
   const [showProductForm, setShowProductForm] = useState(false);
   const [productName, setProductName] = useState("");
@@ -35,45 +26,6 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
   const [productUnit, setProductUnit] = useState<string>("EACH");
   const [savingProduct, setSavingProduct] = useState(false);
   const [productError, setProductError] = useState<string | null>(null);
-
-  async function handleSaveSupplier(e: React.FormEvent) {
-    e.preventDefault();
-    setSavingSupplier(true);
-    setSupplierError(null);
-    try {
-      const res = await fetch(`/api/admin/suppliers/${supplier.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: editName,
-          websiteUrl: editWebsite || null,
-          contactEmail: editEmail || null,
-          contactPhone: editPhone || null,
-          notes: editNotes || null,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setSupplierError(data.error ?? "Failed to update supplier");
-        return;
-      }
-      router.refresh();
-    } catch {
-      setSupplierError("Network error. Please try again.");
-    } finally {
-      setSavingSupplier(false);
-    }
-  }
-
-  async function handleDeleteSupplier() {
-    if (!confirm(`Delete supplier "${supplier.name}"? This cannot be undone.`)) return;
-    try {
-      await fetch(`/api/admin/suppliers/${supplier.id}`, { method: "DELETE" });
-      router.push("/admin/suppliers");
-    } catch {
-      // ignore
-    }
-  }
 
   async function handleAddProduct(e: React.FormEvent) {
     e.preventDefault();
@@ -120,79 +72,7 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Edit supplier */}
-      <form
-        onSubmit={handleSaveSupplier}
-        className="bg-white rounded-xl border border-gray-200 p-5 space-y-4"
-      >
-        <h2 className="text-sm font-semibold text-gray-900">Supplier Details</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Name *</label>
-            <input
-              required
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Website URL</label>
-            <input
-              type="url"
-              value={editWebsite}
-              onChange={(e) => setEditWebsite(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Contact Email</label>
-            <input
-              type="email"
-              value={editEmail}
-              onChange={(e) => setEditEmail(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Contact Phone</label>
-            <input
-              type="tel"
-              value={editPhone}
-              onChange={(e) => setEditPhone(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
-            />
-          </div>
-          <div className="sm:col-span-2 lg:col-span-4">
-            <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
-            <textarea
-              rows={2}
-              value={editNotes}
-              onChange={(e) => setEditNotes(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
-            />
-          </div>
-        </div>
-        {supplierError && <p className="text-sm text-red-600">{supplierError}</p>}
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={savingSupplier}
-            className="px-5 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50"
-          >
-            {savingSupplier ? "Saving…" : "Save Changes"}
-          </button>
-          <button
-            type="button"
-            onClick={handleDeleteSupplier}
-            className="px-5 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700"
-          >
-            Delete Supplier
-          </button>
-        </div>
-      </form>
-
+    <>
       {/* Products */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -349,6 +229,6 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
           </table>
         )}
       </div>
-    </div>
+    </>
   );
 }
