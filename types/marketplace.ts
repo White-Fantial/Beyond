@@ -85,6 +85,7 @@ export interface MarketplaceRecipe {
   estimatedCostPrice: number;
   recommendedPrice: number;
   salePrice: number;
+  instructions: string | null;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -134,6 +135,7 @@ export interface CreateMarketplaceRecipeInput {
   currency?: string;
   recommendedPrice?: number;
   salePrice?: number;
+  instructions?: string;
   steps?: MarketplaceRecipeStepInput[];
   ingredients?: MarketplaceRecipeIngredientInput[];
 }
@@ -152,6 +154,7 @@ export interface UpdateMarketplaceRecipeInput {
   currency?: string;
   recommendedPrice?: number;
   salePrice?: number;
+  instructions?: string;
   steps?: MarketplaceRecipeStepInput[];
   ingredients?: MarketplaceRecipeIngredientInput[];
 }

@@ -1,6 +1,5 @@
 import { requirePlatformAdmin } from "@/lib/admin/auth-guard";
 import { prisma } from "@/lib/prisma";
-import AdminCreateRecipeForm from "@/components/admin/AdminCreateRecipeForm";
 import AdminRecipeActions from "@/components/admin/AdminRecipeActions";
 import Link from "next/link";
 
@@ -85,10 +84,13 @@ export default async function AdminRecipesPage({ searchParams }: PageProps) {
             {total} {total === 1 ? "recipe" : "recipes"} total
           </p>
         </div>
+        <Link
+          href="/admin/recipes/new"
+          className="px-4 py-2 bg-red-700 text-white text-sm font-medium rounded-lg hover:bg-red-800 transition"
+        >
+          + Add Recipe
+        </Link>
       </div>
-
-      {/* Create recipe form */}
-      <AdminCreateRecipeForm />
 
       {/* Store filter */}
       <form method="GET" className="flex items-center gap-3">

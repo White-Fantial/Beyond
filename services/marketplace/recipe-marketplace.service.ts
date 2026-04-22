@@ -43,6 +43,7 @@ type RawRecipe = {
   estimatedCostPrice: number;
   recommendedPrice: number;
   salePrice: number;
+  instructions: string | null;
   publishedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -91,6 +92,7 @@ function toRecipe(row: RawRecipe): MarketplaceRecipe {
     estimatedCostPrice: row.estimatedCostPrice,
     recommendedPrice: row.recommendedPrice,
     salePrice: row.salePrice,
+    instructions: row.instructions,
     publishedAt: row.publishedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -239,6 +241,7 @@ export async function listMarketplaceRecipes(
     estimatedCostPrice: 0,
     recommendedPrice: 0,
     salePrice: 0,
+    instructions: r.instructions ?? null,
     publishedAt: r.createdAt.toISOString(),
     createdAt: r.createdAt.toISOString(),
     updatedAt: r.updatedAt.toISOString(),
@@ -339,6 +342,7 @@ export async function createMarketplaceRecipe(
       currency: input.currency ?? "USD",
       recommendedPrice: input.recommendedPrice ?? 0,
       salePrice: input.type === "BASIC" ? 0 : (input.salePrice ?? 0),
+      instructions: input.instructions ?? null,
       publishedAt: initialStatus === "PUBLISHED" ? new Date() : null,
       steps: {
         create: (input.steps ?? []).map((s) => ({
@@ -445,6 +449,9 @@ export async function updateMarketplaceRecipe(
         ? { recommendedPrice: input.recommendedPrice }
         : {}),
       ...(input.salePrice !== undefined ? { salePrice: input.salePrice } : {}),
+      ...(input.instructions !== undefined
+        ? { instructions: input.instructions || null }
+        : {}),
       ...(input.steps !== undefined
         ? {
             steps: {

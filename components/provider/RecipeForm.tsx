@@ -5,12 +5,15 @@ import { useRouter } from "next/navigation";
 import type {
   CreateMarketplaceRecipeInput,
   UpdateMarketplaceRecipeInput,
-  MarketplaceRecipeStepInput,
   MarketplaceRecipeIngredientInput,
   MarketplaceRecipeDetail,
 } from "@/types/marketplace";
 import type { Ingredient } from "@/types/owner-ingredients";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
+import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
+import type { RecipeYieldUnit } from "@/types/owner-recipes";
+
+const YIELD_UNITS = Object.keys(RECIPE_YIELD_UNIT_LABELS) as RecipeYieldUnit[];
 
 interface RecipeFormProps {
   mode: "create" | "edit";
@@ -38,24 +41,16 @@ export default function RecipeForm({
   const [servings, setServings] = useState(initial?.servings ?? 1);
   const [prepTime, setPrepTime] = useState(initial?.prepTimeMinutes ?? 0);
   const [cookTime, setCookTime] = useState(initial?.cookTimeMinutes ?? 0);
-  const [yieldQty] = useState(initial?.yieldQty ?? 1);
-  const [yieldUnit] = useState(
-    initial?.yieldUnit ?? "EACH"
+  const [yieldQty, setYieldQty] = useState(initial?.yieldQty ?? 1);
+  const [yieldUnit, setYieldUnit] = useState<RecipeYieldUnit>(
+    (initial?.yieldUnit as RecipeYieldUnit) ?? "EACH"
   );
   const [recommendedPrice, setRecommendedPrice] = useState(
     initial?.recommendedPrice ?? 0
   );
   const [salePrice, setSalePrice] = useState(initial?.salePrice ?? 0);
   const [currency] = useState(initial?.currency ?? "USD");
-
-  const [steps, setSteps] = useState<MarketplaceRecipeStepInput[]>(
-    initial?.steps.map((s) => ({
-      stepNumber: s.stepNumber,
-      instruction: s.instruction,
-      imageUrl: s.imageUrl ?? undefined,
-      durationMinutes: s.durationMinutes ?? undefined,
-    })) ?? [{ stepNumber: 1, instruction: "" }]
-  );
+  const [instructions, setInstructions] = useState(initial?.instructions ?? "");
 
   const [ingredients, setIngredients] = useState<
     MarketplaceRecipeIngredientInput[]
@@ -67,33 +62,6 @@ export default function RecipeForm({
       notes: i.notes ?? undefined,
     })) ?? []
   );
-
-  // ── Step helpers ─────────────────────────────────────────────────────────
-
-  function addStep() {
-    setSteps((prev) => [
-      ...prev,
-      { stepNumber: prev.length + 1, instruction: "" },
-    ]);
-  }
-
-  function removeStep(idx: number) {
-    setSteps((prev) =>
-      prev
-        .filter((_, i) => i !== idx)
-        .map((s, i) => ({ ...s, stepNumber: i + 1 }))
-    );
-  }
-
-  function updateStep(
-    idx: number,
-    field: keyof MarketplaceRecipeStepInput,
-    value: string | number
-  ) {
-    setSteps((prev) =>
-      prev.map((s, i) => (i === idx ? { ...s, [field]: value } : s))
-    );
-  }
 
   // ── Ingredient helpers ───────────────────────────────────────────────────
 
@@ -141,11 +109,11 @@ export default function RecipeForm({
           prepTimeMinutes: prepTime || undefined,
           cookTimeMinutes: cookTime || undefined,
           yieldQty,
-          yieldUnit: yieldUnit as "EACH" | "BATCH" | "SERVING" | "GRAM" | "KG" | "ML" | "LITER",
+          yieldUnit,
           recommendedPrice,
           salePrice,
           currency,
-          steps,
+          instructions: instructions || undefined,
           ingredients,
           ...(mode === "create" ? { type: "PREMIUM" as const } : {}),
         };
@@ -303,6 +271,39 @@ export default function RecipeForm({
             />
           </div>
         </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Yield Qty <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              min={1}
+              required
+              value={yieldQty}
+              onChange={(e) => setYieldQty(Number(e.target.value))}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">
+              Yield Unit <span className="text-red-500">*</span>
+            </label>
+            <select
+              required
+              value={yieldUnit}
+              onChange={(e) => setYieldUnit(e.target.value as RecipeYieldUnit)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            >
+              {YIELD_UNITS.map((u) => (
+                <option key={u} value={u}>
+                  {RECIPE_YIELD_UNIT_LABELS[u]}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Pricing */}
@@ -412,65 +413,16 @@ export default function RecipeForm({
         ))}
       </div>
 
-      {/* Steps */}
+      {/* Instructions */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-700">Cooking Steps</h2>
-          <button
-            type="button"
-            onClick={addStep}
-            className="text-xs text-orange-600 hover:text-orange-700 font-medium"
-          >
-            + Add Step
-          </button>
-        </div>
-
-        {steps.map((step, idx) => (
-          <div
-            key={idx}
-            className="flex gap-3 items-start p-3 bg-gray-50 rounded-lg"
-          >
-            <div className="w-7 h-7 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-1">
-              {step.stepNumber}
-            </div>
-            <div className="flex-1 space-y-2">
-              <textarea
-                value={step.instruction}
-                onChange={(e) =>
-                  updateStep(idx, "instruction", e.target.value)
-                }
-                required
-                rows={2}
-                placeholder="Describe this cooking step…"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-              />
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  min={0}
-                  value={step.durationMinutes ?? ""}
-                  onChange={(e) =>
-                    updateStep(
-                      idx,
-                      "durationMinutes",
-                      e.target.value ? Number(e.target.value) : 0
-                    )
-                  }
-                  placeholder="Duration (min)"
-                  className="w-36 border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                />
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => removeStep(idx)}
-              disabled={steps.length <= 1}
-              className="text-red-400 hover:text-red-600 text-lg disabled:opacity-30"
-            >
-              ×
-            </button>
-          </div>
-        ))}
+        <h2 className="text-sm font-semibold text-gray-700">Instructions</h2>
+        <textarea
+          value={instructions}
+          onChange={(e) => setInstructions(e.target.value)}
+          rows={6}
+          placeholder="Describe the cooking steps…"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-y"
+        />
       </div>
 
       {/* Actions */}
