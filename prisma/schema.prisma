@@ -3526,12 +3526,31 @@ model Ingredient {
   marketplaceIngredients MarketplaceRecipeIngredient[]
   ingredientRequests     IngredientRequest[]          @relation("IngredientRequestResolved")
   tempIngredientRequests IngredientRequest[]          @relation("IngredientRequestTemp")
+  tenantRegistrations    TenantIngredient[]
 
   @@index([scope, isActive])
   @@index([scope, category])
   @@index([tenantId, storeId])
   @@index([storeId, name])
   @@map("ingredients")
+}
+
+/// Tracks which PLATFORM-scope ingredients a tenant has registered for use.
+/// Owners register a platform ingredient to associate it with their recipes and
+/// set per-tenant preferred supplier products.
+model TenantIngredient {
+  id           String   @id @default(uuid())
+  tenantId     String
+  ingredientId String   // references PLATFORM-scope Ingredient
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, ingredientId])
+  @@index([tenantId])
+  @@map("tenant_ingredients")
 }
 
 /// Platform-level recipe category managed by admins.
@@ -3622,6 +3641,7 @@ model Supplier {
   contactEmail String?
   contactPhone String?
   notes        String?
+  adapterType  String?       // scraper adapter key (e.g. "foodstuffs", "countdown"); null = generic scraper
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   deletedAt    DateTime?
@@ -3690,15 +3710,22 @@ model IngredientSupplierLink {
   id                String   @id @default(uuid())
   ingredientId      String
   supplierProductId String
+  /// null = platform-level link (admin-managed, visible to all tenants as fallback).
+  /// set  = owner-specific override (per-tenant preferred product selection).
+  tenantId          String?
   isPreferred       Boolean  @default(false)
   createdAt         DateTime @default(now())
 
   ingredient      Ingredient      @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
   supplierProduct SupplierProduct @relation(fields: [supplierProductId], references: [id], onDelete: Cascade)
 
-  @@unique([ingredientId, supplierProductId])
+  // Uniqueness enforced via partial indexes in the migration SQL:
+  //   - (ingredientId, supplierProductId) WHERE tenantId IS NULL  (platform-level)
+  //   - (ingredientId, supplierProductId, tenantId) WHERE tenantId IS NOT NULL (tenant override)
   @@index([ingredientId])
   @@index([supplierProductId])
+  @@index([tenantId])
+  @@index([ingredientId, supplierProductId, tenantId])
   @@map("ingredient_supplier_links")
 }
 
