@@ -282,7 +282,7 @@ export async function resolveEffectiveCost(
  * Optimised to load all relevant data in three queries instead of N×3.
  */
 export async function resolveEffectiveCostsBulk(
-  tenantId: string,
+  tenantId: string | null,
   supplierProductIds: string[]
 ): Promise<Map<string, { price: number; resolved: boolean }>> {
   if (supplierProductIds.length === 0) return new Map();
@@ -291,35 +291,38 @@ export async function resolveEffectiveCostsBulk(
     supplierProductIds.map((id) => [id, { price: 0, resolved: false }])
   );
 
-  // 1. Active contract prices (one per product, take the latest effectiveFrom)
-  const contracts = await prisma.supplierContractPrice.findMany({
-    where: { supplierProductId: { in: supplierProductIds }, tenantId, effectiveTo: null },
-    orderBy: { effectiveFrom: "desc" },
-    select: { supplierProductId: true, price: true },
-  });
-  for (const c of contracts) {
-    if (!result.get(c.supplierProductId)?.resolved) {
-      result.set(c.supplierProductId, { price: c.price, resolved: true });
-    }
-  }
-
-  // 2. Latest price records for products still unresolved
-  const unresolvedAfterContracts = supplierProductIds.filter(
-    (id) => !result.get(id)?.resolved
-  );
-  if (unresolvedAfterContracts.length > 0) {
-    // Fetch the most recent record per product using a raw grouping approach
-    const records = await prisma.supplierPriceRecord.findMany({
-      where: { supplierProductId: { in: unresolvedAfterContracts }, tenantId },
-      orderBy: { observedAt: "desc" },
-      select: { supplierProductId: true, observedPrice: true },
+  // When no tenant context, skip tenant-specific pricing and fall through to reference prices.
+  if (tenantId !== null) {
+    // 1. Active contract prices (one per product, take the latest effectiveFrom)
+    const contracts = await prisma.supplierContractPrice.findMany({
+      where: { supplierProductId: { in: supplierProductIds }, tenantId, effectiveTo: null },
+      orderBy: { effectiveFrom: "desc" },
+      select: { supplierProductId: true, price: true },
     });
-    // Deduplicate: keep first (newest) per product
-    const seen = new Set<string>();
-    for (const r of records) {
-      if (!seen.has(r.supplierProductId)) {
-        seen.add(r.supplierProductId);
-        result.set(r.supplierProductId, { price: r.observedPrice, resolved: true });
+    for (const c of contracts) {
+      if (!result.get(c.supplierProductId)?.resolved) {
+        result.set(c.supplierProductId, { price: c.price, resolved: true });
+      }
+    }
+
+    // 2. Latest price records for products still unresolved
+    const unresolvedAfterContracts = supplierProductIds.filter(
+      (id) => !result.get(id)?.resolved
+    );
+    if (unresolvedAfterContracts.length > 0) {
+      // Fetch the most recent record per product using a raw grouping approach
+      const records = await prisma.supplierPriceRecord.findMany({
+        where: { supplierProductId: { in: unresolvedAfterContracts }, tenantId },
+        orderBy: { observedAt: "desc" },
+        select: { supplierProductId: true, observedPrice: true },
+      });
+      // Deduplicate: keep first (newest) per product
+      const seen = new Set<string>();
+      for (const r of records) {
+        if (!seen.has(r.supplierProductId)) {
+          seen.add(r.supplierProductId);
+          result.set(r.supplierProductId, { price: r.observedPrice, resolved: true });
+        }
       }
     }
   }
