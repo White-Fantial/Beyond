@@ -267,7 +267,7 @@ async function resolveProductComponentCosts(
     }
   }
 
-  const costMap = await resolveCosts(tenantId, allIngredients);
+  const ingredientCostMap = await resolveCosts(tenantId, allIngredients);
 
   for (const comp of components) {
     const recipes = comp.tenantProduct.recipes ?? [];
@@ -278,12 +278,12 @@ async function resolveProductComponentCosts(
     const recipe = recipes[0];
     const rawIngs = recipe.ingredients as RawRecipeIngredient[];
     const totalCost = rawIngs.reduce((sum, ri) => {
-      const mapped = toRecipeIngredientWithCost(ri, costMap);
+      const mapped = toRecipeIngredientWithCost(ri, ingredientCostMap);
       return sum + mapped.lineCost;
     }, 0);
-    const costPerUnit =
+    const subProductCostPerUnit =
       recipe.yieldQty > 0 ? Math.round(totalCost / recipe.yieldQty) : 0;
-    result.set(comp.tenantProductId, costPerUnit);
+    result.set(comp.tenantProductId, subProductCostPerUnit);
   }
 
   return result;
