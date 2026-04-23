@@ -612,7 +612,7 @@ export default function ProductRecipeActions({ catalogProductId, tenantCatalogPr
           onClick={() => setMode("marketplace")}
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
         >
-          🏪 Search Marketplace
+          🏪 Search Recipe
         </button>
         <button
           type="button"
@@ -638,7 +638,7 @@ export default function ProductRecipeActions({ catalogProductId, tenantCatalogPr
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
           >
-            🏪 Search Marketplace
+            🏪 Search Recipe
           </button>
           <button
             type="button"
