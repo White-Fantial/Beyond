@@ -12,7 +12,7 @@
  *   The most recent platform-scraped price is used as a fallback for owners without credentials.
  */
 import { prisma } from "@/lib/prisma";
-import { getScraperForUrl, getScraperForSupplier } from "@/lib/supplier-scraper";
+import { getScraperForSupplier } from "@/lib/supplier-scraper";
 import type { SupplierScraper, SessionContext, ScrapedProduct } from "@/lib/supplier-scraper/base";
 import { credentialedScraper } from "@/lib/supplier-scraper/credentialed";
 import { getDecryptedCredential } from "./owner-supplier-credentials.service";
@@ -30,6 +30,11 @@ interface DecryptedCredentialFields {
 type SupplierSessionEntry =
   | { session: SessionContext; scraper: SupplierScraper; credentialId: string; decryptedCredential: DecryptedCredentialFields }
   | null;
+
+/** Minimal supplier info needed for scraper resolution. */
+interface SupplierAdapterInfo {
+  adapterType: string | null;
+}
 
 /** Sentinel tenantId used for platform-level (unauthenticated) price observations. */
 export const PLATFORM_SCRAPER_TENANT_ID = "PLATFORM_SCRAPER";
@@ -60,7 +65,7 @@ export async function scrapeSupplierProduct(
   }
 
   const scraper = getScraperForSupplier(
-    { adapterType: (product as typeof product & { supplier: { adapterType: string | null } }).supplier.adapterType },
+    (product as typeof product & { supplier: SupplierAdapterInfo }).supplier,
     product.externalUrl
   );
   if (!scraper) {
@@ -235,8 +240,8 @@ export async function scrapeForUser(
   const sessionCache = new Map<string, SupplierSessionEntry>();
 
   for (const product of linkedProducts) {
-    const supplierInfo = (product as typeof product & { supplier: { adapterType: string | null } }).supplier;
-    const domainScraper = getScraperForSupplier({ adapterType: supplierInfo.adapterType }, product.externalUrl);
+    const supplierInfo = (product as typeof product & { supplier: SupplierAdapterInfo }).supplier;
+    const domainScraper = getScraperForSupplier(supplierInfo, product.externalUrl);
     if (!domainScraper) {
       skipped++;
       continue;
@@ -283,6 +288,12 @@ export async function scrapeForUser(
 
       if (entry.scraper.scrapeWithSession && entry.session.authenticated) {
         // Authenticated API path: reuse the existing session.
+        // Some scrapers don't need a URL (they use the session's cached product list),
+        // but we still guard against a missing URL for scrapers that do.
+        if (!product.externalUrl && !entry.scraper.fetchProductList) {
+          skipped++;
+          continue;
+        }
         scraped = await entry.scraper.scrapeWithSession(product.externalUrl ?? "", entry.session);
       } else if (product.externalUrl) {
         // Generic form-based fallback (scraper has no scrapeWithSession).
@@ -477,9 +488,11 @@ export async function scrapeAllPlatformProducts(): Promise<{
   const scrapedAt = new Date();
 
   for (const product of products) {
-    const supplierInfo = (product as typeof product & { supplier: { adapterType: string | null } }).supplier;
-    const scraper = getScraperForSupplier({ adapterType: supplierInfo.adapterType }, product.externalUrl);
+    const supplierInfo = (product as typeof product & { supplier: SupplierAdapterInfo }).supplier;
+    const scraper = getScraperForSupplier(supplierInfo, product.externalUrl);
     if (!scraper) continue;
+    // For scrapers that need a URL, require externalUrl to be present.
+    if (!product.externalUrl && !scraper.fetchProductList) continue;
     try {
       const result = await scraper.scrape(product.externalUrl ?? "");
 
