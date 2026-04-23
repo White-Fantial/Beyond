@@ -679,10 +679,12 @@ export async function copyMarketplaceRecipeToOwner(
   });
 
   // Auto-import all recipe ingredients into the tenant's ingredient list.
-  // Best-effort: failures are silent so that a non-PLATFORM ingredient does not abort the copy.
+  // Best-effort: failures are logged but do not abort the recipe copy.
   await Promise.all(
     ingredientsToCreate.map((i) =>
-      registerTenantIngredient(tenantId, i.ingredientId).catch(() => {})
+      registerTenantIngredient(tenantId, i.ingredientId).catch((err) => {
+        console.error("Failed to auto-import ingredient", i.ingredientId, "for tenant", tenantId, err);
+      })
     )
   );
 
@@ -759,10 +761,12 @@ export async function copyPlatformRecipeToOwner(
   });
 
   // Auto-import all recipe ingredients into the tenant's ingredient list.
-  // Best-effort: failures are silent so that a non-PLATFORM ingredient does not abort the copy.
+  // Best-effort: failures are logged but do not abort the recipe copy.
   await Promise.all(
     ingredientsToCreate.map((i) =>
-      registerTenantIngredient(tenantId, i.ingredientId).catch(() => {})
+      registerTenantIngredient(tenantId, i.ingredientId).catch((err) => {
+        console.error("Failed to auto-import ingredient", i.ingredientId, "for tenant", tenantId, err);
+      })
     )
   );
 
