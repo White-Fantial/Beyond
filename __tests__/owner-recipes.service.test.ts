@@ -40,7 +40,7 @@ const mockPrisma = prisma as unknown as {
 };
 
 const TENANT = "tenant-1";
-const STORE = "store-1";
+
 
 const mockIngRow = {
   id: "ri-1",
@@ -81,7 +81,6 @@ const mockProductComponentRow = {
 const mockRecipeRow = {
   id: "recipe-1",
   tenantId: TENANT,
-  storeId: STORE,
   catalogProductId: null,
   tenantCatalogProductId: null,
   catalogProduct: null,
@@ -114,15 +113,15 @@ describe("listRecipes", () => {
     expect(result.items[0].name).toBe("Classic Bagel");
   });
 
-  it("filters by storeId", async () => {
+  it("filters by tenantId only (no storeId)", async () => {
     mockPrisma.recipe.findMany.mockResolvedValue([]);
     mockPrisma.recipe.count.mockResolvedValue(0);
 
-    await listRecipes(TENANT, { storeId: STORE });
+    await listRecipes(TENANT);
 
     expect(mockPrisma.recipe.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ storeId: STORE }),
+        where: expect.objectContaining({ tenantId: TENANT }),
       })
     );
   });
@@ -204,7 +203,6 @@ describe("createRecipe", () => {
     });
 
     const result = await createRecipe(TENANT, {
-      storeId: STORE,
       name: "Classic Bagel",
       yieldQty: 12,
       yieldUnit: "EACH",
@@ -217,7 +215,6 @@ describe("createRecipe", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           tenantId: TENANT,
-          storeId: STORE,
           yieldQty: 12,
         }),
       })
@@ -232,7 +229,6 @@ describe("createRecipe", () => {
     });
 
     await createRecipe(TENANT, {
-      storeId: STORE,
       name: "Classic Bagel",
       yieldQty: 12,
       yieldUnit: "EACH",
@@ -388,7 +384,6 @@ describe("createRecipe with tenantCatalogProductId", () => {
     });
 
     await createRecipe(TENANT, {
-      storeId: STORE,
       tenantCatalogProductId: tenantProductId,
       name: "New Recipe",
       yieldQty: 1,
@@ -412,7 +407,6 @@ describe("createRecipe with tenantCatalogProductId", () => {
     });
 
     await createRecipe(TENANT, {
-      storeId: STORE,
       name: "New Recipe",
       yieldQty: 1,
       yieldUnit: "EACH",
@@ -440,7 +434,6 @@ describe("createRecipe with productComponents", () => {
     });
 
     await createRecipe(TENANT, {
-      storeId: STORE,
       tenantCatalogProductId: "tp-owner",
       name: "Bulgogi Sandwich",
       yieldQty: 1,
@@ -486,7 +479,6 @@ describe("createRecipe with productComponents", () => {
     });
 
     await createRecipe(TENANT, {
-      storeId: STORE,
       name: "Plain Recipe",
       yieldQty: 1,
       yieldUnit: "EACH",
@@ -555,7 +547,6 @@ describe("circular reference detection in createRecipe", () => {
 
     await expect(
       createRecipe(TENANT, {
-        storeId: STORE,
         tenantCatalogProductId: ownerProductId,
         name: "Circular",
         yieldQty: 1,
@@ -580,7 +571,6 @@ describe("circular reference detection in createRecipe", () => {
 
     await expect(
       createRecipe(TENANT, {
-        storeId: STORE,
         tenantCatalogProductId: productA,
         name: "Indirect Circular",
         yieldQty: 1,
@@ -611,7 +601,6 @@ describe("circular reference detection in createRecipe", () => {
 
     await expect(
       createRecipe(TENANT, {
-        storeId: STORE,
         tenantCatalogProductId: productA,
         name: "Valid",
         yieldQty: 1,

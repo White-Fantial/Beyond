@@ -4,7 +4,8 @@ import Link from "next/link";
 
 export default async function NewOwnerRecipePage() {
   const ctx = await requireAuth();
-  const storeId = ctx.storeMemberships[0]?.storeId ?? "";
+  // requireAuth is called for auth guard only
+  void ctx;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -15,7 +16,7 @@ export default async function NewOwnerRecipePage() {
         <span className="text-gray-300">/</span>
         <h1 className="text-xl font-bold text-gray-900">New Recipe</h1>
       </div>
-      <NewRecipeForm storeId={storeId} />
+      <NewRecipeForm />
     </div>
   );
 }

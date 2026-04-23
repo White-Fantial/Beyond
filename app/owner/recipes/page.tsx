@@ -6,9 +6,8 @@ import Link from "next/link";
 export default async function OwnerRecipesPage() {
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
-  const storeId = ctx.storeMemberships[0]?.storeId ?? "";
 
-  const result = await listRecipes(tenantId, { storeId });
+  const result = await listRecipes(tenantId);
 
   return (
     <div className="space-y-6">

@@ -10,11 +10,10 @@ export async function GET(req: NextRequest) {
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   const { searchParams } = new URL(req.url);
-  const storeId = searchParams.get("storeId") ?? undefined;
   const page = Number(searchParams.get("page") ?? "1");
   const pageSize = Number(searchParams.get("pageSize") ?? "20");
 
-  const result = await listRecipes(tenantId, { storeId, page, pageSize });
+  const result = await listRecipes(tenantId, { page, pageSize });
   return NextResponse.json({ data: result });
 }
 
@@ -23,9 +22,6 @@ export async function POST(req: NextRequest) {
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
   const body = (await req.json()) as CreateRecipeInput;
 
-  if (!body.storeId) {
-    return NextResponse.json({ error: "storeId is required" }, { status: 400 });
-  }
   if (!body.name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }

@@ -8,10 +8,10 @@ import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
 const YIELD_UNITS = Object.keys(RECIPE_YIELD_UNIT_LABELS) as RecipeYieldUnit[];
 
 interface Props {
-  storeId: string;
+  // no props needed — recipes are now tenant-scoped
 }
 
-export default function CreateRecipeForm({ storeId }: Props) {
+export default function CreateRecipeForm({}: Props) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [yieldQty, setYieldQty] = useState("1");
@@ -31,7 +31,6 @@ export default function CreateRecipeForm({ storeId }: Props) {
     setSubmitting(true);
     try {
       const body: CreateRecipeInput = {
-        storeId,
         name,
         yieldQty: qty,
         yieldUnit,

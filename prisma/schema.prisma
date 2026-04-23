@@ -3571,7 +3571,6 @@ model RecipeCategory {
 model Recipe {
   id               String          @id @default(uuid())
   tenantId         String?
-  storeId          String?
   catalogProductId       String?
   tenantCatalogProductId String?   // links to TenantCatalogProduct (tenant-level shared product)
   categoryId       String?         // optional admin-managed recipe category
@@ -3591,8 +3590,6 @@ model Recipe {
   ingredients          RecipeIngredient[]
   productComponents    RecipeProductComponent[]
 
-  @@index([tenantId, storeId])
-  @@index([storeId, catalogProductId])
   @@index([tenantId, tenantCatalogProductId])
   @@index([categoryId])
   @@index([marketplaceSourceId])

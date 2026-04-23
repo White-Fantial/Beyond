@@ -10,14 +10,12 @@ const UNITS = Object.keys(INGREDIENT_UNIT_LABELS) as IngredientUnit[];
 
 interface Props {
   recipeId: string;
-  storeId: string;
   currentIngredients: RecipeIngredient[];
   onClose: () => void;
 }
 
 export default function AddRecipeIngredientForm({
   recipeId,
-  storeId,
   currentIngredients,
   onClose,
 }: Props) {
@@ -33,9 +31,7 @@ export default function AddRecipeIngredientForm({
   useEffect(() => {
     async function load() {
       try {
-        // pageSize=500 handles most stores. Stores with more than 500 ingredients
-        // will only see the first 500 in this selector.
-        const res = await fetch(`/api/owner/ingredients?storeId=${storeId}&pageSize=500`);
+        const res = await fetch(`/api/owner/ingredients?pageSize=500`);
         if (res.ok) {
           const json = await res.json();
           setIngredients(json.data?.items ?? []);
@@ -45,7 +41,7 @@ export default function AddRecipeIngredientForm({
       }
     }
     load();
-  }, [storeId]);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

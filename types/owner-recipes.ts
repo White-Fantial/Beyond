@@ -47,7 +47,6 @@ export interface RecipeProductComponent {
 export interface Recipe {
   id: string;
   tenantId: string | null;
-  storeId: string | null;
   catalogProductId: string | null;
   catalogProductName: string | null;
   catalogProductPrice: number | null; // basePriceAmount (minor units)
@@ -93,7 +92,6 @@ export interface RecipeProductComponentInput {
 }
 
 export interface CreateRecipeInput {
-  storeId?: string;
   catalogProductId?: string;
   tenantCatalogProductId?: string;
   categoryId?: string | null;
@@ -119,14 +117,11 @@ export interface UpdateRecipeInput {
 }
 
 export interface RecipeFilters {
-  storeId?: string;
   page?: number;
   pageSize?: number;
 }
 
 export interface CopyMarketplaceRecipeInput {
-  /** The store this copied recipe belongs to. */
-  storeId: string;
   /** Optional override for the recipe name; defaults to the marketplace recipe's title. */
   name?: string;
   /** If provided, the copied recipe is immediately linked to this catalog product. */
