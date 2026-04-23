@@ -278,6 +278,8 @@ export class BidfoodScraper implements SupplierScraper {
     const baseLoginUrl = credential.loginUrl ?? DEFAULT_LOGIN_URL;
     const fail = { loginUrl: baseLoginUrl, username: credential.username, authenticated: false };
 
+    console.log(`[BidfoodScraper] login() start username=${credential.username} loginUrl=${baseLoginUrl}`);
+
     // ------------------------------------------------------------------
     // Step 1: GET the login page to obtain all hidden form fields and the
     // anti-forgery cookies set by ASP.NET Core.
@@ -285,6 +287,7 @@ export class BidfoodScraper implements SupplierScraper {
     let loginPageHtml: string;
     let loginPageCookies = "";
     try {
+      console.log(`[BidfoodScraper] Step 1: fetching login page ${baseLoginUrl}`);
       const res = await fetch(baseLoginUrl, {
         headers: {
           "User-Agent": DEFAULT_USER_AGENT,
@@ -301,6 +304,7 @@ export class BidfoodScraper implements SupplierScraper {
 
       loginPageHtml = await res.text();
       loginPageCookies = collectCookies(res);
+      console.log(`[BidfoodScraper] Step 1 OK: got login page (${loginPageHtml.length} chars), cookies: ${loginPageCookies.length > 0 ? 'yes' : 'none'}`);
     } catch (err) {
       console.error(
         `[BidfoodScraper] failed to fetch login page: ${err instanceof Error ? err.message : String(err)}`
@@ -313,6 +317,7 @@ export class BidfoodScraper implements SupplierScraper {
     // (BranchGroupId, CustomerGroupId, ShopV5BaseUrl, Language, Site, etc.)
     // that must be forwarded verbatim.
     const hiddenFields = extractHiddenFields(loginPageHtml);
+    console.log(`[BidfoodScraper] extracted ${Object.keys(hiddenFields).length} hidden field(s): ${Object.keys(hiddenFields).join(', ')}`);
 
     if (!hiddenFields["__RequestVerificationToken"]) {
       console.error("[BidfoodScraper] CSRF token not found on login page");
@@ -337,6 +342,7 @@ export class BidfoodScraper implements SupplierScraper {
     let accumulatedCookies = loginPageCookies;
     let redirectLocation: string | null = null;
     try {
+      console.log(`[BidfoodScraper] Step 2: posting credentials to ${baseLoginUrl}`);
       const res = await fetch(baseLoginUrl, {
         method: "POST",
         headers: {
@@ -363,6 +369,7 @@ export class BidfoodScraper implements SupplierScraper {
             ? location
             : new URL(location, IDENTITY_BASE).toString();
         }
+        console.log(`[BidfoodScraper] Step 2 OK: 302 redirect to ${redirectLocation}`);
       } else if (!res.ok) {
         console.error(
           `[BidfoodScraper] credential POST returned HTTP ${res.status}`
@@ -390,6 +397,7 @@ export class BidfoodScraper implements SupplierScraper {
 
     let callbackHtml: string;
     try {
+      console.log(`[BidfoodScraper] Step 3: fetching authorize callback ${authorizeUrl}`);
       const res = await fetch(authorizeUrl, {
         headers: {
           "User-Agent": DEFAULT_USER_AGENT,
@@ -411,6 +419,7 @@ export class BidfoodScraper implements SupplierScraper {
       }
 
       callbackHtml = await res.text();
+      console.log(`[BidfoodScraper] Step 3 OK: got callback HTML (${callbackHtml.length} chars)`);
     } catch (err) {
       console.error(
         `[BidfoodScraper] authorize callback fetch failed: ${err instanceof Error ? err.message : String(err)}`
@@ -434,6 +443,7 @@ export class BidfoodScraper implements SupplierScraper {
     // ------------------------------------------------------------------
     const oidcFormAction = extractFormAction(callbackHtml) ?? SIGNIN_OIDC_URL;
     const oidcFields = extractHiddenFields(callbackHtml);
+    console.log(`[BidfoodScraper] Step 4 prep: oidcFormAction=${oidcFormAction} oidcFields keys=${Object.keys(oidcFields).join(', ')}`);
 
     if (Object.keys(oidcFields).length === 0) {
       // No OIDC fields found — the flow may have ended early (e.g. the site
@@ -456,6 +466,7 @@ export class BidfoodScraper implements SupplierScraper {
 
     let sessionCookies = accumulatedCookies;
     try {
+      console.log(`[BidfoodScraper] Step 4: posting OIDC fields to ${oidcFormAction}`);
       const res = await fetch(oidcFormAction, {
         method: "POST",
         headers: {
@@ -480,6 +491,7 @@ export class BidfoodScraper implements SupplierScraper {
         );
         return fail;
       }
+      console.log(`[BidfoodScraper] Step 4 OK: HTTP ${res.status} sessionCookies=${sessionCookies.length > 0 ? 'yes' : 'none'}`);
     } catch (err) {
       console.error(
         `[BidfoodScraper] signin-oidc POST failed: ${err instanceof Error ? err.message : String(err)}`
@@ -497,7 +509,9 @@ export class BidfoodScraper implements SupplierScraper {
     // The AccountId is required as a query parameter in subsequent
     // product API calls.
     // ------------------------------------------------------------------
+    console.log(`[BidfoodScraper] Step 5: fetching AccountId`);
     const accountId = await this.fetchAccountId(sessionCookies);
+    console.log(`[BidfoodScraper] login() complete: authenticated=true accountId=${accountId}`);
 
     return {
       loginUrl: baseLoginUrl,
@@ -553,6 +567,7 @@ export class BidfoodScraper implements SupplierScraper {
   ): Promise<ScrapedProduct> {
     const empty: ScrapedProduct = { name: null, price: null, currency: null, unit: null };
 
+    console.log(`[BidfoodScraper] scrapeWithSession() url=${url} authenticated=${session.authenticated} accountId=${session.accountId}`);
     if (!session.authenticated || !session.cookies) {
       console.warn("[BidfoodScraper] scrapeWithSession called without a valid session");
       return this.generic.scrape(url);
@@ -632,6 +647,7 @@ export class BidfoodScraper implements SupplierScraper {
       return [];
     }
 
+    console.log(`[BidfoodScraper] fetchProductList() start accountId=${session.accountId}`);
     const results: ScrapedProduct[] = [];
     let skip = 0;
     let totalCount: number | null = null;

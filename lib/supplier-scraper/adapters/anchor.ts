@@ -239,8 +239,10 @@ export class AnchorScraper implements SupplierScraper {
       grant_type: "password",
     });
 
+    console.log(`[AnchorScraper] login() start username=${credential.username} tokenUrl=${TOKEN_URL}`);
     let res: Response;
     try {
+      console.log(`[AnchorScraper] posting credentials to ${TOKEN_URL}`);
       res = await fetch(TOKEN_URL, {
         method: "POST",
         headers: {
@@ -265,6 +267,7 @@ export class AnchorScraper implements SupplierScraper {
     let data: TokenResponse;
     try {
       data = (await res.json()) as TokenResponse;
+      console.log(`[AnchorScraper] login response: hasToken=${!!data.access_token} StoreUID=${data.StoreUID} StoreName=${data.StoreName}`);
     } catch {
       console.error(`[AnchorScraper] login response is not valid JSON`);
       return { username: credential.username, authenticated: false };
@@ -275,6 +278,7 @@ export class AnchorScraper implements SupplierScraper {
       return { username: credential.username, authenticated: false };
     }
 
+    console.log(`[AnchorScraper] login() complete: authenticated=true StoreUID=${data.StoreUID} OrgUID=${data.OrgUID}`);
     return {
       username: credential.username,
       authenticated: true,
@@ -310,6 +314,7 @@ export class AnchorScraper implements SupplierScraper {
   ): Promise<ScrapedProduct> {
     const empty: ScrapedProduct = { name: null, price: null, currency: null, unit: null };
 
+    console.log(`[AnchorScraper] scrapeWithSession() url=${url} authenticated=${session.authenticated}`);
     if (!session.authenticated || !session.accessToken) {
       console.warn("[AnchorScraper] scrapeWithSession called without a valid session");
       return empty;
@@ -356,6 +361,7 @@ export class AnchorScraper implements SupplierScraper {
       return [];
     }
 
+    console.log(`[AnchorScraper] fetchProductList() start — querying ${KNOWN_GROUP_CODES.length} group codes: ${KNOWN_GROUP_CODES.join(', ')}`);
     const seen = new Map<string, ScrapedProduct>();
 
     for (const groupCode of KNOWN_GROUP_CODES) {
@@ -381,6 +387,7 @@ export class AnchorScraper implements SupplierScraper {
   ): Promise<AnchorCatalogItem[]> {
     const url = `${CATALOG_URL_TEMPLATE}?groupcode=${encodeURIComponent(groupCode)}`;
 
+    console.log(`[AnchorScraper] fetchGroupProducts() groupCode=${groupCode} url=${url}`);
     const requestBody = {
       PromoMCL: [],
       Category: [],
@@ -425,6 +432,8 @@ export class AnchorScraper implements SupplierScraper {
     let body: CatalogResponse;
     try {
       body = (await res.json()) as CatalogResponse;
+      const count = body.Data?.ProductCatalogueItem?.length ?? 0;
+      console.log(`[AnchorScraper] fetchGroupProducts() groupCode=${groupCode} returned ${count} items`);
     } catch {
       console.warn(
         `[AnchorScraper] catalog group ${groupCode} response is not valid JSON`

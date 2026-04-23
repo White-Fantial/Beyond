@@ -48,6 +48,7 @@ export async function scrapeSupplierProduct(
   tenantId: string,
   supplierProductId: string
 ): Promise<ScrapeResult> {
+  console.log(`[scrapeSupplierProduct] start productId=${supplierProductId} tenantId=${tenantId}`);
   const product = await prisma.supplierProduct.findFirst({
     where: {
       id: supplierProductId,
@@ -64,20 +65,22 @@ export async function scrapeSupplierProduct(
     throw new Error(`SupplierProduct ${supplierProductId} has no externalUrl to scrape`);
   }
 
-  const scraper = getScraperForSupplier(
-    (product as typeof product & { supplier: SupplierAdapterInfo }).supplier,
-    product.externalUrl
-  );
+  const supplierInfo = (product as typeof product & { supplier: SupplierAdapterInfo }).supplier;
+  console.log(`[scrapeSupplierProduct] adapterType=${supplierInfo.adapterType} url=${product.externalUrl}`);
+  const scraper = getScraperForSupplier(supplierInfo, product.externalUrl);
   if (!scraper) {
     throw new Error(`SupplierProduct ${supplierProductId} has no scraper configured`);
   }
 
+  console.log(`[scrapeSupplierProduct] scraper resolved: ${scraper.constructor.name}`);
   if (!scraper.scrape) {
     throw new Error(
       `Scraper for product ${supplierProductId} does not support unauthenticated scraping. Use scrapeForUser() instead.`
     );
   }
+  console.log(`[scrapeSupplierProduct] calling scrape(${product.externalUrl})`);
   const scraped = await scraper.scrape(product.externalUrl);
+  console.log(`[scrapeSupplierProduct] scrape result: name=${scraped.name} price=${scraped.price} currency=${scraped.currency}`);
 
   const previousPrice = product.referencePrice;
   const newPrice = scraped.price ?? previousPrice;
@@ -114,6 +117,7 @@ export async function scrapeAllSupplierProducts(
   tenantId: string,
   supplierId: string
 ): Promise<ScrapeResult[]> {
+  console.log(`[scrapeAllSupplierProducts] start supplierId=${supplierId} tenantId=${tenantId}`);
   const supplier = await prisma.supplier.findFirst({
     where: {
       id: supplierId,
@@ -127,6 +131,7 @@ export async function scrapeAllSupplierProducts(
     where: { supplierId, deletedAt: null },
   });
 
+  console.log(`[scrapeAllSupplierProducts] found ${products.length} products for supplier ${supplierId}`);
   const results: ScrapeResult[] = [];
   for (const product of products) {
     if (!product.externalUrl) continue;
@@ -197,18 +202,22 @@ export async function scrapeForUser(
   tenantId: string,
   userId: string
 ): Promise<UserScrapeRunResult> {
+  console.log(`[scrapeForUser] start tenantId=${tenantId} userId=${userId}`);
   // 1. Load active credentials for this user
   const credentials = await prisma.supplierCredential.findMany({
     where: { tenantId, userId, deletedAt: null, isActive: true },
     select: { id: true, supplierId: true, loginUrl: true, username: true, passwordEnc: true },
   });
 
+  console.log(`[scrapeForUser] found ${credentials.length} active credential(s) for user ${userId}`);
   const credBySupplierId = new Map(credentials.map((c) => [c.supplierId, c]));
   if (credBySupplierId.size === 0) {
+    console.log(`[scrapeForUser] no credentials found — returning early`);
     return { userId, scraped: 0, skipped: 0, failed: 0, results: [] };
   }
  
   // 2. Find supplier products linked to active ingredient selections for this tenant.
+  console.log(`[scrapeForUser] querying linked products for ${credBySupplierId.size} supplier(s)...`);
   const linkedProducts = await prisma.supplierProduct.findMany({
     where: {
       deletedAt: null,
@@ -236,6 +245,7 @@ export async function scrapeForUser(
     },
   });
 
+  console.log(`[scrapeForUser] found ${linkedProducts.length} linked product(s)`);
   const results: UserScrapeResult[] = [];
   let skipped = 0;
   let failed = 0;
@@ -247,14 +257,17 @@ export async function scrapeForUser(
 
   for (const product of linkedProducts) {
     const supplierInfo = (product as typeof product & { supplier: SupplierAdapterInfo }).supplier;
+    console.log(`[scrapeForUser] processing productId=${product.id} supplierId=${product.supplierId} adapterType=${supplierInfo.adapterType} url=${product.externalUrl}`);
     const domainScraper = getScraperForSupplier(supplierInfo, product.externalUrl);
     if (!domainScraper) {
+      console.warn(`[scrapeForUser] no scraper found for productId=${product.id} — skipping`);
       skipped++;
       continue;
     }
 
     const credential = credBySupplierId.get(product.supplierId);
     if (!credential) {
+      console.warn(`[scrapeForUser] no credential found for supplierId=${product.supplierId} — skipping`);
       skipped++;
       continue;
     }
@@ -263,22 +276,27 @@ export async function scrapeForUser(
       // Reuse the session established earlier for this supplier, or create one now.
       let entry: SupplierSessionEntry;
       if (sessionCache.has(product.supplierId)) {
+        console.log(`[scrapeForUser] reusing cached session for supplierId=${product.supplierId}`);
         entry = sessionCache.get(product.supplierId)!;
       } else {
+        console.log(`[scrapeForUser] no cached session — logging in for supplierId=${product.supplierId} adapterType=${supplierInfo.adapterType} username=${credential.username}`);
         const decrypted = await getDecryptedCredential(credential.id);
 
         if (domainScraper.login && domainScraper.scrapeWithSession) {
+          console.log(`[scrapeForUser] calling scraper.login() for supplierId=${product.supplierId}`);
           const session = await domainScraper.login({
             loginUrl: decrypted.loginUrl ?? undefined,
             username: decrypted.username,
             password: decrypted.password,
           });
+          console.log(`[scrapeForUser] login result for supplierId=${product.supplierId}: authenticated=${session.authenticated}`);
           entry = session.authenticated
             ? { session, scraper: domainScraper, credentialId: credential.id, decryptedCredential: decrypted }
             : null;
         } else {
           // Scraper does not support authenticated API sessions — record a
           // sentinel so the generic fallback is used for all products.
+          console.log(`[scrapeForUser] scraper for supplierId=${product.supplierId} has no login() — using generic fallback`);
           entry = { session: { authenticated: false }, scraper: domainScraper, credentialId: credential.id, decryptedCredential: decrypted };
         }
         sessionCache.set(product.supplierId, entry);
@@ -286,6 +304,7 @@ export async function scrapeForUser(
 
       if (entry === null) {
         // Login failed for this supplier — skip all its products.
+        console.warn(`[scrapeForUser] login failed for supplierId=${product.supplierId} — skipping product ${product.id}`);
         skipped++;
         continue;
       }
@@ -297,23 +316,30 @@ export async function scrapeForUser(
         // Some scrapers don't need a URL (they use the session's cached product list),
         // but we still guard against a missing URL for scrapers that do.
         if (!product.externalUrl && !entry.scraper.fetchProductList) {
+          console.warn(`[scrapeForUser] productId=${product.id} has no externalUrl and scraper has no fetchProductList — skipping`);
           skipped++;
           continue;
         }
+        console.log(`[scrapeForUser] calling scrapeWithSession for productId=${product.id} url=${product.externalUrl}`);
         scraped = await entry.scraper.scrapeWithSession(product.externalUrl ?? "", entry.session);
+        console.log(`[scrapeForUser] scrapeWithSession result: price=${scraped.price} name=${scraped.name}`);
       } else if (product.externalUrl) {
         // Generic form-based fallback (scraper has no scrapeWithSession).
+        console.log(`[scrapeForUser] using generic credentialed fallback for productId=${product.id} url=${product.externalUrl}`);
         scraped = await credentialedScraper.scrapeWithCredential(product.externalUrl, {
           loginUrl: entry.decryptedCredential.loginUrl,
           username: entry.decryptedCredential.username,
           password: entry.decryptedCredential.password,
         });
+        console.log(`[scrapeForUser] generic fallback result: price=${scraped.price} name=${scraped.name}`);
       } else {
+        console.warn(`[scrapeForUser] productId=${product.id} no externalUrl and no scrapeWithSession — skipping`);
         skipped++;
         continue;
       }
 
       if (scraped.price === null) {
+        console.warn(`[scrapeForUser] productId=${product.id} scraped price is null — skipping`);
         skipped++;
         continue;
       }
