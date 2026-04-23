@@ -213,14 +213,15 @@ export async function scrapeForUser(
     where: {
       deletedAt: null,
       supplierId: { in: [...credBySupplierId.keys()] },
-      ingredientLinks: {
-        some: {
-          ingredient: {
-            tenantId,
-            deletedAt: null
-          },
-        },
-      },
+      // FIX. Scrape all supplier pruduct regardless they are registered on the user
+      // ingredientLinks: {
+      //   some: {
+      //     ingredient: {
+      //       tenantId,
+      //       deletedAt: null
+      //     },
+      //   },
+      // },
     },
     select: {
       id: true,
