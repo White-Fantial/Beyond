@@ -703,7 +703,7 @@ export async function copyPlatformRecipeToOwner(
   input: CopyMarketplaceRecipeInput
 ): Promise<RecipeDetail> {
   const source = await prisma.recipe.findFirst({
-    where: { id: platformRecipeId, tenantId: null, storeId: null, deletedAt: null },
+    where: { id: platformRecipeId, tenantId: null, deletedAt: null },
     include: {
       ingredients: { orderBy: { createdAt: "asc" } },
     },
@@ -773,8 +773,22 @@ export async function getProductRecipes(
   catalogProductId: string,
   tenantId?: string
 ): Promise<RecipeDetail[]> {
+  // Resolve tenantId from store if not provided
+  let effectiveTenantId = tenantId;
+  if (!effectiveTenantId) {
+    const store = await prisma.store.findUnique({
+      where: { id: storeId },
+      select: { tenantId: true },
+    });
+    effectiveTenantId = store?.tenantId ?? undefined;
+  }
+
   const rows = await prisma.recipe.findMany({
-    where: { storeId, catalogProductId, deletedAt: null },
+    where: {
+      catalogProductId,
+      ...(effectiveTenantId ? { tenantId: effectiveTenantId } : {}),
+      deletedAt: null,
+    },
     include: {
       catalogProduct: { select: { name: true, basePriceAmount: true } },
       ingredients: {
@@ -791,9 +805,9 @@ export async function getProductRecipes(
 
   if (rows.length === 0) return [];
 
-  const effectiveTenantId = tenantId ?? rows[0].tenantId;
-  if (!effectiveTenantId) {
-    throw new Error(`Cannot resolve costs: recipes in store ${storeId} have no tenantId`);
+  const resolvedTenantId = effectiveTenantId ?? rows[0].tenantId;
+  if (!resolvedTenantId) {
+    throw new Error(`Cannot resolve costs: recipes for catalogProduct ${catalogProductId} have no tenantId`);
   }
 
   const allRawIngredients = rows.flatMap(
@@ -804,8 +818,8 @@ export async function getProductRecipes(
   );
 
   const [costMap, componentCostMap] = await Promise.all([
-    resolveCosts(effectiveTenantId, allRawIngredients),
-    resolveProductComponentCosts(effectiveTenantId, allRawComponents),
+    resolveCosts(resolvedTenantId, allRawIngredients),
+    resolveProductComponentCosts(resolvedTenantId, allRawComponents),
   ]);
 
   return rows.map((row) => {

@@ -9,65 +9,15 @@ const VALID_YIELD_UNITS = Object.keys(RECIPE_YIELD_UNIT_LABELS) as RecipeYieldUn
 export async function GET(req: NextRequest) {
   await requirePlatformAdmin();
   const { searchParams } = new URL(req.url);
-  const storeId = searchParams.get("storeId") ?? undefined;
+  const tenantId = searchParams.get("tenantId") ?? searchParams.get("storeId") ?? undefined;
   const page = Number(searchParams.get("page") ?? "1");
   const pageSize = Number(searchParams.get("pageSize") ?? "20");
 
-  if (storeId) {
-    // List recipes for a specific store
-    const store = await prisma.store.findUnique({
-      where: { id: storeId },
-      select: { tenantId: true },
-    });
-    if (!store) {
-      return NextResponse.json({ error: "Store not found" }, { status: 404 });
-    }
-    const where = { tenantId: store.tenantId, storeId, deletedAt: null };
-    const [rows, total] = await Promise.all([
-      prisma.recipe.findMany({
-        where,
-        include: {
-          catalogProduct: { select: { name: true, basePriceAmount: true } },
-          category: { select: { name: true } },
-        },
-        orderBy: { createdAt: "desc" },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      prisma.recipe.count({ where }),
-    ]);
+  const where = {
+    deletedAt: null,
+    ...(tenantId ? { tenantId } : {}),
+  };
 
-    const storeNames = await prisma.store.findMany({
-      where: { id: { in: [storeId] } },
-      select: { id: true, name: true },
-    });
-    const storeNameMap = new Map(storeNames.map((s) => [s.id, s.name]));
-
-    return NextResponse.json({
-      data: {
-        items: rows.map((r) => ({
-          id: r.id,
-          name: r.name,
-          tenantId: r.tenantId,
-          storeId: r.storeId,
-          storeName: r.storeId ? (storeNameMap.get(r.storeId) ?? null) : null,
-          categoryId: r.categoryId,
-          categoryName: r.category?.name ?? null,
-          yieldQty: r.yieldQty,
-          yieldUnit: r.yieldUnit,
-          notes: r.notes,
-          createdAt: r.createdAt.toISOString(),
-          updatedAt: r.updatedAt.toISOString(),
-        })),
-        total,
-        page,
-        pageSize,
-      },
-    });
-  }
-
-  // List all recipes across all tenants (admin view)
-  const where = { deletedAt: null };
   const [rows, total] = await Promise.all([
     prisma.recipe.findMany({
       where,
@@ -82,13 +32,13 @@ export async function GET(req: NextRequest) {
     prisma.recipe.count({ where }),
   ]);
 
-  // Fetch store names for the returned recipes (only for those that have a storeId)
-  const storeIds = [...new Set(rows.map((r) => r.storeId).filter((id): id is string => id !== null))];
-  const storeNames = await prisma.store.findMany({
-    where: { id: { in: storeIds } },
-    select: { id: true, name: true },
+  // Fetch tenant display names for recipes that have a tenantId
+  const tenantIds = [...new Set(rows.map((r) => r.tenantId).filter((id): id is string => id !== null))];
+  const tenantRows = await prisma.tenant.findMany({
+    where: { id: { in: tenantIds } },
+    select: { id: true, displayName: true },
   });
-  const storeNameMap = new Map(storeNames.map((s) => [s.id, s.name]));
+  const tenantNameMap = new Map(tenantRows.map((t) => [t.id, t.displayName]));
 
   return NextResponse.json({
     data: {
@@ -96,8 +46,7 @@ export async function GET(req: NextRequest) {
         id: r.id,
         name: r.name,
         tenantId: r.tenantId,
-        storeId: r.storeId,
-        storeName: r.storeId ? (storeNameMap.get(r.storeId) ?? null) : null,
+        tenantName: r.tenantId ? (tenantNameMap.get(r.tenantId) ?? null) : null,
         categoryId: r.categoryId,
         categoryName: r.category?.name ?? null,
         yieldQty: r.yieldQty,
@@ -129,11 +78,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Platform-level recipes are not tied to any tenant or store (tenantId/storeId are null).
+    // Platform-level recipes are not tied to any tenant (tenantId is null).
     const recipe = await prisma.recipe.create({
       data: {
         tenantId: null,
-        storeId: null,
         name: body.name.trim(),
         yieldQty: body.yieldQty,
         yieldUnit: body.yieldUnit,
