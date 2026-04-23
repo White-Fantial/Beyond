@@ -229,8 +229,8 @@ export class BidfoodScraper implements SupplierScraper {
     };
     const formBody = new URLSearchParams(formFields);
 
-    let callbackCookies = loginPageCookies;
-    let authorizeCallbackUrl: string | null = null;
+    let accumulatedCookies = loginPageCookies;
+    let redirectLocation: string | null = null;
     try {
       const res = await fetch(baseLoginUrl, {
         method: "POST",
@@ -248,13 +248,13 @@ export class BidfoodScraper implements SupplierScraper {
       });
 
       // Capture cookies set on the 302 response.
-      callbackCookies = collectCookies(res, callbackCookies);
+      accumulatedCookies = collectCookies(res, accumulatedCookies);
 
       if (res.status === 302) {
         const location = res.headers.get("location");
         if (location) {
           // Resolve relative URL against the identity server base.
-          authorizeCallbackUrl = location.startsWith("http")
+          redirectLocation = location.startsWith("http")
             ? location
             : new URL(location, IDENTITY_BASE).toString();
         }
@@ -280,23 +280,23 @@ export class BidfoodScraper implements SupplierScraper {
     // IS4 processes the OIDC request and returns an HTML page containing a
     // self-submitting form that targets signin-oidc on the shop domain.
     // ------------------------------------------------------------------
-    const callbackFetchUrl =
-      authorizeCallbackUrl ?? `${IDENTITY_BASE}/core/connect/authorize/callback`;
+    const authorizeUrl =
+      redirectLocation ?? `${IDENTITY_BASE}/core/connect/authorize/callback`;
 
     let callbackHtml: string;
     try {
-      const res = await fetch(callbackFetchUrl, {
+      const res = await fetch(authorizeUrl, {
         headers: {
           "User-Agent": DEFAULT_USER_AGENT,
           Accept: "text/html,application/xhtml+xml,*/*",
           Referer: IDENTITY_BASE,
-          ...(callbackCookies ? { Cookie: callbackCookies } : {}),
+          ...(accumulatedCookies ? { Cookie: accumulatedCookies } : {}),
         },
         redirect: "follow",
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
 
-      callbackCookies = collectCookies(res, callbackCookies);
+      accumulatedCookies = collectCookies(res, accumulatedCookies);
 
       if (!res.ok) {
         console.error(
@@ -333,12 +333,12 @@ export class BidfoodScraper implements SupplierScraper {
     if (Object.keys(oidcFields).length === 0) {
       // No OIDC fields found — the flow may have ended early (e.g. the site
       // returned a direct session cookie without a form_post step).
-      if (callbackCookies) {
+      if (accumulatedCookies) {
         return {
           loginUrl: baseLoginUrl,
           username: credential.username,
           authenticated: true,
-          cookies: callbackCookies,
+          cookies: accumulatedCookies,
         };
       }
       console.error("[BidfoodScraper] OIDC callback form not found in authorize response");
@@ -347,7 +347,7 @@ export class BidfoodScraper implements SupplierScraper {
 
     const oidcBody = new URLSearchParams(oidcFields);
 
-    let sessionCookies = callbackCookies;
+    let sessionCookies = accumulatedCookies;
     try {
       const res = await fetch(oidcFormAction, {
         method: "POST",
@@ -356,7 +356,7 @@ export class BidfoodScraper implements SupplierScraper {
           "Content-Type": "application/x-www-form-urlencoded",
           Accept: "text/html,application/xhtml+xml,*/*",
           Referer: `${IDENTITY_BASE}/`,
-          ...(callbackCookies ? { Cookie: callbackCookies } : {}),
+          ...(accumulatedCookies ? { Cookie: accumulatedCookies } : {}),
         },
         body: oidcBody.toString(),
         // Use manual redirect so that the Set-Cookie headers on the 302
