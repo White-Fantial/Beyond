@@ -49,4 +49,10 @@ export interface SupplierScraper {
    * Optional — useful for suppliers where the HTML can be fetched externally.
    */
   parseProductPage?(html: string): ScrapedProduct;
+
+  /**
+   * Scrape a product page using an already-established authenticated session.
+   * Optional — implemented by scrapers that use a non-HTML API for product data.
+   */
+  scrapeWithSession?(url: string, session: SessionContext): Promise<ScrapedProduct>;
 }

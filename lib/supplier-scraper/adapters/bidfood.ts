@@ -31,10 +31,13 @@
  *   Step 4 — POST those hidden fields to signin-oidc (redirect: manual):
  *   Response: 302 + Set-Cookie (final Bidfood shop session cookies).
  *
- * Product pages:
- *   Product pages on www.mybidfood.co.nz are server-rendered. The scraper
- *   extracts price via JSON-LD / Open Graph tags (GenericScraper fallback)
- *   using the session cookies obtained from login().
+ *   Step 5 — GET /api/s_v4/Account/GetAccount to obtain the customer AccountId
+ *   that must be supplied in subsequent product API calls.
+ *
+ * Product detail:
+ *   GET /api/s_v4/Product/Detail?AccountId={accountId}&ProductCode={code}
+ *   Cookie: <session cookies from login>
+ *   Price is taken from SelectedUOMPrice.Price (NZD, converted to millicents).
  *
  * Product listing:
  *   fetchProductList() is a stub — replace with real Bidfood catalogue API
@@ -55,11 +58,89 @@ const SHOP_BASE = "https://www.mybidfood.co.nz";
 
 const DEFAULT_LOGIN_URL = `${IDENTITY_BASE}/core/Account/Login`;
 const SIGNIN_OIDC_URL = `${SHOP_BASE}/signin-oidc`;
+const PRODUCT_DETAIL_URL = `${SHOP_BASE}/api/s_v4/Product/Detail`;
+const ACCOUNT_URL = `${SHOP_BASE}/api/s_v4/Account/GetAccount`;
 
 const DEFAULT_USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 const TIMEOUT_MS = 20_000;
+
+// ---------------------------------------------------------------------------
+// TypeScript types for the Bidfood Product Detail API response
+// ---------------------------------------------------------------------------
+
+interface BidfoodUOMPrice {
+  UOMTypeID: number;
+  UomCode: string;
+  UOMDescription: string;
+  Price: number | null;
+  PackSize: string | null;
+  Available: boolean;
+}
+
+interface BidfoodProductDetail {
+  ItemCode: number;
+  ProductCode: string;
+  Description: string;
+  AccountID: number;
+  PackSize: string | null;
+  PackSizeDim: string | null;
+  SelectedUOMPrice: BidfoodUOMPrice | null;
+  UOMPrices: BidfoodUOMPrice[];
+}
+
+interface BidfoodAccountInfo {
+  AccountID?: number;
+  AccountId?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Monetary conversion helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Convert a dollar-value price from the Bidfood API to millicents
+ * (the platform's internal monetary unit: 1/100,000 of a dollar).
+ * Returns null if the value is not a valid positive number.
+ */
+function dollarToMillicents(dollars: number): number | null {
+  if (!isFinite(dollars) || dollars < 0) return null;
+  return Math.round(dollars * 100_000);
+}
+
+// ---------------------------------------------------------------------------
+// URL parsing helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Extract the Bidfood ProductCode from a product URL.
+ *
+ * Bidfood NZ is an Angular SPA and uses hash-based routing. Product URLs
+ * typically have one of these forms:
+ *   https://www.mybidfood.co.nz/#/products/detail/172141
+ *   https://www.mybidfood.co.nz/products/detail/172141
+ *   https://www.mybidfood.co.nz/products/detail/172141/flour-strong-white
+ *
+ * The ProductCode is a sequence of digits at or near the end of the path.
+ * Returns null if no numeric segment is found.
+ */
+function extractProductCodeFromUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    // Hash fragment takes priority (Angular hash routing: #/products/detail/172141)
+    const hashPath = u.hash.replace(/^#\/?/, "");
+    const combined = hashPath || u.pathname;
+    const segments = combined.split("/").filter(Boolean);
+    // Walk from the end — the ProductCode is the last purely numeric segment.
+    for (let i = segments.length - 1; i >= 0; i--) {
+      if (/^\d+$/.test(segments[i])) return segments[i];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // HTML parsing helpers (regex-based — no external dependency)
@@ -160,14 +241,14 @@ export class BidfoodScraper implements SupplierScraper {
    * Authenticate with the Bidfood NZ portal using an OpenID Connect
    * (IdentityServer4) form-based login flow.
    *
-   * The four-step flow:
+   * The flow:
    *   1. GET login page → extract all hidden fields (CSRF + env vars) + cookies
    *   2. POST credentials (redirect:manual) → capture cookies from 302, get Location
    *   3. GET Location (authorize/callback) → receive OIDC form_post HTML
    *   4. POST OIDC fields to signin-oidc (redirect:manual) → capture session cookies
+   *   5. GET /api/s_v4/Account/GetAccount → extract AccountId for product API calls
    *
-   * Returns a SessionContext with `authenticated: true` and a `cookies` string
-   * that must be forwarded as the `Cookie` header in subsequent requests.
+   * Returns a SessionContext with `authenticated: true`, `cookies`, and `accountId`.
    */
   async login(credential: SupplierCredentialPayload): Promise<SessionContext> {
     const baseLoginUrl = credential.loginUrl ?? DEFAULT_LOGIN_URL;
@@ -334,11 +415,13 @@ export class BidfoodScraper implements SupplierScraper {
       // No OIDC fields found — the flow may have ended early (e.g. the site
       // returned a direct session cookie without a form_post step).
       if (accumulatedCookies) {
+        const accountId = await this.fetchAccountId(accumulatedCookies);
         return {
           loginUrl: baseLoginUrl,
           username: credential.username,
           authenticated: true,
           cookies: accumulatedCookies,
+          accountId,
         };
       }
       console.error("[BidfoodScraper] OIDC callback form not found in authorize response");
@@ -385,11 +468,128 @@ export class BidfoodScraper implements SupplierScraper {
       return fail;
     }
 
+    // ------------------------------------------------------------------
+    // Step 5: Fetch the customer AccountId from the account API.
+    // The AccountId is required as a query parameter in subsequent
+    // product API calls.
+    // ------------------------------------------------------------------
+    const accountId = await this.fetchAccountId(sessionCookies);
+
     return {
       loginUrl: baseLoginUrl,
       username: credential.username,
       authenticated: true,
       cookies: sessionCookies,
+      accountId,
+    };
+  }
+
+  /**
+   * Fetch the Bidfood customer AccountId by calling the account info API.
+   * Returns 0 if the account ID cannot be determined (product API calls
+   * will still be attempted; the server may infer the account from the
+   * session cookie).
+   */
+  private async fetchAccountId(cookies: string): Promise<number> {
+    try {
+      const res = await fetch(ACCOUNT_URL, {
+        headers: {
+          "User-Agent": DEFAULT_USER_AGENT,
+          Accept: "application/json",
+          Cookie: cookies,
+        },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+
+      if (!res.ok) {
+        console.warn(`[BidfoodScraper] account API returned HTTP ${res.status}`);
+        return 0;
+      }
+
+      const body = (await res.json()) as BidfoodAccountInfo;
+      const id = body.AccountID ?? body.AccountId ?? 0;
+      return typeof id === "number" ? id : 0;
+    } catch {
+      // Non-fatal — scraping may still succeed if the server infers the account
+      // from the session cookie.
+      return 0;
+    }
+  }
+
+  /**
+   * Scrape a product using an authenticated session obtained via login().
+   *
+   * Calls GET /api/s_v4/Product/Detail?AccountId={accountId}&ProductCode={code}
+   * with the session cookies. Price is taken from SelectedUOMPrice.Price (NZD)
+   * and converted to millicents.
+   */
+  async scrapeWithSession(
+    url: string,
+    session: SessionContext
+  ): Promise<ScrapedProduct> {
+    const empty: ScrapedProduct = { name: null, price: null, currency: null, unit: null };
+
+    if (!session.authenticated || !session.cookies) {
+      console.warn("[BidfoodScraper] scrapeWithSession called without a valid session");
+      return this.generic.scrape(url);
+    }
+
+    const productCode = extractProductCodeFromUrl(url);
+    if (!productCode) {
+      console.warn(`[BidfoodScraper] could not extract ProductCode from URL: ${url}`);
+      return empty;
+    }
+
+    const accountId = typeof session.accountId === "number" ? session.accountId : 0;
+
+    const apiUrl = new URL(PRODUCT_DETAIL_URL);
+    apiUrl.searchParams.set("AccountId", String(accountId));
+    apiUrl.searchParams.set("ProductCode", productCode);
+
+    let res: Response;
+    try {
+      res = await fetch(apiUrl.toString(), {
+        headers: {
+          "User-Agent": DEFAULT_USER_AGENT,
+          Accept: "application/json",
+          Cookie: session.cookies as string,
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+    } catch (err) {
+      console.error(
+        `[BidfoodScraper] product detail request failed for ${productCode}: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return empty;
+    }
+
+    if (!res.ok) {
+      console.error(
+        `[BidfoodScraper] product detail returned HTTP ${res.status} for ${productCode}`
+      );
+      return empty;
+    }
+
+    let detail: BidfoodProductDetail;
+    try {
+      detail = (await res.json()) as BidfoodProductDetail;
+    } catch {
+      console.error(`[BidfoodScraper] product detail response is not valid JSON for ${productCode}`);
+      return empty;
+    }
+
+    // Price is taken from SelectedUOMPrice (the primary purchasable unit).
+    // Falls back to the first entry in UOMPrices if SelectedUOMPrice is null.
+    const uomPrice = detail.SelectedUOMPrice ?? detail.UOMPrices?.[0] ?? null;
+    const dollarPrice = uomPrice?.Price ?? null;
+
+    return {
+      name: detail.Description ?? null,
+      price: dollarPrice !== null ? dollarToMillicents(dollarPrice) : null,
+      currency: "NZD",
+      unit: uomPrice?.UomCode ?? null,
     };
   }
 
