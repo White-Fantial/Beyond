@@ -3767,7 +3767,9 @@ model SupplierCredential {
   supplier     Supplier              @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   priceRecords SupplierPriceRecord[]
 
-  @@unique([tenantId, userId, supplierId])
+  // Active-record uniqueness is enforced via a partial unique index in migration
+  // 20260423101000_supplier_credential_partial_unique (WHERE deletedAt IS NULL).
+  // Using @@unique here would prevent re-creating a credential after soft-delete.
   @@index([tenantId, userId])
   @@index([supplierId])
   @@map("supplier_credentials")
