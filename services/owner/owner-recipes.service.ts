@@ -18,6 +18,7 @@
 import { prisma } from "@/lib/prisma";
 import { resolveEffectiveCostsBulk } from "./owner-supplier-prices.service";
 import { registerTenantIngredient } from "./owner-tenant-ingredients.service";
+import { getUnitConversionFactor } from "@/types/owner-ingredients";
 import type {
   Recipe,
   RecipeDetail,
@@ -92,6 +93,8 @@ type RawRecipeIngredient = {
       supplierProduct: {
         id: string;
         referencePrice: number;
+        purchaseQty: number;
+        unit: string;
       };
     }>;
   };
@@ -117,9 +120,30 @@ type RawRecipeProductComponent = {
 };
 
 /**
+ * Compute the cost per ingredient unit (millicents) from a supplier product package.
+ *
+ * Formula: packagePrice / purchaseQty / conversionFactor(supplierUnit → ingredientUnit)
+ *
+ * Returns 0 when:
+ *   - purchaseQty is zero or negative
+ *   - the supplier unit and ingredient unit are incompatible (e.g. KG vs ML)
+ */
+function resolveUnitCost(
+  packagePrice: number,
+  purchaseQty: number,
+  supplierUnit: IngredientUnit,
+  ingredientUnit: IngredientUnit
+): number {
+  if (purchaseQty <= 0) return 0;
+  const factor = getUnitConversionFactor(supplierUnit, ingredientUnit);
+  if (factor === undefined) return 0;
+  return packagePrice / purchaseQty / factor;
+}
+
+/**
  * Build a RecipeIngredient using pre-resolved cost data.
- * costMap: supplierProductId → effectiveCost (millicents per recipe unit).
- * Uses preferred link first; falls back to cheapest by referencePrice.
+ * costMap: supplierProductId → effectiveCost (millicents per package).
+ * Uses preferred link first; falls back to cheapest by per-ingredient-unit cost.
  */
 function toRecipeIngredientWithCost(
   row: RawRecipeIngredient,
@@ -130,21 +154,37 @@ function toRecipeIngredientWithCost(
 
   const links = row.ingredient.supplierLinks ?? [];
   const preferredLink = links.find((l) => l.isPreferred);
+  const ingredientUnit = row.ingredient.unit as IngredientUnit;
 
-  // Cheapest fallback: pick the link whose resolved cost is lowest (or referencePrice if unresolved)
+  // Cheapest fallback: pick the link whose per-ingredient-unit cost is lowest
   let effectiveCost = 0;
   if (preferredLink) {
-    effectiveCost = costMap.get(preferredLink.supplierProduct.id)?.price ?? 0;
+    const packagePrice =
+      costMap.get(preferredLink.supplierProduct.id)?.price ??
+      preferredLink.supplierProduct.referencePrice;
+    effectiveCost = resolveUnitCost(
+      packagePrice,
+      preferredLink.supplierProduct.purchaseQty,
+      preferredLink.supplierProduct.unit as IngredientUnit,
+      ingredientUnit
+    );
   } else if (links.length > 0) {
-    let cheapestPrice = Infinity;
+    let cheapestUnitCost = Infinity;
     for (const link of links) {
-      const resolved = costMap.get(link.supplierProduct.id);
-      const price = resolved?.price ?? link.supplierProduct.referencePrice;
-      if (price > 0 && price < cheapestPrice) {
-        cheapestPrice = price;
+      const packagePrice =
+        costMap.get(link.supplierProduct.id)?.price ??
+        link.supplierProduct.referencePrice;
+      const unitCost = resolveUnitCost(
+        packagePrice,
+        link.supplierProduct.purchaseQty,
+        link.supplierProduct.unit as IngredientUnit,
+        ingredientUnit
+      );
+      if (unitCost > 0 && unitCost < cheapestUnitCost) {
+        cheapestUnitCost = unitCost;
       }
     }
-    effectiveCost = cheapestPrice === Infinity ? 0 : cheapestPrice;
+    effectiveCost = cheapestUnitCost === Infinity ? 0 : cheapestUnitCost;
   }
 
   const lineCost = Math.round((qty * effectiveCost) / 1000);
@@ -154,7 +194,7 @@ function toRecipeIngredientWithCost(
     recipeId: row.recipeId,
     ingredientId: row.ingredientId,
     ingredientName: row.ingredient.name,
-    ingredientUnit: row.ingredient.unit as IngredientUnit,
+    ingredientUnit,
     ingredientUnitCost: effectiveCost,
     quantity: qty,
     unit: row.unit as IngredientUnit,
@@ -197,7 +237,7 @@ const ingredientInclude = {
         select: {
           isPreferred: true,
           supplierProduct: {
-            select: { id: true, referencePrice: true },
+            select: { id: true, referencePrice: true, purchaseQty: true, unit: true },
           },
         },
       },

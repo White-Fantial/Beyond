@@ -5,6 +5,7 @@
  * Also recomputes estimatedCostPrice whenever ingredients change.
  */
 import { prisma } from "@/lib/prisma";
+import { getUnitConversionFactor } from "@/types/owner-ingredients";
 import type {
   MarketplaceRecipe,
   MarketplaceRecipeDetail,
@@ -117,8 +118,11 @@ async function recomputeCostPrice(
 }
 
 /**
- * Fetch the referencePrice for a set of ingredient IDs from their supplier products.
- * Returns a Map<ingredientId, referencePrice>.
+ * Fetch the per-ingredient-unit cost for a set of ingredient IDs from their preferred
+ * supplier product. Normalises the package price using purchaseQty and the unit
+ * conversion between the supplier product unit and the ingredient unit.
+ *
+ * Returns a Map<ingredientId, unitCost> where unitCost is in millicents per ingredient unit.
  */
 async function fetchIngredientReferencePrices(
   ingredientIds: string[]
@@ -132,15 +136,22 @@ async function fetchIngredientReferencePrices(
     },
     select: {
       ingredientId: true,
-      supplierProduct: { select: { referencePrice: true } },
+      ingredient: { select: { unit: true } },
+      supplierProduct: {
+        select: { referencePrice: true, purchaseQty: true, unit: true },
+      },
     },
   });
 
   const map = new Map<string, number>();
   for (const link of links) {
-    if (!map.has(link.ingredientId)) {
-      map.set(link.ingredientId, link.supplierProduct.referencePrice);
-    }
+    if (map.has(link.ingredientId)) continue;
+    const { referencePrice, purchaseQty, unit: supplierUnit } = link.supplierProduct;
+    const ingredientUnit = link.ingredient.unit as IngredientUnit;
+    if (purchaseQty <= 0) continue;
+    const factor = getUnitConversionFactor(supplierUnit as IngredientUnit, ingredientUnit);
+    if (factor === undefined) continue;
+    map.set(link.ingredientId, referencePrice / purchaseQty / factor);
   }
   return map;
 }

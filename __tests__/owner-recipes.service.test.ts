@@ -80,7 +80,7 @@ const mockIngRow = {
   ingredient: {
     name: "Bread Flour",
     unit: "GRAM",
-    supplierLinks: [{ isPreferred: true, supplierProduct: { id: "sp-1", referencePrice: 5000 } }],
+    supplierLinks: [{ isPreferred: true, supplierProduct: { id: "sp-1", referencePrice: 5000, purchaseQty: 1, unit: "GRAM" } }],
   },
 };
 
@@ -219,6 +219,85 @@ describe("getRecipe", () => {
     mockPrisma.recipe.findFirst.mockResolvedValue(null);
 
     await expect(getRecipe(TENANT, "missing")).rejects.toThrow("not found");
+  });
+});
+
+// ─── unit price normalization (issue #189) ────────────────────────────────────
+
+describe("unit price normalization", () => {
+  it("converts supplier unit (KG) to ingredient unit (GRAM) when computing ingredient cost", async () => {
+    // Supplier: 20 kg bag, $35 = 3,500,000 millicents; ingredient unit = GRAM
+    // expected unitCost = 3,500,000 / 20 / 1000 = 175 millicents/g
+    // lineCost for 100 g = round(100 * 175 / 1000) = 18 cents
+    const kgIngRow = {
+      id: "ri-kg",
+      recipeId: "recipe-1",
+      ingredientId: "ing-kg",
+      quantity: { toNumber: () => 100 },
+      unit: "GRAM",
+      ingredient: {
+        name: "Salt",
+        unit: "GRAM",
+        supplierLinks: [
+          {
+            isPreferred: true,
+            supplierProduct: {
+              id: "sp-kg",
+              referencePrice: 3_500_000,
+              purchaseQty: 20,
+              unit: "KG",
+            },
+          },
+        ],
+      },
+    };
+
+    mockPrisma.recipe.findFirst.mockResolvedValue({
+      ...mockRecipeRow,
+      ingredients: [kgIngRow],
+      productComponents: [],
+    });
+
+    const result = await getRecipe(TENANT, "recipe-1");
+
+    expect(result.ingredients[0].ingredientUnitCost).toBe(175);
+    expect(result.ingredients[0].lineCost).toBe(18);
+  });
+
+  it("resolves to cost 0 when supplier unit is incompatible with ingredient unit (KG vs ML)", async () => {
+    const incompatibleIngRow = {
+      id: "ri-incompat",
+      recipeId: "recipe-1",
+      ingredientId: "ing-incompat",
+      quantity: { toNumber: () => 50 },
+      unit: "ML",
+      ingredient: {
+        name: "Olive Oil",
+        unit: "ML",
+        supplierLinks: [
+          {
+            isPreferred: true,
+            supplierProduct: {
+              id: "sp-incompat",
+              referencePrice: 1_000_000,
+              purchaseQty: 1,
+              unit: "KG",
+            },
+          },
+        ],
+      },
+    };
+
+    mockPrisma.recipe.findFirst.mockResolvedValue({
+      ...mockRecipeRow,
+      ingredients: [incompatibleIngRow],
+      productComponents: [],
+    });
+
+    const result = await getRecipe(TENANT, "recipe-1");
+
+    expect(result.ingredients[0].ingredientUnitCost).toBe(0);
+    expect(result.ingredients[0].lineCost).toBe(0);
   });
 });
 
