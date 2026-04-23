@@ -11,6 +11,7 @@ import { CountdownScraper } from "./adapters/countdown";
 import { BifoldScraper } from "./adapters/bifold";
 import { ServiceFoodScraper } from "./adapters/service-food";
 import { AnchorScraper } from "./adapters/anchor";
+import { BidfoodScraper } from "./adapters/bidfood";
 
 const scrapers: SupplierScraper[] = [
   new FoodstuffsScraper(),
@@ -18,6 +19,7 @@ const scrapers: SupplierScraper[] = [
   new BifoldScraper(),
   new ServiceFoodScraper(),
   new AnchorScraper(),
+  new BidfoodScraper(),
   // Add more domain-specific scrapers here before GenericScraper.
 ];
 

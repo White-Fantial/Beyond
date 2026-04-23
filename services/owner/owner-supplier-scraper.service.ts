@@ -219,11 +219,29 @@ export async function scrapeForUser(
     try {
       const decrypted = await getDecryptedCredential(credential.id);
 
-      const scraped = await credentialedScraper.scrapeWithCredential(product.externalUrl, {
-        loginUrl: decrypted.loginUrl,
-        username: decrypted.username,
-        password: decrypted.password,
-      });
+      let scraped: import("@/lib/supplier-scraper").ScrapedProduct;
+
+      // Use the domain-specific scraper's login + scrapeWithSession if it
+      // supports authenticated API access (e.g. BidfoodScraper).
+      const domainScraper = getScraperForUrl(product.externalUrl);
+      if (domainScraper.login && domainScraper.scrapeWithSession) {
+        const session = await domainScraper.login({
+          loginUrl: decrypted.loginUrl,
+          username: decrypted.username,
+          password: decrypted.password,
+        });
+        if (!session.authenticated) {
+          skipped++;
+          continue;
+        }
+        scraped = await domainScraper.scrapeWithSession(product.externalUrl, session);
+      } else {
+        scraped = await credentialedScraper.scrapeWithCredential(product.externalUrl, {
+          loginUrl: decrypted.loginUrl,
+          username: decrypted.username,
+          password: decrypted.password,
+        });
+      }
 
       if (scraped.price === null) {
         skipped++;
