@@ -32,11 +32,7 @@ interface ProductComponentRow {
   unit: IngredientUnit;
 }
 
-interface Props {
-  // no props needed — recipes are now tenant-scoped
-}
-
-export default function NewRecipeForm({}: Props) {
+export default function NewRecipeForm() {
   const router = useRouter();
 
   const [name, setName] = useState("");
