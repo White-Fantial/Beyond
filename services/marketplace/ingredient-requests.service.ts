@@ -37,9 +37,16 @@ type RawRequest = {
   tempIngredientId: string | null;
   reviewedByUserId: string | null;
   reviewNotes: string | null;
+  ownerSeenAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   requestedBy?: { name: string } | null;
+  resolvedIngredient?: { name: string } | null;
+};
+
+const requestInclude = {
+  requestedBy: { select: { name: true } },
+  resolvedIngredient: { select: { name: true } },
 };
 
 function toRequest(row: RawRequest): IngredientRequest {
@@ -55,9 +62,11 @@ function toRequest(row: RawRequest): IngredientRequest {
     notes: row.notes,
     status: row.status as IngredientRequestStatus,
     resolvedIngredientId: row.resolvedIngredientId,
+    resolvedIngredientName: row.resolvedIngredient?.name ?? null,
     tempIngredientId: row.tempIngredientId,
     reviewedByUserId: row.reviewedByUserId,
     reviewNotes: row.reviewNotes,
+    ownerSeenAt: row.ownerSeenAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -113,7 +122,7 @@ export async function createIngredientRequest(
     const updated = await prisma.ingredientRequest.update({
       where: { id: row.id },
       data: { tempIngredientId: tempIngredient.id },
-      include: { requestedBy: { select: { name: true } } },
+      include: requestInclude,
     });
 
     return toRequest(updated as RawRequest);
@@ -136,7 +145,7 @@ export async function listIngredientRequests(
   const [rows, total] = await Promise.all([
     prisma.ingredientRequest.findMany({
       where,
-      include: { requestedBy: { select: { name: true } } },
+      include: requestInclude,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -163,7 +172,7 @@ export async function getUserIngredientRequests(
   const [rows, total] = await Promise.all([
     prisma.ingredientRequest.findMany({
       where,
-      include: { requestedBy: { select: { name: true } } },
+      include: requestInclude,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -190,7 +199,7 @@ export async function getTenantIngredientRequests(
   const [rows, total] = await Promise.all([
     prisma.ingredientRequest.findMany({
       where,
-      include: { requestedBy: { select: { name: true } } },
+      include: requestInclude,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -212,7 +221,7 @@ export async function getIngredientRequest(
 ): Promise<IngredientRequest> {
   const row = await prisma.ingredientRequest.findUnique({
     where: { id },
-    include: { requestedBy: { select: { name: true } } },
+    include: requestInclude,
   });
   if (!row) throw new Error(`IngredientRequest ${id} not found`);
   return toRequest(row as RawRequest);
@@ -306,7 +315,7 @@ export async function reviewIngredientRequest(
         reviewedByUserId,
         reviewNotes: input.reviewNotes?.trim() ?? null,
       },
-      include: { requestedBy: { select: { name: true } } },
+      include: requestInclude,
     });
 
     return toRequest(row as RawRequest);
@@ -339,13 +348,44 @@ export async function reviewIngredientRequest(
         reviewedByUserId,
         reviewNotes: input.reviewNotes?.trim() ?? null,
       },
-      include: { requestedBy: { select: { name: true } } },
+      include: requestInclude,
     });
 
     return toRequest(row as RawRequest);
   }
 
-  // REJECTED: deactivate the temp ingredient
+  // REJECTED: if a suggested replacement was provided, migrate refs and soft-delete the temp.
+  // Otherwise just deactivate the temp ingredient so the owner knows to fix their recipes manually.
+  if (input.suggestedIngredientId && tempId) {
+    const replacementId = input.suggestedIngredientId;
+    await prisma.recipeIngredient.updateMany({
+      where: { ingredientId: tempId },
+      data: { ingredientId: replacementId },
+    });
+    await prisma.marketplaceRecipeIngredient.updateMany({
+      where: { ingredientId: tempId },
+      data: { ingredientId: replacementId },
+    });
+    await prisma.ingredient.update({
+      where: { id: tempId },
+      data: { deletedAt: new Date(), isActive: false },
+    });
+
+    const row = await prisma.ingredientRequest.update({
+      where: { id },
+      data: {
+        status: "REJECTED",
+        resolvedIngredientId: replacementId,
+        reviewedByUserId,
+        reviewNotes: input.reviewNotes?.trim() ?? null,
+      },
+      include: requestInclude,
+    });
+
+    return toRequest(row as RawRequest);
+  }
+
+  // REJECTED without replacement: just deactivate the temp ingredient
   if (tempId) {
     await prisma.ingredient.update({
       where: { id: tempId },
@@ -361,9 +401,65 @@ export async function reviewIngredientRequest(
       reviewedByUserId,
       reviewNotes: input.reviewNotes?.trim() ?? null,
     },
-    include: { requestedBy: { select: { name: true } } },
+    include: requestInclude,
   });
 
   return toRequest(row as RawRequest);
 }
 
+/**
+ * Mark all reviewed (non-PENDING) requests for a tenant as seen by the owner.
+ * Called when the owner visits the ingredient requests page.
+ */
+export async function markRequestsSeen(tenantId: string): Promise<void> {
+  await prisma.ingredientRequest.updateMany({
+    where: {
+      tenantId,
+      status: { not: "PENDING" },
+      ownerSeenAt: null,
+    },
+    data: { ownerSeenAt: new Date() },
+  });
+}
+
+/**
+ * Count ingredient requests for a tenant that have been reviewed but not yet seen by the owner.
+ * Used to drive the navigation badge.
+ */
+export async function countUnseenRequests(tenantId: string): Promise<number> {
+  return prisma.ingredientRequest.count({
+    where: {
+      tenantId,
+      status: { not: "PENDING" },
+      ownerSeenAt: null,
+    },
+  });
+}
+
+/**
+ * Return the names of recipes (scoped to the given tenant) that reference a specific ingredient.
+ * Used to help owners identify which recipes need manual updating after a rejected request.
+ */
+export async function getRecipesByIngredient(
+  tenantId: string,
+  ingredientId: string
+): Promise<{ id: string; name: string }[]> {
+  const rows = await prisma.recipeIngredient.findMany({
+    where: {
+      ingredientId,
+      recipe: { tenantId, deletedAt: null },
+    },
+    include: { recipe: { select: { id: true, name: true } } },
+  });
+  // Deduplicate by recipe id
+  const seen = new Set<string>();
+  const results: { id: string; name: string }[] = [];
+  for (const r of rows) {
+    const recipe = r.recipe as { id: string; name: string };
+    if (!seen.has(recipe.id)) {
+      seen.add(recipe.id);
+      results.push(recipe);
+    }
+  }
+  return results;
+}

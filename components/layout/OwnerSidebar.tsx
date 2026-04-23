@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { extractOwnerStoreId } from "@/lib/utils/route-helpers";
+import IngredientRequestsBadge from "./IngredientRequestsBadge";
 
 interface NavItem {
   href: string;
@@ -80,6 +81,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
     >
       <span>{item.icon}</span>
       <span>{item.label}</span>
+      {item.href === "/owner/ingredient-requests" && <IngredientRequestsBadge />}
     </Link>
   );
 }

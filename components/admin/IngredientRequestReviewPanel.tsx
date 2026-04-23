@@ -35,8 +35,12 @@ export default function IngredientRequestReviewPanel({
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
   const [searching, startSearch] = useTransition();
 
-  // For REJECTED — rejection reason
+  // For REJECTED — rejection reason + optional suggested replacement
   const [rejectNotes, setRejectNotes] = useState("");
+  const [rejectSearchQuery, setRejectSearchQuery] = useState("");
+  const [rejectSearchResults, setRejectSearchResults] = useState<Ingredient[]>([]);
+  const [suggestedIngredient, setSuggestedIngredient] = useState<Ingredient | null>(null);
+  const [searchingRejection, startRejectSearch] = useTransition();
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +52,9 @@ export default function IngredientRequestReviewPanel({
     setSearchResults([]);
     setSelectedIngredient(null);
     setRejectNotes("");
+    setRejectSearchQuery("");
+    setRejectSearchResults([]);
+    setSuggestedIngredient(null);
     setError(null);
   }
 
@@ -61,6 +68,20 @@ export default function IngredientRequestReviewPanel({
       if (res.ok) {
         const data = await res.json();
         setSearchResults((data.data?.items as Ingredient[]) ?? []);
+      }
+    });
+  }
+
+  async function handleRejectSearch(e: React.FormEvent) {
+    e.preventDefault();
+    setSuggestedIngredient(null);
+    startRejectSearch(async () => {
+      const params = new URLSearchParams({ pageSize: "20", scope: "PLATFORM" });
+      if (rejectSearchQuery.trim()) params.set("q", rejectSearchQuery.trim());
+      const res = await fetch(`/api/owner/platform-ingredients?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setRejectSearchResults((data.data?.items as Ingredient[]) ?? []);
       }
     });
   }
@@ -79,6 +100,9 @@ export default function IngredientRequestReviewPanel({
       reviewNotes: (action === "REJECTED" ? rejectNotes : reviewNotes) || undefined,
       ...(action === "DUPLICATE"
         ? { resolvedIngredientId: selectedIngredient!.id }
+        : {}),
+      ...(action === "REJECTED" && suggestedIngredient
+        ? { suggestedIngredientId: suggestedIngredient.id }
         : {}),
     };
 
@@ -296,7 +320,7 @@ export default function IngredientRequestReviewPanel({
         </div>
       )}
 
-      {/* REJECTED */}
+      {/* REJECTED — rejection reason + optional suggested replacement */}
       {action === "REJECTED" && (
         <div className="space-y-3">
           <div>
@@ -311,6 +335,60 @@ export default function IngredientRequestReviewPanel({
               className="w-full border border-gray-300 rounded px-2 py-1 text-xs"
             />
           </div>
+
+          {/* Optional: suggest a replacement ingredient */}
+          <div className="border border-gray-200 rounded-lg p-3 space-y-2 bg-white">
+            <p className="text-xs font-medium text-gray-700">
+              Suggest a replacement ingredient{" "}
+              <span className="text-gray-400 font-normal">(optional — recipe refs will be auto-migrated)</span>
+            </p>
+            <form onSubmit={handleRejectSearch} className="flex gap-2">
+              <input
+                type="search"
+                value={rejectSearchQuery}
+                onChange={(e) => setRejectSearchQuery(e.target.value)}
+                placeholder="Search PLATFORM ingredient…"
+                className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs"
+              />
+              <button
+                type="submit"
+                disabled={searchingRejection}
+                className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
+              >
+                {searchingRejection ? "Searching…" : "Search"}
+              </button>
+            </form>
+            {rejectSearchResults.length > 0 && (
+              <div className="max-h-40 overflow-y-auto space-y-1">
+                {rejectSearchResults.map((ing) => (
+                  <button
+                    key={ing.id}
+                    type="button"
+                    onClick={() => setSuggestedIngredient(ing)}
+                    className={`w-full text-left px-3 py-2 rounded-lg border text-xs transition-colors ${
+                      suggestedIngredient?.id === ing.id
+                        ? "border-orange-500 bg-orange-50 text-orange-800"
+                        : "border-gray-200 hover:bg-gray-50 text-gray-700"
+                    }`}
+                  >
+                    <span className="font-medium">{ing.name}</span>
+                    {ing.category && <span className="text-gray-400 ml-2">{ing.category}</span>}
+                    <span className="text-gray-400 ml-2">{ing.unit}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {suggestedIngredient ? (
+              <p className="text-xs text-orange-700 font-medium">
+                ✓ Suggested replacement: {suggestedIngredient.name}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-400">
+                No replacement selected — owner will be asked to update their recipes manually.
+              </p>
+            )}
+          </div>
+
           <div className="flex gap-2 justify-end">
             <button
               type="button"
@@ -333,4 +411,3 @@ export default function IngredientRequestReviewPanel({
     </div>
   );
 }
-
