@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SupplierListResult, CreatePlatformSupplierInput } from "@/types/owner-suppliers";
 import Link from "next/link";
+import AdminPlatformScrapeButton from "@/components/admin/AdminPlatformScrapeButton";
 
 interface Props {
   initialResult: SupplierListResult;
@@ -58,7 +59,8 @@ export default function AdminPlatformSupplierPanel({ initialResult }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-4">
+        <AdminPlatformScrapeButton />
         <button
           onClick={() => setShowForm((v) => !v)}
           className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700"
