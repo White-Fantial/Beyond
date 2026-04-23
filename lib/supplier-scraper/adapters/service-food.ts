@@ -4,12 +4,18 @@
  * Handles product pages from the Service Foods Online trade portal
  * (servicefoodsonline.co.nz / servicefoodsonline.kiwi).
  *
- * Authentication uses a JSON REST API at api.servicefoodsonline.co.nz.
- * Login returns a JWT accessToken which is passed as a Bearer token in
- * subsequent authenticated requests.
+ * Authentication:
+ *   POST https://api.servicefoodsonline.co.nz/web/auth/v1/login
+ *   Body: { emailAddress, password, appKey, channel, registrationToken }
+ *   Response: { success, data: { accessToken, refreshToken, ... } }
  *
- * Product listing implementation is pending — a valid authenticated session
- * from login() can be used once the product-list endpoint is identified.
+ * Product search / catalogue:
+ *   GET https://api.servicefoodsonline.co.nz/web/catalog/v1/search?keyword=&limit=100&page=1
+ *   Header: Authorization: <accessToken>
+ *   Response: { success, data: { products: [...] } }
+ *
+ * Product detail:
+ *   Endpoint TBD — scrape() / parseProductPage() will be updated once confirmed.
  */
 import type {
   SupplierScraper,
@@ -24,10 +30,18 @@ const SERVICE_FOOD_DOMAINS = [
   "servicefoodsonline.kiwi",
 ];
 
-const LOGIN_API_URL = "https://api.servicefoodsonline.co.nz/web/auth/v1/login";
+const API_BASE_URL = "https://api.servicefoodsonline.co.nz";
+const LOGIN_API_URL = `${API_BASE_URL}/web/auth/v1/login`;
+const CATALOG_SEARCH_URL = `${API_BASE_URL}/web/catalog/v1/search`;
 
 // Application key embedded in the Service Foods Online web client.
 const APP_KEY = "T3bhwMWrT6wC84qEYynrq9zZ73nZ4wJR";
+
+// Max products per page accepted by the search endpoint.
+const CATALOG_PAGE_SIZE = 100;
+
+// Safety cap: stop after this many pages to avoid runaway loops.
+const MAX_PAGES = 200;
 
 const DEFAULT_USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -46,6 +60,52 @@ interface LoginResponse {
   data?: LoginResponseData;
 }
 
+interface CatalogUnit {
+  code: string;
+  display: string;
+  salePrice: number;
+  normalPrice: number;
+}
+
+interface CatalogProduct {
+  sku: string;
+  displayName: string;
+  units: CatalogUnit[];
+}
+
+interface CatalogSearchResponse {
+  success: boolean;
+  data?: {
+    products: CatalogProduct[];
+  };
+}
+
+/**
+ * Convert a dollar-value price from the Service Foods API to millicents
+ * (the platform's internal monetary unit: 1/100,000 of a dollar).
+ * Returns null if the value is not a valid positive number.
+ */
+function dollarToMillicents(dollars: number): number | null {
+  if (!isFinite(dollars) || dollars < 0) return null;
+  return Math.round(dollars * 100_000);
+}
+
+/**
+ * Map a single CatalogProduct to a ScrapedProduct.
+ * Uses the first unit entry (smallest purchasable unit, typically BAG).
+ * Price is taken from salePrice; falls back to normalPrice.
+ */
+function mapCatalogProduct(product: CatalogProduct): ScrapedProduct {
+  const unit = product.units[0] ?? null;
+  const dollarPrice = unit ? (unit.salePrice ?? unit.normalPrice) : null;
+  return {
+    name: product.displayName ?? null,
+    price: dollarPrice !== null ? dollarToMillicents(dollarPrice) : null,
+    currency: "NZD",
+    unit: unit ? unit.display : null,
+  };
+}
+
 export class ServiceFoodScraper implements SupplierScraper {
   private readonly generic = new GenericScraper();
 
@@ -61,10 +121,12 @@ export class ServiceFoodScraper implements SupplierScraper {
   }
 
   async scrape(url: string): Promise<ScrapedProduct> {
+    // TODO: update with authenticated detail API once endpoint is confirmed.
     return this.generic.scrape(url);
   }
 
   parseProductPage(html: string): ScrapedProduct {
+    // TODO: update with Service Foods-specific extraction once detail API is confirmed.
     return this.generic.parseHtml(html);
   }
 
@@ -135,11 +197,12 @@ export class ServiceFoodScraper implements SupplierScraper {
   }
 
   /**
-   * Fetch the authenticated product catalogue.
+   * Fetch the complete authenticated product catalogue by paginating through
+   * the catalog search endpoint with an empty keyword (returns all products).
    *
-   * Requires a valid session obtained via `login()` (session.accessToken must
-   * be set). Product listing endpoint TBD — capture via browser DevTools on
-   * the order/catalogue page at servicefoodsonline.kiwi.
+   * Each page uses ?keyword=&limit=CATALOG_PAGE_SIZE&page=N.
+   * Stops when a page returns fewer products than the page size, or after
+   * MAX_PAGES pages as a safety cap.
    */
   async fetchProductList(session: SessionContext): Promise<ScrapedProduct[]> {
     if (!session.authenticated || !session.accessToken) {
@@ -148,12 +211,60 @@ export class ServiceFoodScraper implements SupplierScraper {
       );
       return [];
     }
-    // TODO: identify and call the product listing REST endpoint, e.g.:
-    //   GET https://api.servicefoodsonline.co.nz/web/products/v1/...
-    //   with header: Authorization: Bearer <session.accessToken>
-    console.info(
-      `[ServiceFoodScraper] fetchProductList not yet implemented — session authenticated as ${session.username}`
-    );
-    return [];
+
+    const results: ScrapedProduct[] = [];
+    const token = session.accessToken as string;
+
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const url = new URL(CATALOG_SEARCH_URL);
+      url.searchParams.set("keyword", "");
+      url.searchParams.set("limit", String(CATALOG_PAGE_SIZE));
+      url.searchParams.set("page", String(page));
+
+      let res: Response;
+      try {
+        res = await fetch(url.toString(), {
+          headers: {
+            Accept: "application/json;charset=UTF-8",
+            Authorization: token,
+            "User-Agent": DEFAULT_USER_AGENT,
+            Origin: "https://www.servicefoodsonline.kiwi",
+          },
+          signal: AbortSignal.timeout(20_000),
+        });
+      } catch (err) {
+        console.error(
+          `[ServiceFoodScraper] catalog fetch failed on page ${page}: ${err instanceof Error ? err.message : String(err)}`
+        );
+        break;
+      }
+
+      if (!res.ok) {
+        console.error(
+          `[ServiceFoodScraper] catalog page ${page} returned HTTP ${res.status}`
+        );
+        break;
+      }
+
+      let body: CatalogSearchResponse;
+      try {
+        body = (await res.json()) as CatalogSearchResponse;
+      } catch {
+        console.error(
+          `[ServiceFoodScraper] catalog page ${page} response is not valid JSON`
+        );
+        break;
+      }
+
+      const products = body.data?.products ?? [];
+      for (const product of products) {
+        results.push(mapCatalogProduct(product));
+      }
+
+      // If this page is not full, we've reached the last page.
+      if (products.length < CATALOG_PAGE_SIZE) break;
+    }
+
+    return results;
   }
 }
