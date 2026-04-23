@@ -585,7 +585,7 @@ export class BidfoodScraper implements SupplierScraper {
     apiUrl.searchParams.set("AccountId", String(accountId));
     apiUrl.searchParams.set("ProductCode", productCode);
 
-    console.log(`[BidfoodScraper] scrapeWithSession() fetching product cookie ${session.cookies as string} apiUrl=${apiUrl.toString()}`);
+    console.log(`[BidfoodScraper] scrapeWithSession() fetching product cookie ${session.cookies} apiUrl=${apiUrl.toString()}`);
     let res: Response;
     try {
       res = await fetch(apiUrl.toString(), {
