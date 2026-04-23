@@ -3,9 +3,7 @@ import NewRecipeForm from "@/components/owner/recipes/NewRecipeForm";
 import Link from "next/link";
 
 export default async function NewOwnerRecipePage() {
-  const ctx = await requireAuth();
-  // requireAuth is called for auth guard only
-  void ctx;
+  await requireAuth();
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
