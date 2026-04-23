@@ -119,6 +119,7 @@ const mockRecipeRow = {
   notes: null,
   instructions: null,
   marketplaceSourceId: null,
+  platformSourceId: null,
   createdAt: new Date("2026-01-01"),
   updatedAt: new Date("2026-01-01"),
   productComponents: [],
@@ -816,6 +817,21 @@ describe("copyPlatformRecipeToOwner auto-imports ingredients", () => {
     expect(mockRegister).toHaveBeenCalledWith(TENANT, "ing-3");
     expect(mockRegister).toHaveBeenCalledWith(TENANT, "ing-4");
     expect(mockRegister).toHaveBeenCalledTimes(2);
+  });
+
+  it("sets platformSourceId on the created recipe", async () => {
+    mockPrisma.recipe.findFirst.mockResolvedValue(basePlatformRecipe);
+    mockPrisma.recipe.create.mockResolvedValue({
+      ...mockRecipeRow,
+      platformSourceId: "pr-1",
+      ingredients: [], productComponents: [],
+    });
+
+    const result = await copyPlatformRecipeToOwner(TENANT, "pr-1", { name: "My Platform Bagel" });
+
+    const createCall = mockPrisma.recipe.create.mock.calls[0][0];
+    expect(createCall.data.platformSourceId).toBe("pr-1");
+    expect(result.platformSourceId).toBe("pr-1");
   });
 
   it("does not abort if registerTenantIngredient throws for one ingredient", async () => {

@@ -3580,6 +3580,7 @@ model Recipe {
   notes            String?
   instructions     String?         // free-text cooking method / steps
   marketplaceSourceId String?      // links to MarketplaceRecipe if imported from marketplace
+  platformSourceId    String?      // links to platform Recipe (tenantId=null) if copied from platform
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   deletedAt        DateTime?
@@ -3593,6 +3594,7 @@ model Recipe {
   @@index([tenantId, tenantCatalogProductId])
   @@index([categoryId])
   @@index([marketplaceSourceId])
+  @@index([platformSourceId])
   @@map("recipes")
 }
 

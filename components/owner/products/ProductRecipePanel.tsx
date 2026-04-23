@@ -13,10 +13,17 @@ interface Props {
 }
 
 function RecipeBadge({ recipe }: { recipe: RecipeDetail }) {
+  if (recipe.platformSourceId) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+        🏛️ Platform Recipe
+      </span>
+    );
+  }
   if (recipe.marketplaceSourceId) {
     return (
       <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-        🏪 Platform Recipe
+        🏪 Marketplace Recipe
       </span>
     );
   }
