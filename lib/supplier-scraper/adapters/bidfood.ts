@@ -40,8 +40,10 @@
  *   Price is taken from SelectedUOMPrice.Price (NZD, converted to millicents).
  *
  * Product listing:
- *   fetchProductList() is a stub — replace with real Bidfood catalogue API
- *   endpoint once the authenticated order-guide/search API is identified.
+ *   fetchProductList() calls GET /api/s_v3/Product/Search/?SearchText=&...
+ *   with the session cookies. Paginates using $skip until all products are
+ *   retrieved. Each product is normalised to ScrapedProduct with price in
+ *   millicents (NZD × 100,000).
  */
 import type {
   SupplierScraper,
@@ -60,6 +62,9 @@ const DEFAULT_LOGIN_URL = `${IDENTITY_BASE}/core/Account/Login`;
 const SIGNIN_OIDC_URL = `${SHOP_BASE}/signin-oidc`;
 const PRODUCT_DETAIL_URL = `${SHOP_BASE}/api/s_v4/Product/Detail`;
 const ACCOUNT_URL = `${SHOP_BASE}/api/s_v4/Account/GetAccount`;
+const SEARCH_URL = `${SHOP_BASE}/api/s_v3/Product/Search/`;
+
+const SEARCH_PAGE_SIZE = 100;
 
 const DEFAULT_USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -93,6 +98,25 @@ interface BidfoodProductDetail {
 interface BidfoodAccountInfo {
   AccountID?: number;
   AccountId?: number;
+}
+
+interface BidfoodSearchItem {
+  ItemCode: number;
+  ProductCode: string;
+  Description: string | null;
+  PackSize: string | null;
+  SelectedUOMPrice: BidfoodUOMPrice | null;
+  UOMPrices: BidfoodUOMPrice[];
+}
+
+interface BidfoodSearchProducts {
+  Items: BidfoodSearchItem[];
+  Count: number;
+  NextPageLink: string | null;
+}
+
+interface BidfoodSearchResponse {
+  products: BidfoodSearchProducts;
 }
 
 // ---------------------------------------------------------------------------
@@ -596,9 +620,9 @@ export class BidfoodScraper implements SupplierScraper {
   /**
    * Fetch the authenticated product catalogue from Bidfood NZ.
    *
-   * TODO: replace stub with real implementation once the Bidfood catalogue
-   * API endpoint is identified (typically via DevTools Network inspection
-   * after logging in — look for XHR requests to /api/products or similar).
+   * Calls GET /api/s_v3/Product/Search/ with an empty SearchText to retrieve
+   * all products available to the authenticated account. Paginates through the
+   * results using the $skip parameter until all products have been fetched.
    */
   async fetchProductList(session: SessionContext): Promise<ScrapedProduct[]> {
     if (!session.authenticated || !session.cookies) {
@@ -607,9 +631,84 @@ export class BidfoodScraper implements SupplierScraper {
       );
       return [];
     }
+
+    const results: ScrapedProduct[] = [];
+    let skip = 0;
+    let totalCount: number | null = null;
+
+    do {
+      const url = new URL(SEARCH_URL);
+      url.searchParams.set("SearchText", "");
+      url.searchParams.set("selectedSearchTerm", "");
+      url.searchParams.set("includeBanners", "false");
+      url.searchParams.set("PageSize", String(SEARCH_PAGE_SIZE));
+      url.searchParams.set("$skip", String(skip));
+
+      let res: Response;
+      try {
+        res = await fetch(url.toString(), {
+          headers: {
+            "User-Agent": DEFAULT_USER_AGENT,
+            Accept: "application/json",
+            Cookie: session.cookies as string,
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+            "if-modified-since": "Mon, 26 Jul 1997 05:00:00 GMT",
+          },
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        });
+      } catch (err) {
+        console.error(
+          `[BidfoodScraper] fetchProductList search request failed at skip=${skip}: ${err instanceof Error ? err.message : String(err)}`
+        );
+        break;
+      }
+
+      if (!res.ok) {
+        console.error(
+          `[BidfoodScraper] fetchProductList search returned HTTP ${res.status} at skip=${skip}`
+        );
+        break;
+      }
+
+      let body: BidfoodSearchResponse;
+      try {
+        body = (await res.json()) as BidfoodSearchResponse;
+      } catch {
+        console.error(
+          `[BidfoodScraper] fetchProductList response is not valid JSON at skip=${skip}`
+        );
+        break;
+      }
+
+      const items = body?.products?.Items;
+      if (!Array.isArray(items) || items.length === 0) break;
+
+      if (totalCount === null) {
+        totalCount = body.products.Count ?? 0;
+      }
+
+      for (const item of items) {
+        const uomPrice = item.SelectedUOMPrice ?? item.UOMPrices?.[0] ?? null;
+        const dollarPrice = uomPrice?.Price ?? null;
+        results.push({
+          name: item.Description ?? null,
+          price: dollarPrice !== null ? dollarToMillicents(dollarPrice) : null,
+          currency: "NZD",
+          unit: uomPrice?.UomCode ?? null,
+        });
+      }
+
+      skip += items.length;
+
+      // Stop if we've collected all products or received a partial page.
+      if (totalCount !== null && results.length >= totalCount) break;
+      if (items.length < SEARCH_PAGE_SIZE) break;
+    } while (true);
+
     console.info(
-      "[BidfoodScraper] fetchProductList stub called — not yet implemented"
+      `[BidfoodScraper] fetchProductList fetched ${results.length} products`
     );
-    return [];
+    return results;
   }
 }
