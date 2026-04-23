@@ -9,8 +9,8 @@ import { RECIPE_YIELD_UNIT_LABELS } from "@/types/owner-recipes";
 interface RecipeRow {
   id: string;
   name: string;
-  storeId: string | null;
-  storeName: string | null;
+  tenantId: string | null;
+  tenantName: string | null;
   categoryId: string | null;
   categoryName: string | null;
   yieldQty: number;
@@ -97,7 +97,7 @@ export default function AdminRecipeActions({ recipe }: Props) {
         )}
       </td>
       <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
-        {recipe.storeName ?? recipe.storeId ?? <span className="text-gray-300">Platform</span>}
+        {recipe.tenantName ?? recipe.tenantId ?? <span className="text-gray-300">Platform</span>}
       </td>
       <td className="px-4 py-3 text-gray-600 hidden md:table-cell">
         {recipe.yieldQty}{" "}
