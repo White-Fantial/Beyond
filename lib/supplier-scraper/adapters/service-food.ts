@@ -1,35 +1,15 @@
 /**
- * Service Food NZ Scraper Adapter.
+ * Service Foods Online NZ Scraper Adapter.
  *
- * Handles product pages from the Service Food NZ trade portal
- * (servicefood.co.nz).
+ * Handles product pages from the Service Foods Online trade portal
+ * (servicefoodsonline.co.nz / servicefoodsonline.kiwi).
  *
- * Implementation notes
- * --------------------
- * The login flow and price-element selectors below are stubs. To finish this
- * adapter, inspect the Service Food trade portal with browser DevTools:
+ * Authentication uses a JSON REST API at api.servicefoodsonline.co.nz.
+ * Login returns a JWT accessToken which is passed as a Bearer token in
+ * subsequent authenticated requests.
  *
- *   1. Login request
- *      - Open DevTools → Network tab, then sign in.
- *      - Note the login endpoint URL, HTTP method, and POST body field names
- *        (e.g. `username`, `password`, `_token`).
- *      - Note whether the response returns a redirect + Set-Cookie header or a
- *        JSON payload containing a session / bearer token.
- *      - Check whether a CSRF token must be fetched from the login page first.
- *
- *   2. Product page
- *      - Navigate to any product page after login.
- *      - Right-click the price element → Inspect, and note its CSS selector
- *        (e.g. `span.price`, `[data-price]`).
- *      - Check whether the page is server-rendered HTML or dynamically loaded
- *        via JavaScript (if JS — Playwright may be required).
- *
- *   3. Product listing
- *      - If there is a catalogue / order-guide page that lists all products and
- *        prices in one request, note its URL and structure so that
- *        `fetchProductList()` can be implemented.
- *
- * Replace the stub bodies below once the above information is available.
+ * Product listing implementation is pending — a valid authenticated session
+ * from login() can be used once the product-list endpoint is identified.
  */
 import type {
   SupplierScraper,
@@ -39,7 +19,32 @@ import type {
 } from "../base";
 import { GenericScraper } from "../generic";
 
-const SERVICE_FOOD_DOMAINS = ["servicefood.co.nz"];
+const SERVICE_FOOD_DOMAINS = [
+  "servicefoodsonline.co.nz",
+  "servicefoodsonline.kiwi",
+];
+
+const LOGIN_API_URL = "https://api.servicefoodsonline.co.nz/web/auth/v1/login";
+
+// Application key embedded in the Service Foods Online web client.
+const APP_KEY = "T3bhwMWrT6wC84qEYynrq9zZ73nZ4wJR";
+
+const DEFAULT_USER_AGENT =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+interface LoginResponseData {
+  accessToken: string;
+  refreshToken: string;
+  displayName: string;
+  emailAddress: string;
+  accountCode: string;
+  companyName: string;
+}
+
+interface LoginResponse {
+  success: boolean;
+  data?: LoginResponseData;
+}
 
 export class ServiceFoodScraper implements SupplierScraper {
   private readonly generic = new GenericScraper();
@@ -60,39 +65,94 @@ export class ServiceFoodScraper implements SupplierScraper {
   }
 
   parseProductPage(html: string): ScrapedProduct {
-    // TODO: replace with Service Food-specific CSS selector / JSON extraction
-    // once the product page structure has been confirmed via DevTools inspection.
     return this.generic.parseHtml(html);
   }
 
   /**
-   * Authenticate with the Service Food trade portal.
+   * Authenticate with the Service Foods Online REST API.
    *
-   * TODO: replace stub with real implementation:
-   *   - GET loginUrl to extract CSRF token (if required)
-   *   - POST credentials to loginUrl with correct field names
-   *   - Extract and return Set-Cookie / bearer token from response
+   * POSTs JSON credentials to the login endpoint and returns a session context
+   * containing the JWT accessToken for use in subsequent authenticated requests.
    */
   async login(credential: SupplierCredentialPayload): Promise<SessionContext> {
-    const loginUrl =
-      credential.loginUrl ?? "https://www.servicefood.co.nz/login";
-    console.info(
-      `[ServiceFoodScraper] login stub called for ${loginUrl} — not yet implemented`
-    );
-    return { loginUrl, username: credential.username, authenticated: false };
+    const loginUrl = credential.loginUrl ?? LOGIN_API_URL;
+
+    let res: Response;
+    try {
+      res = await fetch(loginUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json;charset=UTF-8",
+          "User-Agent": DEFAULT_USER_AGENT,
+          Origin: "https://www.servicefoodsonline.kiwi",
+        },
+        body: JSON.stringify({
+          emailAddress: credential.username,
+          password: credential.password,
+          appKey: APP_KEY,
+          channel: "0",
+          registrationToken: "",
+        }),
+        signal: AbortSignal.timeout(15_000),
+      });
+    } catch (err) {
+      console.error(
+        `[ServiceFoodScraper] login request failed: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return { loginUrl, username: credential.username, authenticated: false };
+    }
+
+    if (!res.ok) {
+      console.error(
+        `[ServiceFoodScraper] login returned HTTP ${res.status}`
+      );
+      return { loginUrl, username: credential.username, authenticated: false };
+    }
+
+    let body: LoginResponse;
+    try {
+      body = (await res.json()) as LoginResponse;
+    } catch {
+      console.error(`[ServiceFoodScraper] login response is not valid JSON`);
+      return { loginUrl, username: credential.username, authenticated: false };
+    }
+
+    if (!body.success || !body.data?.accessToken) {
+      console.error(`[ServiceFoodScraper] login unsuccessful or missing token`);
+      return { loginUrl, username: credential.username, authenticated: false };
+    }
+
+    return {
+      loginUrl,
+      username: credential.username,
+      authenticated: true,
+      accessToken: body.data.accessToken,
+      refreshToken: body.data.refreshToken,
+      accountCode: body.data.accountCode,
+      companyName: body.data.companyName,
+    };
   }
 
   /**
    * Fetch the authenticated product catalogue.
    *
-   * TODO: replace stub with real implementation:
-   *   - Use session cookie / token from login() to request the catalogue page
-   *     or the supplier's internal product-list API endpoint.
-   *   - Parse each product row/card and return a ScrapedProduct per item.
+   * Requires a valid session obtained via `login()` (session.accessToken must
+   * be set). Product listing endpoint TBD — capture via browser DevTools on
+   * the order/catalogue page at servicefoodsonline.kiwi.
    */
-  async fetchProductList(_session: SessionContext): Promise<ScrapedProduct[]> {
+  async fetchProductList(session: SessionContext): Promise<ScrapedProduct[]> {
+    if (!session.authenticated || !session.accessToken) {
+      console.warn(
+        `[ServiceFoodScraper] fetchProductList called without a valid session`
+      );
+      return [];
+    }
+    // TODO: identify and call the product listing REST endpoint, e.g.:
+    //   GET https://api.servicefoodsonline.co.nz/web/products/v1/...
+    //   with header: Authorization: Bearer <session.accessToken>
     console.info(
-      `[ServiceFoodScraper] fetchProductList stub called — not yet implemented`
+      `[ServiceFoodScraper] fetchProductList not yet implemented — session authenticated as ${session.username}`
     );
     return [];
   }
