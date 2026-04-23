@@ -156,8 +156,8 @@ function normalizeImageUrl(imageUrl: string): string | null {
  */
 function extractProductCodeFromUrl(url: string): string | null {
   try {
-    const u = new URL(url);
-    const segments = u.pathname.split("/").filter(Boolean);
+    const parsedUrl = new URL(url);
+    const segments = parsedUrl.pathname.split("/").filter(Boolean);
     const last = segments[segments.length - 1];
     return last ?? null;
   } catch {

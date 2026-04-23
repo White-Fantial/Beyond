@@ -13,10 +13,23 @@
  */
 import { prisma } from "@/lib/prisma";
 import { getScraperForUrl } from "@/lib/supplier-scraper";
+import type { SupplierScraper, SessionContext, ScrapedProduct } from "@/lib/supplier-scraper/base";
 import { credentialedScraper } from "@/lib/supplier-scraper/credentialed";
 import { getDecryptedCredential } from "./owner-supplier-credentials.service";
 import type { ScrapeResult } from "@/types/owner-suppliers";
 import type { UserScrapeResult, UserScrapeRunResult, ReferencePriceInfo } from "@/types/owner-supplier-credentials";
+
+/** Decrypted credential fields used in the session cache. */
+interface DecryptedCredentialFields {
+  loginUrl: string | null;
+  username: string;
+  password: string;
+}
+
+/** One entry in the per-supplier session cache built by scrapeForUser. */
+type SupplierSessionEntry =
+  | { session: SessionContext; scraper: SupplierScraper; credentialId: string; decryptedCredential: DecryptedCredentialFields }
+  | null;
 
 /** Sentinel tenantId used for platform-level (unauthenticated) price observations. */
 export const PLATFORM_SCRAPER_TENANT_ID = "PLATFORM_SCRAPER";
@@ -206,11 +219,8 @@ export async function scrapeForUser(
 
   // 3. Build a per-supplier session cache so each supplier credential is
   //    authenticated at most once, no matter how many products it covers.
-  //    Keys are supplierId; values are { session, scraper } or null (login failed).
-  type SessionEntry =
-    | { session: import("@/lib/supplier-scraper/base").SessionContext; scraper: import("@/lib/supplier-scraper").SupplierScraper; credentialId: string; decryptedCredential: { loginUrl: string | null; username: string; password: string } }
-    | null;
-  const sessionCache = new Map<string, SessionEntry>();
+  //    Keys are supplierId; values are a SupplierSessionEntry or null (login failed).
+  const sessionCache = new Map<string, SupplierSessionEntry>();
 
   for (const product of linkedProducts) {
     if (!product.externalUrl) {
@@ -226,7 +236,7 @@ export async function scrapeForUser(
 
     try {
       // Reuse the session established earlier for this supplier, or create one now.
-      let entry: SessionEntry;
+      let entry: SupplierSessionEntry;
       if (sessionCache.has(product.supplierId)) {
         entry = sessionCache.get(product.supplierId)!;
       } else {
@@ -256,7 +266,7 @@ export async function scrapeForUser(
         continue;
       }
 
-      let scraped: import("@/lib/supplier-scraper").ScrapedProduct;
+      let scraped: ScrapedProduct;
 
       if (entry.scraper.scrapeWithSession && entry.session.authenticated) {
         // Authenticated API path: reuse the existing session.
