@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { SupplierDetail } from "@/types/owner-suppliers";
+import { SCRAPER_ADAPTER_KEYS } from "@/lib/supplier-scraper";
 
 interface Props {
   supplier: SupplierDetail;
@@ -18,6 +19,7 @@ export default function AdminSupplierEditForm({ supplier }: Props) {
   const [contactEmail, setContactEmail] = useState(supplier.contactEmail ?? "");
   const [contactPhone, setContactPhone] = useState(supplier.contactPhone ?? "");
   const [notes, setNotes] = useState(supplier.notes ?? "");
+  const [adapterType, setAdapterType] = useState(supplier.adapterType ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +37,7 @@ export default function AdminSupplierEditForm({ supplier }: Props) {
           contactEmail: contactEmail.trim() || null,
           contactPhone: contactPhone.trim() || null,
           notes: notes.trim() || null,
+          adapterType: adapterType || null,
         }),
       });
       if (!res.ok) {
@@ -111,6 +114,19 @@ export default function AdminSupplierEditForm({ supplier }: Props) {
               onChange={(e) => setContactPhone(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
             />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Scraper Adapter</label>
+            <select
+              value={adapterType}
+              onChange={(e) => setAdapterType(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+            >
+              <option value="">(none — manual or URL-based)</option>
+              {SCRAPER_ADAPTER_KEYS.map((key) => (
+                <option key={key} value={key}>{key}</option>
+              ))}
+            </select>
           </div>
           <div className="sm:col-span-2">
             <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>

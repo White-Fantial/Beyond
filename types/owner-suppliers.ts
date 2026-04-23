@@ -12,6 +12,8 @@ export interface Supplier {
   contactEmail: string | null;
   contactPhone: string | null;
   notes: string | null;
+  /** Scraper adapter key (e.g. "anchor", "bidfood"). null = URL-based detection or manual only. */
+  adapterType: string | null;
   productCount: number;
   createdAt: string;
   updatedAt: string;
@@ -74,6 +76,8 @@ export interface CreatePlatformSupplierInput {
   contactEmail?: string;
   contactPhone?: string;
   notes?: string;
+  /** Scraper adapter key (e.g. "anchor", "bidfood"). Omit for URL-based detection. */
+  adapterType?: string;
 }
 
 export interface UpdateSupplierInput {
@@ -82,6 +86,8 @@ export interface UpdateSupplierInput {
   contactEmail?: string | null;
   contactPhone?: string | null;
   notes?: string | null;
+  /** Scraper adapter key. Set to null to clear and fall back to URL-based detection. */
+  adapterType?: string | null;
 }
 
 export interface UpsertSupplierProductInput {

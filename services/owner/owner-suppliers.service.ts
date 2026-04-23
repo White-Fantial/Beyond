@@ -28,6 +28,7 @@ type RawSupplier = {
   contactEmail: string | null;
   contactPhone: string | null;
   notes: string | null;
+  adapterType: string | null;
   createdAt: Date;
   updatedAt: Date;
   _count?: { products: number };
@@ -58,6 +59,7 @@ function toSupplier(row: RawSupplier, productCount = 0): Supplier {
     contactEmail: row.contactEmail,
     contactPhone: row.contactPhone,
     notes: row.notes,
+    adapterType: row.adapterType,
     productCount: row._count?.products ?? productCount,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
