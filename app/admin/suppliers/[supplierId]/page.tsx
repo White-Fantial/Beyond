@@ -72,6 +72,20 @@ export default async function AdminSupplierDetailPage({ params }: Props) {
                 <dd className="mt-0.5 text-sm text-gray-900">{supplier.notes}</dd>
               </div>
             )}
+            <div>
+              <dt className="text-xs font-medium text-gray-500">Scraper Adapter</dt>
+              <dd className="mt-0.5">
+                {supplier.adapterType ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                    {supplier.adapterType}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">
+                    Not configured (manual only)
+                  </span>
+                )}
+              </dd>
+            </div>
           </dl>
         </div>
 

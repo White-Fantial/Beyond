@@ -30,6 +30,7 @@ type RawSupplier = {
   contactEmail: string | null;
   contactPhone: string | null;
   notes: string | null;
+  adapterType: string | null;
   createdAt: Date;
   updatedAt: Date;
   _count?: { products: number };
@@ -60,6 +61,7 @@ function toSupplier(row: RawSupplier): Supplier {
     contactEmail: row.contactEmail,
     contactPhone: row.contactPhone,
     notes: row.notes,
+    adapterType: row.adapterType,
     productCount: row._count?.products ?? 0,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -145,6 +147,7 @@ export async function createPlatformSupplier(
       contactEmail: input.contactEmail?.trim() ?? null,
       contactPhone: input.contactPhone?.trim() ?? null,
       notes: input.notes?.trim() ?? null,
+      adapterType: input.adapterType?.trim() ?? null,
     },
     include: { _count: { select: { products: true } } },
   });
@@ -168,6 +171,7 @@ export async function updatePlatformSupplier(
       ...(input.contactEmail !== undefined ? { contactEmail: input.contactEmail } : {}),
       ...(input.contactPhone !== undefined ? { contactPhone: input.contactPhone } : {}),
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
+      ...(input.adapterType !== undefined ? { adapterType: input.adapterType } : {}),
     },
     include: { _count: { select: { products: true } } },
   });

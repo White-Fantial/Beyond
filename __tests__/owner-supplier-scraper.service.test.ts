@@ -20,10 +20,11 @@ vi.mock("@/lib/prisma", () => ({
 
 vi.mock("@/lib/supplier-scraper", () => ({
   getScraperForUrl: vi.fn(),
+  getScraperForSupplier: vi.fn(),
 }));
 
 import { prisma } from "@/lib/prisma";
-import { getScraperForUrl } from "@/lib/supplier-scraper";
+import { getScraperForSupplier } from "@/lib/supplier-scraper";
 import {
   scrapeSupplierProduct,
   scrapeAllSupplierProducts,
@@ -47,7 +48,7 @@ const mockPrisma = prisma as unknown as {
   };
 };
 
-const mockGetScraperForUrl = getScraperForUrl as ReturnType<typeof vi.fn>;
+const mockGetScraperForSupplier = getScraperForSupplier as ReturnType<typeof vi.fn>;
 
 const TENANT = "tenant-1";
 
@@ -62,6 +63,7 @@ const mockProduct = {
   metadata: {},
   createdAt: new Date("2026-01-01"),
   updatedAt: new Date("2026-01-01"),
+  supplier: { adapterType: null },
 };
 
 beforeEach(() => {
@@ -79,7 +81,7 @@ describe("scrapeSupplierProduct", () => {
       lastScrapedAt: new Date(),
     });
 
-    mockGetScraperForUrl.mockReturnValue({
+    mockGetScraperForSupplier.mockReturnValue({
       scrape: vi.fn().mockResolvedValue({
         name: "HG Flour",
         price: 4800,
@@ -105,7 +107,7 @@ describe("scrapeSupplierProduct", () => {
     mockPrisma.supplierProduct.findFirst.mockResolvedValue(mockProduct);
     mockPrisma.supplierProduct.update.mockResolvedValue(mockProduct);
 
-    mockGetScraperForUrl.mockReturnValue({
+    mockGetScraperForSupplier.mockReturnValue({
       scrape: vi.fn().mockResolvedValue({
         name: "HG Flour",
         price: 4500,
@@ -127,7 +129,7 @@ describe("scrapeSupplierProduct", () => {
       referencePrice: 4800,
     });
 
-    mockGetScraperForUrl.mockReturnValue({
+    mockGetScraperForSupplier.mockReturnValue({
       scrape: vi.fn().mockResolvedValue({ price: 4800, name: null, currency: null, unit: null }),
     });
 
@@ -171,7 +173,7 @@ describe("scrapeAllSupplierProducts", () => {
       referencePrice: 4800,
     });
 
-    mockGetScraperForUrl.mockReturnValue({
+    mockGetScraperForSupplier.mockReturnValue({
       scrape: vi.fn().mockResolvedValue({ price: 4800, name: null, currency: null, unit: null }),
     });
 
@@ -199,7 +201,7 @@ describe("scrapeAllSupplierProducts", () => {
 
     mockPrisma.supplierProduct.update.mockResolvedValue(mockProduct);
 
-    mockGetScraperForUrl
+    mockGetScraperForSupplier
       .mockReturnValueOnce({
         scrape: vi.fn().mockRejectedValue(new Error("Network error")),
       })

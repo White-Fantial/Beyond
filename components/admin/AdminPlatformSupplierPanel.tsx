@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { SupplierListResult, CreatePlatformSupplierInput } from "@/types/owner-suppliers";
 import Link from "next/link";
 import AdminPlatformScrapeButton from "@/components/admin/AdminPlatformScrapeButton";
+import { SCRAPER_ADAPTER_KEYS } from "@/lib/supplier-scraper";
 
 interface Props {
   initialResult: SupplierListResult;
@@ -18,6 +19,7 @@ export default function AdminPlatformSupplierPanel({ initialResult }: Props) {
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [adapterType, setAdapterType] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +34,7 @@ export default function AdminPlatformSupplierPanel({ initialResult }: Props) {
         contactEmail: contactEmail || undefined,
         contactPhone: contactPhone || undefined,
         notes: notes || undefined,
+        adapterType: adapterType || undefined,
       };
       const res = await fetch("/api/admin/suppliers", {
         method: "POST",
@@ -48,6 +51,7 @@ export default function AdminPlatformSupplierPanel({ initialResult }: Props) {
       setContactEmail("");
       setContactPhone("");
       setNotes("");
+      setAdapterType("");
       setShowForm(false);
       router.refresh();
     } catch {
@@ -109,6 +113,19 @@ export default function AdminPlatformSupplierPanel({ initialResult }: Props) {
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
               />
             </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Scraper Adapter</label>
+              <select
+                value={adapterType}
+                onChange={(e) => setAdapterType(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-500"
+              >
+                <option value="">(none — manual or URL-based)</option>
+                {SCRAPER_ADAPTER_KEYS.map((key) => (
+                  <option key={key} value={key}>{key}</option>
+                ))}
+              </select>
+            </div>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button
@@ -131,6 +148,7 @@ export default function AdminPlatformSupplierPanel({ initialResult }: Props) {
             <thead>
               <tr className="text-xs text-gray-500 bg-gray-50 border-b border-gray-100">
                 <th className="px-5 py-3 text-left font-medium">Supplier</th>
+                <th className="px-5 py-3 text-left font-medium">Scraper</th>
                 <th className="px-5 py-3 text-left font-medium">Contact</th>
                 <th className="px-5 py-3 text-right font-medium">Products</th>
                 <th className="px-5 py-3" />
@@ -148,10 +166,19 @@ export default function AdminPlatformSupplierPanel({ initialResult }: Props) {
                         href={s.websiteUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-blue-600 hover:underline"
+                        className="block text-xs text-blue-600 hover:underline"
                       >
                         {s.websiteUrl}
                       </a>
+                    )}
+                  </td>
+                  <td className="px-5 py-3">
+                    {s.adapterType ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        {s.adapterType}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
                     )}
                   </td>
                   <td className="px-5 py-3 text-gray-600">

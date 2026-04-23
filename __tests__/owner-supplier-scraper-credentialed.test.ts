@@ -79,6 +79,7 @@ const mockProduct = {
   referencePrice: 4500,
   lastScrapedAt: null,
   metadata: {},
+  supplier: { adapterType: null },
 };
 
 beforeEach(() => {
