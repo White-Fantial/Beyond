@@ -15,7 +15,9 @@
  *   Response: { success, data: { products: [...] } }
  *
  * Product detail:
- *   Endpoint TBD — scrape() / parseProductPage() will be updated once confirmed.
+ *   GET https://api.servicefoodsonline.co.nz/web/catalog/v1/products/{sku}
+ *   Header: Authorization: <accessToken>
+ *   Response: { success, data: { productDetail: { name, salePrice, normalPrice, stockUnit, units, ... } } }
  */
 import type {
   SupplierScraper,
@@ -80,6 +82,23 @@ interface CatalogSearchResponse {
   };
 }
 
+interface ProductDetailData {
+  name: string;
+  normalPrice: number;
+  salePrice: number;
+  stockUnit?: string;
+  units?: CatalogUnit[];
+}
+
+interface ProductDetailResponse {
+  success: boolean;
+  data?: {
+    productDetail: ProductDetailData;
+  };
+}
+
+const PRODUCT_DETAIL_URL = `${API_BASE_URL}/web/catalog/v1/products`;
+
 /**
  * Convert a dollar-value price from the Service Foods API to millicents
  * (the platform's internal monetary unit: 1/100,000 of a dollar).
@@ -106,6 +125,50 @@ function mapCatalogProduct(product: CatalogProduct): ScrapedProduct {
   };
 }
 
+/**
+ * Extract the product SKU from a Service Foods URL.
+ *
+ * Handles two formats:
+ *   - Product page:  https://www.servicefoodsonline.kiwi/FLOUS20-FLOUR-BETA-STRONG-...
+ *     → SKU is the first dash-delimited segment of the path.
+ *   - Detail API:    https://api.servicefoodsonline.co.nz/web/catalog/v1/products/FLOUS20
+ *     → SKU is the last path segment.
+ *
+ * Returns null for unrecognised URL formats.
+ */
+function extractSkuFromUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname === "api.servicefoodsonline.co.nz") {
+      // API URL: last non-empty path segment is the SKU
+      const parts = u.pathname.split("/").filter(Boolean);
+      return parts[parts.length - 1] ?? null;
+    }
+    // Product page URL slug: first segment before the first '-' is the SKU
+    const slug = u.pathname.replace(/^\//, "");
+    const dashIndex = slug.indexOf("-");
+    if (dashIndex > 0) return slug.slice(0, dashIndex);
+    return slug || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Map a ProductDetailData from the detail API to a ScrapedProduct.
+ * Uses salePrice; falls back to normalPrice. Unit comes from stockUnit or first unit entry.
+ */
+function mapProductDetail(detail: ProductDetailData): ScrapedProduct {
+  const dollarPrice = detail.salePrice ?? detail.normalPrice ?? null;
+  const unit = detail.stockUnit ?? detail.units?.[0]?.display ?? null;
+  return {
+    name: detail.name ?? null,
+    price: dollarPrice !== null ? dollarToMillicents(dollarPrice) : null,
+    currency: "NZD",
+    unit,
+  };
+}
+
 export class ServiceFoodScraper implements SupplierScraper {
   private readonly generic = new GenericScraper();
 
@@ -121,12 +184,57 @@ export class ServiceFoodScraper implements SupplierScraper {
   }
 
   async scrape(url: string): Promise<ScrapedProduct> {
-    // TODO: update with authenticated detail API once endpoint is confirmed.
-    return this.generic.scrape(url);
+    const sku = extractSkuFromUrl(url);
+    if (!sku) {
+      // Unrecognised URL format — fall back to generic HTML scraping
+      return this.generic.scrape(url);
+    }
+
+    const detailUrl = `${PRODUCT_DETAIL_URL}/${encodeURIComponent(sku)}`;
+
+    let res: Response;
+    try {
+      res = await fetch(detailUrl, {
+        headers: {
+          Accept: "application/json;charset=UTF-8",
+          "User-Agent": DEFAULT_USER_AGENT,
+          Origin: "https://www.servicefoodsonline.kiwi",
+        },
+        signal: AbortSignal.timeout(15_000),
+      });
+    } catch (err) {
+      console.warn(
+        `[ServiceFoodScraper] detail fetch failed for SKU ${sku}: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return { name: null, price: null, currency: null, unit: null };
+    }
+
+    if (!res.ok) {
+      // 401/403 expected when no auth token is provided — return empty result.
+      console.warn(
+        `[ServiceFoodScraper] detail returned HTTP ${res.status} for SKU ${sku}`
+      );
+      return { name: null, price: null, currency: null, unit: null };
+    }
+
+    let body: ProductDetailResponse;
+    try {
+      body = (await res.json()) as ProductDetailResponse;
+    } catch {
+      return { name: null, price: null, currency: null, unit: null };
+    }
+
+    const detail = body.data?.productDetail;
+    if (!detail) {
+      return { name: null, price: null, currency: null, unit: null };
+    }
+
+    return mapProductDetail(detail);
   }
 
   parseProductPage(html: string): ScrapedProduct {
-    // TODO: update with Service Foods-specific extraction once detail API is confirmed.
+    // Service Foods Online is a React SPA — HTML pages contain no structured
+    // pricing data. Delegate to the generic scraper as a best-effort fallback.
     return this.generic.parseHtml(html);
   }
 
