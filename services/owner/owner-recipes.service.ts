@@ -17,6 +17,7 @@
  */
 import { prisma } from "@/lib/prisma";
 import { resolveEffectiveCostsBulk } from "./owner-supplier-prices.service";
+import { registerTenantIngredient } from "./owner-tenant-ingredients.service";
 import type {
   Recipe,
   RecipeDetail,
@@ -677,6 +678,14 @@ export async function copyMarketplaceRecipeToOwner(
     },
   });
 
+  // Auto-import all recipe ingredients into the tenant's ingredient list.
+  // Best-effort: failures are silent so that a non-PLATFORM ingredient does not abort the copy.
+  await Promise.all(
+    ingredientsToCreate.map((i) =>
+      registerTenantIngredient(tenantId, i.ingredientId).catch(() => {})
+    )
+  );
+
   const recipe = toRecipe(row as RawRecipe);
   const rawIngredients = row.ingredients as RawRecipeIngredient[];
   const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
@@ -748,6 +757,14 @@ export async function copyPlatformRecipeToOwner(
       },
     },
   });
+
+  // Auto-import all recipe ingredients into the tenant's ingredient list.
+  // Best-effort: failures are silent so that a non-PLATFORM ingredient does not abort the copy.
+  await Promise.all(
+    ingredientsToCreate.map((i) =>
+      registerTenantIngredient(tenantId, i.ingredientId).catch(() => {})
+    )
+  );
 
   const recipe = toRecipe(row as RawRecipe);
   const rawIngredients = row.ingredients as RawRecipeIngredient[];
