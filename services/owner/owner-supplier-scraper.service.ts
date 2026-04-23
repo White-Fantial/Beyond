@@ -71,6 +71,12 @@ export async function scrapeSupplierProduct(
   if (!scraper) {
     throw new Error(`SupplierProduct ${supplierProductId} has no scraper configured`);
   }
+
+  if (!scraper.scrape) {
+    throw new Error(
+      `Scraper for product ${supplierProductId} does not support unauthenticated scraping. Use scrapeForUser() instead.`
+    );
+  }
   const scraped = await scraper.scrape(product.externalUrl);
 
   const previousPrice = product.referencePrice;
