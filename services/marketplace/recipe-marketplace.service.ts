@@ -222,7 +222,6 @@ export async function listMarketplaceRecipes(
   // with MarketplaceRecipe IDs (which are plain UUIDs).
   const platformWhere = {
     tenantId: null,
-    storeId: null,
     deletedAt: null,
     ...(q?.trim()
       ? { name: { contains: q.trim(), mode: "insensitive" as const } }
