@@ -201,8 +201,8 @@ export async function scrapeForUser(
   if (credBySupplierId.size === 0) {
     return { userId, scraped: 0, skipped: 0, failed: 0, results: [] };
   }
-
-  // 2. Find supplier products linked to ingredients used in any recipe in this tenant.
+ 
+  // 2. Find supplier products linked to ingredients used inthis tenant.
   const linkedProducts = await prisma.supplierProduct.findMany({
     where: {
       deletedAt: null,
@@ -211,12 +211,7 @@ export async function scrapeForUser(
         some: {
           ingredient: {
             tenantId,
-            deletedAt: null,
-            recipeIngredients: {
-              some: {
-                recipe: { tenantId, deletedAt: null },
-              },
-            },
+            deletedAt: null
           },
         },
       },
