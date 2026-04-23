@@ -3,6 +3,7 @@ import { listIngredients } from "@/services/owner/owner-ingredients.service";
 import { getTenantIngredientRequests } from "@/services/marketplace/ingredient-requests.service";
 import IngredientTable from "@/components/owner/ingredients/IngredientTable";
 import RequestIngredientPanel from "@/components/owner/ingredients/RequestIngredientPanel";
+import ImportPlatformIngredientPanel from "@/components/owner/ingredients/ImportPlatformIngredientPanel";
 import { INGREDIENT_REQUEST_STATUS_LABELS } from "@/types/marketplace";
 import type { IngredientRequestStatus } from "@/types/marketplace";
 
@@ -16,19 +17,11 @@ const statusColors: Record<IngredientRequestStatus, string> = {
 export default async function OwnerIngredientsPage() {
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
-  const storeId = ctx.storeMemberships[0]?.storeId ?? "";
 
   const [result, requestsResult] = await Promise.all([
-    listIngredients(tenantId, { storeId }),
+    listIngredients(tenantId),
     getTenantIngredientRequests(tenantId),
   ]);
-
-  // Collect temp ingredient IDs that are still pending
-  const pendingTempIds = new Set(
-    requestsResult.items
-      .filter((r) => r.status === "PENDING" && r.tempIngredientId)
-      .map((r) => r.tempIngredientId!)
-  );
 
   return (
     <div className="space-y-6">
@@ -40,11 +33,14 @@ export default async function OwnerIngredientsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <ImportPlatformIngredientPanel
+            initiallySelectedIds={result.items.map((item) => item.id)}
+          />
           <RequestIngredientPanel />
         </div>
       </div>
 
-      <IngredientTable items={result.items} pendingTempIds={pendingTempIds} />
+      <IngredientTable items={result.items} />
 
       {/* Ingredient Requests section */}
       {requestsResult.items.length > 0 && (
@@ -73,11 +69,6 @@ export default async function OwnerIngredientsPage() {
                     {req.status === "REJECTED" && req.reviewNotes && (
                       <p className="mt-1 text-xs text-red-600">
                         <span className="font-medium">Rejection reason:</span> {req.reviewNotes}
-                      </p>
-                    )}
-                    {req.status === "PENDING" && req.tempIngredientId && (
-                      <p className="mt-1 text-xs text-blue-600">
-                        A temporary ingredient is available for use in recipes while this request is being reviewed.
                       </p>
                     )}
                     <p className="mt-1 text-xs text-gray-400">

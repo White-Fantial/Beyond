@@ -30,7 +30,7 @@ export default async function AdminEditRecipePage({ params }: PageProps) {
 
   const [platformIngredients, categories] = await Promise.all([
     prisma.ingredient.findMany({
-      where: { scope: "PLATFORM", deletedAt: null },
+      where: { deletedAt: null },
       select: { id: true, name: true, unit: true, category: true },
       orderBy: { name: "asc" },
     }),

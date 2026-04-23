@@ -334,7 +334,7 @@ export async function addPlatformIngredientLink(
   supplierProductId: string
 ): Promise<PlatformIngredientLink> {
   const ingredient = await prisma.ingredient.findFirst({
-    where: { id: ingredientId, scope: "PLATFORM", deletedAt: null },
+    where: { id: ingredientId, deletedAt: null },
   });
   if (!ingredient) throw new Error(`PlatformIngredient ${ingredientId} not found`);
 

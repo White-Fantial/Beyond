@@ -1,8 +1,7 @@
 /**
  * Platform Ingredients Service — Marketplace.
  *
- * Manages the platform-global ingredient catalogue (scope = PLATFORM).
- * Thin wrapper around the unified Ingredient model — all reads filter on scope=PLATFORM.
+ * Manages the platform-global ingredient catalogue.
  * Only PLATFORM_ADMIN and PLATFORM_MODERATOR may write; RECIPE_PROVIDER reads only.
  */
 import { prisma } from "@/lib/prisma";
@@ -21,9 +20,6 @@ export type { Ingredient as PlatformIngredient };
 
 function toIngredient(row: {
   id: string;
-  scope: string;
-  tenantId: string | null;
-  storeId: string | null;
   name: string;
   description: string | null;
   category: string | null;
@@ -36,9 +32,6 @@ function toIngredient(row: {
 }): Ingredient {
   return {
     id: row.id,
-    scope: row.scope as "PLATFORM" | "STORE",
-    tenantId: row.tenantId,
-    storeId: row.storeId,
     name: row.name,
     description: row.description,
     category: row.category,
@@ -59,7 +52,6 @@ export async function listPlatformIngredients(
   const { category, isActive, page = 1, pageSize = 50 } = filters;
 
   const where = {
-    scope: "PLATFORM" as const,
     deletedAt: null,
     ...(category !== undefined ? { category } : {}),
     ...(isActive !== undefined ? { isActive } : {}),
@@ -85,7 +77,7 @@ export async function listPlatformIngredients(
 
 export async function getPlatformIngredient(id: string): Promise<Ingredient> {
   const row = await prisma.ingredient.findFirst({
-    where: { id, scope: "PLATFORM", deletedAt: null },
+    where: { id, deletedAt: null },
   });
   if (!row) throw new Error(`PlatformIngredient ${id} not found`);
   return toIngredient(row);
@@ -97,9 +89,6 @@ export async function createPlatformIngredient(
 ): Promise<Ingredient> {
   const row = await prisma.ingredient.create({
     data: {
-      scope: "PLATFORM",
-      tenantId: null,
-      storeId: null,
       name: input.name,
       description: input.description ?? null,
       category: input.category ?? null,
@@ -116,7 +105,7 @@ export async function updatePlatformIngredient(
   input: UpdateIngredientInput
 ): Promise<Ingredient> {
   const existing = await prisma.ingredient.findFirst({
-    where: { id, scope: "PLATFORM", deletedAt: null },
+    where: { id, deletedAt: null },
   });
   if (!existing) throw new Error(`PlatformIngredient ${id} not found`);
 
@@ -135,7 +124,7 @@ export async function updatePlatformIngredient(
 
 export async function deletePlatformIngredient(id: string): Promise<void> {
   const existing = await prisma.ingredient.findFirst({
-    where: { id, scope: "PLATFORM", deletedAt: null },
+    where: { id, deletedAt: null },
   });
   if (!existing) throw new Error(`PlatformIngredient ${id} not found`);
   await prisma.ingredient.update({

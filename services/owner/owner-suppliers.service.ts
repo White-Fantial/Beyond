@@ -214,6 +214,22 @@ const linkInclude = {
   },
 } as const;
 
+async function assertTenantIngredientSelected(
+  tenantId: string,
+  ingredientId: string
+): Promise<void> {
+  const selection = await prisma.tenantIngredientSelection.findFirst({
+    where: {
+      tenantId,
+      ingredientId,
+      isActive: true,
+      ingredient: { deletedAt: null },
+    },
+    select: { id: true },
+  });
+  if (!selection) throw new Error(`Ingredient ${ingredientId} not found`);
+}
+
 /**
  * Returns all supplier-product links visible to a tenant for a given ingredient.
  * Includes both platform-level links (tenantId=null) and this tenant's own links.
@@ -223,14 +239,7 @@ export async function getIngredientLinks(
   tenantId: string,
   ingredientId: string
 ): Promise<IngredientSupplierLink[]> {
-  const ingredient = await prisma.ingredient.findFirst({
-    where: {
-      id: ingredientId,
-      deletedAt: null,
-      OR: [{ tenantId }, { scope: "PLATFORM" }],
-    },
-  });
-  if (!ingredient) throw new Error(`Ingredient ${ingredientId} not found`);
+  await assertTenantIngredientSelected(tenantId, ingredientId);
 
   const rows = await prisma.ingredientSupplierLink.findMany({
     where: {
@@ -257,14 +266,7 @@ export async function linkIngredientToSupplierProduct(
   supplierProductId: string,
   isPreferred = false
 ): Promise<IngredientSupplierLink> {
-  const ingredient = await prisma.ingredient.findFirst({
-    where: {
-      id: ingredientId,
-      deletedAt: null,
-      OR: [{ tenantId }, { scope: "PLATFORM" }],
-    },
-  });
-  if (!ingredient) throw new Error(`Ingredient ${ingredientId} not found`);
+  await assertTenantIngredientSelected(tenantId, ingredientId);
 
   const supplierProduct = await prisma.supplierProduct.findFirst({
     where: {

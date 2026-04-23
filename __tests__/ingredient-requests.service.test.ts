@@ -11,15 +11,11 @@ vi.mock("@/lib/prisma", () => ({
       updateMany: vi.fn(),
     },
     ingredient: {
+      findFirst: vi.fn(),
       create: vi.fn(),
-      update: vi.fn(),
     },
     recipeIngredient: {
       findMany: vi.fn(),
-      updateMany: vi.fn(),
-    },
-    marketplaceRecipeIngredient: {
-      updateMany: vi.fn(),
     },
   },
 }));
@@ -47,15 +43,11 @@ const mockPrisma = prisma as unknown as {
     updateMany: ReturnType<typeof vi.fn>;
   };
   ingredient: {
+    findFirst: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
-    update: ReturnType<typeof vi.fn>;
   };
   recipeIngredient: {
     findMany: ReturnType<typeof vi.fn>;
-    updateMany: ReturnType<typeof vi.fn>;
-  };
-  marketplaceRecipeIngredient: {
-    updateMany: ReturnType<typeof vi.fn>;
   };
 };
 
@@ -65,7 +57,6 @@ const MODERATOR_ID = "mod-1";
 const REQUEST_ID = "req-1";
 const PI_ID = "pi-1";
 const NEW_PI_ID = "pi-new";
-const TEMP_ID = "temp-ing-1";
 
 const mockRow = {
   id: REQUEST_ID,
@@ -78,7 +69,6 @@ const mockRow = {
   notes: "Used as finishing oil for pasta",
   status: "PENDING",
   resolvedIngredientId: null,
-  tempIngredientId: null,
   reviewedByUserId: null,
   reviewNotes: null,
   ownerSeenAt: null,
@@ -91,7 +81,6 @@ const mockRow = {
 const mockRowWithTenant = {
   ...mockRow,
   tenantId: TENANT_ID,
-  tempIngredientId: TEMP_ID,
 };
 
 beforeEach(() => {
@@ -114,7 +103,6 @@ describe("createIngredientRequest", () => {
     expect(result.name).toBe("Truffle Oil");
     expect(result.status).toBe("PENDING");
     expect(result.requestedByName).toBe("Jane Chef");
-    expect(result.tempIngredientId).toBeNull();
     expect(mockPrisma.ingredientRequest.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -124,15 +112,10 @@ describe("createIngredientRequest", () => {
         }),
       })
     );
-    // No temp ingredient created when tenantId not provided
-    expect(mockPrisma.ingredient.create).not.toHaveBeenCalled();
   });
 
-  it("creates a temp STORE-scope ingredient when tenantId is provided", async () => {
-    // First create returns the base request, second update returns with tempIngredientId
-    mockPrisma.ingredientRequest.create.mockResolvedValue(mockRow);
-    mockPrisma.ingredient.create.mockResolvedValue({ id: TEMP_ID });
-    mockPrisma.ingredientRequest.update.mockResolvedValue(mockRowWithTenant);
+  it("stores tenantId when request comes from owner context", async () => {
+    mockPrisma.ingredientRequest.create.mockResolvedValue(mockRowWithTenant);
 
     const result = await createIngredientRequest(USER_ID, {
       name: "Truffle Oil",
@@ -141,22 +124,14 @@ describe("createIngredientRequest", () => {
       tenantId: TENANT_ID,
     });
 
-    expect(result.tempIngredientId).toBe(TEMP_ID);
     expect(result.tenantId).toBe(TENANT_ID);
-    expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
+    expect(mockPrisma.ingredientRequest.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          scope: "STORE",
           tenantId: TENANT_ID,
           name: "Truffle Oil",
           unit: "ML",
-          isActive: true,
         }),
-      })
-    );
-    expect(mockPrisma.ingredientRequest.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: { tempIngredientId: TEMP_ID },
       })
     );
   });
@@ -288,7 +263,7 @@ describe("getIngredientRequest", () => {
 
 describe("reviewIngredientRequest", () => {
   describe("APPROVED", () => {
-    it("auto-creates PLATFORM ingredient from request data (no temp ingredient)", async () => {
+    it("auto-creates a platform ingredient from request data", async () => {
       mockPrisma.ingredientRequest.findUnique.mockResolvedValue(mockRow);
       mockPrisma.ingredient.create.mockResolvedValue({ id: NEW_PI_ID });
       mockPrisma.ingredientRequest.update.mockResolvedValue({
@@ -306,64 +281,38 @@ describe("reviewIngredientRequest", () => {
       expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            scope: "PLATFORM",
             name: "Truffle Oil",
             unit: "ML",
-            tenantId: null,
-            storeId: null,
             createdByUserId: MODERATOR_ID,
           }),
         })
       );
-      // No migration needed (no temp ingredient)
-      expect(mockPrisma.recipeIngredient.updateMany).not.toHaveBeenCalled();
-      expect(mockPrisma.marketplaceRecipeIngredient.updateMany).not.toHaveBeenCalled();
-      expect(mockPrisma.ingredient.update).not.toHaveBeenCalled();
     });
 
-    it("migrates RecipeIngredient refs from temp ingredient on APPROVED", async () => {
+    it("uses an existing ingredient id when provided", async () => {
       mockPrisma.ingredientRequest.findUnique.mockResolvedValue(mockRowWithTenant);
-      mockPrisma.ingredient.create.mockResolvedValue({ id: NEW_PI_ID });
-      mockPrisma.recipeIngredient.updateMany.mockResolvedValue({ count: 3 });
-      mockPrisma.marketplaceRecipeIngredient.updateMany.mockResolvedValue({ count: 1 });
-      mockPrisma.ingredient.update.mockResolvedValue({});
+      mockPrisma.ingredient.findFirst.mockResolvedValue({ id: PI_ID });
       mockPrisma.ingredientRequest.update.mockResolvedValue({
         ...mockRowWithTenant,
         status: "APPROVED",
-        resolvedIngredientId: NEW_PI_ID,
+        resolvedIngredientId: PI_ID,
         reviewedByUserId: MODERATOR_ID,
-        tempIngredientId: TEMP_ID,
       });
 
-      await reviewIngredientRequest(REQUEST_ID, MODERATOR_ID, {
+      const result = await reviewIngredientRequest(REQUEST_ID, MODERATOR_ID, {
         status: "APPROVED",
-        reviewNotes: "Approved and migrated",
+        resolvedIngredientId: PI_ID,
       });
 
-      expect(mockPrisma.recipeIngredient.updateMany).toHaveBeenCalledWith({
-        where: { ingredientId: TEMP_ID },
-        data: { ingredientId: NEW_PI_ID },
-      });
-      expect(mockPrisma.marketplaceRecipeIngredient.updateMany).toHaveBeenCalledWith({
-        where: { ingredientId: TEMP_ID },
-        data: { ingredientId: NEW_PI_ID },
-      });
-      // Soft-delete the temp ingredient
-      expect(mockPrisma.ingredient.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: TEMP_ID },
-          data: expect.objectContaining({ isActive: false }),
-        })
-      );
+      expect(result.resolvedIngredientId).toBe(PI_ID);
+      expect(mockPrisma.ingredient.create).not.toHaveBeenCalled();
     });
   });
 
   describe("DUPLICATE", () => {
-    it("migrates temp ingredient refs to existing PLATFORM ingredient on DUPLICATE", async () => {
+    it("links request to an existing ingredient", async () => {
       mockPrisma.ingredientRequest.findUnique.mockResolvedValue(mockRowWithTenant);
-      mockPrisma.recipeIngredient.updateMany.mockResolvedValue({ count: 2 });
-      mockPrisma.marketplaceRecipeIngredient.updateMany.mockResolvedValue({ count: 0 });
-      mockPrisma.ingredient.update.mockResolvedValue({});
+      mockPrisma.ingredient.findFirst.mockResolvedValue({ id: PI_ID });
       mockPrisma.ingredientRequest.update.mockResolvedValue({
         ...mockRowWithTenant,
         status: "DUPLICATE",
@@ -377,16 +326,7 @@ describe("reviewIngredientRequest", () => {
       });
 
       expect(result.status).toBe("DUPLICATE");
-      expect(mockPrisma.recipeIngredient.updateMany).toHaveBeenCalledWith({
-        where: { ingredientId: TEMP_ID },
-        data: { ingredientId: PI_ID },
-      });
-      expect(mockPrisma.ingredient.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: TEMP_ID },
-          data: expect.objectContaining({ isActive: false }),
-        })
-      );
+      expect(result.resolvedIngredientId).toBe(PI_ID);
     });
 
     it("throws when DUPLICATE without resolvedIngredientId", async () => {
@@ -399,9 +339,8 @@ describe("reviewIngredientRequest", () => {
   });
 
   describe("REJECTED", () => {
-    it("deactivates temp ingredient on REJECTED", async () => {
+    it("stores rejection notes", async () => {
       mockPrisma.ingredientRequest.findUnique.mockResolvedValue(mockRowWithTenant);
-      mockPrisma.ingredient.update.mockResolvedValue({});
       mockPrisma.ingredientRequest.update.mockResolvedValue({
         ...mockRowWithTenant,
         status: "REJECTED",
@@ -415,62 +354,28 @@ describe("reviewIngredientRequest", () => {
       });
 
       expect(result.status).toBe("REJECTED");
-      expect(mockPrisma.ingredient.update).toHaveBeenCalledWith({
-        where: { id: TEMP_ID },
-        data: { isActive: false },
-      });
+      expect(result.reviewNotes).toBe("Not a valid ingredient");
     });
 
-    it("does not call ingredient.update on REJECTED when no temp ingredient", async () => {
-      mockPrisma.ingredientRequest.findUnique.mockResolvedValue(mockRow);
-      mockPrisma.ingredientRequest.update.mockResolvedValue({
-        ...mockRow,
-        status: "REJECTED",
-        reviewedByUserId: MODERATOR_ID,
-        reviewNotes: "Not needed",
-      });
-
-      await reviewIngredientRequest(REQUEST_ID, MODERATOR_ID, {
-        status: "REJECTED",
-        reviewNotes: "Not needed",
-      });
-
-      expect(mockPrisma.ingredient.update).not.toHaveBeenCalled();
-    });
-
-    it("migrates refs to suggestedIngredientId and soft-deletes temp on REJECTED with suggestion", async () => {
-      const SUGGESTED_ID = "suggested-ing-1";
+    it("stores a suggested ingredient id when provided", async () => {
+      const suggestedId = "suggested-ing-1";
       mockPrisma.ingredientRequest.findUnique.mockResolvedValue(mockRowWithTenant);
-      mockPrisma.recipeIngredient.updateMany.mockResolvedValue({ count: 2 });
-      mockPrisma.marketplaceRecipeIngredient.updateMany.mockResolvedValue({ count: 0 });
-      mockPrisma.ingredient.update.mockResolvedValue({});
+      mockPrisma.ingredient.findFirst.mockResolvedValue({ id: suggestedId });
       mockPrisma.ingredientRequest.update.mockResolvedValue({
         ...mockRowWithTenant,
         status: "REJECTED",
-        resolvedIngredientId: SUGGESTED_ID,
+        resolvedIngredientId: suggestedId,
         reviewedByUserId: MODERATOR_ID,
         reviewNotes: "Use existing ingredient",
-        resolvedIngredient: { name: "Existing Ingredient" },
       });
 
       const result = await reviewIngredientRequest(REQUEST_ID, MODERATOR_ID, {
         status: "REJECTED",
         reviewNotes: "Use existing ingredient",
-        suggestedIngredientId: SUGGESTED_ID,
+        suggestedIngredientId: suggestedId,
       });
 
-      expect(result.status).toBe("REJECTED");
-      expect(result.resolvedIngredientId).toBe(SUGGESTED_ID);
-      expect(mockPrisma.recipeIngredient.updateMany).toHaveBeenCalledWith({
-        where: { ingredientId: TEMP_ID },
-        data: { ingredientId: SUGGESTED_ID },
-      });
-      expect(mockPrisma.ingredient.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: TEMP_ID },
-          data: expect.objectContaining({ isActive: false }),
-        })
-      );
+      expect(result.resolvedIngredientId).toBe(suggestedId);
     });
   });
 
@@ -537,14 +442,14 @@ describe("countUnseenRequests", () => {
 // ─── getRecipesByIngredient ───────────────────────────────────────────────────
 
 describe("getRecipesByIngredient", () => {
-  it("returns deduplicated recipe list for an ingredient", async () => {
+  it("returns unique recipes that reference the ingredient", async () => {
     mockPrisma.recipeIngredient.findMany.mockResolvedValue([
       { recipe: { id: "r-1", name: "Pasta" } },
-      { recipe: { id: "r-2", name: "Pizza" } },
+      { recipe: { id: "r-2", name: "Soup" } },
       { recipe: { id: "r-1", name: "Pasta" } }, // duplicate
     ]);
 
-    const result = await getRecipesByIngredient(TENANT_ID, TEMP_ID);
+    const result = await getRecipesByIngredient(TENANT_ID, PI_ID);
 
     expect(result).toHaveLength(2);
     expect(result[0].id).toBe("r-1");
@@ -554,7 +459,7 @@ describe("getRecipesByIngredient", () => {
   it("returns empty array when no recipes use the ingredient", async () => {
     mockPrisma.recipeIngredient.findMany.mockResolvedValue([]);
 
-    const result = await getRecipesByIngredient(TENANT_ID, TEMP_ID);
+    const result = await getRecipesByIngredient(TENANT_ID, PI_ID);
 
     expect(result).toHaveLength(0);
   });

@@ -240,7 +240,7 @@ function CreateRecipePanel({
   const [tenantProducts, setTenantProducts] = useState<TenantProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
-  // Load tenant-scope ingredients on mount (no storeId filter — recipes are tenant-scoped)
+  // Load tenant-selected platform ingredients on mount.
   useEffect(() => {
     fetch(`/api/owner/ingredients?pageSize=200`)
       .then((r) => r.json())

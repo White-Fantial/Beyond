@@ -102,11 +102,6 @@ export default async function AdminIngredientRequestsPage({
                       &ldquo;{req.notes}&rdquo;
                     </p>
                   )}
-                  {req.tempIngredientId && (
-                    <p className="text-xs text-blue-500 mt-0.5">
-                      Temp ingredient created — recipe references will be migrated on approval.
-                    </p>
-                  )}
                   <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">
                     <span>Requested by: {req.requestedByName}</span>
                     <span>

@@ -2,13 +2,11 @@
  * Ingredient Request Service — Platform Ingredient Management.
  *
  * Handles owner-submitted requests to add new ingredients to the platform catalogue.
- * When an owner submits a request, a temporary STORE-scope Ingredient is created
- * immediately so the owner can use it in recipes right away.
  *
  * PLATFORM_ADMIN and PLATFORM_MODERATOR can review requests and:
- *  - APPROVE: auto-create a PLATFORM ingredient, migrating all refs from the temp ingredient.
- *  - DUPLICATE: link to an existing PLATFORM ingredient, migrating temp ingredient refs.
- *  - REJECTED: deactivate the temp ingredient and notify the owner via reviewNotes.
+ *  - APPROVE: auto-create a platform ingredient (or link to an existing one).
+ *  - DUPLICATE: link to an existing platform ingredient.
+ *  - REJECTED: reject with optional suggestion and reviewNotes.
  */
 import { prisma } from "@/lib/prisma";
 import type {
@@ -34,7 +32,6 @@ type RawRequest = {
   notes: string | null;
   status: string;
   resolvedIngredientId: string | null;
-  tempIngredientId: string | null;
   reviewedByUserId: string | null;
   reviewNotes: string | null;
   ownerSeenAt: Date | null;
@@ -48,6 +45,16 @@ const requestInclude = {
   requestedBy: { select: { name: true } },
   resolvedIngredient: { select: { name: true } },
 };
+
+async function assertIngredientExists(ingredientId: string): Promise<void> {
+  const ingredient = await prisma.ingredient.findFirst({
+    where: { id: ingredientId, deletedAt: null, isActive: true },
+    select: { id: true },
+  });
+  if (!ingredient) {
+    throw new Error(`Ingredient ${ingredientId} not found`);
+  }
+}
 
 function toRequest(row: RawRequest): IngredientRequest {
   return {
@@ -63,7 +70,6 @@ function toRequest(row: RawRequest): IngredientRequest {
     status: row.status as IngredientRequestStatus,
     resolvedIngredientId: row.resolvedIngredientId,
     resolvedIngredientName: row.resolvedIngredient?.name ?? null,
-    tempIngredientId: row.tempIngredientId,
     reviewedByUserId: row.reviewedByUserId,
     reviewNotes: row.reviewNotes,
     ownerSeenAt: row.ownerSeenAt?.toISOString() ?? null,
@@ -76,10 +82,6 @@ function toRequest(row: RawRequest): IngredientRequest {
 
 /**
  * Submit a new ingredient request.
- *
- * When a tenantId is provided (owner context), a temporary STORE-scope Ingredient
- * is auto-created so the owner can use it in recipes immediately while the request
- * is under review.
  */
 export async function createIngredientRequest(
   requestedByUserId: string,
@@ -88,7 +90,7 @@ export async function createIngredientRequest(
   const unit = (input.unit ?? "GRAM") as IngredientUnit;
   const tenantId = input.tenantId ?? null;
 
-  // Create the request record first
+  // Create request record
   const row = await prisma.ingredientRequest.create({
     data: {
       requestedByUserId,
@@ -102,31 +104,6 @@ export async function createIngredientRequest(
     },
     include: { requestedBy: { select: { name: true } } },
   });
-
-  // If the request comes from an owner, auto-create a temporary STORE-scope ingredient
-  if (tenantId) {
-    const tempIngredient = await prisma.ingredient.create({
-      data: {
-        scope: "STORE",
-        tenantId,
-        storeId: null,
-        name: input.name.trim(),
-        description: input.description?.trim() ?? null,
-        category: input.category?.trim() ?? null,
-        unit,
-        notes: input.notes?.trim() ?? null,
-        isActive: true,
-      },
-    });
-
-    const updated = await prisma.ingredientRequest.update({
-      where: { id: row.id },
-      data: { tempIngredientId: tempIngredient.id },
-      include: requestInclude,
-    });
-
-    return toRequest(updated as RawRequest);
-  }
 
   return toRequest(row as RawRequest);
 }
@@ -231,19 +208,14 @@ export async function getIngredientRequest(
  * Review an ingredient request (moderator / admin action).
  *
  * APPROVED (auto-create):
- *   Creates a new PLATFORM-scope Ingredient from the request data.
- *   Any RecipeIngredient or MarketplaceRecipeIngredient rows referencing
- *   the temp ingredient are migrated to the new PLATFORM ingredient.
- *   The temp ingredient is then soft-deleted.
+ *   Creates a new platform ingredient from the request data unless a
+ *   resolvedIngredientId is explicitly provided.
  *
  * DUPLICATE:
- *   resolvedIngredientId must point to the existing PLATFORM ingredient.
- *   Migrates temp ingredient references to the existing ingredient, then soft-deletes
- *   the temp ingredient.
+ *   resolvedIngredientId must point to an existing platform ingredient.
  *
  * REJECTED:
- *   Deactivates the temp ingredient (sets isActive=false) so owners know it is
- *   no longer usable. The reviewNotes reason is visible to the owner.
+ *   Marks request rejected with optional suggestedIngredientId for owner guidance.
  */
 export async function reviewIngredientRequest(
   id: string,
@@ -264,7 +236,13 @@ export async function reviewIngredientRequest(
     );
   }
 
-  const tempId = (existing as unknown as RawRequest).tempIngredientId;
+  if (input.resolvedIngredientId) {
+    await assertIngredientExists(input.resolvedIngredientId);
+  }
+
+  if (input.suggestedIngredientId) {
+    await assertIngredientExists(input.suggestedIngredientId);
+  }
 
   if (input.status === "APPROVED") {
     let resolvedId: string;
@@ -273,12 +251,9 @@ export async function reviewIngredientRequest(
       // Approve & Edit flow: admin already created the ingredient externally
       resolvedId = input.resolvedIngredientId;
     } else {
-      // Auto-create the PLATFORM ingredient from request data
+      // Auto-create a platform ingredient from request data
       const platformIngredient = await prisma.ingredient.create({
         data: {
-          scope: "PLATFORM",
-          tenantId: null,
-          storeId: null,
           name: existing.name,
           description: existing.description ?? null,
           category: existing.category ?? null,
@@ -289,22 +264,6 @@ export async function reviewIngredientRequest(
         },
       });
       resolvedId = platformIngredient.id;
-    }
-
-    // Migrate temp ingredient references if a temp ingredient exists
-    if (tempId) {
-      await prisma.recipeIngredient.updateMany({
-        where: { ingredientId: tempId },
-        data: { ingredientId: resolvedId },
-      });
-      await prisma.marketplaceRecipeIngredient.updateMany({
-        where: { ingredientId: tempId },
-        data: { ingredientId: resolvedId },
-      });
-      await prisma.ingredient.update({
-        where: { id: tempId },
-        data: { deletedAt: new Date(), isActive: false },
-      });
     }
 
     const row = await prisma.ingredientRequest.update({
@@ -324,22 +283,6 @@ export async function reviewIngredientRequest(
   if (input.status === "DUPLICATE") {
     const resolvedId = input.resolvedIngredientId!;
 
-    // Migrate temp ingredient references to the existing PLATFORM ingredient
-    if (tempId) {
-      await prisma.recipeIngredient.updateMany({
-        where: { ingredientId: tempId },
-        data: { ingredientId: resolvedId },
-      });
-      await prisma.marketplaceRecipeIngredient.updateMany({
-        where: { ingredientId: tempId },
-        data: { ingredientId: resolvedId },
-      });
-      await prisma.ingredient.update({
-        where: { id: tempId },
-        data: { deletedAt: new Date(), isActive: false },
-      });
-    }
-
     const row = await prisma.ingredientRequest.update({
       where: { id },
       data: {
@@ -354,50 +297,11 @@ export async function reviewIngredientRequest(
     return toRequest(row as RawRequest);
   }
 
-  // REJECTED: if a suggested replacement was provided, migrate refs and soft-delete the temp.
-  // Otherwise just deactivate the temp ingredient so the owner knows to fix their recipes manually.
-  if (input.suggestedIngredientId && tempId) {
-    const replacementId = input.suggestedIngredientId;
-    await prisma.recipeIngredient.updateMany({
-      where: { ingredientId: tempId },
-      data: { ingredientId: replacementId },
-    });
-    await prisma.marketplaceRecipeIngredient.updateMany({
-      where: { ingredientId: tempId },
-      data: { ingredientId: replacementId },
-    });
-    await prisma.ingredient.update({
-      where: { id: tempId },
-      data: { deletedAt: new Date(), isActive: false },
-    });
-
-    const row = await prisma.ingredientRequest.update({
-      where: { id },
-      data: {
-        status: "REJECTED",
-        resolvedIngredientId: replacementId,
-        reviewedByUserId,
-        reviewNotes: input.reviewNotes?.trim() ?? null,
-      },
-      include: requestInclude,
-    });
-
-    return toRequest(row as RawRequest);
-  }
-
-  // REJECTED without replacement: just deactivate the temp ingredient
-  if (tempId) {
-    await prisma.ingredient.update({
-      where: { id: tempId },
-      data: { isActive: false },
-    });
-  }
-
   const row = await prisma.ingredientRequest.update({
     where: { id },
     data: {
       status: "REJECTED",
-      resolvedIngredientId: null,
+      resolvedIngredientId: input.suggestedIngredientId ?? null,
       reviewedByUserId,
       reviewNotes: input.reviewNotes?.trim() ?? null,
     },

@@ -1,18 +1,13 @@
 /**
- * Owner Ingredients Service — Cost Management Phase 1 (revised).
+ * Owner Ingredients Service.
  *
- * Manage ingredient master data for a tenant's store (scope = STORE).
- * Ingredients are now purely conceptual taxonomy nodes — price data lives in
- * SupplierContractPrice and SupplierPriceRecord, linked via IngredientSupplierLink.
- *
- * All functions scoped to tenantId.
+ * Ingredients are platform-managed only. Owners can only select/unselect
+ * which platform ingredients are active for their tenant.
  */
 import { prisma } from "@/lib/prisma";
 import type {
   Ingredient,
   IngredientListResult,
-  CreateIngredientInput,
-  UpdateIngredientInput,
   IngredientFilters,
 } from "@/types/owner-ingredients";
 import type { IngredientUnit } from "@/types/owner-ingredients";
@@ -21,9 +16,6 @@ import type { IngredientUnit } from "@/types/owner-ingredients";
 
 function toIngredient(row: {
   id: string;
-  scope: string;
-  tenantId: string | null;
-  storeId: string | null;
   name: string;
   description: string | null;
   category: string | null;
@@ -36,9 +28,6 @@ function toIngredient(row: {
 }): Ingredient {
   return {
     id: row.id,
-    scope: row.scope as "PLATFORM" | "STORE",
-    tenantId: row.tenantId,
-    storeId: row.storeId,
     name: row.name,
     description: row.description,
     category: row.category,
@@ -57,129 +46,98 @@ export async function listIngredients(
   tenantId: string,
   filters: IngredientFilters = {}
 ): Promise<IngredientListResult> {
-  const { storeId, page = 1, pageSize = 50 } = filters;
+  const { category, isActive, page = 1, pageSize = 50 } = filters;
 
   const where = {
-    scope: "STORE" as const,
     tenantId,
-    deletedAt: null,
-    ...(storeId ? { storeId } : {}),
+    isActive: true,
+    ingredient: {
+      deletedAt: null,
+      ...(category !== undefined ? { category } : {}),
+      ...(isActive !== undefined ? { isActive } : {}),
+    },
   };
 
   const [rows, total] = await Promise.all([
-    prisma.ingredient.findMany({
+    prisma.tenantIngredientSelection.findMany({
       where,
-      orderBy: { name: "asc" },
+      include: { ingredient: true },
+      orderBy: { ingredient: { name: "asc" } },
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),
-    prisma.ingredient.count({ where }),
+    prisma.tenantIngredientSelection.count({ where }),
   ]);
 
-  return { items: rows.map(toIngredient), total, page, pageSize };
+  return {
+    items: rows.map((row) => toIngredient(row.ingredient)),
+    total,
+    page,
+    pageSize,
+  };
 }
 
 export async function getIngredient(
   tenantId: string,
   ingredientId: string
 ): Promise<Ingredient> {
-  const row = await prisma.ingredient.findFirst({
-    where: { id: ingredientId, scope: "STORE", tenantId, deletedAt: null },
+  const row = await prisma.tenantIngredientSelection.findFirst({
+    where: {
+      tenantId,
+      ingredientId,
+      isActive: true,
+      ingredient: { deletedAt: null },
+    },
+    include: { ingredient: true },
   });
   if (!row) throw new Error(`Ingredient ${ingredientId} not found`);
-  return toIngredient(row);
+  return toIngredient(row.ingredient);
 }
 
-export async function createIngredient(
+export async function selectPlatformIngredient(
   tenantId: string,
-  input: CreateIngredientInput
+  ingredientId: string
 ): Promise<Ingredient> {
-  const row = await prisma.ingredient.create({
-    data: {
-      scope: "STORE",
+  const platformIngredient = await prisma.ingredient.findFirst({
+    where: { id: ingredientId, isActive: true, deletedAt: null },
+  });
+  if (!platformIngredient) {
+    throw new Error(`Platform ingredient ${ingredientId} not found`);
+  }
+
+  await prisma.tenantIngredientSelection.upsert({
+    where: {
+      tenantId_ingredientId: {
+        tenantId,
+        ingredientId,
+      },
+    },
+    create: {
       tenantId,
-      storeId: input.storeId ?? null,
-      name: input.name,
-      description: input.description ?? null,
-      category: input.category ?? null,
-      unit: input.unit,
-      notes: input.notes ?? null,
+      ingredientId,
+      isActive: true,
+    },
+    update: {
+      isActive: true,
     },
   });
-  return toIngredient(row);
+
+  return toIngredient(platformIngredient);
 }
 
-export async function updateIngredient(
-  tenantId: string,
-  ingredientId: string,
-  input: UpdateIngredientInput
-): Promise<Ingredient> {
-  const existing = await prisma.ingredient.findFirst({
-    where: { id: ingredientId, scope: "STORE", tenantId, deletedAt: null },
-  });
-  if (!existing) throw new Error(`Ingredient ${ingredientId} not found`);
-
-  const row = await prisma.ingredient.update({
-    where: { id: ingredientId },
-    data: {
-      ...(input.name !== undefined ? { name: input.name } : {}),
-      ...(input.description !== undefined ? { description: input.description } : {}),
-      ...(input.category !== undefined ? { category: input.category } : {}),
-      ...(input.unit !== undefined ? { unit: input.unit } : {}),
-      ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
-      ...(input.notes !== undefined ? { notes: input.notes } : {}),
-    },
-  });
-  return toIngredient(row);
-}
-
-export async function deleteIngredient(
+export async function unselectPlatformIngredient(
   tenantId: string,
   ingredientId: string
 ): Promise<void> {
-  const existing = await prisma.ingredient.findFirst({
-    where: { id: ingredientId, scope: "STORE", tenantId, deletedAt: null },
+  const selection = await prisma.tenantIngredientSelection.findFirst({
+    where: { tenantId, ingredientId, isActive: true },
   });
-  if (!existing) throw new Error(`Ingredient ${ingredientId} not found`);
+  if (!selection) throw new Error(`Ingredient ${ingredientId} not found`);
 
-  await prisma.ingredient.update({
-    where: { id: ingredientId },
-    data: { deletedAt: new Date() },
+  await prisma.tenantIngredientSelection.update({
+    where: { id: selection.id },
+    data: { isActive: false },
   });
-}
-
-/**
- * Import a PLATFORM-scope ingredient into a store's ingredient list.
- *
- * Creates a new STORE-scope Ingredient that mirrors the platform ingredient's
- * name, description, category, and unit. Pricing is set separately via
- * SupplierContractPrice or SupplierPriceRecord after import.
- */
-export async function importPlatformIngredient(
-  tenantId: string,
-  storeId: string,
-  platformIngredientId: string
-): Promise<Ingredient> {
-  const platform = await prisma.ingredient.findFirst({
-    where: { id: platformIngredientId, scope: "PLATFORM", deletedAt: null },
-  });
-  if (!platform) {
-    throw new Error(`Platform ingredient ${platformIngredientId} not found`);
-  }
-
-  const row = await prisma.ingredient.create({
-    data: {
-      scope: "STORE",
-      tenantId,
-      storeId,
-      name: platform.name,
-      description: platform.description,
-      category: platform.category,
-      unit: platform.unit,
-      notes: platform.notes,
-    },
-  });
-  return toIngredient(row);
 }
 
 /**
@@ -192,7 +150,6 @@ export async function searchPlatformIngredients(
   const { q, category, page = 1, pageSize = 30 } = filters;
 
   const where = {
-    scope: "PLATFORM" as const,
     isActive: true,
     deletedAt: null,
     ...(category ? { category } : {}),

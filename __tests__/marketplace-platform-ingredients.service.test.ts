@@ -35,12 +35,9 @@ const CREATOR_ID = "user-mod-1";
 
 const mockIngredient = {
   id: "pi-1",
-  scope: "PLATFORM",
-  tenantId: null,
-  storeId: null,
-  name: "소금",
+  name: "Salt",
   description: null,
-  category: "조미료",
+  category: "Seasoning",
   unit: "GRAM",
   isActive: true,
   createdByUserId: CREATOR_ID,
@@ -64,8 +61,8 @@ describe("listPlatformIngredients", () => {
 
     expect(result.items).toHaveLength(1);
     expect(result.total).toBe(1);
-    expect(result.items[0].name).toBe("소금");
-    expect(result.items[0].category).toBe("조미료");
+    expect(result.items[0].name).toBe("Salt");
+    expect(result.items[0].category).toBe("Seasoning");
   });
 
   it("serialises dates to ISO strings", async () => {
@@ -86,7 +83,7 @@ describe("listPlatformIngredients", () => {
     expect(result.items).toHaveLength(0);
     expect(mockPrisma.ingredient.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ scope: "PLATFORM", isActive: false }),
+        where: expect.objectContaining({ isActive: false }),
       })
     );
   });
@@ -95,11 +92,11 @@ describe("listPlatformIngredients", () => {
     mockPrisma.ingredient.findMany.mockResolvedValue([mockIngredient]);
     mockPrisma.ingredient.count.mockResolvedValue(1);
 
-    await listPlatformIngredients({ category: "조미료" });
+    await listPlatformIngredients({ category: "Seasoning" });
 
     expect(mockPrisma.ingredient.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ scope: "PLATFORM", category: "조미료" }),
+        where: expect.objectContaining({ category: "Seasoning" }),
       })
     );
   });
@@ -113,8 +110,7 @@ describe("getPlatformIngredient", () => {
 
     const result = await getPlatformIngredient("pi-1");
     expect(result.id).toBe("pi-1");
-    expect(result.name).toBe("소금");
-    expect(result.scope).toBe("PLATFORM");
+    expect(result.name).toBe("Salt");
   });
 
   it("throws when not found", async () => {
@@ -129,25 +125,22 @@ describe("getPlatformIngredient", () => {
 // ─── createPlatformIngredient ─────────────────────────────────────────────────
 
 describe("createPlatformIngredient", () => {
-  it("creates an ingredient with scope=PLATFORM and returns it", async () => {
+  it("creates an ingredient and returns it", async () => {
     mockPrisma.ingredient.create.mockResolvedValue(mockIngredient);
 
     const result = await createPlatformIngredient(CREATOR_ID, {
-      name: "소금",
+      name: "Salt",
       unit: "GRAM",
-      category: "조미료",
+      category: "Seasoning",
     });
 
-    expect(result.name).toBe("소금");
+    expect(result.name).toBe("Salt");
     expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          scope: "PLATFORM",
-          name: "소금",
+          name: "Salt",
           createdByUserId: CREATOR_ID,
           unit: "GRAM",
-          tenantId: null,
-          storeId: null,
         }),
       })
     );
@@ -156,15 +149,15 @@ describe("createPlatformIngredient", () => {
   it("defaults currency to USD", async () => {
     mockPrisma.ingredient.create.mockResolvedValue({
       ...mockIngredient,
-      name: "설탕",
+      name: "Sugar",
     });
 
     const result = await createPlatformIngredient(CREATOR_ID, {
-      name: "설탕",
+      name: "Sugar",
       unit: "GRAM",
     });
 
-    expect(result.name).toBe("설탕");
+    expect(result.name).toBe("Sugar");
   });
 });
 
@@ -175,11 +168,11 @@ describe("updatePlatformIngredient", () => {
     mockPrisma.ingredient.findFirst.mockResolvedValue(mockIngredient);
     mockPrisma.ingredient.update.mockResolvedValue({
       ...mockIngredient,
-      name: "굵은 소금",
+      name: "Kosher Salt",
     });
 
-    const result = await updatePlatformIngredient("pi-1", { name: "굵은 소금" });
-    expect(result.name).toBe("굵은 소금");
+    const result = await updatePlatformIngredient("pi-1", { name: "Kosher Salt" });
+    expect(result.name).toBe("Kosher Salt");
   });
 
   it("throws when not found", async () => {

@@ -331,7 +331,7 @@ export async function createMarketplaceRecipe(
   const [validIngredients, referencePriceMap] = await Promise.all([
     ingredientIds.length > 0
       ? prisma.ingredient.findMany({
-          where: { id: { in: ingredientIds }, scope: "PLATFORM", deletedAt: null },
+          where: { id: { in: ingredientIds }, deletedAt: null },
           select: { id: true },
         })
       : Promise.resolve([]),
@@ -416,7 +416,7 @@ export async function updateMarketplaceRecipe(
     const [validIngredients, referencePriceMap] = await Promise.all([
       ingredientIds.length > 0
         ? prisma.ingredient.findMany({
-            where: { id: { in: ingredientIds }, scope: "PLATFORM", deletedAt: null },
+            where: { id: { in: ingredientIds }, deletedAt: null },
             select: { id: true },
           })
         : Promise.resolve([]),

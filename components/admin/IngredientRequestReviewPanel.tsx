@@ -62,7 +62,7 @@ export default function IngredientRequestReviewPanel({
     e.preventDefault();
     setSelectedIngredient(null);
     startSearch(async () => {
-      const params = new URLSearchParams({ pageSize: "20", scope: "PLATFORM" });
+      const params = new URLSearchParams({ pageSize: "20" });
       if (searchQuery.trim()) params.set("q", searchQuery.trim());
       const res = await fetch(`/api/owner/platform-ingredients?${params.toString()}`);
       if (res.ok) {
@@ -76,7 +76,7 @@ export default function IngredientRequestReviewPanel({
     e.preventDefault();
     setSuggestedIngredient(null);
     startRejectSearch(async () => {
-      const params = new URLSearchParams({ pageSize: "20", scope: "PLATFORM" });
+      const params = new URLSearchParams({ pageSize: "20" });
       if (rejectSearchQuery.trim()) params.set("q", rejectSearchQuery.trim());
       const res = await fetch(`/api/owner/platform-ingredients?${params.toString()}`);
       if (res.ok) {
@@ -207,7 +207,7 @@ export default function IngredientRequestReviewPanel({
             <p><span className="font-medium">Unit:</span> {requestUnit}</p>
             {requestDescription && <p><span className="font-medium">Description:</span> {requestDescription}</p>}
             {requestNotes && <p><span className="font-medium">Usage notes:</span> {requestNotes}</p>}
-            <p className="text-green-600 mt-1">All recipe references to the temporary ingredient will be automatically migrated.</p>
+            <p className="text-green-600 mt-1">The request will be marked approved with this ingredient.</p>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">

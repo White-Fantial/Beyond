@@ -85,8 +85,8 @@ export default function RequestIngredientPanel() {
         <div>
           <h2 className="text-sm font-semibold text-gray-900">Request New Ingredient</h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            A temporary ingredient will be created immediately so you can use it in recipes.
-            A platform admin will review and promote it to the official catalogue.
+            Request a new platform ingredient. A platform admin will review and add it
+            to the official catalogue if approved.
           </p>
         </div>
         <button
@@ -100,8 +100,7 @@ export default function RequestIngredientPanel() {
 
       {success && (
         <div className="rounded-lg bg-green-50 border border-green-200 p-3 text-xs text-green-800">
-          ✓ Request submitted. A temporary ingredient has been created and is ready to use in recipes.
-          It will appear in your ingredient list below.
+          ✓ Request submitted. It will appear in your request history while awaiting review.
         </div>
       )}
 

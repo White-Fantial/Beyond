@@ -2,11 +2,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
+    tenantIngredientSelection: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      upsert: vi.fn(),
+      update: vi.fn(),
+      count: vi.fn(),
+    },
     ingredient: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
       count: vi.fn(),
     },
   },
@@ -16,31 +21,30 @@ import { prisma } from "@/lib/prisma";
 import {
   listIngredients,
   getIngredient,
-  createIngredient,
-  updateIngredient,
-  deleteIngredient,
-  importPlatformIngredient,
+  selectPlatformIngredient,
+  unselectPlatformIngredient,
   searchPlatformIngredients,
 } from "@/services/owner/owner-ingredients.service";
 
 const mockPrisma = prisma as unknown as {
+  tenantIngredientSelection: {
+    findMany: ReturnType<typeof vi.fn>;
+    findFirst: ReturnType<typeof vi.fn>;
+    upsert: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    count: ReturnType<typeof vi.fn>;
+  };
   ingredient: {
     findMany: ReturnType<typeof vi.fn>;
     findFirst: ReturnType<typeof vi.fn>;
-    create: ReturnType<typeof vi.fn>;
-    update: ReturnType<typeof vi.fn>;
     count: ReturnType<typeof vi.fn>;
   };
 };
 
 const TENANT = "tenant-1";
-const STORE = "store-1";
 
 const mockIngredient = {
   id: "ing-1",
-  scope: "STORE",
-  tenantId: TENANT,
-  storeId: STORE,
   name: "Bread Flour",
   description: null,
   category: null,
@@ -55,11 +59,18 @@ const mockIngredient = {
 const mockPlatformIngredient = {
   ...mockIngredient,
   id: "plat-1",
-  scope: "PLATFORM",
-  tenantId: null,
-  storeId: null,
   name: "Salt",
   category: "Seasoning",
+};
+
+const mockSelection = {
+  id: "sel-1",
+  tenantId: TENANT,
+  ingredientId: mockIngredient.id,
+  isActive: true,
+  createdAt: new Date("2026-01-01"),
+  updatedAt: new Date("2026-01-01"),
+  ingredient: mockIngredient,
 };
 
 beforeEach(() => {
@@ -70,8 +81,8 @@ beforeEach(() => {
 
 describe("listIngredients", () => {
   it("returns paginated ingredients", async () => {
-    mockPrisma.ingredient.findMany.mockResolvedValue([mockIngredient]);
-    mockPrisma.ingredient.count.mockResolvedValue(1);
+    mockPrisma.tenantIngredientSelection.findMany.mockResolvedValue([mockSelection]);
+    mockPrisma.tenantIngredientSelection.count.mockResolvedValue(1);
 
     const result = await listIngredients(TENANT);
 
@@ -81,45 +92,48 @@ describe("listIngredients", () => {
   });
 
   it("serialises dates to ISO strings", async () => {
-    mockPrisma.ingredient.findMany.mockResolvedValue([mockIngredient]);
-    mockPrisma.ingredient.count.mockResolvedValue(1);
+    mockPrisma.tenantIngredientSelection.findMany.mockResolvedValue([mockSelection]);
+    mockPrisma.tenantIngredientSelection.count.mockResolvedValue(1);
 
     const result = await listIngredients(TENANT);
     expect(typeof result.items[0].createdAt).toBe("string");
     expect(result.items[0].createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 
-  it("filters by storeId", async () => {
-    mockPrisma.ingredient.findMany.mockResolvedValue([]);
-    mockPrisma.ingredient.count.mockResolvedValue(0);
+  it("filters by category", async () => {
+    mockPrisma.tenantIngredientSelection.findMany.mockResolvedValue([]);
+    mockPrisma.tenantIngredientSelection.count.mockResolvedValue(0);
 
-    await listIngredients(TENANT, { storeId: STORE });
+    await listIngredients(TENANT, { category: "Grains" });
 
-    expect(mockPrisma.ingredient.findMany).toHaveBeenCalledWith(
+    expect(mockPrisma.tenantIngredientSelection.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ storeId: STORE }),
+        where: expect.objectContaining({
+          tenantId: TENANT,
+          ingredient: expect.objectContaining({ category: "Grains" }),
+        }),
       })
     );
   });
 
   it("defaults to page 1, pageSize 50", async () => {
-    mockPrisma.ingredient.findMany.mockResolvedValue([]);
-    mockPrisma.ingredient.count.mockResolvedValue(0);
+    mockPrisma.tenantIngredientSelection.findMany.mockResolvedValue([]);
+    mockPrisma.tenantIngredientSelection.count.mockResolvedValue(0);
 
     const result = await listIngredients(TENANT);
     expect(result.page).toBe(1);
     expect(result.pageSize).toBe(50);
   });
 
-  it("excludes soft-deleted ingredients", async () => {
-    mockPrisma.ingredient.findMany.mockResolvedValue([]);
-    mockPrisma.ingredient.count.mockResolvedValue(0);
+  it("only returns active tenant selections", async () => {
+    mockPrisma.tenantIngredientSelection.findMany.mockResolvedValue([]);
+    mockPrisma.tenantIngredientSelection.count.mockResolvedValue(0);
 
     await listIngredients(TENANT);
 
-    expect(mockPrisma.ingredient.findMany).toHaveBeenCalledWith(
+    expect(mockPrisma.tenantIngredientSelection.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ deletedAt: null }),
+        where: expect.objectContaining({ tenantId: TENANT, isActive: true }),
       })
     );
   });
@@ -129,7 +143,7 @@ describe("listIngredients", () => {
 
 describe("getIngredient", () => {
   it("returns a single ingredient", async () => {
-    mockPrisma.ingredient.findFirst.mockResolvedValue(mockIngredient);
+    mockPrisma.tenantIngredientSelection.findFirst.mockResolvedValue(mockSelection);
 
     const result = await getIngredient(TENANT, "ing-1");
 
@@ -138,180 +152,30 @@ describe("getIngredient", () => {
   });
 
   it("throws if not found", async () => {
-    mockPrisma.ingredient.findFirst.mockResolvedValue(null);
+    mockPrisma.tenantIngredientSelection.findFirst.mockResolvedValue(null);
 
     await expect(getIngredient(TENANT, "missing")).rejects.toThrow("not found");
   });
 });
 
-// ─── createIngredient ─────────────────────────────────────────────────────────
+// ─── selectPlatformIngredient ─────────────────────────────────────────────────
 
-describe("createIngredient", () => {
-  it("creates an ingredient with correct data", async () => {
-    mockPrisma.ingredient.create.mockResolvedValue(mockIngredient);
-
-    const result = await createIngredient(TENANT, {
-      storeId: STORE,
-      name: "Bread Flour",
-      unit: "GRAM",
-    });
-
-    expect(result.name).toBe("Bread Flour");
-    expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          scope: "STORE",
-          tenantId: TENANT,
-          storeId: STORE,
-          unit: "GRAM",
-        }),
-      })
-    );
-  });
-
-  it("stores optional category and notes", async () => {
-    mockPrisma.ingredient.create.mockResolvedValue({
-      ...mockIngredient,
-      category: "Grains",
-      notes: "Premium flour",
-    });
-
-    await createIngredient(TENANT, {
-      storeId: STORE,
-      name: "Bread Flour",
-      unit: "GRAM",
-      category: "Grains",
-      notes: "Premium flour",
-    });
-
-    expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ category: "Grains", notes: "Premium flour" }),
-      })
-    );
-  });
-});
-
-// ─── updateIngredient ─────────────────────────────────────────────────────────
-
-describe("updateIngredient", () => {
-  it("updates ingredient name", async () => {
-    mockPrisma.ingredient.findFirst.mockResolvedValue(mockIngredient);
-    mockPrisma.ingredient.update.mockResolvedValue({
-      ...mockIngredient,
-      name: "Premium Bread Flour",
-    });
-
-    const result = await updateIngredient(TENANT, "ing-1", { name: "Premium Bread Flour" });
-
-    expect(result.name).toBe("Premium Bread Flour");
-    expect(mockPrisma.ingredient.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "ing-1" },
-        data: expect.objectContaining({ name: "Premium Bread Flour" }),
-      })
-    );
-  });
-
-  it("updates recipe unit", async () => {
-    mockPrisma.ingredient.findFirst.mockResolvedValue(mockIngredient);
-    mockPrisma.ingredient.update.mockResolvedValue({
-      ...mockIngredient,
-      unit: "KG",
-    });
-
-    const result = await updateIngredient(TENANT, "ing-1", { unit: "KG" });
-
-    expect(result.unit).toBe("KG");
-  });
-
-  it("throws if ingredient not found", async () => {
-    mockPrisma.ingredient.findFirst.mockResolvedValue(null);
-
-    await expect(
-      updateIngredient(TENANT, "missing", { name: "X" })
-    ).rejects.toThrow("not found");
-  });
-});
-
-// ─── deleteIngredient ─────────────────────────────────────────────────────────
-
-describe("deleteIngredient", () => {
-  it("soft-deletes the ingredient", async () => {
-    mockPrisma.ingredient.findFirst.mockResolvedValue(mockIngredient);
-    mockPrisma.ingredient.update.mockResolvedValue({
-      ...mockIngredient,
-      deletedAt: new Date(),
-    });
-
-    await deleteIngredient(TENANT, "ing-1");
-
-    expect(mockPrisma.ingredient.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: "ing-1" },
-        data: expect.objectContaining({ deletedAt: expect.any(Date) }),
-      })
-    );
-  });
-
-  it("throws if ingredient not found", async () => {
-    mockPrisma.ingredient.findFirst.mockResolvedValue(null);
-
-    await expect(deleteIngredient(TENANT, "missing")).rejects.toThrow("not found");
-  });
-});
-
-// ─── importPlatformIngredient ─────────────────────────────────────────────────
-
-describe("importPlatformIngredient", () => {
-  it("creates a STORE-scope copy of a platform ingredient", async () => {
+describe("selectPlatformIngredient", () => {
+  it("adds a platform ingredient to the tenant selection list", async () => {
     mockPrisma.ingredient.findFirst.mockResolvedValue(mockPlatformIngredient);
-    const expectedRow = {
-      ...mockIngredient,
-      id: "new-ing",
-      name: "Salt",
-      category: "Seasoning",
-    };
-    mockPrisma.ingredient.create.mockResolvedValue(expectedRow);
+    mockPrisma.tenantIngredientSelection.upsert.mockResolvedValue({});
 
-    const result = await importPlatformIngredient(TENANT, STORE, "plat-1");
+    const result = await selectPlatformIngredient(TENANT, "plat-1");
 
     expect(result.name).toBe("Salt");
-    expect(result.category).toBe("Seasoning");
-    expect(mockPrisma.ingredient.findFirst).toHaveBeenCalledWith(
+    expect(mockPrisma.tenantIngredientSelection.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ id: "plat-1", scope: "PLATFORM" }),
-      })
-    );
-    expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          scope: "STORE",
+        create: expect.objectContaining({
           tenantId: TENANT,
-          storeId: STORE,
-          name: "Salt",
-          category: "Seasoning",
+          ingredientId: "plat-1",
+          isActive: true,
         }),
-      })
-    );
-  });
-
-  it("copies unit from platform ingredient", async () => {
-    mockPrisma.ingredient.findFirst.mockResolvedValue({
-      ...mockPlatformIngredient,
-      unit: "KG",
-    });
-    mockPrisma.ingredient.create.mockResolvedValue({
-      ...mockIngredient,
-      unit: "KG",
-    });
-
-    const result = await importPlatformIngredient(TENANT, STORE, "plat-1");
-
-    expect(result.unit).toBe("KG");
-    expect(mockPrisma.ingredient.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ unit: "KG" }),
+        update: { isActive: true },
       })
     );
   });
@@ -319,27 +183,45 @@ describe("importPlatformIngredient", () => {
   it("throws if platform ingredient not found", async () => {
     mockPrisma.ingredient.findFirst.mockResolvedValue(null);
 
-    await expect(
-      importPlatformIngredient(TENANT, STORE, "missing")
-    ).rejects.toThrow("not found");
+    await expect(selectPlatformIngredient(TENANT, "missing")).rejects.toThrow("not found");
+  });
+});
+
+// ─── unselectPlatformIngredient ───────────────────────────────────────────────
+
+describe("unselectPlatformIngredient", () => {
+  it("marks the tenant selection inactive", async () => {
+    mockPrisma.tenantIngredientSelection.findFirst.mockResolvedValue({ id: "sel-1" });
+    mockPrisma.tenantIngredientSelection.update.mockResolvedValue({});
+
+    await unselectPlatformIngredient(TENANT, "ing-1");
+
+    expect(mockPrisma.tenantIngredientSelection.update).toHaveBeenCalledWith({
+      where: { id: "sel-1" },
+      data: { isActive: false },
+    });
+  });
+
+  it("throws if ingredient not found", async () => {
+    mockPrisma.tenantIngredientSelection.findFirst.mockResolvedValue(null);
+
+    await expect(unselectPlatformIngredient(TENANT, "missing")).rejects.toThrow("not found");
   });
 });
 
 // ─── searchPlatformIngredients ────────────────────────────────────────────────
 
 describe("searchPlatformIngredients", () => {
-  it("searches PLATFORM ingredients by name keyword", async () => {
+  it("searches platform ingredients by name keyword", async () => {
     mockPrisma.ingredient.findMany.mockResolvedValue([mockPlatformIngredient]);
     mockPrisma.ingredient.count.mockResolvedValue(1);
 
     const result = await searchPlatformIngredients({ q: "Salt" });
 
     expect(result.items).toHaveLength(1);
-    expect(result.items[0].scope).toBe("PLATFORM");
     expect(mockPrisma.ingredient.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          scope: "PLATFORM",
           name: expect.objectContaining({ contains: "Salt" }),
         }),
       })

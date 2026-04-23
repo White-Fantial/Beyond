@@ -19,7 +19,7 @@ vi.mock("@/lib/prisma", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
-    ingredient: {
+    tenantIngredientSelection: {
       findFirst: vi.fn(),
     },
   },
@@ -52,7 +52,7 @@ const mockPrisma = prisma as unknown as {
     update: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
   };
-  ingredient: {
+  tenantIngredientSelection: {
     findFirst: ReturnType<typeof vi.fn>;
   };
 };
@@ -168,11 +168,7 @@ const mockLinkRow = {
 
 describe("linkIngredientToSupplierProduct", () => {
   it("creates a link between ingredient and supplier product", async () => {
-    mockPrisma.ingredient.findFirst.mockResolvedValue({
-      id: "ing-1",
-      tenantId: TENANT,
-      scope: "STORE",
-    });
+    mockPrisma.tenantIngredientSelection.findFirst.mockResolvedValue({ id: "sel-1" });
     mockPrisma.supplierProduct.findFirst.mockResolvedValue({
       ...mockProduct,
       supplier: { name: "Sysco Foods" },
@@ -194,7 +190,7 @@ describe("linkIngredientToSupplierProduct", () => {
   });
 
   it("unsets other preferred links when isPreferred = true", async () => {
-    mockPrisma.ingredient.findFirst.mockResolvedValue({ id: "ing-1", tenantId: TENANT, scope: "STORE" });
+    mockPrisma.tenantIngredientSelection.findFirst.mockResolvedValue({ id: "sel-1" });
     mockPrisma.supplierProduct.findFirst.mockResolvedValue({
       ...mockProduct,
       supplier: { name: "Sysco Foods" },
@@ -217,7 +213,7 @@ describe("linkIngredientToSupplierProduct", () => {
   });
 
   it("allows linking to a PLATFORM supplier product", async () => {
-    mockPrisma.ingredient.findFirst.mockResolvedValue({ id: "ing-1", tenantId: TENANT, scope: "STORE" });
+    mockPrisma.tenantIngredientSelection.findFirst.mockResolvedValue({ id: "sel-1" });
     mockPrisma.supplierProduct.findFirst.mockResolvedValue({
       ...mockProduct,
       supplierId: "sup-platform-1",

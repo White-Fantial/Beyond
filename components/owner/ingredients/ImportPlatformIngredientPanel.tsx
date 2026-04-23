@@ -6,7 +6,7 @@ import type { Ingredient, IngredientUnit } from "@/types/owner-ingredients";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
 
 interface Props {
-  storeId: string;
+  initiallySelectedIds?: string[];
 }
 
 interface SearchResult {
@@ -14,7 +14,7 @@ interface SearchResult {
   total: number;
 }
 
-export default function ImportPlatformIngredientPanel({ storeId }: Props) {
+export default function ImportPlatformIngredientPanel({ initiallySelectedIds = [] }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -22,7 +22,9 @@ export default function ImportPlatformIngredientPanel({ storeId }: Props) {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [importingId, setImportingId] = useState<string | null>(null);
-  const [importedIds, setImportedIds] = useState<Set<string>>(new Set());
+  const [importedIds, setImportedIds] = useState<Set<string>>(
+    new Set(initiallySelectedIds)
+  );
   const [importError, setImportError] = useState<string | null>(null);
 
   function handleSearch(e: React.FormEvent) {
@@ -54,7 +56,7 @@ export default function ImportPlatformIngredientPanel({ storeId }: Props) {
       const res = await fetch("/api/owner/platform-ingredients/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ platformIngredientId: ing.id, storeId }),
+        body: JSON.stringify({ platformIngredientId: ing.id }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -88,15 +90,19 @@ export default function ImportPlatformIngredientPanel({ storeId }: Props) {
         <h2 className="text-sm font-semibold text-gray-900">Import Platform Ingredient</h2>
         <button
           type="button"
-          onClick={() => { setOpen(false); setResult(null); setImportedIds(new Set()); }}
+          onClick={() => {
+            setOpen(false);
+            setResult(null);
+            setImportedIds(new Set(initiallySelectedIds));
+          }}
           className="text-xs text-gray-400 hover:text-gray-600"
         >
           ✕ Close
         </button>
       </div>
       <p className="text-xs text-gray-500">
-        Search the platform ingredient catalogue and import ingredients into your store.
-        After importing, link the ingredient to a supplier product to set pricing via
+        Search the platform ingredient catalogue and add ingredients to your active list.
+        After adding, link the ingredient to a supplier product to set pricing via
         contract prices or price records.
       </p>
 
@@ -145,16 +151,16 @@ export default function ImportPlatformIngredientPanel({ storeId }: Props) {
                   </div>
                   <div className="shrink-0">
                     {importedIds.has(ing.id) ? (
-                      <span className="text-xs font-medium text-green-600">✓ Imported</span>
+                        <span className="text-xs font-medium text-green-600">✓ Added</span>
                     ) : importingId === ing.id ? (
-                      <span className="text-xs text-brand-600">Importing…</span>
+                      <span className="text-xs text-brand-600">Adding…</span>
                     ) : (
                       <button
                         type="button"
                         onClick={() => handleImport(ing)}
                         className="text-xs font-medium text-brand-600 hover:text-brand-800 px-2 py-1 rounded hover:bg-brand-50 transition"
                       >
-                        Import →
+                        Add →
                       </button>
                     )}
                   </div>

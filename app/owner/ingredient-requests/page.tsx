@@ -26,8 +26,7 @@ export default async function OwnerIngredientRequestsPage() {
       <div>
         <h1 className="text-xl font-bold text-gray-900">Ingredient Requests</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          Request new ingredients to be added to the platform catalogue. A temporary ingredient
-          is created immediately for use in recipes while the request is under review.
+          Request new ingredients to be added to the platform catalogue.
         </p>
       </div>
 
@@ -64,13 +63,6 @@ export default async function OwnerIngredientRequestsPage() {
                     <p className="text-xs text-gray-500 italic">&ldquo;{req.notes}&rdquo;</p>
                   )}
 
-                  {/* PENDING — temp ingredient note */}
-                  {req.status === "PENDING" && req.tempIngredientId && (
-                    <p className="mt-1 text-xs text-blue-600">
-                      ✓ A temporary ingredient is available to use in recipes right now.
-                    </p>
-                  )}
-
                   {/* APPROVED — show which platform ingredient was created */}
                   {req.status === "APPROVED" && req.resolvedIngredientName && (
                     <p className="mt-1 text-xs text-green-700">
@@ -84,32 +76,16 @@ export default async function OwnerIngredientRequestsPage() {
                     <p className="mt-1 text-xs text-gray-700">
                       This ingredient already exists as:{" "}
                       <span className="font-medium">{req.resolvedIngredientName}</span>. Your recipes
-                      have been updated.
+                      can use this platform ingredient.
                     </p>
                   )}
 
-                  {/* REJECTED — with replacement: auto-migrated */}
+                  {/* REJECTED — with replacement suggestion */}
                   {req.status === "REJECTED" && req.resolvedIngredientId && req.resolvedIngredientName && (
                     <p className="mt-1 text-xs text-orange-700">
-                      Request rejected. Your recipes have been updated to use:{" "}
+                      Request rejected. Suggested platform ingredient:{" "}
                       <span className="font-medium">{req.resolvedIngredientName}</span>
                     </p>
-                  )}
-
-                  {/* REJECTED — without replacement: manual action needed */}
-                  {req.status === "REJECTED" && !req.resolvedIngredientId && req.tempIngredientId && (
-                    <div className="mt-1 space-y-1">
-                      <p className="text-xs text-red-700">
-                        Request rejected. The temporary ingredient is no longer active. Please update
-                        your recipes manually.
-                      </p>
-                      <a
-                        href={`/owner/recipes?ingredient=${req.tempIngredientId}`}
-                        className="text-xs text-brand-600 hover:underline"
-                      >
-                        View affected recipes →
-                      </a>
-                    </div>
                   )}
 
                   {/* REJECTED — review notes (reason) */}

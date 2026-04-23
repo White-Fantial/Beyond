@@ -225,7 +225,6 @@ export interface IngredientRequest {
   status: IngredientRequestStatus;
   resolvedIngredientId: string | null;
   resolvedIngredientName: string | null;
-  tempIngredientId: string | null;
   reviewedByUserId: string | null;
   reviewNotes: string | null;
   ownerSeenAt: string | null;
@@ -251,10 +250,10 @@ export interface CreateIngredientRequestInput {
 
 export interface ReviewIngredientRequestInput {
   status: "APPROVED" | "REJECTED" | "DUPLICATE";
-  /** Required when status is APPROVED or DUPLICATE — the Ingredient id (scope=PLATFORM) to link. */
+  /** Required when status is DUPLICATE — the Ingredient id to link. */
   resolvedIngredientId?: string;
   reviewNotes?: string;
-  /** Optional for REJECTED — if provided, recipe refs are migrated to this ingredient and temp is soft-deleted. */
+  /** Optional for REJECTED — if provided, suggests a platform ingredient to use instead. */
   suggestedIngredientId?: string;
 }
 

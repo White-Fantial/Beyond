@@ -53,25 +53,14 @@ export function getUnitConversionFactor(
   return table[from]?.[to];
 }
 
-/** Scope distinguishes platform-global ingredients from store-specific ones. */
-export type IngredientScope = "PLATFORM" | "STORE";
-
 export interface Ingredient {
   id: string;
-  scope: IngredientScope;
-  /** null for PLATFORM scope */
-  tenantId: string | null;
-  /** null for PLATFORM scope */
-  storeId: string | null;
   name: string;
   description: string | null;
-  /** Category classification, primarily used for PLATFORM scope */
   category: string | null;
   /** Unit used when adding to recipes, e.g. GRAM */
   unit: IngredientUnit;
-  /** Inactive ingredients are hidden from selection UIs */
   isActive: boolean;
-  /** Set for PLATFORM scope — the admin/moderator who created it */
   createdByUserId: string | null;
   notes: string | null;
   createdAt: string;
@@ -86,8 +75,6 @@ export interface IngredientListResult {
 }
 
 export interface CreateIngredientInput {
-  /** Required for STORE scope; omit for PLATFORM scope */
-  storeId?: string;
   name: string;
   description?: string;
   category?: string;
@@ -107,10 +94,17 @@ export interface UpdateIngredientInput {
 }
 
 export interface IngredientFilters {
-  scope?: IngredientScope;
-  storeId?: string;
   category?: string;
   isActive?: boolean;
   page?: number;
   pageSize?: number;
+}
+
+export interface OwnerIngredientSelection {
+  id: string;
+  tenantId: string;
+  ingredientId: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
