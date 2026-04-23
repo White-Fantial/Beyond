@@ -145,6 +145,27 @@ function normalizeImageUrl(imageUrl: string): string | null {
 }
 
 /**
+ * Extract the Anchor product Code from a product URL.
+ *
+ * Anchor products do not have individual browseable pages; however, the
+ * platform stores a canonical URL in the form:
+ *   https://webservices.anchororders.com/products/{CODE}
+ *
+ * The Code is the last non-empty path segment. Returns null if no meaningful
+ * segment can be extracted.
+ */
+function extractProductCodeFromUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const segments = u.pathname.split("/").filter(Boolean);
+    const last = segments[segments.length - 1];
+    return last ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Convert an NZD dollar price from the Anchor API to millicents
  * (the platform's internal monetary unit: 1/100,000 of a dollar).
  * Returns null if the value is not a valid non-negative number.
@@ -268,6 +289,56 @@ export class AnchorScraper implements SupplierScraper {
       StoreName: data.StoreName,
       StoreEmail: data.StoreEmail,
     };
+  }
+
+  /**
+   * Scrape a single product using an already-established authenticated session.
+   *
+   * Because the Anchor Orders API has no per-product detail endpoint, this
+   * method queries each known product group in order and returns the first item
+   * whose Code matches the code extracted from `url`.
+   *
+   * The canonical `externalUrl` format for Anchor products is:
+   *   https://webservices.anchororders.com/products/{CODE}
+   * where CODE is the Anchor product Code (e.g. "FWMA1234").
+   *
+   * Returns an empty ScrapedProduct if the product cannot be found.
+   */
+  async scrapeWithSession(
+    url: string,
+    session: SessionContext
+  ): Promise<ScrapedProduct> {
+    const empty: ScrapedProduct = { name: null, price: null, currency: null, unit: null };
+
+    if (!session.authenticated || !session.accessToken) {
+      console.warn("[AnchorScraper] scrapeWithSession called without a valid session");
+      return empty;
+    }
+
+    const productCode = extractProductCodeFromUrl(url);
+    if (!productCode) {
+      console.warn(`[AnchorScraper] scrapeWithSession: could not extract product code from URL: ${url}`);
+      return empty;
+    }
+
+    // Search each product group until the matching code is found.
+    for (const groupCode of KNOWN_GROUP_CODES) {
+      const items = await this.fetchGroupProducts(groupCode, session);
+      const match = items.find((item) => item.Code === productCode);
+      if (match) {
+        const mapped = mapCatalogItem(match);
+        // Return only the ScrapedProduct fields (strip externalId/imageUrl extras).
+        return {
+          name: mapped.name,
+          price: mapped.price,
+          currency: mapped.currency,
+          unit: mapped.unit,
+        };
+      }
+    }
+
+    console.warn(`[AnchorScraper] scrapeWithSession: product code ${productCode} not found in any group`);
+    return empty;
   }
 
   /**
