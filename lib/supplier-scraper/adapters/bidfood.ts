@@ -269,15 +269,15 @@ export class BidfoodScraper implements SupplierScraper {
           ...(loginPageCookies ? { Cookie: loginPageCookies } : {}),
         },
         body: formBody.toString(),
-        // Do NOT follow redirects automatically — we need to handle the
-        // form_post OIDC response ourselves.
+        // Follow redirects so that any intermediate IS4 redirect chain
+        // resolves to the final OIDC callback HTML page.
         redirect: "follow",
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
 
       callbackCookies = collectCookies(res, callbackCookies);
 
-      if (!res.ok && res.status !== 200) {
+      if (!res.ok) {
         console.error(
           `[BidfoodScraper] credential POST returned HTTP ${res.status}`
         );
@@ -348,13 +348,16 @@ export class BidfoodScraper implements SupplierScraper {
           ...(callbackCookies ? { Cookie: callbackCookies } : {}),
         },
         body: oidcBody.toString(),
-        redirect: "follow",
+        // Use manual redirect so that the Set-Cookie headers on the 302
+        // response from signin-oidc are captured before the redirect is
+        // followed.
+        redirect: "manual",
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
 
       sessionCookies = collectCookies(res, sessionCookies);
 
-      if (!res.ok && res.status !== 302 && res.status !== 200) {
+      if (!res.ok && res.status !== 302) {
         console.error(
           `[BidfoodScraper] signin-oidc POST returned HTTP ${res.status}`
         );
