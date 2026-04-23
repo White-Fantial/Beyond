@@ -183,12 +183,12 @@ export async function recomputeReferencePrice(supplierProductId: string): Promis
 }
 
 /**
- * Scrape only the supplier products that are used in the given tenant's recipes,
+ * Scrape only the supplier products linked to active ingredients for the given tenant,
  * using the user's registered credentials for each supplier.
  *
  * Algorithm:
  *   1. Find all active credentials for the user in this tenant.
- *   2. Find all supplier products linked to ingredients used in this tenant's recipes.
+ *   2. Find all supplier products linked to active ingredient selections for this tenant.
  *   3. For each product whose supplier has a credential, do a credentialed scrape.
  *   4. Append a SupplierPriceRecord row (one per scrape — full history preserved).
  *   5. Recompute referencePrice for each scraped product.
@@ -208,20 +208,24 @@ export async function scrapeForUser(
     return { userId, scraped: 0, skipped: 0, failed: 0, results: [] };
   }
  
-  // 2. Find supplier products linked to ingredients used inthis tenant.
+  // 2. Find supplier products linked to active ingredient selections for this tenant.
   const linkedProducts = await prisma.supplierProduct.findMany({
     where: {
       deletedAt: null,
       supplierId: { in: [...credBySupplierId.keys()] },
-      // FIX. Scrape all supplier pruduct regardless they are registered on the user
-      // ingredientLinks: {
-      //   some: {
-      //     ingredient: {
-      //       tenantId,
-      //       deletedAt: null
-      //     },
-      //   },
-      // },
+      ingredientLinks: {
+        some: {
+          ingredient: {
+            deletedAt: null,
+            tenantSelections: {
+              some: {
+                tenantId,
+                isActive: true,
+              },
+            },
+          },
+        },
+      },
     },
     select: {
       id: true,

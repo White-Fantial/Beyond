@@ -184,6 +184,26 @@ describe("scrapeForUser", () => {
         }),
       })
     );
+    expect(mockPrisma.supplierProduct.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          supplierId: { in: [SUP_ID] },
+          ingredientLinks: {
+            some: {
+              ingredient: {
+                deletedAt: null,
+                tenantSelections: {
+                  some: {
+                    tenantId: TENANT,
+                    isActive: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+      })
+    );
   });
 
   it("tracks previous observed price for change reporting", async () => {
