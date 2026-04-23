@@ -9,6 +9,20 @@ vi.mock("@/lib/prisma", () => ({
       update: vi.fn(),
       count: vi.fn(),
     },
+    marketplaceRecipe: {
+      findFirst: vi.fn(),
+    },
+    marketplaceRecipePurchase: {
+      findFirst: vi.fn(),
+    },
+    ingredient: {
+      findFirst: vi.fn(),
+    },
+    tenantIngredient: {
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
   },
 }));
 
@@ -19,6 +33,10 @@ vi.mock("@/services/owner/owner-supplier-prices.service", () => ({
   ),
 }));
 
+vi.mock("@/services/owner/owner-tenant-ingredients.service", () => ({
+  registerTenantIngredient: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { prisma } from "@/lib/prisma";
 import {
   listRecipes,
@@ -27,7 +45,10 @@ import {
   updateRecipe,
   deleteRecipe,
   getTenantProductRecipes,
+  copyMarketplaceRecipeToOwner,
+  copyPlatformRecipeToOwner,
 } from "@/services/owner/owner-recipes.service";
+import { registerTenantIngredient } from "@/services/owner/owner-tenant-ingredients.service";
 
 const mockPrisma = prisma as unknown as {
   recipe: {
@@ -36,6 +57,14 @@ const mockPrisma = prisma as unknown as {
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
     count: ReturnType<typeof vi.fn>;
+  };
+  marketplaceRecipe: { findFirst: ReturnType<typeof vi.fn> };
+  marketplaceRecipePurchase: { findFirst: ReturnType<typeof vi.fn> };
+  ingredient: { findFirst: ReturnType<typeof vi.fn> };
+  tenantIngredient: {
+    findFirst: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
   };
 };
 
@@ -609,5 +638,133 @@ describe("circular reference detection in createRecipe", () => {
         productComponents: [{ tenantProductId: productB, quantity: 1, unit: "EACH" }],
       })
     ).resolves.toBeDefined();
+  });
+});
+
+// ─── copyMarketplaceRecipeToOwner — auto-import ingredients ───────────────────
+
+describe("copyMarketplaceRecipeToOwner auto-imports ingredients", () => {
+  const mockRegister = registerTenantIngredient as ReturnType<typeof vi.fn>;
+
+  const baseMarketplaceRecipe = {
+    id: "mr-1",
+    title: "Market Bagel",
+    type: "BASIC",
+    yieldQty: 12,
+    yieldUnit: "EACH",
+    description: null,
+    instructions: null,
+    deletedAt: null,
+    ingredients: [
+      { ingredientId: "ing-1", quantity: { toNumber: () => 250 }, unit: "GRAM" },
+      { ingredientId: "ing-2", quantity: { toNumber: () => 10 }, unit: "GRAM" },
+    ],
+  };
+
+  it("calls registerTenantIngredient for each ingredient after copy", async () => {
+    mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue(baseMarketplaceRecipe);
+    mockPrisma.recipe.create.mockResolvedValue({
+      ...mockRecipeRow,
+      ingredients: [], productComponents: [],
+    });
+
+    await copyMarketplaceRecipeToOwner(TENANT, "user-1", "mr-1", { name: "My Bagel" });
+
+    expect(mockRegister).toHaveBeenCalledWith(TENANT, "ing-1");
+    expect(mockRegister).toHaveBeenCalledWith(TENANT, "ing-2");
+    expect(mockRegister).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not abort if registerTenantIngredient throws for one ingredient", async () => {
+    mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue(baseMarketplaceRecipe);
+    mockPrisma.recipe.create.mockResolvedValue({
+      ...mockRecipeRow,
+      ingredients: [], productComponents: [],
+    });
+    mockRegister.mockRejectedValueOnce(new Error("not a platform ingredient"));
+    mockRegister.mockResolvedValueOnce(undefined);
+
+    await expect(
+      copyMarketplaceRecipeToOwner(TENANT, "user-1", "mr-1", { name: "My Bagel" })
+    ).resolves.toBeDefined();
+  });
+
+  it("skips registerTenantIngredient when recipe has no ingredients", async () => {
+    mockPrisma.marketplaceRecipe.findFirst.mockResolvedValue({
+      ...baseMarketplaceRecipe,
+      ingredients: [],
+    });
+    mockPrisma.recipe.create.mockResolvedValue({
+      ...mockRecipeRow,
+      ingredients: [], productComponents: [],
+    });
+
+    await copyMarketplaceRecipeToOwner(TENANT, "user-1", "mr-1", { name: "Empty" });
+
+    expect(mockRegister).not.toHaveBeenCalled();
+  });
+});
+
+// ─── copyPlatformRecipeToOwner — auto-import ingredients ──────────────────────
+
+describe("copyPlatformRecipeToOwner auto-imports ingredients", () => {
+  const mockRegister = registerTenantIngredient as ReturnType<typeof vi.fn>;
+
+  const basePlatformRecipe = {
+    id: "pr-1",
+    tenantId: null,
+    name: "Platform Bagel",
+    yieldQty: 12,
+    yieldUnit: "EACH",
+    notes: null,
+    instructions: null,
+    deletedAt: null,
+    ingredients: [
+      { ingredientId: "ing-3", quantity: { toNumber: () => 300 }, unit: "GRAM" },
+      { ingredientId: "ing-4", quantity: { toNumber: () => 15 }, unit: "GRAM" },
+    ],
+  };
+
+  it("calls registerTenantIngredient for each ingredient after copy", async () => {
+    mockPrisma.recipe.findFirst.mockResolvedValue(basePlatformRecipe);
+    mockPrisma.recipe.create.mockResolvedValue({
+      ...mockRecipeRow,
+      ingredients: [], productComponents: [],
+    });
+
+    await copyPlatformRecipeToOwner(TENANT, "pr-1", { name: "My Platform Bagel" });
+
+    expect(mockRegister).toHaveBeenCalledWith(TENANT, "ing-3");
+    expect(mockRegister).toHaveBeenCalledWith(TENANT, "ing-4");
+    expect(mockRegister).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not abort if registerTenantIngredient throws for one ingredient", async () => {
+    mockPrisma.recipe.findFirst.mockResolvedValue(basePlatformRecipe);
+    mockPrisma.recipe.create.mockResolvedValue({
+      ...mockRecipeRow,
+      ingredients: [], productComponents: [],
+    });
+    mockRegister.mockRejectedValueOnce(new Error("not a platform ingredient"));
+    mockRegister.mockResolvedValueOnce(undefined);
+
+    await expect(
+      copyPlatformRecipeToOwner(TENANT, "pr-1", { name: "My Platform Bagel" })
+    ).resolves.toBeDefined();
+  });
+
+  it("skips registerTenantIngredient when recipe has no ingredients", async () => {
+    mockPrisma.recipe.findFirst.mockResolvedValue({
+      ...basePlatformRecipe,
+      ingredients: [],
+    });
+    mockPrisma.recipe.create.mockResolvedValue({
+      ...mockRecipeRow,
+      ingredients: [], productComponents: [],
+    });
+
+    await copyPlatformRecipeToOwner(TENANT, "pr-1", { name: "Empty" });
+
+    expect(mockRegister).not.toHaveBeenCalled();
   });
 });
