@@ -1,7 +1,6 @@
 import { requireOwnerPortalAccess } from "@/lib/owner/auth-guard";
 import { getTenantProduct } from "@/services/owner/owner-tenant-products.service";
 import { getTenantProductRecipes } from "@/services/owner/owner-recipes.service";
-import { getOwnerStores } from "@/services/owner/owner-store.service";
 import {
   listProductModifierGroups,
   listTenantModifierGroups,
@@ -21,16 +20,13 @@ export default async function TenantProductDetailPage({ params }: Props) {
   const ctx = await requireOwnerPortalAccess();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
 
-  const [product, stores, recipes, linkedModifiers, allModifiers] = await Promise.all([
+  const [product, recipes, linkedModifiers, allModifiers] = await Promise.all([
     getTenantProduct(tenantId, productId),
-    tenantId ? getOwnerStores(tenantId) : [],
     tenantId ? getTenantProductRecipes(tenantId, productId) : [],
     tenantId ? listProductModifierGroups(tenantId, productId) : [],
     tenantId ? listTenantModifierGroups(tenantId) : [],
   ]);
   if (!product) notFound();
-
-  const storeOptions = stores.map((s) => ({ id: s.id, name: s.name }));
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
@@ -71,7 +67,6 @@ export default async function TenantProductDetailPage({ params }: Props) {
         </div>
         <TenantProductRecipeSection
           tenantProductId={productId}
-          stores={storeOptions}
           allRecipes={recipes}
         />
       </div>

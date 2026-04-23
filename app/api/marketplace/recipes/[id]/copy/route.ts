@@ -31,10 +31,6 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
   const body = (await req.json()) as CopyMarketplaceRecipeInput;
 
-  if (!body.storeId?.trim()) {
-    return NextResponse.json({ error: "storeId is required" }, { status: 400 });
-  }
-
   try {
     // Handle platform recipe (admin-created Recipe with tenantId=null)
     if (id.startsWith("platform:")) {

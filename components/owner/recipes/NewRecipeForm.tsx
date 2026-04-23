@@ -32,11 +32,7 @@ interface ProductComponentRow {
   unit: IngredientUnit;
 }
 
-interface Props {
-  storeId: string;
-}
-
-export default function NewRecipeForm({ storeId }: Props) {
+export default function NewRecipeForm() {
   const router = useRouter();
 
   const [name, setName] = useState("");
@@ -56,8 +52,7 @@ export default function NewRecipeForm({ storeId }: Props) {
   const [loadingProducts, setLoadingProducts] = useState(true);
 
   useEffect(() => {
-    if (!storeId) return;
-    fetch(`/api/owner/ingredients?storeId=${storeId}&pageSize=500`)
+    fetch(`/api/owner/ingredients?pageSize=500`)
       .then((r) => r.json())
       .then((json) => setStoreIngredients(json.data?.items ?? []))
       .catch(() => {})
@@ -67,7 +62,7 @@ export default function NewRecipeForm({ storeId }: Props) {
       .then((json) => setTenantProducts(json.data ?? []))
       .catch(() => {})
       .finally(() => setLoadingProducts(false));
-  }, [storeId]);
+  }, []);
 
   function addIngredientRow() {
     if (storeIngredients.length === 0) return;
@@ -135,7 +130,6 @@ export default function NewRecipeForm({ storeId }: Props) {
         unit: r.unit,
       }));
       const body: CreateRecipeInput = {
-        storeId,
         name: name.trim(),
         yieldQty: qty,
         yieldUnit,

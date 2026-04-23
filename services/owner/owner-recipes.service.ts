@@ -36,7 +36,6 @@ import type { IngredientUnit } from "@/types/owner-ingredients";
 type RawRecipe = {
   id: string;
   tenantId: string | null;
-  storeId: string | null;
   catalogProductId: string | null;
   tenantCatalogProductId: string | null;
   categoryId: string | null;
@@ -61,7 +60,6 @@ function toRecipe(row: RawRecipe): Recipe {
   return {
     id: row.id,
     tenantId: row.tenantId,
-    storeId: row.storeId,
     catalogProductId: row.catalogProductId,
     catalogProductName: row.catalogProduct?.name ?? null,
     catalogProductPrice: row.catalogProduct?.basePriceAmount ?? null,
@@ -372,12 +370,11 @@ export async function listRecipes(
   tenantId: string,
   filters: RecipeFilters = {}
 ): Promise<RecipeListResult> {
-  const { storeId, page = 1, pageSize = 20 } = filters;
+  const { page = 1, pageSize = 20 } = filters;
 
   const where = {
     tenantId,
     deletedAt: null,
-    ...(storeId ? { storeId } : {}),
   };
 
   const [rows, total] = await Promise.all([
@@ -443,8 +440,6 @@ export async function createRecipe(
   tenantId: string,
   input: CreateRecipeInput
 ): Promise<RecipeDetail> {
-  if (!input.storeId) throw new Error("storeId is required");
-
   // Circular-reference check (only relevant when the recipe is for a specific product)
   if (input.tenantCatalogProductId && input.productComponents?.length) {
     await detectCircularComponents(
@@ -456,7 +451,6 @@ export async function createRecipe(
   const row = await prisma.recipe.create({
     data: {
       tenantId,
-      storeId: input.storeId,
       catalogProductId: input.catalogProductId ?? null,
       tenantCatalogProductId: input.tenantCatalogProductId ?? null,
       name: input.name,
@@ -659,7 +653,6 @@ export async function copyMarketplaceRecipeToOwner(
   const row = await prisma.recipe.create({
     data: {
       tenantId,
-      storeId: input.storeId,
       name: input.name?.trim() || source.title,
       yieldQty: source.yieldQty,
       yieldUnit: source.yieldUnit as RecipeYieldUnit,
@@ -733,7 +726,6 @@ export async function copyPlatformRecipeToOwner(
   const row = await prisma.recipe.create({
     data: {
       tenantId,
-      storeId: input.storeId,
       name: input.name?.trim() || source.name,
       yieldQty: source.yieldQty,
       yieldUnit: source.yieldUnit as RecipeYieldUnit,
@@ -850,7 +842,7 @@ export async function getTenantProductRecipes(
         orderBy: { createdAt: "asc" },
       },
     },
-    orderBy: [{ storeId: "asc" }, { name: "asc" }],
+    orderBy: [{ name: "asc" }],
   });
 
   if (rows.length === 0) return [];

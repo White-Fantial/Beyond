@@ -1,9 +1,12 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type { RecipeDetail } from "@/types/owner-recipes";
 import RecipeCostBreakdown from "@/components/owner/recipes/RecipeCostBreakdown";
 import ProductRecipeActions from "@/components/owner/products/ProductRecipeActions";
 
 interface Props {
-  storeId: string;
   catalogProductId?: string;
   tenantCatalogProductId?: string;
   recipes: RecipeDetail[];
@@ -24,7 +27,47 @@ function RecipeBadge({ recipe }: { recipe: RecipeDetail }) {
   );
 }
 
-export default function ProductRecipePanel({ storeId, catalogProductId, tenantCatalogProductId, recipes }: Props) {
+function DeleteRecipeButton({ recipeId }: { recipeId: string }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleDelete() {
+    if (!confirm("Are you sure you want to delete this recipe? This action cannot be undone.")) {
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      try {
+        const res = await fetch(`/api/owner/recipes/${recipeId}`, { method: "DELETE" });
+        if (!res.ok) {
+          const data = await res.json();
+          setError(data.error ?? "Failed to delete recipe.");
+          return;
+        }
+        router.refresh();
+      } catch {
+        setError("A network error occurred. Please try again.");
+      }
+    });
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={handleDelete}
+        disabled={isPending}
+        className="text-xs font-medium text-red-500 hover:text-red-700 disabled:opacity-50 transition"
+      >
+        {isPending ? "Deleting…" : "Delete Recipe"}
+      </button>
+      {error && <p className="text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+export default function ProductRecipePanel({ catalogProductId, tenantCatalogProductId, recipes }: Props) {
   return (
     <div className="space-y-6">
       {recipes.length === 0 ? (
@@ -34,7 +77,6 @@ export default function ProductRecipePanel({ storeId, catalogProductId, tenantCa
             No recipe is linked to this product yet. Search the marketplace to import one, or create your own from scratch.
           </p>
           <ProductRecipeActions
-            storeId={storeId}
             catalogProductId={catalogProductId}
             tenantCatalogProductId={tenantCatalogProductId}
           />
@@ -53,6 +95,7 @@ export default function ProductRecipePanel({ storeId, catalogProductId, tenantCa
                     </span>
                   )}
                 </div>
+                <DeleteRecipeButton recipeId={recipe.id} />
               </div>
               <div className="p-5">
                 <RecipeCostBreakdown detail={recipe} canEdit />

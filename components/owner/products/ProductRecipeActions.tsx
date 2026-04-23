@@ -11,7 +11,6 @@ import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
 const YIELD_UNITS = Object.keys(RECIPE_YIELD_UNIT_LABELS) as RecipeYieldUnit[];
 
 interface Props {
-  storeId: string;
   /** Store-level CatalogProduct ID — set when managing recipes from a store product page. */
   catalogProductId?: string;
   /** Tenant-level TenantCatalogProduct ID — set when managing recipes from the global product catalog. */
@@ -26,12 +25,10 @@ interface MarketplaceSearchResult {
 // ─── Marketplace search sub-panel ─────────────────────────────────────────────
 
 function MarketplaceSearchPanel({
-  storeId,
   catalogProductId,
   tenantCatalogProductId,
   onDone,
 }: {
-  storeId: string;
   catalogProductId?: string;
   tenantCatalogProductId?: string;
   onDone: () => void;
@@ -76,7 +73,7 @@ function MarketplaceSearchPanel({
       const res = await fetch(`/api/marketplace/recipes/${recipe.id}/copy`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storeId, catalogProductId, tenantCatalogProductId }),
+        body: JSON.stringify({ catalogProductId, tenantCatalogProductId }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -194,7 +191,7 @@ function MarketplaceSearchPanel({
 
 // ─── Create recipe sub-panel ──────────────────────────────────────────────────
 
-interface StoreIngredient {
+interface Ingredient {
   id: string;
   name: string;
   unit: string;
@@ -218,12 +215,10 @@ interface ProductComponentRow {
 }
 
 function CreateRecipePanel({
-  storeId,
   catalogProductId,
   tenantCatalogProductId,
   onDone,
 }: {
-  storeId: string;
   catalogProductId?: string;
   tenantCatalogProductId?: string;
   onDone: () => void;
@@ -238,19 +233,19 @@ function CreateRecipePanel({
   const [error, setError] = useState<string | null>(null);
 
   const [ingredientRows, setIngredientRows] = useState<IngredientRow[]>([]);
-  const [storeIngredients, setStoreIngredients] = useState<StoreIngredient[]>([]);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loadingIngredients, setLoadingIngredients] = useState(true);
 
   const [productComponentRows, setProductComponentRows] = useState<ProductComponentRow[]>([]);
   const [tenantProducts, setTenantProducts] = useState<TenantProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
-  // Load store-scope ingredients on mount
+  // Load tenant-scope ingredients on mount (no storeId filter — recipes are tenant-scoped)
   useEffect(() => {
-    fetch(`/api/owner/ingredients?storeId=${encodeURIComponent(storeId)}&pageSize=200`)
+    fetch(`/api/owner/ingredients?pageSize=200`)
       .then((r) => r.json())
       .then((json) => {
-        setStoreIngredients(json.data?.items ?? []);
+        setIngredients(json.data?.items ?? []);
       })
       .catch(() => {})
       .finally(() => setLoadingIngredients(false));
@@ -259,11 +254,11 @@ function CreateRecipePanel({
       .then((json) => setTenantProducts(json.data ?? []))
       .catch(() => {})
       .finally(() => setLoadingProducts(false));
-  }, [storeId]);
+  }, []);
 
   function addIngredientRow() {
-    if (storeIngredients.length === 0) return;
-    const first = storeIngredients[0];
+    if (ingredients.length === 0) return;
+    const first = ingredients[0];
     setIngredientRows((prev) => [
       ...prev,
       { ingredientId: first.id, quantity: 1, unit: first.unit as IngredientUnit },
@@ -326,7 +321,6 @@ function CreateRecipePanel({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          storeId,
           catalogProductId,
           tenantCatalogProductId,
           name,
@@ -437,16 +431,16 @@ function CreateRecipePanel({
           <button
             type="button"
             onClick={addIngredientRow}
-            disabled={loadingIngredients || storeIngredients.length === 0}
+            disabled={loadingIngredients || ingredients.length === 0}
             className="text-xs text-brand-600 hover:text-brand-800 font-medium disabled:opacity-40"
           >
             {loadingIngredients ? "Loading…" : "+ Add Ingredient"}
           </button>
         </div>
 
-        {!loadingIngredients && storeIngredients.length === 0 && (
+        {!loadingIngredients && ingredients.length === 0 && (
           <p className="text-xs text-gray-400">
-            No ingredients found for this store. Add ingredients first under Cost Management.
+            No ingredients found. Add ingredients first under Cost Management.
           </p>
         )}
 
@@ -460,7 +454,7 @@ function CreateRecipePanel({
                   onChange={(e) => updateIngredientRow(idx, "ingredientId", e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 >
-                  {storeIngredients.map((ing) => (
+                  {ingredients.map((ing) => (
                     <option key={ing.id} value={ing.id}>
                       {ing.name}
                     </option>
@@ -601,7 +595,7 @@ function CreateRecipePanel({
 
 type Mode = "none" | "marketplace" | "create";
 
-export default function ProductRecipeActions({ storeId, catalogProductId, tenantCatalogProductId }: Props) {
+export default function ProductRecipeActions({ catalogProductId, tenantCatalogProductId }: Props) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("none");
 
@@ -669,7 +663,6 @@ export default function ProductRecipeActions({ storeId, catalogProductId, tenant
 
       {mode === "marketplace" && (
         <MarketplaceSearchPanel
-          storeId={storeId}
           catalogProductId={catalogProductId}
           tenantCatalogProductId={tenantCatalogProductId}
           onDone={handleDone}
@@ -677,7 +670,6 @@ export default function ProductRecipeActions({ storeId, catalogProductId, tenant
       )}
       {mode === "create" && (
         <CreateRecipePanel
-          storeId={storeId}
           catalogProductId={catalogProductId}
           tenantCatalogProductId={tenantCatalogProductId}
           onDone={handleDone}
