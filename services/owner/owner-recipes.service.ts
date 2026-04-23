@@ -47,6 +47,7 @@ type RawRecipe = {
   notes: string | null;
   instructions: string | null;
   marketplaceSourceId: string | null;
+  platformSourceId: string | null;
   createdAt: Date;
   updatedAt: Date;
   catalogProduct?: {
@@ -74,6 +75,7 @@ function toRecipe(row: RawRecipe): Recipe {
     notes: row.notes,
     instructions: row.instructions ?? null,
     marketplaceSourceId: row.marketplaceSourceId ?? null,
+    platformSourceId: row.platformSourceId ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -782,6 +784,7 @@ export async function copyPlatformRecipeToOwner(
       yieldUnit: source.yieldUnit as RecipeYieldUnit,
       notes: source.notes ?? null,
       instructions: source.instructions ?? null,
+      platformSourceId: platformRecipeId,
       catalogProductId: input.catalogProductId ?? null,
       tenantCatalogProductId: input.tenantCatalogProductId ?? null,
       ingredients: {

@@ -59,6 +59,7 @@ export interface Recipe {
   notes: string | null;
   instructions: string | null;
   marketplaceSourceId: string | null; // links to the original MarketplaceRecipe if copied
+  platformSourceId: string | null;    // links to the original platform Recipe if copied
   createdAt: string;
   updatedAt: string;
 }
