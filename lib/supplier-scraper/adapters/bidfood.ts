@@ -5,21 +5,31 @@
  *
  * Authentication:
  *   Bidfood uses OpenID Connect (IdentityServer4) with form_post response mode.
+ *   The login form embeds several hidden environment fields in addition to the
+ *   CSRF token; all must be submitted together with the credentials.
  *
- *   Step 1 — GET the IdentityServer login page at:
+ *   Step 1 — GET the IdentityServer login page:
  *     https://identity.mybidfood.co.nz/core/Account/Login?ReturnUrl=...
  *   Extract:
- *     - __RequestVerificationToken  (hidden CSRF field)
- *     - ReturnUrl query parameter   (forwarded to POST)
+ *     - All hidden <input> fields (includes __RequestVerificationToken and
+ *       environment metadata: BranchGroupId, CustomerGroupId, ShopV5BaseUrl,
+ *       HasLogo, Language, SupportMultilingual, PrivacyPolicyEnabled,
+ *       LogoFolder, CorporateSiteUrl, Site, StaySignIn, …)
+ *     - Set-Cookie headers (anti-forgery cookies)
  *
- *   Step 2 — POST credentials to the same login endpoint:
- *     Fields: Input.Username, Input.Password, __RequestVerificationToken, ReturnUrl
- *   Response: HTML page containing an auto-submit form that POSTs back to
- *     https://www.mybidfood.co.nz/signin-oidc
- *   with hidden fields: code, id_token, state, session_state.
+ *   Step 2 — POST credentials to the same login endpoint (redirect: manual):
+ *     Body: all extracted hidden fields + UserName + Password
+ *   Response: 302 redirect to /core/connect/authorize/callback?...
+ *   Important: Set-Cookie on the 302 response carries idsrv.session and
+ *     .AspNetCore.Identity.Application — must be captured before following
+ *     the redirect.
  *
- *   Step 3 — POST those hidden fields to the signin-oidc endpoint.
- *   Response: redirect + Set-Cookie (sets the Bidfood session cookies).
+ *   Step 3 — GET the authorize/callback URL (from Location header):
+ *   Response: HTML page with a self-submitting form that POSTs to signin-oidc
+ *     with hidden fields: code, id_token, state, session_state.
+ *
+ *   Step 4 — POST those hidden fields to signin-oidc (redirect: manual):
+ *   Response: 302 + Set-Cookie (final Bidfood shop session cookies).
  *
  * Product pages:
  *   Product pages on www.mybidfood.co.nz are server-rendered. The scraper
@@ -54,29 +64,6 @@ const TIMEOUT_MS = 20_000;
 // ---------------------------------------------------------------------------
 // HTML parsing helpers (regex-based — no external dependency)
 // ---------------------------------------------------------------------------
-
-/**
- * Extract the value of a hidden <input> field by its name attribute.
- * Returns null if the field is not found.
- */
-function extractInputValue(html: string, name: string): string | null {
-  // Match both single and double quotes, attribute order-agnostic.
-  const patterns = [
-    new RegExp(
-      `<input[^>]+name=["']${name}["'][^>]+value=["']([^"']*)["']`,
-      "i"
-    ),
-    new RegExp(
-      `<input[^>]+value=["']([^"']*)["'][^>]+name=["']${name}["']`,
-      "i"
-    ),
-  ];
-  for (const re of patterns) {
-    const m = html.match(re);
-    if (m) return m[1];
-  }
-  return null;
-}
 
 /**
  * Extract ALL hidden input fields from an HTML form as a key→value map.
@@ -118,13 +105,10 @@ function collectCookies(res: Response, existing = ""): string {
         .map((c) => c.trim())
         .filter(Boolean);
 
-  const names = new Set<string>();
   const parts: string[] = [];
 
   // Keep existing cookies that are not overwritten
   for (const part of existing.split(";").map((p) => p.trim()).filter(Boolean)) {
-    const eqIdx = part.indexOf("=");
-    if (eqIdx > 0) names.add(part.slice(0, eqIdx).trim());
     parts.push(part);
   }
 
@@ -141,7 +125,6 @@ function collectCookies(res: Response, existing = ""): string {
     } else {
       parts.push(nameValue);
     }
-    names.add(cookieName);
   }
 
   return parts.join("; ");
@@ -177,19 +160,22 @@ export class BidfoodScraper implements SupplierScraper {
    * Authenticate with the Bidfood NZ portal using an OpenID Connect
    * (IdentityServer4) form-based login flow.
    *
-   * The three-step flow:
-   *   1. GET login page → extract CSRF token + ReturnUrl
-   *   2. POST credentials → receive OIDC callback form
-   *   3. POST callback form fields to signin-oidc → receive session cookies
+   * The four-step flow:
+   *   1. GET login page → extract all hidden fields (CSRF + env vars) + cookies
+   *   2. POST credentials (redirect:manual) → capture cookies from 302, get Location
+   *   3. GET Location (authorize/callback) → receive OIDC form_post HTML
+   *   4. POST OIDC fields to signin-oidc (redirect:manual) → capture session cookies
    *
    * Returns a SessionContext with `authenticated: true` and a `cookies` string
    * that must be forwarded as the `Cookie` header in subsequent requests.
    */
   async login(credential: SupplierCredentialPayload): Promise<SessionContext> {
     const baseLoginUrl = credential.loginUrl ?? DEFAULT_LOGIN_URL;
+    const fail = { loginUrl: baseLoginUrl, username: credential.username, authenticated: false };
 
     // ------------------------------------------------------------------
-    // Step 1: GET the login page to obtain the CSRF token and ReturnUrl.
+    // Step 1: GET the login page to obtain all hidden form fields and the
+    // anti-forgery cookies set by ASP.NET Core.
     // ------------------------------------------------------------------
     let loginPageHtml: string;
     let loginPageCookies = "";
@@ -204,10 +190,8 @@ export class BidfoodScraper implements SupplierScraper {
       });
 
       if (!res.ok) {
-        console.error(
-          `[BidfoodScraper] login page returned HTTP ${res.status}`
-        );
-        return { loginUrl: baseLoginUrl, username: credential.username, authenticated: false };
+        console.error(`[BidfoodScraper] login page returned HTTP ${res.status}`);
+        return fail;
       }
 
       loginPageHtml = await res.text();
@@ -216,61 +200,98 @@ export class BidfoodScraper implements SupplierScraper {
       console.error(
         `[BidfoodScraper] failed to fetch login page: ${err instanceof Error ? err.message : String(err)}`
       );
-      return { loginUrl: baseLoginUrl, username: credential.username, authenticated: false };
+      return fail;
     }
 
-    const csrfToken = extractInputValue(loginPageHtml, "__RequestVerificationToken");
-    if (!csrfToken) {
+    // Extract all hidden fields. The login form embeds the CSRF token
+    // (__RequestVerificationToken) plus several environment fields
+    // (BranchGroupId, CustomerGroupId, ShopV5BaseUrl, Language, Site, etc.)
+    // that must be forwarded verbatim.
+    const hiddenFields = extractHiddenFields(loginPageHtml);
+
+    if (!hiddenFields["__RequestVerificationToken"]) {
       console.error("[BidfoodScraper] CSRF token not found on login page");
-      return { loginUrl: baseLoginUrl, username: credential.username, authenticated: false };
+      return fail;
     }
 
-    // Extract ReturnUrl from the login page URL or from a hidden input.
-    let returnUrl =
-      extractInputValue(loginPageHtml, "ReturnUrl") ??
-      (() => {
-        try {
-          return new URL(baseLoginUrl).searchParams.get("ReturnUrl") ?? "";
-        } catch {
-          return "";
-        }
-      })();
-
     // ------------------------------------------------------------------
-    // Step 2: POST credentials to the login endpoint.
+    // Step 2: POST credentials + all hidden fields.
+    //
+    // Use redirect:manual so that the Set-Cookie headers on the 302
+    // response (idsrv.session + .AspNetCore.Identity.Application) are
+    // captured before following the redirect.
     // ------------------------------------------------------------------
-    const loginPostUrl = (() => {
-      try {
-        const u = new URL(baseLoginUrl);
-        if (returnUrl) u.searchParams.set("ReturnUrl", returnUrl);
-        return u.toString();
-      } catch {
-        return baseLoginUrl;
-      }
-    })();
+    const formFields: Record<string, string> = {
+      ...hiddenFields,
+      UserName: credential.username,
+      Password: credential.password,
+      StaySignIn: "false",
+    };
+    const formBody = new URLSearchParams(formFields);
 
-    const formBody = new URLSearchParams({
-      "Input.Username": credential.username,
-      "Input.Password": credential.password,
-      __RequestVerificationToken: csrfToken,
-      ReturnUrl: returnUrl,
-    });
-
-    let callbackHtml: string;
     let callbackCookies = loginPageCookies;
+    let authorizeCallbackUrl: string | null = null;
     try {
-      const res = await fetch(loginPostUrl, {
+      const res = await fetch(baseLoginUrl, {
         method: "POST",
         headers: {
           "User-Agent": DEFAULT_USER_AGENT,
           "Content-Type": "application/x-www-form-urlencoded",
           Accept: "text/html,application/xhtml+xml,*/*",
           Referer: baseLoginUrl,
+          Origin: IDENTITY_BASE,
           ...(loginPageCookies ? { Cookie: loginPageCookies } : {}),
         },
         body: formBody.toString(),
-        // Follow redirects so that any intermediate IS4 redirect chain
-        // resolves to the final OIDC callback HTML page.
+        redirect: "manual",
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+
+      // Capture cookies set on the 302 response.
+      callbackCookies = collectCookies(res, callbackCookies);
+
+      if (res.status === 302) {
+        const location = res.headers.get("location");
+        if (location) {
+          // Resolve relative URL against the identity server base.
+          authorizeCallbackUrl = location.startsWith("http")
+            ? location
+            : new URL(location, IDENTITY_BASE).toString();
+        }
+      } else if (!res.ok) {
+        console.error(
+          `[BidfoodScraper] credential POST returned HTTP ${res.status}`
+        );
+        return fail;
+      } else {
+        // 200 means the login form was re-rendered (invalid credentials).
+        console.error("[BidfoodScraper] login failed — invalid credentials or unexpected response");
+        return fail;
+      }
+    } catch (err) {
+      console.error(
+        `[BidfoodScraper] credential POST failed: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return fail;
+    }
+
+    // ------------------------------------------------------------------
+    // Step 3: Follow the redirect to the authorize/callback endpoint.
+    // IS4 processes the OIDC request and returns an HTML page containing a
+    // self-submitting form that targets signin-oidc on the shop domain.
+    // ------------------------------------------------------------------
+    const callbackFetchUrl =
+      authorizeCallbackUrl ?? `${IDENTITY_BASE}/core/connect/authorize/callback`;
+
+    let callbackHtml: string;
+    try {
+      const res = await fetch(callbackFetchUrl, {
+        headers: {
+          "User-Agent": DEFAULT_USER_AGENT,
+          Accept: "text/html,application/xhtml+xml,*/*",
+          Referer: IDENTITY_BASE,
+          ...(callbackCookies ? { Cookie: callbackCookies } : {}),
+        },
         redirect: "follow",
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
@@ -279,47 +300,39 @@ export class BidfoodScraper implements SupplierScraper {
 
       if (!res.ok) {
         console.error(
-          `[BidfoodScraper] credential POST returned HTTP ${res.status}`
+          `[BidfoodScraper] authorize callback returned HTTP ${res.status}`
         );
-        return { loginUrl: baseLoginUrl, username: credential.username, authenticated: false };
+        return fail;
       }
 
       callbackHtml = await res.text();
     } catch (err) {
       console.error(
-        `[BidfoodScraper] credential POST failed: ${err instanceof Error ? err.message : String(err)}`
+        `[BidfoodScraper] authorize callback fetch failed: ${err instanceof Error ? err.message : String(err)}`
       );
-      return { loginUrl: baseLoginUrl, username: credential.username, authenticated: false };
-    }
-
-    // Detect login failure (IdentityServer4 re-renders the login page on error).
-    if (
-      callbackHtml.includes("Invalid username or password") ||
-      callbackHtml.includes("Input.Username") // login form still present
-    ) {
-      console.error("[BidfoodScraper] login failed — invalid credentials");
-      return { loginUrl: baseLoginUrl, username: credential.username, authenticated: false };
+      return fail;
     }
 
     // ------------------------------------------------------------------
-    // Step 3: Submit the OIDC callback form to signin-oidc.
+    // Step 4: Submit the OIDC form_post to signin-oidc.
     //
-    // IdentityServer4 in form_post mode returns an HTML page containing
-    // a self-submitting form like:
+    // The callback HTML contains a self-submitting form like:
     //   <form method="POST" action="https://www.mybidfood.co.nz/signin-oidc">
     //     <input type="hidden" name="code" value="..." />
     //     <input type="hidden" name="id_token" value="..." />
     //     <input type="hidden" name="state" value="..." />
     //     <input type="hidden" name="session_state" value="..." />
     //   </form>
+    //
+    // Use redirect:manual to capture the final shop session cookies from
+    // the 302 response before the browser would redirect to the homepage.
     // ------------------------------------------------------------------
-    const oidcFormAction =
-      extractFormAction(callbackHtml) ?? SIGNIN_OIDC_URL;
+    const oidcFormAction = extractFormAction(callbackHtml) ?? SIGNIN_OIDC_URL;
     const oidcFields = extractHiddenFields(callbackHtml);
 
     if (Object.keys(oidcFields).length === 0) {
-      // The response doesn't look like an OIDC callback page.
-      // The site may have already set a session cookie directly.
+      // No OIDC fields found — the flow may have ended early (e.g. the site
+      // returned a direct session cookie without a form_post step).
       if (callbackCookies) {
         return {
           loginUrl: baseLoginUrl,
@@ -328,10 +341,8 @@ export class BidfoodScraper implements SupplierScraper {
           cookies: callbackCookies,
         };
       }
-      console.error(
-        "[BidfoodScraper] OIDC callback form not found in login response"
-      );
-      return { loginUrl: baseLoginUrl, username: credential.username, authenticated: false };
+      console.error("[BidfoodScraper] OIDC callback form not found in authorize response");
+      return fail;
     }
 
     const oidcBody = new URLSearchParams(oidcFields);
@@ -349,8 +360,7 @@ export class BidfoodScraper implements SupplierScraper {
         },
         body: oidcBody.toString(),
         // Use manual redirect so that the Set-Cookie headers on the 302
-        // response from signin-oidc are captured before the redirect is
-        // followed.
+        // response from signin-oidc are captured before the redirect is followed.
         redirect: "manual",
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
@@ -361,18 +371,18 @@ export class BidfoodScraper implements SupplierScraper {
         console.error(
           `[BidfoodScraper] signin-oidc POST returned HTTP ${res.status}`
         );
-        return { loginUrl: baseLoginUrl, username: credential.username, authenticated: false };
+        return fail;
       }
     } catch (err) {
       console.error(
         `[BidfoodScraper] signin-oidc POST failed: ${err instanceof Error ? err.message : String(err)}`
       );
-      return { loginUrl: baseLoginUrl, username: credential.username, authenticated: false };
+      return fail;
     }
 
     if (!sessionCookies) {
       console.error("[BidfoodScraper] no session cookies received after OIDC flow");
-      return { loginUrl: baseLoginUrl, username: credential.username, authenticated: false };
+      return fail;
     }
 
     return {
