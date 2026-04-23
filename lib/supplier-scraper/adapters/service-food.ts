@@ -232,6 +232,74 @@ export class ServiceFoodScraper implements SupplierScraper {
     return mapProductDetail(detail);
   }
 
+  /**
+   * Fetch a single product using an already-established authenticated session.
+   *
+   * Calls GET /web/catalog/v1/products/{sku} with the JWT accessToken from the
+   * session. This is identical to scrape() but includes the Authorization header
+   * so the API returns the customer's actual price rather than a 401.
+   */
+  async scrapeWithSession(
+    url: string,
+    session: SessionContext
+  ): Promise<ScrapedProduct> {
+    const empty: ScrapedProduct = { name: null, price: null, currency: null, unit: null };
+
+    if (!session.authenticated || !session.accessToken) {
+      // No valid session — fall back to unauthenticated scrape.
+      return this.scrape(url);
+    }
+
+    const sku = extractSkuFromUrl(url);
+    if (!sku) {
+      console.warn(`[ServiceFoodScraper] scrapeWithSession: could not extract SKU from URL: ${url}`);
+      return empty;
+    }
+
+    const token = session.accessToken as string;
+    const detailUrl = `${PRODUCT_DETAIL_URL}/${encodeURIComponent(sku)}`;
+
+    let res: Response;
+    try {
+      res = await fetch(detailUrl, {
+        headers: {
+          Accept: "application/json;charset=UTF-8",
+          Authorization: token,
+          "User-Agent": DEFAULT_USER_AGENT,
+          Origin: "https://www.servicefoodsonline.kiwi",
+        },
+        signal: AbortSignal.timeout(15_000),
+      });
+    } catch (err) {
+      console.warn(
+        `[ServiceFoodScraper] scrapeWithSession detail fetch failed for SKU ${sku}: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return empty;
+    }
+
+    if (!res.ok) {
+      console.warn(
+        `[ServiceFoodScraper] scrapeWithSession detail returned HTTP ${res.status} for SKU ${sku}`
+      );
+      return empty;
+    }
+
+    let body: ProductDetailResponse;
+    try {
+      body = (await res.json()) as ProductDetailResponse;
+    } catch {
+      console.warn(`[ServiceFoodScraper] scrapeWithSession response is not valid JSON for SKU ${sku}`);
+      return empty;
+    }
+
+    const detail = body.data?.productDetail;
+    if (!detail) {
+      return empty;
+    }
+
+    return mapProductDetail(detail);
+  }
+
   parseProductPage(html: string): ScrapedProduct {
     // Service Foods Online is a React SPA — HTML pages contain no structured
     // pricing data. Delegate to the generic scraper as a best-effort fallback.

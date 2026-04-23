@@ -13,10 +13,23 @@
  */
 import { prisma } from "@/lib/prisma";
 import { getScraperForUrl } from "@/lib/supplier-scraper";
+import type { SupplierScraper, SessionContext, ScrapedProduct } from "@/lib/supplier-scraper/base";
 import { credentialedScraper } from "@/lib/supplier-scraper/credentialed";
 import { getDecryptedCredential } from "./owner-supplier-credentials.service";
 import type { ScrapeResult } from "@/types/owner-suppliers";
 import type { UserScrapeResult, UserScrapeRunResult, ReferencePriceInfo } from "@/types/owner-supplier-credentials";
+
+/** Decrypted credential fields used in the session cache. */
+interface DecryptedCredentialFields {
+  loginUrl: string | null;
+  username: string;
+  password: string;
+}
+
+/** One entry in the per-supplier session cache built by scrapeForUser. */
+type SupplierSessionEntry =
+  | { session: SessionContext; scraper: SupplierScraper; credentialId: string; decryptedCredential: DecryptedCredentialFields }
+  | null;
 
 /** Sentinel tenantId used for platform-level (unauthenticated) price observations. */
 export const PLATFORM_SCRAPER_TENANT_ID = "PLATFORM_SCRAPER";
@@ -204,6 +217,11 @@ export async function scrapeForUser(
   let skipped = 0;
   let failed = 0;
 
+  // 3. Build a per-supplier session cache so each supplier credential is
+  //    authenticated at most once, no matter how many products it covers.
+  //    Keys are supplierId; values are a SupplierSessionEntry or null (login failed).
+  const sessionCache = new Map<string, SupplierSessionEntry>();
+
   for (const product of linkedProducts) {
     if (!product.externalUrl) {
       skipped++;
@@ -217,29 +235,48 @@ export async function scrapeForUser(
     }
 
     try {
-      const decrypted = await getDecryptedCredential(credential.id);
-
-      let scraped: import("@/lib/supplier-scraper").ScrapedProduct;
-
-      // Use the domain-specific scraper's login + scrapeWithSession if it
-      // supports authenticated API access (e.g. BidfoodScraper).
-      const domainScraper = getScraperForUrl(product.externalUrl);
-      if (domainScraper.login && domainScraper.scrapeWithSession) {
-        const session = await domainScraper.login({
-          loginUrl: decrypted.loginUrl ?? undefined,
-          username: decrypted.username,
-          password: decrypted.password,
-        });
-        if (!session.authenticated) {
-          skipped++;
-          continue;
-        }
-        scraped = await domainScraper.scrapeWithSession(product.externalUrl, session);
+      // Reuse the session established earlier for this supplier, or create one now.
+      let entry: SupplierSessionEntry;
+      if (sessionCache.has(product.supplierId)) {
+        entry = sessionCache.get(product.supplierId)!;
       } else {
+        const decrypted = await getDecryptedCredential(credential.id);
+        const domainScraper = getScraperForUrl(product.externalUrl);
+
+        if (domainScraper.login && domainScraper.scrapeWithSession) {
+          const session = await domainScraper.login({
+            loginUrl: decrypted.loginUrl ?? undefined,
+            username: decrypted.username,
+            password: decrypted.password,
+          });
+          entry = session.authenticated
+            ? { session, scraper: domainScraper, credentialId: credential.id, decryptedCredential: decrypted }
+            : null;
+        } else {
+          // Scraper does not support authenticated API sessions — record a
+          // sentinel so the generic fallback is used for all products.
+          entry = { session: { authenticated: false }, scraper: domainScraper, credentialId: credential.id, decryptedCredential: decrypted };
+        }
+        sessionCache.set(product.supplierId, entry);
+      }
+
+      if (entry === null) {
+        // Login failed for this supplier — skip all its products.
+        skipped++;
+        continue;
+      }
+
+      let scraped: ScrapedProduct;
+
+      if (entry.scraper.scrapeWithSession && entry.session.authenticated) {
+        // Authenticated API path: reuse the existing session.
+        scraped = await entry.scraper.scrapeWithSession(product.externalUrl, entry.session);
+      } else {
+        // Generic form-based fallback (scraper has no scrapeWithSession).
         scraped = await credentialedScraper.scrapeWithCredential(product.externalUrl, {
-          loginUrl: decrypted.loginUrl,
-          username: decrypted.username,
-          password: decrypted.password,
+          loginUrl: entry.decryptedCredential.loginUrl,
+          username: entry.decryptedCredential.username,
+          password: entry.decryptedCredential.password,
         });
       }
 
@@ -264,12 +301,12 @@ export async function scrapeForUser(
           tenantId,
           observedPrice: scraped.price,
           source: "SCRAPED",
-          credentialId: credential.id,
+          credentialId: entry.credentialId,
           observedAt: scrapedAt,
         },
       });
 
-      // Recompute reference price (max across all tenants)
+      // Recompute reference price
       await recomputeReferencePrice(product.id);
 
       const updatedProduct = await prisma.supplierProduct.findFirst({
