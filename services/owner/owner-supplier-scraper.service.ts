@@ -226,7 +226,7 @@ export async function scrapeForUser(
       const domainScraper = getScraperForUrl(product.externalUrl);
       if (domainScraper.login && domainScraper.scrapeWithSession) {
         const session = await domainScraper.login({
-          loginUrl: decrypted.loginUrl,
+          loginUrl: decrypted.loginUrl ?? undefined,
           username: decrypted.username,
           password: decrypted.password,
         });
