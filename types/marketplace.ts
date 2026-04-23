@@ -224,9 +224,11 @@ export interface IngredientRequest {
   notes: string | null;
   status: IngredientRequestStatus;
   resolvedIngredientId: string | null;
+  resolvedIngredientName: string | null;
   tempIngredientId: string | null;
   reviewedByUserId: string | null;
   reviewNotes: string | null;
+  ownerSeenAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -252,6 +254,8 @@ export interface ReviewIngredientRequestInput {
   /** Required when status is APPROVED or DUPLICATE — the Ingredient id (scope=PLATFORM) to link. */
   resolvedIngredientId?: string;
   reviewNotes?: string;
+  /** Optional for REJECTED — if provided, recipe refs are migrated to this ingredient and temp is soft-deleted. */
+  suggestedIngredientId?: string;
 }
 
 export interface IngredientRequestFilters {

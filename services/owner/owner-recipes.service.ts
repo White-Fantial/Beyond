@@ -17,7 +17,6 @@
  */
 import { prisma } from "@/lib/prisma";
 import { resolveEffectiveCostsBulk } from "./owner-supplier-prices.service";
-import { registerTenantIngredient } from "./owner-tenant-ingredients.service";
 import { getUnitConversionFactor } from "@/types/owner-ingredients";
 import type {
   Recipe,

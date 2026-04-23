@@ -3526,8 +3526,6 @@ model Ingredient {
   marketplaceIngredients MarketplaceRecipeIngredient[]
   ingredientRequests     IngredientRequest[]          @relation("IngredientRequestResolved")
   tempIngredientRequests IngredientRequest[]          @relation("IngredientRequestTemp")
-  tenantRegistrations    TenantIngredient[]
-
   @@index([scope, isActive])
   @@index([scope, category])
   @@index([tenantId, storeId])
@@ -3535,23 +3533,6 @@ model Ingredient {
   @@map("ingredients")
 }
 
-/// Tracks which PLATFORM-scope ingredients a tenant has registered for use.
-/// Owners register a platform ingredient to associate it with their recipes and
-/// set per-tenant preferred supplier products.
-model TenantIngredient {
-  id           String   @id @default(uuid())
-  tenantId     String
-  ingredientId String   // references PLATFORM-scope Ingredient
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-
-  @@unique([tenantId, ingredientId])
-  @@index([tenantId])
-  @@map("tenant_ingredients")
-}
 
 /// Platform-level recipe category managed by admins.
 /// All recipes can optionally belong to one category (nullable = uncategorized).
@@ -4003,6 +3984,7 @@ model IngredientRequest {
   tempIngredientId       String?                 // auto-created STORE-scope Ingredient for immediate use while pending
   reviewedByUserId       String?
   reviewNotes            String?
+  ownerSeenAt            DateTime?               // set when owner visits the requests page after a status change
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
 
