@@ -119,7 +119,7 @@ async function recomputeCostPrice(
 
 /**
  * Fetch the per-ingredient-unit cost for a set of ingredient IDs from their preferred
- * supplier product. Normalises the package price using purchaseQty and the unit
+ * supplier product. Normalizes the package price using purchaseQty and the unit
  * conversion between the supplier product unit and the ingredient unit.
  *
  * Returns a Map<ingredientId, unitCost> where unitCost is in millicents per ingredient unit.
