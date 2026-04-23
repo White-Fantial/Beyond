@@ -6,6 +6,21 @@ import type { Supplier } from "@/types/owner-suppliers";
 import type { SupplierCredential } from "@/types/owner-supplier-credentials";
 import SupplierCredentialPanel from "@/components/owner/suppliers/SupplierCredentialPanel";
 
+interface UserScrapeRunResult {
+  scraped: number;
+  skipped: number;
+  failed: number;
+}
+
+function formatRefreshResult(result: UserScrapeRunResult): string {
+  if (result.scraped === 0) {
+    return "No ingredient-linked products found — make sure your ingredients have supplier links and credentials are set up.";
+  }
+  const productLabel = result.scraped === 1 ? "product" : "products";
+  const failedSuffix = result.failed > 0 ? `, ${result.failed} failed` : "";
+  return `Updated prices for ${result.scraped} ${productLabel}${failedSuffix}.`;
+}
+
 interface Props {
   suppliers: Supplier[];
   credentials: SupplierCredential[];
@@ -14,18 +29,79 @@ interface Props {
 export default function SupplierListClient({ suppliers, credentials }: Props) {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshResult, setRefreshResult] = useState<UserScrapeRunResult | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
 
   const credentialBySupplierId = Object.fromEntries(
     credentials.map((c) => [c.supplierId, c])
   );
 
+  const hasCredentials = credentials.length > 0;
+
+  const searchLower = search.toLowerCase();
   const filtered = suppliers.filter((s) =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    (s.websiteUrl ?? "").toLowerCase().includes(search.toLowerCase())
+    s.name.toLowerCase().includes(searchLower) ||
+    (s.websiteUrl ?? "").toLowerCase().includes(searchLower)
   );
+
+  async function handleRefreshPrices() {
+    setRefreshing(true);
+    setRefreshResult(null);
+    setRefreshError(null);
+    try {
+      const res = await fetch("/api/owner/scrape/user", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setRefreshError(data.error ?? "Refresh failed");
+        return;
+      }
+      setRefreshResult(data.data as UserScrapeRunResult);
+    } catch {
+      setRefreshError("Network error. Please try again.");
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
+      {/* Refresh ingredient prices */}
+      <div className="bg-white rounded-xl border border-gray-200 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-gray-900">Refresh Ingredient Prices</p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Scrape your account-specific prices for all supplier products linked to your recipe
+            ingredients.
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1.5 shrink-0">
+          <button
+            onClick={handleRefreshPrices}
+            disabled={refreshing || !hasCredentials}
+            title={
+              !hasCredentials
+                ? "Add supplier credentials first to enable price refreshing"
+                : undefined
+            }
+            className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition whitespace-nowrap"
+          >
+            {refreshing ? "Refreshing…" : "🔄 Refresh My Prices"}
+          </button>
+          {!hasCredentials && (
+            <p className="text-xs text-gray-500">
+              Add credentials on a supplier row to enable this.
+            </p>
+          )}
+          {refreshResult && (
+            <p className="text-xs text-green-700">
+              {formatRefreshResult(refreshResult)}
+            </p>
+          )}
+          {refreshError && <p className="text-xs text-red-600">{refreshError}</p>}
+        </div>
+      </div>
+
       {/* Search bar */}
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
