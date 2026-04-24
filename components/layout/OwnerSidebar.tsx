@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { extractOwnerStoreId } from "@/lib/utils/route-helpers";
-import IngredientRequestsBadge from "./IngredientRequestsBadge";
 
 interface NavItem {
   href: string;
@@ -33,9 +32,7 @@ const costItems: NavItem[] = [
   { href: "/owner/products/categories", label: "Categories", icon: "🗂️" },
   { href: "/owner/products/modifiers", label: "Modifiers", icon: "🔧" },
   { href: "/owner/ingredients", label: "Ingredients", icon: "🥕" },
-  { href: "/owner/ingredient-requests", label: "Ingredient Requests", icon: "🌿" },
   { href: "/owner/suppliers", label: "Suppliers", icon: "🚚" },
-  { href: "/owner/supplier-requests", label: "Request Supplier", icon: "📨" },
 ];
 
 const insightsItems: NavItem[] = [
@@ -81,7 +78,6 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
     >
       <span>{item.icon}</span>
       <span>{item.label}</span>
-      {item.href === "/owner/ingredient-requests" && <IngredientRequestsBadge />}
     </Link>
   );
 }
