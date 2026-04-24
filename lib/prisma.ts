@@ -4,6 +4,12 @@ import { Pool } from "pg";
 import { getDatabaseUrl, shouldUseDatabaseSsl } from "./database-url";
 
 const databaseUrl = getDatabaseUrl();
+const logLevelsForDevelopment: Array<"query" | "info" | "warn" | "error"> = [
+  // "query",
+  "info",
+  "warn",
+  "error",
+];
 
 const globalForPrisma = globalThis as unknown as {
   prismaPool: Pool | undefined;
@@ -21,7 +27,7 @@ export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     adapter: new PrismaPg(prismaPool),
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+    log: process.env.NODE_ENV === "development" ? logLevelsForDevelopment : ["error"],
   });
 
 if (process.env.NODE_ENV !== "production") {
