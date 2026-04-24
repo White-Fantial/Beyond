@@ -139,16 +139,24 @@ function mapCatalogProduct(product: CatalogProduct): ScrapedProduct {
 function extractSkuFromUrl(url: string): string | null {
   try {
     const u = new URL(url);
-    if (u.hostname === "api.servicefoodsonline.co.nz") {
-      // API URL: last non-empty path segment is the SKU
-      const parts = u.pathname.split("/").filter(Boolean);
+    const parts = u.pathname.split("/").filter(Boolean);
+
+    // Service Foods product page:
+    // /product/{slug}/{sku}
+    if (
+      u.hostname === "www.servicefoodsonline.kiwi" &&
+      parts[0] === "product" &&
+      parts.length >= 3
+    ) {
       return parts[parts.length - 1] ?? null;
     }
-    // Product page URL slug: first segment before the first '-' is the SKU
-    const slug = u.pathname.replace(/^\//, "");
-    const dashIndex = slug.indexOf("-");
-    if (dashIndex > 0) return slug.slice(0, dashIndex);
-    return slug || null;
+
+    // API URL: last non-empty path segment is the SKU
+    if (u.hostname === "api.servicefoodsonline.co.nz") {
+      return parts[parts.length - 1] ?? null;
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -245,7 +253,6 @@ export class ServiceFoodScraper implements SupplierScraper {
   ): Promise<ScrapedProduct> {
     const empty: ScrapedProduct = { name: null, price: null, currency: null, unit: null };
 
-    console.log(`[ServiceFoodScraper] scrapeWithSession() url=${url} authenticated=${session.authenticated}`);
     if (!session.authenticated || !session.accessToken) {
       // No valid session — fall back to unauthenticated scrape.
       return this.scrape(url);
@@ -316,10 +323,8 @@ export class ServiceFoodScraper implements SupplierScraper {
   async login(credential: SupplierCredentialPayload): Promise<SessionContext> {
     const loginUrl = credential.loginUrl ?? LOGIN_API_URL;
 
-    console.log(`[ServiceFoodScraper] login() start username=${credential.username} loginUrl=${loginUrl}`);
     let res: Response;
     try {
-      console.log(`[ServiceFoodScraper] posting credentials to ${loginUrl}`);
       res = await fetch(loginUrl, {
         method: "POST",
         headers: {
@@ -354,7 +359,6 @@ export class ServiceFoodScraper implements SupplierScraper {
     let body: LoginResponse;
     try {
       body = (await res.json()) as LoginResponse;
-      console.log(`[ServiceFoodScraper] login response: success=${body.success} hasToken=${!!body.data?.accessToken}`);
     } catch {
       console.error(`[ServiceFoodScraper] login response is not valid JSON`);
       return { loginUrl, username: credential.username, authenticated: false };
@@ -365,7 +369,6 @@ export class ServiceFoodScraper implements SupplierScraper {
       return { loginUrl, username: credential.username, authenticated: false };
     }
 
-    console.log(`[ServiceFoodScraper] login() complete: authenticated=true accountCode=${body.data.accountCode} companyName=${body.data.companyName}`);
     return {
       loginUrl,
       username: credential.username,
@@ -393,7 +396,6 @@ export class ServiceFoodScraper implements SupplierScraper {
       return [];
     }
 
-    console.log(`[ServiceFoodScraper] fetchProductList() start accountCode=${session.accountCode}`);
     const results: ScrapedProduct[] = [];
     const token = session.accessToken as string;
 
