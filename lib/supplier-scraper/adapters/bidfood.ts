@@ -95,11 +95,6 @@ interface BidfoodProductDetail {
   UOMPrices: BidfoodUOMPrice[];
 }
 
-interface BidfoodAccountInfo {
-  AccountID?: number;
-  AccountId?: number;
-}
-
 interface BidfoodSearchItem {
   ItemCode: number;
   ProductCode: string;
@@ -314,7 +309,7 @@ export class BidfoodScraper implements SupplierScraper {
       redirect: "manual",
     });
 
-    let shopOidcCookies = collectCookies(triggerRes);
+    const shopOidcCookies = collectCookies(triggerRes);
 
     const authorizeUrl = triggerRes.headers.get("location");
 
@@ -380,7 +375,7 @@ export class BidfoodScraper implements SupplierScraper {
     const formBody = new URLSearchParams(formFields);
 
     let accumulatedCookies = loginPageCookies;
-    let redirectLocation: string | null = null;
+    
     try {
       const res = await fetch(baseLoginUrl, {
         method: "POST",
