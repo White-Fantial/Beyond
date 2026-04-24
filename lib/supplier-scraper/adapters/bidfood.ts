@@ -353,7 +353,7 @@ export class BidfoodScraper implements SupplierScraper {
     // (BranchGroupId, CustomerGroupId, ShopV5BaseUrl, Language, Site, etc.)
     // that must be forwarded verbatim.
     const hiddenFields = extractHiddenFields(loginPageHtml);
-    
+
     if (!hiddenFields["__RequestVerificationToken"]) {
       console.error("[BidfoodScraper] CSRF token not found on login page");
       return fail;
@@ -375,7 +375,7 @@ export class BidfoodScraper implements SupplierScraper {
     const formBody = new URLSearchParams(formFields);
 
     let accumulatedCookies = loginPageCookies;
-    
+
     try {
       const res = await fetch(baseLoginUrl, {
         method: "POST",
@@ -395,24 +395,6 @@ export class BidfoodScraper implements SupplierScraper {
       // Capture cookies set on the 302 response.
       accumulatedCookies = collectCookies(res, accumulatedCookies);
 
-      if (res.status === 302) {
-        const location = res.headers.get("location");
-        if (location) {
-          // Resolve relative URL against the identity server base.
-          redirectLocation = location.startsWith("http")
-            ? location
-            : new URL(location, IDENTITY_BASE).toString();
-        }
-      } else if (!res.ok) {
-        console.error(
-          `[BidfoodScraper] credential POST returned HTTP ${res.status}`
-        );
-        return fail;
-      } else {
-        // 200 means the login form was re-rendered (invalid credentials).
-        console.error("[BidfoodScraper] login failed — invalid credentials or unexpected response");
-        return fail;
-      }
     } catch (err) {
       console.error(
         `[BidfoodScraper] credential POST failed: ${err instanceof Error ? err.message : String(err)}`
@@ -475,7 +457,7 @@ export class BidfoodScraper implements SupplierScraper {
     // ------------------------------------------------------------------
     const oidcFormAction = extractFormAction(callbackHtml) ?? SIGNIN_OIDC_URL;
     const oidcFields = extractHiddenFields(callbackHtml);
-    
+
     if (Object.keys(oidcFields).length === 0) {
       // No OIDC fields found — the flow may have ended early (e.g. the site
       // returned a direct session cookie without a form_post step).
