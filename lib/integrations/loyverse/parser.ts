@@ -37,6 +37,8 @@ export interface ParsedExternalModifierOption {
   externalId: string;
   normalizedName: string;
   normalizedPriceAmount: number;
+  isActive: boolean | null;
+  isSoldOut: boolean | null;
   rawPayload: LoyverseModifier;
 }
 
@@ -58,6 +60,8 @@ export function parseLoyverseModifierGroup(raw: LoyverseModifierGroup): ParsedEx
       externalId: m.id,
       normalizedName: m.name.trim(),
       normalizedPriceAmount: toMinorUnits(m.price ?? 0),
+      isActive: typeof m.is_active === "boolean" ? m.is_active : null,
+      isSoldOut: typeof m.is_sold_out === "boolean" ? m.is_sold_out : null,
       rawPayload: m,
     })),
   };
@@ -70,6 +74,8 @@ export interface ParsedExternalProduct {
   externalParentId: string | null; // category_id
   normalizedName: string;
   normalizedPriceAmount: number; // from first variant
+  isActive: boolean | null;
+  isSoldOut: boolean | null;
   externalUpdatedAt: Date | null;
   rawPayload: LoyverseItem;
   modifierGroupIds: string[];
@@ -82,6 +88,8 @@ export function parseLoyverseItem(raw: LoyverseItem): ParsedExternalProduct {
     externalParentId: raw.category_id ?? null,
     normalizedName: raw.item_name.trim(),
     normalizedPriceAmount: toMinorUnits(firstVariant?.price ?? 0),
+    isActive: typeof raw.is_active === "boolean" ? raw.is_active : null,
+    isSoldOut: typeof raw.is_sold_out === "boolean" ? raw.is_sold_out : null,
     externalUpdatedAt: raw.updated_at ? new Date(raw.updated_at) : null,
     rawPayload: raw,
     modifierGroupIds: raw.modifier_ids ?? [],

@@ -430,6 +430,33 @@ export async function placeGuestOrder(
     if (product.isSoldOut) throw new Error(`Product is sold out: ${product.name}`);
   }
 
+  const selectedOptionIds = [
+    ...new Set(items.flatMap((item) => item.selectedModifiers.map((m) => m.optionId))),
+  ];
+  if (
+    selectedOptionIds.length > 0 &&
+    "catalogModifierOption" in prisma &&
+    typeof prisma.catalogModifierOption?.findMany === "function"
+  ) {
+    const options = await prisma.catalogModifierOption.findMany({
+      where: {
+        id: { in: selectedOptionIds },
+        storeId,
+        deletedAt: null,
+        isActive: true,
+      },
+      select: { id: true, name: true, isSoldOut: true },
+    });
+    const optionMap = new Map(options.map((o) => [o.id, o]));
+    for (const item of items) {
+      for (const mod of item.selectedModifiers) {
+        const option = optionMap.get(mod.optionId);
+        if (!option) throw new Error(`Modifier option not available: ${mod.optionId}`);
+        if (option.isSoldOut) throw new Error(`Modifier option is sold out: ${option.name}`);
+      }
+    }
+  }
+
   const normalizedItems = items.map((item) => {
     const modifierTotal = item.selectedModifiers.reduce(
       (sum, m) => sum + m.priceDeltaAmount,

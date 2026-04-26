@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listModifierGroups, setModifierOptionSoldOut } from "@/services/catalog.service";
+import { listModifierGroups, setModifierOptionSoldOut, setModifierOptionActive } from "@/services/catalog.service";
 
 export async function GET(req: NextRequest) {
   const storeId = req.nextUrl.searchParams.get("storeId");
@@ -14,10 +14,11 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const body = await req.json();
-  const { action, optionId, isSoldOut } = body as {
-    action: "toggleSoldOut";
+  const { action, optionId, isSoldOut, isActive } = body as {
+    action: "toggleSoldOut" | "toggleActive";
     optionId: string;
-    isSoldOut: boolean;
+    isSoldOut?: boolean;
+    isActive?: boolean;
   };
 
   if (action === "toggleSoldOut") {
@@ -25,6 +26,14 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "optionId and isSoldOut required" }, { status: 400 });
     }
     const updated = await setModifierOptionSoldOut(optionId, isSoldOut);
+    return NextResponse.json({ option: updated });
+  }
+
+  if (action === "toggleActive") {
+    if (!optionId || isActive === undefined) {
+      return NextResponse.json({ error: "optionId and isActive required" }, { status: 400 });
+    }
+    const updated = await setModifierOptionActive(optionId, isActive);
     return NextResponse.json({ option: updated });
   }
 

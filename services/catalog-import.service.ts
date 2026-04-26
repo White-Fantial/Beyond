@@ -113,6 +113,8 @@ function hashModifierOptionEntity(fields: {
   name: string | null | undefined;
   priceAmount: number | null | undefined;
   groupExternalId: string;
+  isActive?: boolean | null;
+  isSoldOut?: boolean | null;
 }): string {
   return crypto
     .createHash("sha256")
@@ -121,6 +123,8 @@ function hashModifierOptionEntity(fields: {
         name: (fields.name ?? "").trim(),
         priceAmount: fields.priceAmount ?? null,
         groupExternalId: fields.groupExternalId,
+        isActive: fields.isActive ?? null,
+        isSoldOut: fields.isSoldOut ?? null,
       })
     )
     .digest("hex");
@@ -150,6 +154,18 @@ function extractItemPrice(raw: Record<string, unknown>): number | null {
   return null;
 }
 
+function extractItemIsActive(raw: Record<string, unknown>): boolean | null {
+  if (typeof raw["is_active"] === "boolean") return raw["is_active"] as boolean;
+  if (typeof raw["isActive"] === "boolean") return raw["isActive"] as boolean;
+  return null;
+}
+
+function extractItemIsSoldOut(raw: Record<string, unknown>): boolean | null {
+  if (typeof raw["is_sold_out"] === "boolean") return raw["is_sold_out"] as boolean;
+  if (typeof raw["isSoldOut"] === "boolean") return raw["isSoldOut"] as boolean;
+  return null;
+}
+
 function extractModifierGroupName(raw: Record<string, unknown>): string | null {
   return typeof raw["name"] === "string" ? (raw["name"] as string).trim() : null;
 }
@@ -160,6 +176,18 @@ function extractModifierOptionName(raw: Record<string, unknown>): string | null 
 
 function extractModifierOptionPrice(raw: Record<string, unknown>): number | null {
   if (typeof raw["price"] === "number") return Math.round((raw["price"] as number) * 100);
+  return null;
+}
+
+function extractModifierOptionIsActive(raw: Record<string, unknown>): boolean | null {
+  if (typeof raw["is_active"] === "boolean") return raw["is_active"] as boolean;
+  if (typeof raw["isActive"] === "boolean") return raw["isActive"] as boolean;
+  return null;
+}
+
+function extractModifierOptionIsSoldOut(raw: Record<string, unknown>): boolean | null {
+  if (typeof raw["is_sold_out"] === "boolean") return raw["is_sold_out"] as boolean;
+  if (typeof raw["isSoldOut"] === "boolean") return raw["isSoldOut"] as boolean;
   return null;
 }
 
@@ -450,6 +478,8 @@ async function persistModifierOption(args: {
     name,
     priceAmount,
     groupExternalId: mo.groupExternalId,
+    isActive: extractModifierOptionIsActive(mo.raw),
+    isSoldOut: extractModifierOptionIsSoldOut(mo.raw),
   });
 
   await prisma.externalCatalogModifierOption.upsert({
@@ -512,7 +542,9 @@ async function persistProduct(args: {
 
   const name = extractItemName(prod.raw);
   const priceAmount = extractItemPrice(prod.raw);
-  const entityHash = hashProductEntity({ name, priceAmount });
+  const isActive = extractItemIsActive(prod.raw);
+  const isSoldOut = extractItemIsSoldOut(prod.raw);
+  const entityHash = hashProductEntity({ name, priceAmount, isActive, isSoldOut });
 
   const primaryCategoryId = prod.categoryExternalIds[0] ?? null;
 

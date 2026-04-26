@@ -153,6 +153,16 @@ export async function setProductSoldOut(
   });
 }
 
+export async function setProductActive(
+  productId: string,
+  isActive: boolean
+): Promise<CatalogProduct> {
+  return prisma.catalogProduct.update({
+    where: { id: productId },
+    data: { isActive },
+  });
+}
+
 // ─── Products grouped by category (for inventory/availability view) ───────────
 
 export interface ProductWithCategory extends CatalogProduct {
@@ -226,6 +236,16 @@ export async function setModifierOptionSoldOut(
   return prisma.catalogModifierOption.update({
     where: { id: optionId },
     data: { isSoldOut },
+  });
+}
+
+export async function setModifierOptionActive(
+  optionId: string,
+  isActive: boolean
+): Promise<CatalogModifierOption> {
+  return prisma.catalogModifierOption.update({
+    where: { id: optionId },
+    data: { isActive },
   });
 }
 

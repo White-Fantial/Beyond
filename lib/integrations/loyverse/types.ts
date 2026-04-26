@@ -18,6 +18,8 @@ export interface LoyverseModifier {
   id: string;
   name: string;
   price: number; // in currency units (e.g., 1.50 = $1.50)
+  is_active?: boolean;
+  is_sold_out?: boolean;
 }
 
 export interface LoyverseModifierGroup {
@@ -59,6 +61,8 @@ export interface LoyverseItem {
   tax_ids?: string[];
   modifier_ids?: string[];
   variants: LoyverseItemVariant[];
+  is_active?: boolean;
+  is_sold_out?: boolean;
   image_url?: string;
   created_at?: string;
   updated_at?: string;
