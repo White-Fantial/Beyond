@@ -98,6 +98,15 @@ interface UberEatsOrderItem {
   }>;
 }
 
+interface UberEatsWebhookEnvelope {
+  event_type?: string;
+  resource_id?: string;
+  resource_href?: string;
+  meta?: {
+    store_id?: string;
+  };
+}
+
 interface UberEatsOrderPayload {
   order_id?: string;
   store?: { store_id?: string };
@@ -361,10 +370,14 @@ export async function POST(
 
     if (channelType === "UBER_EATS") {
       const payload = body as unknown as UberEatsOrderPayload;
+      const envelope = body as unknown as UberEatsWebhookEnvelope;
 
-      const externalOrderRef = payload.order_id;
+      const externalOrderRef =
+        payload.order_id ??
+        envelope.resource_id ??
+        (typeof envelope.resource_href === "string" ? envelope.resource_href.split("/").pop() : undefined);
       if (!externalOrderRef) {
-        await markWebhookLogProcessed(webhookLog.id, "SKIPPED", "Missing order_id");
+        await markWebhookLogProcessed(webhookLog.id, "SKIPPED", "Missing order_id/resource_id");
         return NextResponse.json({ ok: true, skipped: true });
       }
 
@@ -384,7 +397,7 @@ export async function POST(
         taxAmount: payload.tax ?? 0,
         tipAmount: payload.tip ?? 0,
         totalAmount: payload.total ?? 0,
-        currencyCode: payload.currency_code ?? "NZD",
+        currencyCode: payload.currency_code ?? "USD",
         customerName,
         customerPhone: customer?.phone,
         customerEmail: customer?.email,
@@ -423,7 +436,7 @@ export async function POST(
         taxAmount: payload.tax ?? 0,
         tipAmount: payload.tip ?? 0,
         totalAmount: payload.order_value ?? 0,
-        currencyCode: payload.currency ?? "NZD",
+        currencyCode: payload.currency ?? "USD",
         customerName,
         customerPhone: customer?.phone_number,
         customerEmail: customer?.email,

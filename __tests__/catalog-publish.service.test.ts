@@ -101,6 +101,12 @@ import {
   buildLoyverseModifierOptionCreate,
 } from "@/services/catalog-publish/payload-builders/loyverse/modifier-option.builder";
 
+
+import {
+  buildUberEatsCategoryCreate,
+  buildUberEatsProductCreate,
+} from "@/services/catalog-publish/payload-builders/uber-eats";
+
 describe("buildLoyverseCategoryCreate", () => {
   it("returns payload with name", () => {
     const payload = buildLoyverseCategoryCreate({ name: "Drinks" });
@@ -150,6 +156,33 @@ describe("buildLoyverseModifierOptionCreate", () => {
     expect(() => buildLoyverseModifierOptionCreate({ name: "Small" }, "")).toThrow(
       "parentExternalGroupId is required"
     );
+  });
+});
+
+
+describe("buildUberEatsCategoryCreate", () => {
+  it("maps category availability into Uber service_availability", () => {
+    const payload = buildUberEatsCategoryCreate({
+      id: "cat-1",
+      name: "Breakfast",
+      isActive: true,
+      availabilityWindows: [{ dayOfWeek: "MON", startTime: "08:00", endTime: "11:00" }],
+    });
+
+    expect(payload.id).toBe("cat-1");
+    expect(payload.active).toBe(true);
+    expect(Array.isArray(payload.service_availability)).toBe(true);
+  });
+});
+
+describe("buildUberEatsProductCreate", () => {
+  it("maps visibility into suspended flag", () => {
+    const payload = buildUberEatsProductCreate({ name: "Latte", price: 599, isVisible: false });
+    expect(payload.suspended).toBe(true);
+  });
+
+  it("throws when name is missing", () => {
+    expect(() => buildUberEatsProductCreate({ name: null })).toThrow("name is required");
   });
 });
 
