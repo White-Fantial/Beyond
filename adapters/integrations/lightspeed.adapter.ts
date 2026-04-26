@@ -138,6 +138,7 @@ class LightspeedAdapter implements ProviderAdapter {
         if (first) {
           providerAccount = {
             externalMerchantId: first.account_id ?? null,
+            externalStoreId: first.id,
             externalStoreName: first.name,
           };
         }

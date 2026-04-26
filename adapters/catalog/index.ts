@@ -8,11 +8,13 @@ export type { CatalogImportAdapter, FullCatalogPayload } from "./types";
 export { LoyverseCatalogAdapter } from "./loyverse.adapter";
 export { UberEatsCatalogAdapter } from "./uber-eats.adapter";
 export { DoorDashCatalogAdapter } from "./doordash.adapter";
+export { LightspeedCatalogAdapter } from "./lightspeed.adapter";
 
 import type { CatalogImportAdapter } from "./types";
 import { LoyverseCatalogAdapter } from "./loyverse.adapter";
 import { UberEatsCatalogAdapter } from "./uber-eats.adapter";
 import { DoorDashCatalogAdapter } from "./doordash.adapter";
+import { LightspeedCatalogAdapter } from "./lightspeed.adapter";
 
 export function createCatalogAdapter(provider: string): CatalogImportAdapter {
   switch (provider.toUpperCase()) {
@@ -22,10 +24,12 @@ export function createCatalogAdapter(provider: string): CatalogImportAdapter {
       return new UberEatsCatalogAdapter();
     case "DOORDASH":
       return new DoorDashCatalogAdapter();
+    case "LIGHTSPEED":
+      return new LightspeedCatalogAdapter();
     default:
       throw new Error(
         `No catalog import adapter registered for provider "${provider}". ` +
-          `Supported: LOYVERSE, UBER_EATS, DOORDASH.`
+          `Supported: LOYVERSE, LIGHTSPEED, UBER_EATS, DOORDASH.`
       );
   }
 }

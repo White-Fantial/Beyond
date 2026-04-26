@@ -28,6 +28,7 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import { decryptJson } from "@/lib/integrations/crypto";
 import { createCatalogPublishAdapter } from "@/adapters/catalog/publish-index";
 import { validatePublishPrerequisites } from "./catalog-publish/prerequisites";
 import { computePublishHash } from "./catalog-publish/publish-hash";
@@ -44,6 +45,7 @@ import type {
   GetPublishJobsOptions,
   ProviderPublishInput,
 } from "@/types/catalog-publish";
+import type { DecryptedCredentialPayload } from "@/domains/integration/types";
 
 // ─── Scope helper ─────────────────────────────────────────────────────────────
 
@@ -56,11 +58,26 @@ function entityTypeToScope(entityType: CatalogEntityType): CatalogPublishScope {
 async function getConnectionCredentials(connectionId: string): Promise<Record<string, string>> {
   const conn = await prisma.connection.findUnique({
     where: { id: connectionId },
-    include: { appCredential: true },
+    include: {
+      credentials: {
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+    },
   });
   if (!conn) throw new Error(`Connection "${connectionId}" not found.`);
-  const raw = conn.appCredential?.configEncrypted ?? "";
-  return { accessToken: raw, configEncrypted: raw };
+  const activeCredential = conn.credentials[0];
+  if (!activeCredential) {
+    throw new Error(`Connection "${connectionId}" has no active credential.`);
+  }
+  const decrypted = decryptJson<DecryptedCredentialPayload>(activeCredential.configEncrypted);
+  return {
+    accessToken: decrypted.accessToken ?? "",
+    refreshToken: decrypted.refreshToken ?? "",
+    externalStoreId: conn.externalStoreId ?? "",
+    businessUnitId: conn.externalStoreId ?? "",
+  };
 }
 
 // ─── Provider method dispatch ─────────────────────────────────────────────────

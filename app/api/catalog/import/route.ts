@@ -12,7 +12,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { decryptJson } from "@/lib/integrations/crypto";
 import { runFullCatalogImport } from "@/services/catalog-import.service";
+import type { DecryptedCredentialPayload } from "@/domains/integration/types";
 
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as { storeId?: string; connectionId?: string };
@@ -58,10 +60,15 @@ export async function POST(req: NextRequest) {
     storeId: connection.storeId,
     connectionId: connection.id,
     provider: connection.provider,
-    credentials: {
-      accessToken: credential.configEncrypted,
-      configEncrypted: credential.configEncrypted,
-    },
+    credentials: (() => {
+      const decrypted = decryptJson<DecryptedCredentialPayload>(credential.configEncrypted);
+      return {
+        accessToken: decrypted.accessToken ?? "",
+        refreshToken: decrypted.refreshToken ?? "",
+        externalStoreId: connection.externalStoreId ?? "",
+        businessUnitId: connection.externalStoreId ?? "",
+      };
+    })(),
   });
 
   const httpStatus = result.status === "SUCCEEDED" ? 200 : 500;
