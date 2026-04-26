@@ -748,7 +748,7 @@ The customer ordering portal lives under `/store/[storeSlug]` and is a **fully p
 |-------|---------|
 | `/store/[storeSlug]` | Main order entry — category bar + product card list |
 | `/store/[storeSlug]/cart` | Cart review — items, quantities, pickup time summary |
-| `/store/[storeSlug]/checkout` | Checkout (stub — payment & order creation coming) |
+| `/store/[storeSlug]/checkout` | Checkout — contact/pickup/payment selection and order creation |
 | `/store/[storeSlug]/subscriptions` | Subscription entry — same catalog filtered for subscription products |
 
 `storeSlug` maps to the `Store.code` field in the database.
@@ -908,13 +908,9 @@ Located at `/owner/stores/[storeId]/integrations/[connectionId]/publish`. Shows:
 | Uber Eats | Stub — not yet implemented (Uber Eats uses full-menu PUT model) |
 | DoorDash | Stub — not yet implemented |
 
-#### TODO — Future Phases
+#### Historical Note
 
-```
-// TODO Phase 5: external change detection after import
-// TODO Phase 6: field-level conflict detection between internal changes and external changes
-// TODO Phase 7: policy-based two-way sync (auto-merge vs manual review)
-```
+Phase 5~7 items above are now implemented in the current codebase; remaining work is provider-specific adapter completion (Uber Eats / DoorDash import+publish hardening and Lightspeed catalog pipeline parity).
 
 ---
 
