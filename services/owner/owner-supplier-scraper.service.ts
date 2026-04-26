@@ -18,6 +18,7 @@ import { credentialedScraper } from "@/lib/supplier-scraper/credentialed";
 import { getDecryptedCredential } from "./owner-supplier-credentials.service";
 import type { ScrapeResult } from "@/types/owner-suppliers";
 import type { UserScrapeResult, UserScrapeRunResult, ReferencePriceInfo } from "@/types/owner-supplier-credentials";
+import type { IngredientUnit } from "@/types/owner-ingredients";
 
 /** Decrypted credential fields used in the session cache. */
 interface DecryptedCredentialFields {
@@ -38,6 +39,56 @@ interface SupplierAdapterInfo {
 
 /** Sentinel tenantId used for platform-level (unauthenticated) price observations. */
 export const PLATFORM_SCRAPER_TENANT_ID = "PLATFORM_SCRAPER";
+
+const SCRAPED_UNIT_TO_INGREDIENT_UNIT: Record<string, IngredientUnit> = {
+  G: "GRAM",
+  GR: "GRAM",
+  GRAM: "GRAM",
+  GRAMS: "GRAM",
+  KG: "KG",
+  KGS: "KG",
+  KILOGRAM: "KG",
+  KILOGRAMS: "KG",
+  ML: "ML",
+  MILLILITER: "ML",
+  MILLILITERS: "ML",
+  L: "LITER",
+  LTR: "LITER",
+  LITRE: "LITER",
+  LITRES: "LITER",
+  LITER: "LITER",
+  LITERS: "LITER",
+  OZ: "OZ",
+  OUNCE: "OZ",
+  OUNCES: "OZ",
+  LB: "LB",
+  LBS: "LB",
+  POUND: "LB",
+  POUNDS: "LB",
+  EA: "EACH",
+  EACH: "EACH",
+  PIECE: "PIECE",
+  PIECES: "PIECE",
+};
+
+function parseScrapedPack(unitText: string | null): { purchaseQty?: number; unit?: IngredientUnit } {
+  if (!unitText) return {};
+  const normalized = unitText.trim().toUpperCase();
+  if (!normalized) return {};
+
+  const qtyMatch = normalized.match(/^\s*([0-9]+(?:\.[0-9]+)?)\s*([A-Z]+)\s*$/);
+  if (qtyMatch) {
+    const qty = Number(qtyMatch[1]);
+    const unit = SCRAPED_UNIT_TO_INGREDIENT_UNIT[qtyMatch[2]];
+    if (Number.isFinite(qty) && qty > 0 && unit) {
+      return { purchaseQty: qty, unit };
+    }
+  }
+
+  const mapped = SCRAPED_UNIT_TO_INGREDIENT_UNIT[normalized];
+  if (mapped) return { unit: mapped };
+  return {};
+}
 
 // ─── Phase 4: unauthenticated scraping ────────────────────────────────────────
 
@@ -80,16 +131,20 @@ export async function scrapeSupplierProduct(
   const newPrice = scraped.price ?? previousPrice;
   const changed = newPrice !== previousPrice;
   const scrapedAt = new Date();
+  const parsedPack = parseScrapedPack(scraped.unit);
 
   await prisma.supplierProduct.update({
     where: { id: supplierProductId },
     data: {
       referencePrice: newPrice,
+      ...(parsedPack.purchaseQty !== undefined ? { purchaseQty: parsedPack.purchaseQty } : {}),
+      ...(parsedPack.unit !== undefined ? { unit: parsedPack.unit } : {}),
       lastScrapedAt: scrapedAt,
       metadata: {
         ...(product.metadata as Record<string, unknown>),
         lastScrapedName: scraped.name,
         lastScrapedCurrency: scraped.currency,
+        lastScrapedUnitRaw: scraped.unit,
       },
     },
   });
