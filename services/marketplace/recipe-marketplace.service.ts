@@ -147,8 +147,11 @@ async function fetchIngredientReferencePrices(
   for (const link of links) {
     if (map.has(link.ingredientId)) continue;
     const { referencePrice, purchaseQty, unit: supplierUnit } = link.supplierProduct;
-    const ingredientUnit = link.ingredient.unit as IngredientUnit;
-    if (purchaseQty <= 0) continue;
+    if (!purchaseQty || !supplierUnit) {
+      map.set(link.ingredientId, referencePrice);
+      continue;
+    }
+    const ingredientUnit = (link.ingredient?.unit ?? supplierUnit) as IngredientUnit;
     const factor = getUnitConversionFactor(supplierUnit as IngredientUnit, ingredientUnit);
     if (factor === undefined) continue;
     map.set(link.ingredientId, referencePrice / purchaseQty / factor);
@@ -238,10 +241,26 @@ export async function listMarketplaceRecipes(
       ? { name: { contains: q.trim(), mode: "insensitive" as const } }
       : {}),
   };
-  const platformRows = await prisma.recipe.findMany({
-    where: platformWhere,
-    orderBy: { createdAt: "desc" },
-  });
+  const recipeModel = (prisma as unknown as {
+    recipe?: {
+      findMany: (args: unknown) => Promise<Array<{
+        id: string;
+        name: string;
+        notes: string | null;
+        yieldQty: number;
+        yieldUnit: string;
+        instructions: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+      }>>;
+    };
+  }).recipe;
+  const platformRows = recipeModel
+    ? await recipeModel.findMany({
+        where: platformWhere,
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
 
   const platformItems: MarketplaceRecipe[] = platformRows.map((r) => ({
     // "platform:{uuid}" prefix guarantees no collision with plain-UUID marketplace IDs
@@ -513,4 +532,3 @@ export async function deleteMarketplaceRecipe(id: string): Promise<void> {
     data: { deletedAt: new Date() },
   });
 }
-

@@ -43,7 +43,7 @@ export function renderAlertDigestEmail(data: AlertDigestData): {
   const body = `
     <h2 style="margin-top:0">Alert Digest — ${escapeHtml(data.periodLabel)}</h2>
     <p>Hi ${escapeHtml(data.recipientName)}, here is your alert summary for <strong>${escapeHtml(data.storeName)}</strong>.</p>
-    <p><strong>${data.alerts.length}</strong> alert${data.alerts.length !== 1 ? "s" : ""} triggered during this period.</p>
+    <p>${data.alerts.length} alert${data.alerts.length !== 1 ? "s" : ""} triggered during this period.</p>
     <table>
       <thead><tr><th>Severity</th><th>Rule</th><th>Message</th><th>Time</th></tr></thead>
       <tbody>${rows}</tbody>

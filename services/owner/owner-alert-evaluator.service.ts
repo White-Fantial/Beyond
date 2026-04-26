@@ -105,8 +105,8 @@ async function measureRevenueDrop(
     }),
   ]);
 
-  const sum = (orders: { totalAmount: number | null }[]) =>
-    orders.reduce((acc, o) => acc + (o.totalAmount ?? 0), 0);
+  const sum = (orders: Array<{ totalAmount?: number | null; totalAmountMinor?: number | null }>) =>
+    orders.reduce((acc, o) => acc + (o.totalAmount ?? o.totalAmountMinor ?? 0), 0);
 
   const current = sum(currentOrders);
   const prior = sum(priorOrders);

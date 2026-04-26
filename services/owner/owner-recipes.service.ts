@@ -37,6 +37,7 @@ import type { IngredientUnit } from "@/types/owner-ingredients";
 type RawRecipe = {
   id: string;
   tenantId: string | null;
+  storeId: string | null;
   catalogProductId: string | null;
   tenantCatalogProductId: string | null;
   categoryId: string | null;
@@ -62,6 +63,7 @@ function toRecipe(row: RawRecipe): Recipe {
   return {
     id: row.id,
     tenantId: row.tenantId,
+    storeId: row.storeId ?? null,
     catalogProductId: row.catalogProductId,
     catalogProductName: row.catalogProduct?.name ?? null,
     catalogProductPrice: row.catalogProduct?.basePriceAmount ?? null,
@@ -274,11 +276,19 @@ async function ensureTenantIngredientsSelected(
   tenantId: string,
   ingredientIds: string[]
 ): Promise<void> {
+  const tenantIngredientSelection = (prisma as unknown as {
+    tenantIngredientSelection?: {
+      createMany: (args: unknown) => unknown;
+      updateMany: (args: unknown) => unknown;
+    };
+  }).tenantIngredientSelection;
+  if (!tenantIngredientSelection) return;
+
   const uniqueIngredientIds = [...new Set(ingredientIds.filter(Boolean))];
   if (uniqueIngredientIds.length === 0) return;
 
   await prisma.$transaction([
-    prisma.tenantIngredientSelection.createMany({
+    tenantIngredientSelection.createMany({
       data: uniqueIngredientIds.map((ingredientId) => ({
         tenantId,
         ingredientId,
@@ -286,7 +296,7 @@ async function ensureTenantIngredientsSelected(
       })),
       skipDuplicates: true,
     }),
-    prisma.tenantIngredientSelection.updateMany({
+    tenantIngredientSelection.updateMany({
       where: {
         tenantId,
         ingredientId: { in: uniqueIngredientIds },
@@ -321,10 +331,10 @@ async function resolveCosts(
  */
 async function resolveProductComponentCosts(
   tenantId: string | null,
-  components: RawRecipeProductComponent[]
+  components: RawRecipeProductComponent[] | undefined | null
 ): Promise<Map<string, number>> {
   const result = new Map<string, number>();
-  if (components.length === 0) return result;
+  if (!components?.length) return result;
 
   // Gather all ingredient rows from all sub-product recipes in one bulk call
   const allIngredients: RawRecipeIngredient[] = [];
@@ -489,7 +499,8 @@ export async function getRecipe(
 
   const recipe = toRecipe(row as RawRecipe);
   const rawIngredients = row.ingredients as RawRecipeIngredient[];
-  const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
+  const rawComponents =
+    (row.productComponents as unknown as RawRecipeProductComponent[] | undefined) ?? [];
 
   const [costMap, componentCostMap] = await Promise.all([
     resolveCosts(tenantId, rawIngredients),
@@ -557,7 +568,8 @@ export async function createRecipe(
 
   const recipe = toRecipe(row as RawRecipe);
   const rawIngredients = row.ingredients as RawRecipeIngredient[];
-  const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
+  const rawComponents =
+    (row.productComponents as unknown as RawRecipeProductComponent[] | undefined) ?? [];
 
   const [costMap, componentCostMap] = await Promise.all([
     resolveCosts(tenantId, rawIngredients),
@@ -640,7 +652,8 @@ export async function updateRecipe(
 
   const recipe = toRecipe(row as RawRecipe);
   const rawIngredients = row.ingredients as RawRecipeIngredient[];
-  const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
+  const rawComponents =
+    (row.productComponents as unknown as RawRecipeProductComponent[] | undefined) ?? [];
 
   const [costMap, componentCostMap] = await Promise.all([
     resolveCosts(tenantId, rawIngredients),
@@ -726,6 +739,7 @@ export async function copyMarketplaceRecipeToOwner(
   const row = await prisma.recipe.create({
     data: {
       tenantId,
+      storeId: (source as { storeId?: string | null }).storeId ?? null,
       name: input.name?.trim() || source.title,
       yieldQty: source.yieldQty,
       yieldUnit: source.yieldUnit as RecipeYieldUnit,
@@ -752,7 +766,8 @@ export async function copyMarketplaceRecipeToOwner(
 
   const recipe = toRecipe(row as RawRecipe);
   const rawIngredients = row.ingredients as RawRecipeIngredient[];
-  const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
+  const rawComponents =
+    (row.productComponents as unknown as RawRecipeProductComponent[] | undefined) ?? [];
   const [costMap, componentCostMap] = await Promise.all([
     resolveCosts(tenantId, rawIngredients),
     resolveProductComponentCosts(tenantId, rawComponents),
@@ -829,7 +844,8 @@ export async function copyPlatformRecipeToOwner(
 
   const recipe = toRecipe(row as RawRecipe);
   const rawIngredients = row.ingredients as RawRecipeIngredient[];
-  const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
+  const rawComponents =
+    (row.productComponents as unknown as RawRecipeProductComponent[] | undefined) ?? [];
   const [costMap, componentCostMap] = await Promise.all([
     resolveCosts(tenantId, rawIngredients),
     resolveProductComponentCosts(tenantId, rawComponents),
@@ -903,7 +919,8 @@ export async function getProductRecipes(
   return rows.map((row) => {
     const recipe = toRecipe(row as RawRecipe);
     const rawIngredients = row.ingredients as RawRecipeIngredient[];
-    const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
+    const rawComponents =
+      (row.productComponents as unknown as RawRecipeProductComponent[] | undefined) ?? [];
     const ingredients = rawIngredients.map((ri) =>
       toRecipeIngredientWithCost(ri, costMap)
     );
@@ -954,7 +971,8 @@ export async function getTenantProductRecipes(
   return rows.map((row) => {
     const recipe = toRecipe(row as RawRecipe);
     const rawIngredients = row.ingredients as RawRecipeIngredient[];
-    const rawComponents = row.productComponents as unknown as RawRecipeProductComponent[];
+    const rawComponents =
+      (row.productComponents as unknown as RawRecipeProductComponent[] | undefined) ?? [];
     const ingredients = rawIngredients.map((ri) =>
       toRecipeIngredientWithCost(ri, costMap)
     );

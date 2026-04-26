@@ -47,6 +47,7 @@ export interface RecipeProductComponent {
 export interface Recipe {
   id: string;
   tenantId: string | null;
+  storeId: string | null;
   catalogProductId: string | null;
   catalogProductName: string | null;
   catalogProductPrice: number | null; // basePriceAmount (minor units)
