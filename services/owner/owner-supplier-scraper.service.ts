@@ -478,6 +478,25 @@ export async function scrapeAllPlatformProducts(): Promise<{
   changed: number;
   failed: number;
 }> {
+  const platformTenant = await prisma.tenant.findFirst({
+    where: { type: "PLATFORM", archivedAt: null },
+    select: { id: true },
+  });
+  if (!platformTenant) {
+    throw new Error("Platform tenant not found");
+  }
+
+  const platformCredentials = await prisma.supplierCredential.findMany({
+    where: { tenantId: platformTenant.id, deletedAt: null, isActive: true },
+    select: {
+      id: true,
+      supplierId: true,
+      updatedAt: true,
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+  const credentialBySupplierId = new Map(platformCredentials.map((credential) => [credential.supplierId, credential]));
+
   const products = await prisma.supplierProduct.findMany({
     where: {
       deletedAt: null,
@@ -485,6 +504,7 @@ export async function scrapeAllPlatformProducts(): Promise<{
     },
     select: {
       id: true,
+      supplierId: true,
       externalUrl: true,
       referencePrice: true,
       supplier: { select: { adapterType: true } },
@@ -495,6 +515,7 @@ export async function scrapeAllPlatformProducts(): Promise<{
   let changed = 0;
   let failed = 0;
   const scrapedAt = new Date();
+  const sessionCache = new Map<string, SupplierSessionEntry>();
 
   for (const product of products) {
     const supplierInfo = (product as typeof product & { supplier: SupplierAdapterInfo }).supplier;
@@ -503,7 +524,61 @@ export async function scrapeAllPlatformProducts(): Promise<{
     // For scrapers that need a URL, require externalUrl to be present.
     if (!product.externalUrl && !scraper.fetchProductList) continue;
     try {
-      const result = await scraper.scrape(product.externalUrl ?? "");
+      const credential = credentialBySupplierId.get(product.supplierId);
+      let result: ScrapedProduct | null = null;
+
+      if (credential) {
+        let entry = sessionCache.get(product.supplierId);
+
+        if (entry === undefined) {
+          const decrypted = await getDecryptedCredential(credential.id);
+
+          try {
+            if (scraper.login && scraper.scrapeWithSession) {
+              const session = await scraper.login({
+                loginUrl: decrypted.loginUrl ?? undefined,
+                username: decrypted.username,
+                password: decrypted.password,
+              });
+              entry = session
+                ? {
+                    session,
+                    scraper,
+                    credentialId: credential.id,
+                    decryptedCredential: decrypted,
+                  }
+                : null;
+            } else {
+              entry = {
+                session: { authenticated: false },
+                scraper,
+                credentialId: credential.id,
+                decryptedCredential: decrypted,
+              };
+            }
+          } catch {
+            entry = null;
+          }
+
+          sessionCache.set(product.supplierId, entry);
+        }
+
+        if (entry) {
+          if (entry.scraper.scrapeWithSession && entry.session.authenticated) {
+            result = await entry.scraper.scrapeWithSession(product.externalUrl ?? "", entry.session);
+          } else if (product.externalUrl) {
+            result = await credentialedScraper.scrapeWithCredential(product.externalUrl, {
+              loginUrl: entry.decryptedCredential.loginUrl,
+              username: entry.decryptedCredential.username,
+              password: entry.decryptedCredential.password,
+            });
+          }
+        }
+      }
+
+      if (!result) {
+        result = await scraper.scrape(product.externalUrl ?? "");
+      }
 
       if (result.price === null) continue;
 
