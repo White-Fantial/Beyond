@@ -10,6 +10,7 @@ interface InitialData {
   timezone: string;
   currency: string;
   countryCode: string;
+  type: string;
   status: string;
 }
 
@@ -21,6 +22,7 @@ interface Props {
 }
 
 const TENANT_STATUS_OPTIONS = ["ACTIVE", "TRIAL", "SUSPENDED", "ARCHIVED"];
+const TENANT_TYPE_OPTIONS = ["MERCHANT", "PLATFORM"];
 const inputCls = "w-full text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500";
 
 export default function EditTenantDialog({ open, onClose, tenantId, initialData }: Props) {
@@ -78,6 +80,12 @@ export default function EditTenantDialog({ open, onClose, tenantId, initialData 
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+            <select name="type" value={form.type} onChange={handleChange} className={inputCls}>
+              {TENANT_TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Country code</label>
             <input name="countryCode" value={form.countryCode} onChange={handleChange} maxLength={2} className={inputCls} />

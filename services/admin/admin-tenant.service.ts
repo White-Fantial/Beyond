@@ -47,6 +47,7 @@ export async function listAdminTenants(
         id: true,
         displayName: true,
         slug: true,
+        type: true,
         status: true,
         timezone: true,
         currency: true,
@@ -63,7 +64,7 @@ export async function listAdminTenants(
   return {
     items: tenants.map((t) =>
       mapTenantListItem(
-        { ...t, status: t.status as string },
+        { ...t, type: t.type as string, status: t.status as string },
         t._count.stores,
         t._count.memberships
       )
@@ -80,6 +81,7 @@ export async function getAdminTenantDetail(tenantId: string): Promise<AdminTenan
       slug: true,
       legalName: true,
       displayName: true,
+      type: true,
       status: true,
       timezone: true,
       currency: true,
@@ -150,6 +152,7 @@ export async function getAdminTenantDetail(tenantId: string): Promise<AdminTenan
     slug: tenant.slug,
     legalName: tenant.legalName,
     displayName: tenant.displayName,
+    type: tenant.type as string,
     status: tenant.status as string,
     timezone: tenant.timezone,
     currency: tenant.currency,
@@ -170,6 +173,8 @@ export async function getAdminTenantDetail(tenantId: string): Promise<AdminTenan
 
 const ALLOWED_TENANT_STATUSES = ["ACTIVE", "TRIAL", "SUSPENDED", "ARCHIVED"] as const;
 type AllowedTenantStatus = (typeof ALLOWED_TENANT_STATUSES)[number];
+const ALLOWED_TENANT_TYPES = ["PLATFORM", "MERCHANT"] as const;
+type AllowedTenantType = (typeof ALLOWED_TENANT_TYPES)[number];
 
 const SLUG_RE = /^[a-z0-9-]+$/;
 
@@ -182,6 +187,7 @@ export interface CreateAdminTenantInput {
   timezone: string;
   currency: string;
   countryCode: string;
+  type?: string;
   status?: string;
 }
 
@@ -189,7 +195,7 @@ export async function createAdminTenant(
   input: CreateAdminTenantInput,
   actorUserId: string
 ): Promise<{ id: string }> {
-  const { slug, legalName, displayName, timezone, currency, countryCode, status = "ACTIVE" } = input;
+  const { slug, legalName, displayName, timezone, currency, countryCode, type = "MERCHANT", status = "ACTIVE" } = input;
 
   if (!slug || !SLUG_RE.test(slug)) {
     throw new Error("Slug may only contain lowercase letters, numbers, and hyphens.");
@@ -199,6 +205,9 @@ export async function createAdminTenant(
   if (!timezone?.trim()) throw new Error("Timezone is required.");
   if (!currency?.trim()) throw new Error("Currency is required.");
   if (!countryCode?.trim()) throw new Error("Country code is required.");
+  if (!ALLOWED_TENANT_TYPES.includes(type as AllowedTenantType)) {
+    throw new Error(`Invalid tenant type value: ${type}`);
+  }
   if (!ALLOWED_TENANT_STATUSES.includes(status as AllowedTenantStatus)) {
     throw new Error(`Invalid status value: ${status}`);
   }
@@ -214,6 +223,7 @@ export async function createAdminTenant(
       timezone: timezone.trim(),
       currency: currency.trim().toUpperCase(),
       countryCode: countryCode.trim().toUpperCase(),
+      type: type as never,
       status: status as never,
     },
     select: { id: true },
@@ -229,6 +239,7 @@ export interface UpdateAdminTenantInput {
   timezone?: string;
   currency?: string;
   countryCode?: string;
+  type?: string;
   status?: string;
 }
 
@@ -239,7 +250,7 @@ export async function updateAdminTenant(
 ): Promise<void> {
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },
-    select: { id: true, legalName: true, displayName: true, timezone: true, currency: true, countryCode: true, status: true },
+    select: { id: true, legalName: true, displayName: true, timezone: true, currency: true, countryCode: true, type: true, status: true },
   });
   if (!tenant) notFound();
 
@@ -255,6 +266,12 @@ export async function updateAdminTenant(
   if (input.timezone !== undefined) data.timezone = input.timezone.trim();
   if (input.currency !== undefined) data.currency = input.currency.trim().toUpperCase();
   if (input.countryCode !== undefined) data.countryCode = input.countryCode.trim().toUpperCase();
+  if (input.type !== undefined) {
+    if (!ALLOWED_TENANT_TYPES.includes(input.type as AllowedTenantType)) {
+      throw new Error(`Invalid tenant type value: ${input.type}`);
+    }
+    data.type = input.type;
+  }
   if (input.status !== undefined) {
     if (!ALLOWED_TENANT_STATUSES.includes(input.status as AllowedTenantStatus)) {
       throw new Error(`Invalid status value: ${input.status}`);
@@ -266,7 +283,7 @@ export async function updateAdminTenant(
 
   await prisma.tenant.update({ where: { id: tenantId }, data: { ...data, updatedAt: new Date() } });
   await auditAdminTenantUpdated(tenantId, actorUserId, {
-    before: { legalName: tenant.legalName, displayName: tenant.displayName, timezone: tenant.timezone, status: tenant.status },
+    before: { legalName: tenant.legalName, displayName: tenant.displayName, timezone: tenant.timezone, type: tenant.type, status: tenant.status },
     after: data,
   });
 }
