@@ -117,10 +117,22 @@
 
 ## Planned
 
-### Integrations & Adapters
+### Integrations & Catalog
 
-- [ ] **Lightspeed POS Adapter** — catalog sync, order forwarding; `LIGHTSPEED` added to `ConnectionProvider` enum; `adapters/integrations/lightspeed.adapter.ts`
+- [ ] **Uber Eats Catalog Import Adapter (real implementation)** — replace Phase 2 stub (`adapters/catalog/uber-eats.adapter.ts`) with live menu API fetch + mapping.
+- [ ] **DoorDash Catalog Import Adapter (real implementation)** — replace Phase 2 stub (`adapters/catalog/doordash.adapter.ts`) with live Merchant API fetch + mapping.
+- [ ] **Uber Eats Catalog Publish Adapter** — replace not-implemented publish responses with full menu write flow (`adapters/catalog/uber-eats-publish.adapter.ts`, `services/catalog-publish/payload-builders/uber-eats/`).
+- [ ] **DoorDash Catalog Publish Adapter** — replace not-implemented publish responses with Merchant API-compatible payload flow (`adapters/catalog/doordash-publish.adapter.ts`, `services/catalog-publish/payload-builders/doordash/`).
+- [ ] **Lightspeed Catalog Pipeline Integration** — provider OAuth/store lookup is present, but catalog import/publish pipeline parity still needs implementation.
 
-### Cross-Cutting
+### Platform Services
 
-- [ ] **CSV / PDF Export** — downloadable CSV and PDF export for Owner Console reports (`/owner/reports`) and Admin Logs Console (`/admin/logs`); export service utilities; API routes with `Content-Disposition` headers
+- [ ] **Store Service Completion** — implement `services/store.service.ts` placeholders (`getStoresByTenant`, `getStore`, `createStore`) with Prisma-backed logic and tests.
+
+### Supplier Data Automation
+
+- [ ] **Supplier Scraper Adapter Completion** — implement login and product extraction for currently stubbed adapters (`bifold`, `countdown`, `foodstuffs`).
+
+### Documentation Consistency
+
+- [ ] **Documentation Sync Pass** — remove obsolete phase TODO language and keep `README.md`, `doc/architecture.md`, `features.md`, and `doc/roadmap.md` aligned with actual code status.

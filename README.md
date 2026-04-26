@@ -156,6 +156,28 @@ See [doc/architecture.md](./doc/architecture.md) for detailed diagrams and API r
 
 ---
 
+## Implementation Status Snapshot (2026-04-26)
+
+현재 코드 기준으로 문서와 구현의 싱크를 맞춘 상태 요약입니다.
+
+### Stable / Implemented
+
+- 멀티 포털(고객/백오피스/오너/어드민), RBAC, JWT 세션, Prisma 기반 멀티테넌시
+- 카탈로그 아키텍처 Phase 1~8 (내부 정본, 외부 diff, conflict, sync policy, merge editor)
+- Customer Portal Phase 1~5 (주문/구독/알림/주소/로열티/결제수단/리뷰/지원/추천/푸시 설정)
+- Owner/Admin 기능군의 고도화(리포트, 팀/활동, 빌링, 시스템 모니터링, 플래그, 컴플라이언스)
+
+### Partially Implemented / Remaining
+
+- Uber Eats / DoorDash 카탈로그 import 어댑터는 아직 stub (빈 payload 반환)
+- Uber Eats / DoorDash 카탈로그 publish 어댑터는 아직 not implemented 응답
+- Lightspeed는 OAuth/스토어 조회/메뉴 조회/주문 전송 기반 어댑터가 있으나, 카탈로그 import/publish 경로의 완전 연동은 후속 작업 필요
+- 일부 supplier scraper 어댑터(예: Bifold/Countdown/Foodstuffs)는 스켈레톤 상태
+- `services/store.service.ts`는 기본 CRUD가 미완료
+
+자세한 분석/미구현 목록은 [`doc/implementation-status.md`](./doc/implementation-status.md) 참고.
+
+---
 ## Getting Started
 
 ### Prerequisites
@@ -213,8 +235,9 @@ Detailed documentation is in the [`doc/`](./doc/) folder:
 | Document | Description |
 |----------|-------------|
 | [features.md](./features.md) | **Feature Reference** — complete catalogue of every feature, categorised by functional area |
-| [doc/roadmap.md](./doc/roadmap.md) | Development roadmap — all completed phases grouped by area (Core, Catalog, Backoffice, Storefront, Customer Portal, Owner Console, Admin Console, Integrations), and planned work (Customer Portal Phase 3, Lightspeed/Baemin/Coupang Eats adapters, CSV/PDF export, Web Push) |
+| [doc/roadmap.md](./doc/roadmap.md) | Development roadmap — completed work and remaining implementation items based on current code state |
 | [doc/admin-console.md](./doc/admin-console.md) | Admin Console — routes, write actions, impersonation, logs, jobs, billing, feature flags |
 | [doc/owner-console.md](./doc/owner-console.md) | Owner Console — dashboard, store settings, staff, catalog, reports & analytics, customer & subscription management (Phase 5), billing deep dive (Phase 6) |
 | [doc/architecture.md](./doc/architecture.md) | Architecture — multi-tenant model, order model, catalog layers, channel integrations, customer order UI |
 | [doc/troubleshooting.md](./doc/troubleshooting.md) | Troubleshooting common issues (sync, modifiers, order forwarding) |
+| [doc/implementation-status.md](./doc/implementation-status.md) | Implementation status audit (implemented vs partial vs missing), with concrete file-level backlog |
