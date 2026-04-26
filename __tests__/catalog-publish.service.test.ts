@@ -218,10 +218,30 @@ describe("LoyverseCatalogPublishAdapter", () => {
 describe("UberEatsCatalogPublishAdapter", () => {
   const adapter = new UberEatsCatalogPublishAdapter();
 
-  it("createCategory returns not-implemented failure", async () => {
-    const result = await adapter.createCategory(DUMMY_INPUT);
-    expect(result.success).toBe(false);
-    expect((result.responsePayload?.["error"] as string)).toContain("not yet implemented");
+  it("createCategory executes menu-level publish calls", async () => {
+    const originalFetch = global.fetch;
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ menus: [{ id: "menu-1", categories: [] }] }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true }),
+      } as Response);
+
+    const result = await adapter.createCategory({
+      ...DUMMY_INPUT,
+      credentials: { accessToken: "tok", externalStoreId: "store-1" },
+      payload: { id: "cat-1", title: { translations: { en_us: "Drinks" } } },
+    });
+
+    expect(result.success).toBe(true);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    global.fetch = originalFetch;
   });
 });
 

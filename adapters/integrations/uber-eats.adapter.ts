@@ -104,6 +104,26 @@ class UberEatsAdapter implements ProviderAdapter {
     const expiresAt = new Date(issuedAt.getTime() + tokens.expires_in * 1000);
     const refreshAfter = new Date(expiresAt.getTime() - 5 * 60 * 1000);
 
+    let providerAccount: OAuthCallbackResult["providerAccount"] | undefined;
+    try {
+      const storesRes = await fetch(`${UBER_EATS_API_BASE}/eats/stores`, {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
+      });
+      if (storesRes.ok) {
+        const storesData = (await storesRes.json()) as UberEatsStoresResponse;
+        const firstStore = storesData.data?.[0];
+        if (firstStore) {
+          providerAccount = {
+            externalStoreId: firstStore.store_id,
+            externalStoreName: firstStore.name,
+            externalMerchantId: firstStore.merchant_uuid ?? null,
+          };
+        }
+      }
+    } catch {
+      // Non-fatal; connection can still be saved without discovered store metadata.
+    }
+
     const payload: DecryptedCredentialPayload = {
       credentialType: "OAUTH_TOKEN",
       authScheme: "OAUTH2",
@@ -126,6 +146,7 @@ class UberEatsAdapter implements ProviderAdapter {
           canRefresh: !!tokens.refresh_token,
         },
       ],
+      providerAccount,
     };
   }
 
