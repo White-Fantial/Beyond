@@ -1,11 +1,8 @@
 /**
- * DoorDash catalog publish adapter — Phase 4 (stub).
+ * DoorDash catalog publish adapter.
  *
- * All methods return a "not implemented" error until DoorDash Merchant API
- * integration is completed.
- *
- * TODO Phase 4+: Implement using DoorDash Drive / Merchant API.
- * Reference: https://developer.doordash.com/en-US/api/marketplace/
+ * Uses menu-document read/modify/write semantics similar to other delivery
+ * channel adapters in this codebase.
  */
 
 import type {
@@ -13,61 +10,249 @@ import type {
   ProviderPublishInput,
   ProviderPublishResult,
 } from "@/types/catalog-publish";
+import {
+  buildDoorDashCategoryCreate,
+  buildDoorDashCategoryUpdate,
+  buildDoorDashProductCreate,
+  buildDoorDashProductUpdate,
+} from "@/services/catalog-publish/payload-builders/doordash";
 
-const NOT_IMPLEMENTED: ProviderPublishResult = {
-  success: false,
-  responsePayload: { error: "DoorDash publish adapter is not yet implemented." },
-};
+const DOORDASH_API_BASE = "https://openapi.doordash.com";
+
+type DDRecord = Record<string, unknown>;
+
+function getToken(credentials: Record<string, string>): string {
+  const token = credentials["accessToken"] ?? credentials["configEncrypted"];
+  if (!token) throw new Error("DoorDash publish adapter: accessToken credential is required.");
+  return token;
+}
+
+function getExternalStoreId(credentials: Record<string, string>): string {
+  const externalStoreId = credentials["externalStoreId"] ?? credentials["businessUnitId"];
+  if (!externalStoreId) {
+    throw new Error("DoorDash publish adapter: externalStoreId (or businessUnitId) is required.");
+  }
+  return externalStoreId;
+}
+
+function menuEndpoint(storeId: string, credentials: Record<string, string>): string {
+  return credentials["menusEndpoint"] ?? `${DOORDASH_API_BASE}/marketplace/api/v1/stores/${storeId}/menus`;
+}
+
+function readString(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+async function doordashRequest(
+  method: "GET" | "PUT",
+  token: string,
+  endpoint: string,
+  body?: unknown
+): Promise<{ ok: boolean; status: number; data: DDRecord | null }> {
+  const res = await fetch(endpoint, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      ...(method === "PUT" ? { "Content-Type": "application/json" } : {}),
+    },
+    body: body != null ? JSON.stringify(body) : undefined,
+  });
+
+  const data = (await res.json().catch(() => null)) as DDRecord | null;
+  return { ok: res.ok, status: res.status, data };
+}
+
+function ensureMenuDocument(doc: DDRecord | null): DDRecord {
+  if (doc && Array.isArray(doc["menus"]) && doc["menus"].length > 0) return doc;
+  return {
+    menus: [{ id: "default-menu", name: "Menu" }],
+  };
+}
+
+function upsertEntity(arr: unknown, payload: DDRecord, externalEntityId?: string): DDRecord[] {
+  const list = Array.isArray(arr) ? ([...arr] as DDRecord[]) : [];
+  const targetId = externalEntityId ?? readString(payload["id"]);
+  if (!targetId) {
+    list.push(payload);
+    return list;
+  }
+  const idx = list.findIndex((entry) => readString(entry["id"]) === targetId);
+  if (idx >= 0) list[idx] = { ...list[idx], ...payload, id: targetId };
+  else list.push({ ...payload, id: targetId });
+  return list;
+}
+
+function mutateEntityStatus(arr: unknown, externalEntityId: string | undefined, active: boolean): DDRecord[] {
+  if (!externalEntityId) return Array.isArray(arr) ? (arr as DDRecord[]) : [];
+  const list = Array.isArray(arr) ? ([...arr] as DDRecord[]) : [];
+  const idx = list.findIndex((entry) => readString(entry["id"]) === externalEntityId);
+  if (idx >= 0) {
+    list[idx] = { ...list[idx], id: externalEntityId, active };
+  }
+  return list;
+}
+
+async function executeMenuMutation(
+  input: ProviderPublishInput,
+  mutate: (menu: DDRecord) => DDRecord
+): Promise<ProviderPublishResult> {
+  const token = getToken(input.credentials);
+  const storeId = getExternalStoreId(input.credentials);
+  const endpoint = menuEndpoint(storeId, input.credentials);
+
+  const readRes = await doordashRequest("GET", token, endpoint);
+  if (!readRes.ok) {
+    return { success: false, responsePayload: readRes.data ?? { error: `GET menus failed (${readRes.status})` } };
+  }
+
+  const currentDoc = ensureMenuDocument(readRes.data);
+  const menus = Array.isArray(currentDoc["menus"]) ? ([...currentDoc["menus"]] as DDRecord[]) : [];
+  const baseMenu = (menus[0] ?? {}) as DDRecord;
+  const updatedMenu = mutate(baseMenu);
+  const nextDoc: DDRecord = { ...currentDoc, menus: [updatedMenu, ...menus.slice(1)] };
+
+  const writeRes = await doordashRequest("PUT", token, endpoint, nextDoc);
+  if (!writeRes.ok) {
+    return {
+      success: false,
+      responsePayload: writeRes.data ?? { error: `PUT menus failed (${writeRes.status})` },
+      rawPayload: nextDoc,
+    };
+  }
+
+  return {
+    success: true,
+    externalId: input.externalEntityId ?? readString((input.payload as DDRecord)["id"]) ?? undefined,
+    responsePayload: writeRes.data ?? undefined,
+    rawPayload: nextDoc,
+  };
+}
 
 export class DoorDashCatalogPublishAdapter implements ProviderCatalogPublishAdapter {
   readonly provider = "DOORDASH";
 
-  async createCategory(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+  async createCategory(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    const payload = buildDoorDashCategoryCreate(input.payload as DDRecord);
+    return executeMenuMutation({ ...input, payload }, (menu) => ({
+      ...menu,
+      categories: upsertEntity(menu["categories"], payload),
+    }));
   }
-  async updateCategory(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async updateCategory(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    if (!input.externalEntityId) {
+      return { success: false, responsePayload: { error: "externalEntityId required for update" } };
+    }
+    const payload = buildDoorDashCategoryUpdate(input.payload as DDRecord, input.externalEntityId);
+    return executeMenuMutation({ ...input, payload }, (menu) => ({
+      ...menu,
+      categories: upsertEntity(menu["categories"], payload, input.externalEntityId),
+    }));
   }
-  async archiveCategory(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async archiveCategory(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    return executeMenuMutation(input, (menu) => ({
+      ...menu,
+      categories: mutateEntityStatus(menu["categories"], input.externalEntityId, false),
+    }));
   }
-  async unarchiveCategory(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async unarchiveCategory(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    return executeMenuMutation(input, (menu) => ({
+      ...menu,
+      categories: mutateEntityStatus(menu["categories"], input.externalEntityId, true),
+    }));
   }
-  async createProduct(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async createProduct(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    const source = (input.payload as { entity?: DDRecord }).entity ?? (input.payload as DDRecord);
+    const payload = buildDoorDashProductCreate(source);
+    return executeMenuMutation({ ...input, payload }, (menu) => ({
+      ...menu,
+      items: upsertEntity(menu["items"], payload),
+    }));
   }
-  async updateProduct(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async updateProduct(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    if (!input.externalEntityId) {
+      return { success: false, responsePayload: { error: "externalEntityId required for update" } };
+    }
+    const source = (input.payload as { entity?: DDRecord }).entity ?? (input.payload as DDRecord);
+    const payload = buildDoorDashProductUpdate(source, input.externalEntityId);
+    return executeMenuMutation({ ...input, payload }, (menu) => ({
+      ...menu,
+      items: upsertEntity(menu["items"], payload, input.externalEntityId),
+    }));
   }
-  async archiveProduct(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async archiveProduct(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    return executeMenuMutation(input, (menu) => ({
+      ...menu,
+      items: mutateEntityStatus(menu["items"], input.externalEntityId, false),
+    }));
   }
-  async unarchiveProduct(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async unarchiveProduct(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    return executeMenuMutation(input, (menu) => ({
+      ...menu,
+      items: mutateEntityStatus(menu["items"], input.externalEntityId, true),
+    }));
   }
-  async createModifierGroup(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async createModifierGroup(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    return executeMenuMutation(input, (menu) => ({
+      ...menu,
+      modifier_groups: upsertEntity(menu["modifier_groups"], input.payload),
+    }));
   }
-  async updateModifierGroup(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async updateModifierGroup(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    return executeMenuMutation(input, (menu) => ({
+      ...menu,
+      modifier_groups: upsertEntity(menu["modifier_groups"], input.payload, input.externalEntityId),
+    }));
   }
-  async archiveModifierGroup(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async archiveModifierGroup(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    return executeMenuMutation(input, (menu) => ({
+      ...menu,
+      modifier_groups: mutateEntityStatus(menu["modifier_groups"], input.externalEntityId, false),
+    }));
   }
-  async unarchiveModifierGroup(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async unarchiveModifierGroup(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    return executeMenuMutation(input, (menu) => ({
+      ...menu,
+      modifier_groups: mutateEntityStatus(menu["modifier_groups"], input.externalEntityId, true),
+    }));
   }
-  async createModifierOption(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async createModifierOption(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    return executeMenuMutation(input, (menu) => ({
+      ...menu,
+      modifier_options: upsertEntity(menu["modifier_options"], input.payload),
+    }));
   }
-  async updateModifierOption(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async updateModifierOption(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    return executeMenuMutation(input, (menu) => ({
+      ...menu,
+      modifier_options: upsertEntity(menu["modifier_options"], input.payload, input.externalEntityId),
+    }));
   }
-  async archiveModifierOption(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async archiveModifierOption(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    return executeMenuMutation(input, (menu) => ({
+      ...menu,
+      modifier_options: mutateEntityStatus(menu["modifier_options"], input.externalEntityId, false),
+    }));
   }
-  async unarchiveModifierOption(_input: ProviderPublishInput): Promise<ProviderPublishResult> {
-    return NOT_IMPLEMENTED;
+
+  async unarchiveModifierOption(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    return executeMenuMutation(input, (menu) => ({
+      ...menu,
+      modifier_options: mutateEntityStatus(menu["modifier_options"], input.externalEntityId, true),
+    }));
   }
 }

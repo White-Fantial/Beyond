@@ -106,6 +106,10 @@ import {
   buildUberEatsCategoryCreate,
   buildUberEatsProductCreate,
 } from "@/services/catalog-publish/payload-builders/uber-eats";
+import {
+  buildDoorDashCategoryCreate,
+  buildDoorDashProductCreate,
+} from "@/services/catalog-publish/payload-builders/doordash";
 
 describe("buildLoyverseCategoryCreate", () => {
   it("returns payload with name", () => {
@@ -186,6 +190,35 @@ describe("buildUberEatsProductCreate", () => {
   });
 });
 
+describe("buildDoorDashCategoryCreate", () => {
+  it("maps active state and availability", () => {
+    const payload = buildDoorDashCategoryCreate({
+      id: "cat-1",
+      name: "Lunch",
+      isActive: true,
+      availabilityWindows: [{ dayOfWeek: "MON", startTime: "11:00", endTime: "14:00" }],
+    });
+
+    expect(payload.id).toBe("cat-1");
+    expect(payload.active).toBe(true);
+    expect(Array.isArray(payload.availability)).toBe(true);
+  });
+});
+
+describe("buildDoorDashProductCreate", () => {
+  it("maps core item fields", () => {
+    const payload = buildDoorDashProductCreate({
+      id: "prod-1",
+      name: "Latte",
+      price: 650,
+      isVisible: false,
+    });
+    expect(payload.id).toBe("prod-1");
+    expect(payload.price).toBe(650);
+    expect(payload.active).toBe(false);
+  });
+});
+
 // ─── 3. Adapter contract: unsupported action ──────────────────────────────────
 
 import { LoyverseCatalogPublishAdapter } from "@/adapters/catalog/loyverse-publish.adapter";
@@ -248,10 +281,30 @@ describe("UberEatsCatalogPublishAdapter", () => {
 describe("DoorDashCatalogPublishAdapter", () => {
   const adapter = new DoorDashCatalogPublishAdapter();
 
-  it("createProduct returns not-implemented failure", async () => {
-    const result = await adapter.createProduct(DUMMY_INPUT);
-    expect(result.success).toBe(false);
-    expect((result.responsePayload?.["error"] as string)).toContain("not yet implemented");
+  it("createProduct executes menu-level publish calls", async () => {
+    const originalFetch = global.fetch;
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ menus: [{ id: "menu-1", items: [] }] }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true }),
+      } as Response);
+
+    const result = await adapter.createProduct({
+      ...DUMMY_INPUT,
+      credentials: { accessToken: "tok", externalStoreId: "store-1" },
+      payload: { entity: { id: "prod-1", name: "Latte", price: 599 } },
+    });
+
+    expect(result.success).toBe(true);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    global.fetch = originalFetch;
   });
 });
 
