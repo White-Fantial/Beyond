@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
 import { encryptJson, decryptJson } from "@/lib/integrations/crypto";
 import { getProviderAdapter } from "@/adapters/integrations/base";
+import { getProviderCapabilities } from "@/domains/integration/provider-capabilities";
 // Ensure all adapters are registered by importing them
 import "@/adapters/integrations/loyverse.adapter";
 import "@/adapters/integrations/uber-eats.adapter";
@@ -324,6 +325,7 @@ export async function handleOAuthCallback(
 
   const appCredential = await resolveAppCredential(provider, tenantId);
   const adapter = getProviderAdapter(provider);
+  const providerCapabilities = getProviderCapabilities(provider);
   const redirectUri = buildRedirectUri(provider, appBaseUrl);
 
   let callbackResult;
@@ -364,6 +366,7 @@ export async function handleOAuthCallback(
       externalStoreId: callbackResult.providerAccount?.externalStoreId ?? null,
       externalStoreName: callbackResult.providerAccount?.externalStoreName ?? null,
       externalLocationId: callbackResult.providerAccount?.externalLocationId ?? null,
+      capabilitiesJson: providerCapabilities as unknown as Prisma.InputJsonValue,
       lastConnectedAt: new Date(),
       lastAuthValidatedAt: new Date(),
       reauthRequiredAt: null,
@@ -379,6 +382,7 @@ export async function handleOAuthCallback(
       externalStoreId: callbackResult.providerAccount?.externalStoreId ?? undefined,
       externalStoreName: callbackResult.providerAccount?.externalStoreName ?? undefined,
       externalLocationId: callbackResult.providerAccount?.externalLocationId ?? undefined,
+      capabilitiesJson: providerCapabilities as unknown as Prisma.InputJsonValue,
       lastConnectedAt: new Date(),
       lastAuthValidatedAt: new Date(),
       reauthRequiredAt: null,

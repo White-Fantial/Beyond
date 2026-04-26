@@ -52,7 +52,7 @@ class UberEatsAdapter implements ProviderAdapter {
   }): AuthorizationStartResult {
     const { appCredential, redirectUri, state } = input;
 
-    const defaultScopes = ["eats.store", "eats.order"];
+    const defaultScopes = ["eats.store", "eats.order", "eats.store.status.notification"];
     const scopes =
       appCredential.scopes.length > 0 ? appCredential.scopes : defaultScopes;
 
