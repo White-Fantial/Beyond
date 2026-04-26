@@ -58,6 +58,7 @@ const mockProduct = {
   name: "High Grade Flour 25kg",
   externalUrl: "https://flourco.nz/products/hg-flour-25kg",
   referencePrice: 4500,
+  purchaseQty: 1,
   unit: "KG",
   lastScrapedAt: null,
   metadata: {},
@@ -120,6 +121,37 @@ describe("scrapeSupplierProduct", () => {
 
     expect(result.changed).toBe(false);
     expect(result.newPrice).toBe(4500);
+  });
+
+  it("updates purchaseQty/unit when scraper returns a parseable pack unit", async () => {
+    mockPrisma.supplierProduct.findFirst.mockResolvedValue(mockProduct);
+    mockPrisma.supplierProduct.update.mockResolvedValue({
+      ...mockProduct,
+      referencePrice: 5000,
+      purchaseQty: 25,
+      unit: "KG",
+    });
+
+    mockGetScraperForSupplier.mockReturnValue({
+      scrape: vi.fn().mockResolvedValue({
+        name: "HG Flour",
+        price: 5000,
+        currency: "NZD",
+        unit: "25kg",
+      }),
+    });
+
+    await scrapeSupplierProduct(TENANT, "sp-1");
+
+    expect(mockPrisma.supplierProduct.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          purchaseQty: 25,
+          unit: "KG",
+          metadata: expect.objectContaining({ lastScrapedUnitRaw: "25kg" }),
+        }),
+      })
+    );
   });
 
   it("does NOT update ingredient unitCost (pricing moved to supplier price tables)", async () => {

@@ -383,7 +383,13 @@ export async function importPlatformSupplierProducts(
 
       if (normalizedUrl) {
         const existingByUrl = await prisma.supplierProduct.findFirst({
-          where: { supplierId, externalUrlNormalized: normalizedUrl, deletedAt: null },
+          where: {
+            supplierId,
+            externalUrlNormalized: normalizedUrl,
+            purchaseQty: row.purchaseQty,
+            unit: row.unit,
+            deletedAt: null,
+          },
         });
 
         if (existingByUrl) {

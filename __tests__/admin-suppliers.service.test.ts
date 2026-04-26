@@ -386,4 +386,23 @@ describe("importPlatformSupplierProducts", () => {
     expect(result.updatedCount).toBe(0);
     expect(result.failedCount).toBe(0);
   });
+
+  it("creates when URL matches but purchase unit/qty differs", async () => {
+    mockPrisma.supplier.findFirst.mockResolvedValue(mockPlatformSupplier);
+    mockPrisma.supplierProduct.findFirst.mockResolvedValue(null);
+    mockPrisma.supplierProduct.create.mockResolvedValue(mockProduct);
+
+    const result = await importPlatformSupplierProducts(SUP_ID, [
+      {
+        name: "Flour Carton",
+        externalUrl: "https://example.com/item?b=2&a=1",
+        referencePrice: 700000,
+        purchaseQty: 1,
+        unit: "EACH",
+      },
+    ]);
+
+    expect(result.createdCount).toBe(1);
+    expect(result.updatedCount).toBe(0);
+  });
 });
