@@ -37,7 +37,7 @@ import type { IngredientUnit } from "@/types/owner-ingredients";
 type RawRecipe = {
   id: string;
   tenantId: string | null;
-  storeId: string | null;
+  storeId?: string | null;
   catalogProductId: string | null;
   tenantCatalogProductId: string | null;
   categoryId: string | null;
@@ -287,24 +287,32 @@ async function ensureTenantIngredientsSelected(
   const uniqueIngredientIds = [...new Set(ingredientIds.filter(Boolean))];
   if (uniqueIngredientIds.length === 0) return;
 
-  await prisma.$transaction([
-    tenantIngredientSelection.createMany({
+  await prisma.$transaction(async (tx) => {
+    const txTenantIngredientSelection = (tx as unknown as {
+      tenantIngredientSelection?: {
+        createMany: (args: unknown) => unknown;
+        updateMany: (args: unknown) => unknown;
+      };
+    }).tenantIngredientSelection;
+    if (!txTenantIngredientSelection) return;
+
+    await txTenantIngredientSelection.createMany({
       data: uniqueIngredientIds.map((ingredientId) => ({
         tenantId,
         ingredientId,
         isActive: true,
       })),
       skipDuplicates: true,
-    }),
-    tenantIngredientSelection.updateMany({
+    });
+    await txTenantIngredientSelection.updateMany({
       where: {
         tenantId,
         ingredientId: { in: uniqueIngredientIds },
         isActive: false,
       },
       data: { isActive: true },
-    }),
-  ]);
+    });
+  });
 }
 
 /**
@@ -739,7 +747,6 @@ export async function copyMarketplaceRecipeToOwner(
   const row = await prisma.recipe.create({
     data: {
       tenantId,
-      storeId: (source as { storeId?: string | null }).storeId ?? null,
       name: input.name?.trim() || source.title,
       yieldQty: source.yieldQty,
       yieldUnit: source.yieldUnit as RecipeYieldUnit,
