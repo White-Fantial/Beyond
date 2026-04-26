@@ -45,6 +45,7 @@ export default async function AdminTenantDetailPage({ params }: PageProps) {
               timezone: tenant.timezone,
               currency: tenant.currency,
               countryCode: tenant.countryCode,
+              type: tenant.type,
               status: tenant.status,
             }}
           />
@@ -67,6 +68,7 @@ export default async function AdminTenantDetailPage({ params }: PageProps) {
             { label: "ID", value: <span className="font-mono text-xs">{tenant.id}</span> },
             { label: "Legal Name", value: tenant.legalName },
             { label: "Display Name", value: tenant.displayName },
+            { label: "Type", value: tenant.type },
             { label: "슬러그", value: <span className="font-mono text-xs">{tenant.slug}</span> },
             { label: "Status", value: <StatusBadge value={tenant.status} /> },
             { label: "Time대", value: tenant.timezone },

@@ -1,0 +1,4 @@
+CREATE TYPE "TenantType" AS ENUM ('PLATFORM', 'MERCHANT');
+
+ALTER TABLE "tenants"
+ADD COLUMN "type" "TenantType" NOT NULL DEFAULT 'MERCHANT';

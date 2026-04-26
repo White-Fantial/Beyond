@@ -58,6 +58,7 @@ export interface AdminTenantListItem {
   id: string;
   displayName: string;
   slug: string;
+  type: string;
   status: string;
   timezone: string;
   currency: string;
@@ -78,6 +79,7 @@ export interface AdminTenantDetail {
   slug: string;
   legalName: string;
   displayName: string;
+  type: string;
   status: string;
   timezone: string;
   currency: string;

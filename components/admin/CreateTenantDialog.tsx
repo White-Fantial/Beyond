@@ -10,6 +10,7 @@ interface Props {
 }
 
 const TENANT_STATUS_OPTIONS = ["ACTIVE", "TRIAL", "SUSPENDED", "ARCHIVED"];
+const TENANT_TYPE_OPTIONS = ["MERCHANT", "PLATFORM"];
 
 export default function CreateTenantDialog({ open, onClose }: Props) {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function CreateTenantDialog({ open, onClose }: Props) {
     timezone: "Asia/Seoul",
     currency: "USD",
     countryCode: "KR",
+    type: "MERCHANT",
     status: "ACTIVE",
   });
 
@@ -76,9 +78,16 @@ export default function CreateTenantDialog({ open, onClose }: Props) {
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-4">
+          <Field label="Type">
+            <select name="type" value={form.type} onChange={handleChange} className={inputCls}>
+              {TENANT_TYPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </Field>
           <Field label="Country code *">
             <input name="countryCode" value={form.countryCode} onChange={handleChange} required maxLength={2} className={inputCls} />
           </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
           <Field label="Status">
             <select name="status" value={form.status} onChange={handleChange} className={inputCls}>
               {TENANT_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}

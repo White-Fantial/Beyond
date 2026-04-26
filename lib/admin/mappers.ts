@@ -25,6 +25,7 @@ export function mapTenantListItem(
     id: string;
     displayName: string;
     slug: string;
+    type: string;
     status: string;
     timezone: string;
     currency: string;
@@ -37,6 +38,7 @@ export function mapTenantListItem(
     id: t.id,
     displayName: t.displayName,
     slug: t.slug,
+    type: t.type,
     status: t.status,
     timezone: t.timezone,
     currency: t.currency,

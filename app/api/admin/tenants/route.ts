@@ -6,9 +6,9 @@ export async function POST(req: NextRequest) {
   try {
     const ctx = await requirePlatformAdminNotImpersonating();
     const body = await req.json();
-    const { slug, legalName, displayName, timezone, currency, countryCode, status } = body;
+    const { slug, legalName, displayName, timezone, currency, countryCode, type, status } = body;
     const result = await createAdminTenant(
-      { slug, legalName, displayName, timezone, currency, countryCode, status },
+      { slug, legalName, displayName, timezone, currency, countryCode, type, status },
       ctx.userId
     );
     return NextResponse.json(result, { status: 201 });

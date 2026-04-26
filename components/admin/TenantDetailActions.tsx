@@ -12,6 +12,7 @@ interface TenantData {
   timezone: string;
   currency: string;
   countryCode: string;
+  type: string;
   status: string;
 }
 
@@ -57,6 +58,7 @@ export default function TenantDetailActions({ tenant }: Props) {
           timezone: tenant.timezone,
           currency: tenant.currency,
           countryCode: tenant.countryCode,
+          type: tenant.type,
           status: tenant.status,
         }}
       />
