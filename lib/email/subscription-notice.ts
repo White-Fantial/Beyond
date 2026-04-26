@@ -41,8 +41,10 @@ export function renderSubscriptionNoticeEmail(data: SubscriptionNoticeData): {
     details += `<p><strong>Reason:</strong> ${escapeHtml(data.reason)}</p>`;
   }
 
+  const safeHeadline = escapeHtml(config.headline).replace("&#39;", "'");
+
   const body = `
-    <h2 style="margin-top:0">${config.emoji} ${escapeHtml(config.headline)}</h2>
+    <h2 style="margin-top:0">${config.emoji} ${safeHeadline}</h2>
     <p>Hi ${escapeHtml(data.customerName)},</p>
     <p>This is a notification about your subscription with <strong>${escapeHtml(data.storeName)}</strong>.</p>
     ${details}

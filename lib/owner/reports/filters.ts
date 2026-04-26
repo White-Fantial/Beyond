@@ -141,10 +141,11 @@ export function formatDateKey(date: Date, timezone: string = DEFAULT_TIMEZONE): 
 export function generateDateKeys(from: Date, to: Date, timezone: string = DEFAULT_TIMEZONE): string[] {
   const tz = safeTimezone(timezone);
   const keys: string[] = [];
-  const current = new Date(from);
-  while (current <= to) {
-    keys.push(formatDateKey(current, tz));
-    current.setUTCDate(current.getUTCDate() + 1);
+  let current = toLocalParts(from, tz);
+  const end = toLocalParts(to, tz);
+  while (compareLocalDates(current, end) <= 0) {
+    keys.push(`${current.year}-${pad(current.month)}-${pad(current.day)}`);
+    current = addDays(current, 1);
   }
   return keys;
 }
@@ -241,4 +242,10 @@ function addDays(d: LocalDate, n: number): LocalDate {
 
 function daysInMonth(year: number, month: number): number {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+function compareLocalDates(a: LocalDate, b: LocalDate): number {
+  if (a.year !== b.year) return a.year - b.year;
+  if (a.month !== b.month) return a.month - b.month;
+  return a.day - b.day;
 }
