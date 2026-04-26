@@ -270,6 +270,33 @@ const productComponentInclude = {
   },
 } as const;
 
+async function ensureTenantIngredientsSelected(
+  tenantId: string,
+  ingredientIds: string[]
+): Promise<void> {
+  const uniqueIngredientIds = [...new Set(ingredientIds.filter(Boolean))];
+  if (uniqueIngredientIds.length === 0) return;
+
+  await prisma.$transaction([
+    prisma.tenantIngredientSelection.createMany({
+      data: uniqueIngredientIds.map((ingredientId) => ({
+        tenantId,
+        ingredientId,
+        isActive: true,
+      })),
+      skipDuplicates: true,
+    }),
+    prisma.tenantIngredientSelection.updateMany({
+      where: {
+        tenantId,
+        ingredientId: { in: uniqueIngredientIds },
+        isActive: false,
+      },
+      data: { isActive: true },
+    }),
+  ]);
+}
+
 /**
  * Resolve costs for all ingredients in a set of raw recipe ingredient rows.
  */
@@ -691,6 +718,10 @@ export async function copyMarketplaceRecipeToOwner(
       unit: i.unit as IngredientUnit,
     })
   );
+  await ensureTenantIngredientsSelected(
+    tenantId,
+    ingredientsToCreate.map((i) => i.ingredientId)
+  );
 
   const row = await prisma.recipe.create({
     data: {
@@ -763,6 +794,10 @@ export async function copyPlatformRecipeToOwner(
       quantity: typeof i.quantity === "object" ? i.quantity.toNumber() : i.quantity,
       unit: i.unit as IngredientUnit,
     })
+  );
+  await ensureTenantIngredientsSelected(
+    tenantId,
+    ingredientsToCreate.map((i) => i.ingredientId)
   );
 
   const row = await prisma.recipe.create({
