@@ -29,6 +29,13 @@ const PROVIDERS = [
     logo: "🟢",
   },
   {
+    provider: "LIGHTSPEED" as const,
+    connectionType: "POS" as const,
+    label: "Lightspeed O-Series",
+    description: "Lightspeed O-Series POS와 메뉴, 재고, 주문을 Sync합니다.",
+    logo: "⚡",
+  },
+  {
     provider: "UBER_EATS" as const,
     connectionType: "DELIVERY" as const,
     label: "Uber Eats",

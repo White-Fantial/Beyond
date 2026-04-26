@@ -29,6 +29,7 @@ export async function getOwnerStoreConnectionCards(
 
   const KNOWN_PROVIDERS: Array<{ provider: string; connectionType: string; label: string }> = [
     { provider: "LOYVERSE", connectionType: "POS", label: "Loyverse POS" },
+    { provider: "LIGHTSPEED", connectionType: "POS", label: "Lightspeed POS" },
     { provider: "UBER_EATS", connectionType: "DELIVERY", label: "Uber Eats" },
     { provider: "DOORDASH", connectionType: "DELIVERY", label: "DoorDash" },
   ];

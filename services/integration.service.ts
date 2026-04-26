@@ -15,6 +15,7 @@ import { getProviderAdapter } from "@/adapters/integrations/base";
 import { getProviderCapabilities } from "@/domains/integration/provider-capabilities";
 // Ensure all adapters are registered by importing them
 import "@/adapters/integrations/loyverse.adapter";
+import "@/adapters/integrations/lightspeed.adapter";
 import "@/adapters/integrations/uber-eats.adapter";
 import "@/adapters/integrations/doordash.adapter";
 
