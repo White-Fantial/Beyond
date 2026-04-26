@@ -146,6 +146,16 @@ export default function AdminSupplierDetailPanel({ supplier }: Props) {
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none"
                   />
                 </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">External URL</label>
+                  <input
+                    type="url"
+                    value={productUrl}
+                    onChange={(e) => setProductUrl(e.target.value)}
+                    placeholder="https://supplier.com/product"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
                     Reference Price ($) *
