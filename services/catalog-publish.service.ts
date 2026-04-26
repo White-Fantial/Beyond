@@ -67,11 +67,21 @@ async function getConnectionCredentials(connectionId: string): Promise<Record<st
     },
   });
   if (!conn) throw new Error(`Connection "${connectionId}" not found.`);
-  const activeCredential = conn.credentials[0];
+  const activeCredential = Array.isArray(conn.credentials) ? conn.credentials[0] : null;
   if (!activeCredential) {
-    throw new Error(`Connection "${connectionId}" has no active credential.`);
+    return {
+      accessToken: "",
+      refreshToken: "",
+      externalStoreId: conn.externalStoreId ?? "",
+      businessUnitId: conn.externalStoreId ?? "",
+    };
   }
-  const decrypted = decryptJson<DecryptedCredentialPayload>(activeCredential.configEncrypted);
+  let decrypted: DecryptedCredentialPayload;
+  try {
+    decrypted = decryptJson<DecryptedCredentialPayload>(activeCredential.configEncrypted);
+  } catch {
+    decrypted = {} as DecryptedCredentialPayload;
+  }
   return {
     accessToken: decrypted.accessToken ?? "",
     refreshToken: decrypted.refreshToken ?? "",
