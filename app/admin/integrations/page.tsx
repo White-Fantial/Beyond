@@ -17,6 +17,7 @@ const CONNECTION_STATUS_OPTIONS = [
 
 const PROVIDER_OPTIONS = [
   { value: "LOYVERSE", label: "Loyverse" },
+  { value: "LIGHTSPEED", label: "Lightspeed" },
   { value: "UBER_EATS", label: "Uber Eats" },
   { value: "DOORDASH", label: "DoorDash" },
   { value: "STRIPE", label: "Stripe" },

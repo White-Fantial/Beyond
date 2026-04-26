@@ -21,7 +21,8 @@ import type { ConnectionProvider } from "@prisma/client";
 
 // Map URL slug → enum value
 const PROVIDER_SLUG_MAP: Record<string, ConnectionProvider> = {
-  loyverse: "LOYVERSE",
+ loyverse: "LOYVERSE",
+  lightspeed: "LIGHTSPEED",
   "uber-eats": "UBER_EATS",
   doordash: "DOORDASH",
 };

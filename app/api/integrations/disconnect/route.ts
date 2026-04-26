@@ -14,7 +14,7 @@ import { PERMISSIONS } from "@/lib/auth/constants";
 import { disconnectProvider } from "@/services/integration.service";
 import type { ConnectionProvider, ConnectionType } from "@prisma/client";
 
-const ALLOWED_PROVIDERS: ConnectionProvider[] = ["LOYVERSE", "UBER_EATS", "DOORDASH"];
+const ALLOWED_PROVIDERS: ConnectionProvider[] = ["LOYVERSE", "LIGHTSPEED", "UBER_EATS", "DOORDASH"];
 const ALLOWED_TYPES: ConnectionType[] = ["POS", "DELIVERY", "PAYMENT"];
 
 export async function POST(req: NextRequest) {
