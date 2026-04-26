@@ -3708,6 +3708,8 @@ model SupplierProduct {
   supplierId                String
   name                      String
   externalUrl               String?
+  /// Canonicalized external URL used for duplicate detection during admin imports.
+  externalUrlNormalized     String?
   referencePrice            Int            @default(0) // millicents — platform-wide aggregate (max across all tenants) maintained by scraper
   purchaseQty               Float          @default(1) // how many units come in one package (e.g. 500 for a 500g bag)
   unit                      IngredientUnit @default(EACH)
@@ -3723,6 +3725,7 @@ model SupplierProduct {
   priceRecords      SupplierPriceRecord[]
 
   @@index([supplierId])
+  @@index([supplierId, externalUrlNormalized])
   @@map("supplier_products")
 }
 
