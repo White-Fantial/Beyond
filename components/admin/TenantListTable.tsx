@@ -20,6 +20,7 @@ export default function TenantListTable({ items, emptyMessage }: TenantListTable
           <tr>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Name</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Slug</th>
+            <th className="px-4 py-3 text-left font-medium text-gray-500">Type</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Timezone</th>
             <th className="px-4 py-3 text-left font-medium text-gray-500 hidden md:table-cell">Currency</th>
@@ -38,6 +39,7 @@ export default function TenantListTable({ items, emptyMessage }: TenantListTable
                 </Link>
               </td>
               <td className="px-4 py-3 text-gray-500 font-mono text-xs">{t.slug}</td>
+              <td className="px-4 py-3 text-gray-500">{t.type}</td>
               <td className="px-4 py-3">
                 <StatusBadge value={t.status} />
               </td>

@@ -75,6 +75,11 @@ enum TenantStatus {
   ARCHIVED
 }
 
+enum TenantType {
+  PLATFORM
+  MERCHANT
+}
+
 enum UserStatus {
   ACTIVE
   INVITED
@@ -326,6 +331,7 @@ model Tenant {
   slug        String       @unique
   legalName   String
   displayName String
+  type        TenantType   @default(MERCHANT)
   status      TenantStatus @default(ACTIVE)
   timezone    String
   currency    String

@@ -11,8 +11,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const ctx = await requirePlatformAdminNotImpersonating();
     const { tenantId } = await params;
     const body = await req.json();
-    const { legalName, displayName, timezone, currency, countryCode, status } = body;
-    await updateAdminTenant(tenantId, { legalName, displayName, timezone, currency, countryCode, status }, ctx.userId);
+    const { legalName, displayName, timezone, currency, countryCode, type, status } = body;
+    await updateAdminTenant(tenantId, { legalName, displayName, timezone, currency, countryCode, type, status }, ctx.userId);
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
