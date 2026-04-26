@@ -33,6 +33,7 @@ const PROVIDER_CHANNEL_MAP: Record<string, OrderChannelType> = {
   "uber-eats": "UBER_EATS",
   doordash: "DOORDASH",
   pos: "POS",
+  loyverse: "POS",
   online: "ONLINE",
 };
 
@@ -216,6 +217,53 @@ function normalizeDoorDashItems(items: DoorDashOrderItem[] = []): NormalizedOrde
   });
 }
 
+interface LoyverseOrderPayload {
+  id?: string;
+  order_id?: string;
+  total_money?: number;
+  total?: number;
+  created_at?: string;
+  customer?: { name?: string; phone_number?: string; email?: string };
+  line_items?: Array<{
+    item_id?: string;
+    item_name?: string;
+    quantity?: number;
+    price?: number;
+    total?: number;
+    modifiers?: Array<{
+      modifier_id?: string;
+      modifier_name?: string;
+      quantity?: number;
+      price?: number;
+      total?: number;
+    }>;
+  }>;
+}
+
+function normalizeLoyverseItems(items: LoyverseOrderPayload["line_items"] = []): NormalizedOrderItem[] {
+  return (items ?? []).map((item) => {
+    const qty = item.quantity ?? 1;
+    const unitPrice = item.price ?? 0;
+    const modifiers: NormalizedOrderItemModifier[] = (item.modifiers ?? []).map((mod) => ({
+      sourceModifierOptionRef: mod.modifier_id,
+      modifierOptionName: mod.modifier_name ?? "Unknown",
+      quantity: mod.quantity ?? 1,
+      unitPriceAmount: mod.price ?? 0,
+      totalPriceAmount: mod.total ?? (mod.price ?? 0) * (mod.quantity ?? 1),
+      rawPayload: mod,
+    }));
+    return {
+      sourceProductRef: item.item_id,
+      productName: item.item_name ?? "Unknown item",
+      quantity: qty,
+      unitPriceAmount: unitPrice,
+      totalPriceAmount: item.total ?? unitPrice * qty,
+      modifiers,
+      rawPayload: item,
+    };
+  });
+}
+
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 export async function POST(
@@ -381,6 +429,33 @@ export async function POST(
         customerEmail: customer?.email,
         notes: payload.special_instructions,
         items: normalizeDoorDashItems(payload.order_items),
+        rawPayload: body,
+      });
+
+      await markWebhookLogProcessed(webhookLog.id, "PROCESSED");
+      return NextResponse.json({ ok: true, orderId: order.id, created });
+    }
+
+    if (providerSlug === "loyverse") {
+      const payload = body as unknown as LoyverseOrderPayload;
+      const externalOrderRef = payload.order_id ?? payload.id;
+      if (!externalOrderRef) {
+        await markWebhookLogProcessed(webhookLog.id, "SKIPPED", "Missing order_id");
+        return NextResponse.json({ ok: true, skipped: true });
+      }
+
+      const { order, created } = await createCanonicalOrderFromInbound({
+        tenantId: connection.tenantId,
+        storeId: connection.storeId,
+        channelType: "POS",
+        connectionId: connection.id,
+        externalOrderRef,
+        orderedAt: payload.created_at ? new Date(payload.created_at) : new Date(),
+        totalAmount: payload.total_money ?? payload.total ?? 0,
+        customerName: payload.customer?.name,
+        customerPhone: payload.customer?.phone_number,
+        customerEmail: payload.customer?.email,
+        items: normalizeLoyverseItems(payload.line_items),
         rawPayload: body,
       });
 

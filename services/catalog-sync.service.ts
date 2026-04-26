@@ -328,6 +328,8 @@ export async function runLoyverseFullCatalogSync(
           data: {
             name: opt.normalizedName,
             priceDeltaAmount: opt.normalizedPriceAmount,
+            ...(opt.isActive !== null ? { isActive: opt.isActive } : {}),
+            ...(opt.isSoldOut !== null ? { isSoldOut: opt.isSoldOut } : {}),
             modifierGroupId: internalGroupId,
             updatedAt: now,
           },
@@ -347,6 +349,8 @@ export async function runLoyverseFullCatalogSync(
             importedAt: now,
             name: opt.normalizedName,
             priceDeltaAmount: opt.normalizedPriceAmount,
+            ...(opt.isActive !== null ? { isActive: opt.isActive } : {}),
+            ...(opt.isSoldOut !== null ? { isSoldOut: opt.isSoldOut } : {}),
             updatedAt: now,
           },
         });
@@ -386,6 +390,8 @@ export async function runLoyverseFullCatalogSync(
         data: {
           name: parsed.normalizedName,
           basePriceAmount: parsed.normalizedPriceAmount,
+          ...(parsed.isActive !== null ? { isActive: parsed.isActive } : {}),
+          ...(parsed.isSoldOut !== null ? { isSoldOut: parsed.isSoldOut } : {}),
           updatedAt: now,
         },
       });
@@ -404,6 +410,8 @@ export async function runLoyverseFullCatalogSync(
           importedAt: now,
           name: parsed.normalizedName,
           basePriceAmount: parsed.normalizedPriceAmount,
+          ...(parsed.isActive !== null ? { isActive: parsed.isActive } : {}),
+          ...(parsed.isSoldOut !== null ? { isSoldOut: parsed.isSoldOut } : {}),
           updatedAt: now,
         },
       });
