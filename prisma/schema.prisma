@@ -18,7 +18,7 @@ enum CatalogSourceType {
   IMPORTED
 }
 
-// Phase 1: Internal catalog ownership.
+// Catalog provenance and ownership metadata.
 // Records where a catalog entity ORIGINALLY came from (historical provenance only).
 // This is NOT the current authoritative source — Beyond internal catalog IS the
 // canonical operational model regardless of origin.
@@ -52,7 +52,7 @@ enum MappingStatus {
   DISCONNECTED
 }
 
-// Phase 3: Catalog mapping layer enums.
+// Catalog mapping lifecycle enums.
 
 enum CatalogMappingStatus {
   ACTIVE
@@ -1243,7 +1243,7 @@ model CatalogCategory {
   id                       String            @id @default(uuid())
   tenantId                 String
   storeId                  String
-  // Phase 1: provenance fields — records where this entity ORIGINALLY came from.
+  // Provenance fields — records where this entity ORIGINALLY came from.
   // Beyond internal catalog is always the canonical operational model.
   originType               CatalogOriginType @default(BEYOND_CREATED)
   originConnectionId       String?   // nullable — which external connection first created this
@@ -1278,7 +1278,7 @@ model CatalogProduct {
   id                        String            @id @default(uuid())
   tenantId                  String
   storeId                   String
-  // Phase 1: provenance fields — historical origin only; not current authoritative source.
+  // Provenance fields — historical origin only; not current authoritative source.
   originType                CatalogOriginType @default(BEYOND_CREATED)
   originConnectionId        String?
   originExternalRef         String?
@@ -1511,7 +1511,7 @@ model CatalogModifierGroup {
   id                        String            @id @default(uuid())
   tenantId                  String
   storeId                   String
-  // Phase 1: provenance fields — historical origin only; not current authoritative source.
+  // Provenance fields — historical origin only; not current authoritative source.
   originType                CatalogOriginType @default(BEYOND_CREATED)
   originConnectionId        String?
   originExternalRef         String?
@@ -1544,7 +1544,7 @@ model CatalogModifierOption {
   tenantId                  String
   storeId                   String
   modifierGroupId           String
-  // Phase 1: provenance fields — historical origin only; not current authoritative source.
+  // Provenance fields — historical origin only; not current authoritative source.
   originType                CatalogOriginType @default(BEYOND_CREATED)
   originConnectionId        String?
   originExternalRef         String?
@@ -1594,7 +1594,7 @@ model CatalogProductModifierGroup {
   @@map("catalog_product_modifier_groups")
 }
 
-// ─── Phase 2: Import Run & Raw Snapshot ──────────────────────────────────────
+// ─── Catalog Import Runs & Raw Snapshots ─────────────────────────────────────
 
 /// Tracks a full catalog import run for a given channel connection.
 model CatalogImportRun {
@@ -1615,7 +1615,7 @@ model CatalogImportRun {
 
   errorMessage String?
 
-  // Phase 5: diff / change-detection status
+  // Diff / change-detection status
   comparedToImportRunId String?
   diffStatus            String?   // PENDING, RUNNING, SUCCEEDED, FAILED
   diffCompletedAt       DateTime?
@@ -1656,7 +1656,7 @@ model ExternalCatalogSnapshot {
 }
 
 // ─── External Raw Mirror Tables ───────────────────────────────────────────────
-// Phase 2: enhanced with entityHash (fingerprint of normalised key fields for diff)
+// Enhanced with entityHash (fingerprint of normalised key fields for diff)
 // and importRunId (which import run last upserted this row).
 
 model ExternalCatalogCategory {
@@ -1671,9 +1671,9 @@ model ExternalCatalogCategory {
   rawPayload        Json
   externalUpdatedAt DateTime?
   syncChecksum      String?
-  // Phase 2: fingerprint of key normalised fields for future diff support
+  // Fingerprint of key normalised fields for diff support
   entityHash        String?
-  // Phase 2: last import run that upserted this row
+  // Last import run that upserted this row
   importRunId       String?
   lastSyncedAt      DateTime         @default(now())
   createdAt         DateTime         @default(now())
@@ -1697,9 +1697,9 @@ model ExternalCatalogProduct {
   rawPayload            Json
   externalUpdatedAt     DateTime?
   syncChecksum          String?
-  // Phase 2: fingerprint of key normalised fields for future diff support
+  // Fingerprint of key normalised fields for diff support
   entityHash            String?
-  // Phase 2: last import run that upserted this row
+  // Last import run that upserted this row
   importRunId           String?
   lastSyncedAt          DateTime         @default(now())
   createdAt             DateTime         @default(now())
@@ -1722,9 +1722,9 @@ model ExternalCatalogModifierGroup {
   rawPayload        Json
   externalUpdatedAt DateTime?
   syncChecksum      String?
-  // Phase 2: fingerprint of key normalised fields for future diff support
+  // Fingerprint of key normalised fields for diff support
   entityHash        String?
-  // Phase 2: last import run that upserted this row
+  // Last import run that upserted this row
   importRunId       String?
   lastSyncedAt      DateTime         @default(now())
   createdAt         DateTime         @default(now())
@@ -1748,9 +1748,9 @@ model ExternalCatalogModifierOption {
   rawPayload            Json
   externalUpdatedAt     DateTime?
   syncChecksum          String?
-  // Phase 2: fingerprint of key normalised fields for future diff support
+  // Fingerprint of key normalised fields for diff support
   entityHash            String?
-  // Phase 2: last import run that upserted this row
+  // Last import run that upserted this row
   importRunId           String?
   lastSyncedAt          DateTime         @default(now())
   createdAt             DateTime         @default(now())
@@ -1770,7 +1770,7 @@ model ExternalCatalogProductModifierGroupLink {
   externalProductId       String
   externalModifierGroupId String
   rawPayload              Json?
-  // Phase 5: import run tracking for deleted-link detection
+  // Import run tracking for deleted-link detection
   importRunId             String?
   lastSyncedAt            DateTime         @default(now())
   createdAt               DateTime         @default(now())
@@ -1781,7 +1781,7 @@ model ExternalCatalogProductModifierGroupLink {
   @@map("external_catalog_product_modifier_group_links")
 }
 
-// ─── Channel Entity Mappings (Phase 3) ───────────────────────────────────────
+// ─── Channel Entity Mappings ─────────────────────────────────────────────────
 //
 // Links internal canonical catalog entities to their counterparts in an
 // external channel (Loyverse, Uber Eats, DoorDash, …).
@@ -1795,11 +1795,11 @@ model ExternalCatalogProductModifierGroupLink {
 //     the migration SQL (WHERE status NOT IN ('ARCHIVED','UNMATCHED')) because
 //     Prisma does not support partial unique indexes natively.
 //
-// TODO Phase 4: publish engine — reads ACTIVE mappings to build outbound payloads.
-// TODO Phase 5: external change detection — flags ACTIVE mappings whose externalEntityId
+// Used by outbound publishing to resolve ACTIVE mapping routes.
+// Used by external change detection to flag ACTIVE mappings whose externalEntityId
 //               disappears from the next import run.
-// TODO Phase 6: conflict detection — compares field-level diffs between internal and external.
-// TODO Phase 7: policy-based two-way sync — uses mappings as the routing table.
+// Used by conflict detection to compare field-level diffs between internal and external.
+// Used by policy-based two-way sync as the routing table.
 
 model ChannelEntityMapping {
   id           String @id @default(uuid())
@@ -1824,7 +1824,7 @@ model ChannelEntityMapping {
   linkedAt        DateTime  @default(now())
   unlinkedAt      DateTime?
 
-  // Phase 4: Publish summary fields — snapshot of the last outbound publish result.
+  // Publish summary fields — snapshot of the last outbound publish result.
   // Detailed per-operation history lives in CatalogPublishJob.
   lastPublishedAt   DateTime?
   lastPublishStatus CatalogPublishStatus?
@@ -1841,16 +1841,16 @@ model ChannelEntityMapping {
   @@map("channel_entity_mappings")
 }
 
-// ─── Phase 4: Outbound Publish Layer ─────────────────────────────────────────
+// ─── Catalog Outbound Publish Layer ───────────────────────────────────────────
 //
 // Publish = one-way push from internal Beyond catalog → external channel.
 // The mapping layer (ChannelEntityMapping) determines whether to CREATE or UPDATE.
 // External normalized catalog is still primarily refreshed via import, not assumed
 // to be authoritative from publish success alone.
 //
-// TODO Phase 5: external change detection after import
-// TODO Phase 6: conflict detection between internal changes and external changes
-// TODO Phase 7: policy-based two-way sync
+// Integrates with external change detection after import.
+// Integrates with conflict detection between internal and external changes.
+// Integrates with policy-based two-way sync.
 
 enum CatalogPublishAction {
   CREATE
@@ -1909,7 +1909,7 @@ model CatalogPublishJob {
   @@map("catalog_publish_jobs")
 }
 
-// ─── Phase 5: External Change Detection ──────────────────────────────────────
+// ─── External Change Detection ────────────────────────────────────────────────
 
 enum ExternalCatalogChangeKind {
   CREATED
@@ -1983,7 +1983,7 @@ model ExternalCatalogChangeField {
   @@map("external_catalog_change_fields")
 }
 
-// ─── Phase 6: Conflict Detection & Resolution ────────────────────────────────
+// ─── Catalog Conflict Detection & Resolution ─────────────────────────────────
 
 enum CatalogConflictType {
   FIELD_VALUE_CONFLICT
@@ -2101,7 +2101,7 @@ model CatalogConflictResolutionLog {
 
 /// Lightweight log of internal catalog field changes.
 /// Used by conflict detection to determine whether internal state changed after a baseline point.
-/// Phase 6 uses this for conflict detection; richer history will be extended in Phase 7.
+/// Used for conflict detection; can be extended for broader sync history.
 model InternalCatalogChange {
   id         String @id @default(uuid())
   tenantId   String
@@ -2123,7 +2123,7 @@ model InternalCatalogChange {
   @@map("internal_catalog_changes")
 }
 
-// ─── Catalog Sync (Phase 7) ───────────────────────────────────────────────────
+// ─── Catalog Sync Policies & Execution ────────────────────────────────────────
 
 enum CatalogSyncDirection {
   INTERNAL_TO_EXTERNAL
@@ -2275,7 +2275,7 @@ model CatalogSyncExecutionLog {
   @@map("catalog_sync_execution_logs")
 }
 
-// ─── Phase 8: Advanced Manual Merge ──────────────────────────────────────────
+// ─── Catalog Advanced Manual Merge ────────────────────────────────────────────
 
 enum CatalogMergeDraftStatus {
   DRAFT
@@ -2970,7 +2970,7 @@ model StoreHours {
   @@map("store_hours")
 }
 
-// ─── Phase 2 (Customer Portal): Addresses & Notifications ────────────────────
+// ─── Customer Portal: Addresses & Notifications ───────────────────────────────
 
 enum CustomerNotificationType {
   ORDER_STATUS_UPDATE
@@ -3017,7 +3017,7 @@ model CustomerAddress {
   @@map("customer_addresses")
 }
 
-// ─── Phase 3 (Customer Portal): Loyalty & Payment Methods ────────────────────
+// ─── Customer Portal: Loyalty & Payment Methods ───────────────────────────────
 
 enum LoyaltyTransactionType {
   EARN
@@ -3098,7 +3098,7 @@ model SavedPaymentMethod {
   @@map("saved_payment_methods")
 }
 
-// ─── Phase 8: Automation & Notifications ─────────────────────────────────────
+// ─── Automation & Notifications ───────────────────────────────────────────────
 
 enum AlertMetricType {
   CANCELLATION_RATE
