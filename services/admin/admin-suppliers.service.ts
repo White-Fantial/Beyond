@@ -18,6 +18,68 @@ import type {
 } from "@/types/owner-suppliers";
 import type { IngredientUnit } from "@/types/owner-ingredients";
 
+const SUPPLIER_PRODUCT_UNITS = new Set<IngredientUnit>([
+  "GRAM",
+  "KG",
+  "ML",
+  "LITER",
+  "EACH",
+  "TSP",
+  "TBSP",
+  "OZ",
+  "LB",
+  "CUP",
+  "PIECE",
+]);
+
+export interface BulkSupplierProductImportResult {
+  totalRows: number;
+  successCount: number;
+  failedCount: number;
+  createdCount: number;
+  updatedCount: number;
+  errors: Array<{ row: number; reason: string }>;
+}
+
+export interface BulkSupplierProductImportInput {
+  name: string;
+  externalUrl?: string;
+  referencePrice: number;
+  purchaseQty: number;
+  unit: IngredientUnit;
+}
+
+export function normalizeSupplierProductUrl(rawUrl: string | null | undefined): string | null {
+  const trimmed = rawUrl?.trim();
+  if (!trimmed) return null;
+
+  try {
+    const parsed = new URL(trimmed);
+    parsed.hash = "";
+    parsed.username = "";
+    parsed.password = "";
+    parsed.hostname = parsed.hostname.toLowerCase();
+
+    if (
+      (parsed.protocol === "https:" && parsed.port === "443") ||
+      (parsed.protocol === "http:" && parsed.port === "80")
+    ) {
+      parsed.port = "";
+    }
+
+    parsed.pathname = parsed.pathname.replace(/\/+$/, "") || "/";
+    const normalizedParams = [...parsed.searchParams.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, value]) => `${key}=${value}`)
+      .join("&");
+    parsed.search = normalizedParams ? `?${normalizedParams}` : "";
+
+    return parsed.toString();
+  } catch {
+    return trimmed;
+  }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 type RawSupplier = {
@@ -41,6 +103,7 @@ type RawSupplierProduct = {
   supplierId: string;
   name: string;
   externalUrl: string | null;
+  externalUrlNormalized: string | null;
   referencePrice: number;
   purchaseQty: number;
   unit: string;
@@ -206,6 +269,7 @@ export async function createPlatformSupplierProduct(
       supplierId,
       name: input.name.trim(),
       externalUrl: input.externalUrl?.trim() ?? null,
+      externalUrlNormalized: normalizeSupplierProductUrl(input.externalUrl),
       referencePrice: input.referencePrice ?? 0,
       purchaseQty: input.purchaseQty ?? 1,
       unit: input.unit,
@@ -233,7 +297,12 @@ export async function updatePlatformSupplierProduct(
     where: { id: productId },
     data: {
       ...(input.name !== undefined ? { name: input.name } : {}),
-      ...(input.externalUrl !== undefined ? { externalUrl: input.externalUrl } : {}),
+      ...(input.externalUrl !== undefined
+        ? {
+            externalUrl: input.externalUrl,
+            externalUrlNormalized: normalizeSupplierProductUrl(input.externalUrl),
+          }
+        : {}),
       ...(input.referencePrice !== undefined ? { referencePrice: input.referencePrice } : {}),
       ...(input.purchaseQty !== undefined ? { purchaseQty: input.purchaseQty } : {}),
       ...(input.unit !== undefined ? { unit: input.unit } : {}),
@@ -271,6 +340,76 @@ export async function getPlatformSupplierProduct(
   });
   if (!row) throw new Error(`SupplierProduct ${productId} not found`);
   return toProduct(row as RawSupplierProduct);
+}
+
+export async function importPlatformSupplierProducts(
+  supplierId: string,
+  rows: BulkSupplierProductImportInput[]
+): Promise<BulkSupplierProductImportResult> {
+  const supplier = await prisma.supplier.findFirst({
+    where: { id: supplierId, scope: "PLATFORM", deletedAt: null },
+  });
+  if (!supplier) throw new Error(`PlatformSupplier ${supplierId} not found`);
+
+  const result: BulkSupplierProductImportResult = {
+    totalRows: rows.length,
+    successCount: 0,
+    failedCount: 0,
+    createdCount: 0,
+    updatedCount: 0,
+    errors: [],
+  };
+
+  for (let index = 0; index < rows.length; index += 1) {
+    const rowNumber = index + 1;
+    const row = rows[index];
+
+    try {
+      if (!row.name.trim()) throw new Error("name is required");
+      if (row.referencePrice < 0) throw new Error("referencePrice must be non-negative");
+      if (!(row.purchaseQty > 0)) throw new Error("purchaseQty must be greater than zero");
+      if (!SUPPLIER_PRODUCT_UNITS.has(row.unit)) throw new Error(`unit must be one of ${[...SUPPLIER_PRODUCT_UNITS].join(", ")}`);
+
+      const normalizedUrl = normalizeSupplierProductUrl(row.externalUrl);
+      const payload = {
+        supplierId,
+        name: row.name.trim(),
+        externalUrl: row.externalUrl?.trim() || null,
+        externalUrlNormalized: normalizedUrl,
+        referencePrice: row.referencePrice,
+        purchaseQty: row.purchaseQty,
+        unit: row.unit,
+      };
+
+      if (normalizedUrl) {
+        const existingByUrl = await prisma.supplierProduct.findFirst({
+          where: { supplierId, externalUrlNormalized: normalizedUrl, deletedAt: null },
+        });
+
+        if (existingByUrl) {
+          await prisma.supplierProduct.update({
+            where: { id: existingByUrl.id },
+            data: payload,
+          });
+          result.updatedCount += 1;
+          result.successCount += 1;
+          continue;
+        }
+      }
+
+      await prisma.supplierProduct.create({ data: payload });
+      result.createdCount += 1;
+      result.successCount += 1;
+    } catch (error) {
+      result.failedCount += 1;
+      result.errors.push({
+        row: rowNumber,
+        reason: error instanceof Error ? error.message : "Unknown import error",
+      });
+    }
+  }
+
+  return result;
 }
 
 // ─── Platform-level ingredient ↔ SupplierProduct links ──────────────────────

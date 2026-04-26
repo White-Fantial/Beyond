@@ -28,6 +28,8 @@ import {
   createPlatformSupplierProduct,
   updatePlatformSupplierProduct,
   deletePlatformSupplierProduct,
+  importPlatformSupplierProducts,
+  normalizeSupplierProductUrl,
 } from "@/services/admin/admin-suppliers.service";
 
 const mockPrisma = prisma as unknown as {
@@ -69,6 +71,7 @@ const mockProduct = {
   supplierId: SUP_ID,
   name: "All Purpose Flour 25kg",
   externalUrl: null,
+  externalUrlNormalized: null,
   referencePrice: 3500000,
   purchaseQty: 25,
   unit: "KG",
@@ -330,5 +333,57 @@ describe("deletePlatformSupplierProduct", () => {
     await expect(deletePlatformSupplierProduct(SUP_ID, "missing")).rejects.toThrow(
       "not found"
     );
+  });
+});
+
+describe("normalizeSupplierProductUrl", () => {
+  it("normalizes protocol defaults, case, hash, and query order", () => {
+    const normalized = normalizeSupplierProductUrl(
+      "https://EXAMPLE.com:443/products/abc/?b=2&a=1#test"
+    );
+    expect(normalized).toBe("https://example.com/products/abc?a=1&b=2");
+  });
+});
+
+describe("importPlatformSupplierProducts", () => {
+  it("updates existing product by normalized external URL", async () => {
+    mockPrisma.supplier.findFirst.mockResolvedValue(mockPlatformSupplier);
+    mockPrisma.supplierProduct.findFirst.mockResolvedValue(mockProduct);
+    mockPrisma.supplierProduct.update.mockResolvedValue(mockProduct);
+
+    const result = await importPlatformSupplierProducts(SUP_ID, [
+      {
+        name: "Flour Updated",
+        externalUrl: "https://example.com/item?b=2&a=1",
+        referencePrice: 100000,
+        purchaseQty: 2,
+        unit: "KG",
+      },
+    ]);
+
+    expect(result.updatedCount).toBe(1);
+    expect(result.createdCount).toBe(0);
+    expect(result.failedCount).toBe(0);
+    expect(mockPrisma.supplierProduct.update).toHaveBeenCalled();
+  });
+
+  it("creates when URL match does not exist", async () => {
+    mockPrisma.supplier.findFirst.mockResolvedValue(mockPlatformSupplier);
+    mockPrisma.supplierProduct.findFirst.mockResolvedValue(null);
+    mockPrisma.supplierProduct.create.mockResolvedValue(mockProduct);
+
+    const result = await importPlatformSupplierProducts(SUP_ID, [
+      {
+        name: "New Product",
+        externalUrl: "https://example.com/new",
+        referencePrice: 100000,
+        purchaseQty: 1,
+        unit: "EACH",
+      },
+    ]);
+
+    expect(result.createdCount).toBe(1);
+    expect(result.updatedCount).toBe(0);
+    expect(result.failedCount).toBe(0);
   });
 });
