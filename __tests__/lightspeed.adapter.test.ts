@@ -60,8 +60,8 @@ describe("buildAuthorizationUrl", () => {
       codeVerifier: "my-code-verifier",
     });
 
-    // URL should still be valid (code_verifier goes to token endpoint, not auth URL)
-    expect(result.redirectUrl).toContain("lightspeedhq.com");
+    expect(result.redirectUrl).toContain("code_challenge=");
+    expect(result.redirectUrl).toContain("code_challenge_method=S256");
   });
 
   it("identifies provider as LIGHTSPEED", () => {
