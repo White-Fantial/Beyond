@@ -50,7 +50,7 @@ function fingerprintToken(token: string): string {
 }
 
 function buildRedirectUri(provider: ConnectionProvider, baseUrl: string): string {
-  return `${baseUrl}/api/integrations/callback/${provider.toLowerCase().replace("_", "-")}`;
+  return `${baseUrl}/api/integrations/callback/${provider.toLowerCase().replace(/_/g, "-")}`;
 }
 
 // ─── Action logging ───────────────────────────────────────────────────────────
