@@ -156,7 +156,7 @@ See [doc/architecture.md](./doc/architecture.md) for detailed diagrams and API r
 
 ---
 
-## Implementation Status Snapshot (2026-04-26)
+## Implementation Status Snapshot (2026-04-28)
 
 현재 코드 기준으로 문서와 구현의 싱크를 맞춘 상태 요약입니다.
 
@@ -167,13 +167,27 @@ See [doc/architecture.md](./doc/architecture.md) for detailed diagrams and API r
 - Customer Portal Phase 1~5 (주문/구독/알림/주소/로열티/결제수단/리뷰/지원/추천/푸시 설정)
 - Owner/Admin 기능군의 고도화(리포트, 팀/활동, 빌링, 시스템 모니터링, 플래그, 컴플라이언스)
 
+### Provider Integration Status
+
+| Feature | Loyverse | Lightspeed | Uber Eats | DoorDash |
+|---------|:--------:|:----------:|:---------:|:--------:|
+| OAuth Connect | ✅ | ✅ | ✅ | ✅ |
+| Token Refresh | ✅ | ✅ | ✅ | ✅ |
+| Store Listing | — | ✅ | ✅ | ✅ |
+| Catalog Import | ✅ | ✅ | ✅ | ✅ |
+| Catalog Publish | ✅ | ✅ | ✅ | ✅ |
+| Availability Publish | — | ✅ | ✅ | ✅ |
+| Order Webhooks | ✅ | — | ✅ | ✅ |
+| Full Live API Verified | ✅ | ⚠️ | ⚠️ | ⚠️ |
+
+> ⚠️ Adapter logic is implemented and structurally correct, but live end-to-end verification
+> requires provider production credentials not available in this environment.
+> All mapping, payload building, and API call paths are in place.
+
 ### Partially Implemented / Remaining
 
-- Uber Eats / DoorDash 카탈로그 import 어댑터는 아직 stub (빈 payload 반환)
-- Uber Eats / DoorDash 카탈로그 publish 어댑터는 아직 not implemented 응답
-- Lightspeed는 OAuth/스토어 조회/메뉴 조회/주문 전송 기반 어댑터가 있으나, 카탈로그 import/publish 경로의 완전 연동은 후속 작업 필요
-- 일부 supplier scraper 어댑터(예: Bifold/Countdown/Foodstuffs)는 스켈레톤 상태
-- `services/store.service.ts`는 기본 CRUD가 미완료
+- Supplier scraper adapters (Bifold/Countdown/Foodstuffs) are skeleton stubs
+- `services/store.service.ts` basic CRUD is incomplete
 
 자세한 분석/미구현 목록은 [`doc/implementation-status.md`](./doc/implementation-status.md) 참고.
 

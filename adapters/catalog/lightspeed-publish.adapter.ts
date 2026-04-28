@@ -150,4 +150,70 @@ export class LightspeedCatalogPublishAdapter implements ProviderCatalogPublishAd
     const res = await lsRequest("PATCH", `/business_units/${businessUnitId}/menu_items/${input.externalEntityId}`, token, { is_active: true });
     return { success: res.ok, externalId: input.externalEntityId, responsePayload: res.data ?? undefined };
   }
+
+  async createModifierGroup(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    const token = getToken(input.credentials);
+    const businessUnitId = getBusinessUnitId(input.credentials);
+    const res = await lsRequest("POST", `/business_units/${businessUnitId}/modifier_groups`, token, input.payload);
+    if (!res.ok) return { success: false, responsePayload: res.data ?? { error: "create modifier group failed" } };
+    const data = res.data ?? {};
+    return { success: true, externalId: (data["id"] as string) ?? undefined, responsePayload: data, rawPayload: input.payload };
+  }
+
+  async updateModifierGroup(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    if (!input.externalEntityId) return unsupported("externalEntityId required for modifier group update.");
+    const token = getToken(input.credentials);
+    const businessUnitId = getBusinessUnitId(input.credentials);
+    const res = await lsRequest("PUT", `/business_units/${businessUnitId}/modifier_groups/${input.externalEntityId}`, token, input.payload);
+    return { success: res.ok, externalId: input.externalEntityId, responsePayload: res.data ?? undefined, rawPayload: input.payload };
+  }
+
+  async archiveModifierGroup(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    if (!input.externalEntityId) return unsupported("externalEntityId required for modifier group archive.");
+    const token = getToken(input.credentials);
+    const businessUnitId = getBusinessUnitId(input.credentials);
+    const res = await lsRequest("PATCH", `/business_units/${businessUnitId}/modifier_groups/${input.externalEntityId}`, token, { is_active: false });
+    return { success: res.ok, externalId: input.externalEntityId, responsePayload: res.data ?? undefined };
+  }
+
+  async unarchiveModifierGroup(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    if (!input.externalEntityId) return unsupported("externalEntityId required for modifier group unarchive.");
+    const token = getToken(input.credentials);
+    const businessUnitId = getBusinessUnitId(input.credentials);
+    const res = await lsRequest("PATCH", `/business_units/${businessUnitId}/modifier_groups/${input.externalEntityId}`, token, { is_active: true });
+    return { success: res.ok, externalId: input.externalEntityId, responsePayload: res.data ?? undefined };
+  }
+
+  async createModifierOption(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    const token = getToken(input.credentials);
+    const businessUnitId = getBusinessUnitId(input.credentials);
+    const res = await lsRequest("POST", `/business_units/${businessUnitId}/modifier_options`, token, input.payload);
+    if (!res.ok) return { success: false, responsePayload: res.data ?? { error: "create modifier option failed" } };
+    const data = res.data ?? {};
+    return { success: true, externalId: (data["id"] as string) ?? undefined, responsePayload: data, rawPayload: input.payload };
+  }
+
+  async updateModifierOption(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    if (!input.externalEntityId) return unsupported("externalEntityId required for modifier option update.");
+    const token = getToken(input.credentials);
+    const businessUnitId = getBusinessUnitId(input.credentials);
+    const res = await lsRequest("PUT", `/business_units/${businessUnitId}/modifier_options/${input.externalEntityId}`, token, input.payload);
+    return { success: res.ok, externalId: input.externalEntityId, responsePayload: res.data ?? undefined, rawPayload: input.payload };
+  }
+
+  async archiveModifierOption(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    if (!input.externalEntityId) return unsupported("externalEntityId required for modifier option archive.");
+    const token = getToken(input.credentials);
+    const businessUnitId = getBusinessUnitId(input.credentials);
+    const res = await lsRequest("PATCH", `/business_units/${businessUnitId}/modifier_options/${input.externalEntityId}`, token, { is_active: false });
+    return { success: res.ok, externalId: input.externalEntityId, responsePayload: res.data ?? undefined };
+  }
+
+  async unarchiveModifierOption(input: ProviderPublishInput): Promise<ProviderPublishResult> {
+    if (!input.externalEntityId) return unsupported("externalEntityId required for modifier option unarchive.");
+    const token = getToken(input.credentials);
+    const businessUnitId = getBusinessUnitId(input.credentials);
+    const res = await lsRequest("PATCH", `/business_units/${businessUnitId}/modifier_options/${input.externalEntityId}`, token, { is_active: true });
+    return { success: res.ok, externalId: input.externalEntityId, responsePayload: res.data ?? undefined };
+  }
 }

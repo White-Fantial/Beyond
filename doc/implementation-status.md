@@ -1,4 +1,4 @@
-# Beyond — Implementation Status Audit (2026-04-26)
+# Beyond — Implementation Status Audit (2026-04-28)
 
 본 문서는 현재 코드베이스 기준으로 **실제로 구현된 기능**과 **아직 미구현/부분구현 상태**를 정리한 운영 문서입니다.
 
@@ -22,66 +22,85 @@
 
 ---
 
-## 2) 부분 구현 / 미구현 항목
+## 2) Provider Integration Status
 
-아래 항목은 코드 상 TODO/stub/not-implemented 패턴과 실제 구현체를 기준으로 도출했습니다.
+| Feature | Loyverse | Lightspeed | Uber Eats | DoorDash |
+|---------|:--------:|:----------:|:---------:|:--------:|
+| OAuth Connect | ✅ | ✅ | ✅ | ✅ |
+| Token Refresh | ✅ | ✅ | ✅ | ✅ |
+| Store Listing | — | ✅ | ✅ | ✅ |
+| Catalog Import | ✅ | ✅ | ✅ | ✅ |
+| Catalog Publish | ✅ | ✅ | ✅ | ✅ |
+| Modifier Group/Option Publish | ✅ | ✅ | ✅ | ✅ |
+| Availability Publish | — | ✅ | ✅ | ✅ |
+| Order Webhooks | ✅ | — | ✅ | ✅ |
+| Full Live API Verified | ✅ | ⚠️ | ⚠️ | ⚠️ |
 
-### 2.1 Catalog Import Adapter 공백
-- `adapters/catalog/uber-eats.adapter.ts`
-  - `fetchFullCatalog()`가 현재 빈 배열 payload 반환(stub)
-- `adapters/catalog/doordash.adapter.ts`
-  - `fetchFullCatalog()`가 현재 빈 배열 payload 반환(stub)
+> ⚠️ Adapter logic is fully implemented and structurally correct (OAuth lifecycle, token exchange,
+> token refresh, store listing, catalog import, catalog publish including modifier groups and options,
+> and availability publish). Full live end-to-end verification against provider production APIs
+> requires provider credentials not available in this environment.
+>
+> **What is implemented:** All import/publish adapter methods, payload builders, API endpoint calls,
+> credential passing, error handling, and mapping lookups.
+>
+> **What is not yet live-verified:** Actual provider API response shapes may differ from expected;
+> response mapping should be treated as best-effort until tested with real credentials.
 
-### 2.2 Catalog Publish Adapter 공백
-- `adapters/catalog/uber-eats-publish.adapter.ts`
-  - 모든 메서드가 미구현 응답 반환
-- `adapters/catalog/doordash-publish.adapter.ts`
-  - 모든 메서드가 미구현 응답 반환
-- `services/catalog-publish/payload-builders/uber-eats/index.ts`
-  - not implemented 예외
-- `services/catalog-publish/payload-builders/doordash/index.ts`
-  - not implemented 예외
+### Key adapter files
 
-### 2.3 Store Service 미완성
+- `adapters/integrations/lightspeed.adapter.ts` — OAuth connect/callback/refresh/store-list
+- `adapters/catalog/lightspeed.adapter.ts` — catalog import (menu items, modifier groups)
+- `adapters/catalog/lightspeed-publish.adapter.ts` — catalog publish (categories, products, modifier groups, modifier options)
+- `adapters/integrations/uber-eats.adapter.ts` — OAuth connect/callback/refresh/store-list
+- `adapters/catalog/uber-eats.adapter.ts` — catalog import (menus, categories, items, modifier groups, options)
+- `adapters/catalog/uber-eats-publish.adapter.ts` — catalog publish (full menu read/mutate/write cycle)
+- `services/catalog-publish/payload-builders/uber-eats/index.ts` — Uber Eats payload builders
+- `adapters/integrations/doordash.adapter.ts` — OAuth connect/callback/refresh/store-list
+- `adapters/catalog/doordash.adapter.ts` — catalog import (menus, categories, items, modifier groups, options)
+- `adapters/catalog/doordash-publish.adapter.ts` — catalog publish (full menu read/mutate/write cycle)
+- `services/catalog-publish/payload-builders/doordash/index.ts` — DoorDash payload builders
+
+---
+
+## 3) 부분 구현 / 미구현 항목
+
+### 3.1 Store Service 미완성
 - `services/store.service.ts`
   - `getStoresByTenant()` 빈 배열 반환
   - `getStore()`는 null 반환
   - `createStore()`는 not implemented 예외
 
-### 2.4 Supplier Scraper 일부 어댑터 스켈레톤
+### 3.2 Supplier Scraper 일부 어댑터 스켈레톤
 - `lib/supplier-scraper/adapters/bifold.ts`
 - `lib/supplier-scraper/adapters/countdown.ts`
 - `lib/supplier-scraper/adapters/foodstuffs.ts`
 
 위 어댑터들은 주석/로그 기준으로 로그인/상품수집 로직이 stub 상태입니다.
 
-### 2.5 문서-구현 불일치 보정 필요 포인트
-- 일부 문서 문맥에는 과거 단계의 TODO/Stub 설명이 남아 있어, 최신 구현 수준(특히 Catalog Phase 5~8 완료)과 혼선 가능
-- 향후 문서 업데이트 시 “구현 완료”와 “연동 완료”를 분리해 표기하는 방식 권장
+### 3.3 Lightspeed — Order Webhook Ingestion
+- Lightspeed order webhook ingestion is not yet implemented (capability flag: `orderWebhookIngestion: false`).
 
 ---
 
-## 3) 권장 우선순위 백로그
+## 4) 권장 우선순위 백로그
 
-1. **P0 — 외부 채널 카탈로그 양방향 완성도 개선**
-   - Uber Eats / DoorDash import adapter 실구현
-   - Uber Eats / DoorDash publish adapter + payload builder 실구현
-
-2. **P1 — Store Service 실제 CRUD 연결**
+1. **P1 — Store Service 실제 CRUD 연결**
    - `services/store.service.ts`의 placeholder 제거
 
-3. **P1 — Scraper Adapter 실동작화**
+2. **P1 — Scraper Adapter 실동작화**
    - Bifold/Countdown/Foodstuffs 로그인 흐름 및 상품 파싱 구현
 
-4. **P2 — 문서 일관성 정리**
-   - 아키텍처/로드맵/기능 문서의 phase/TODO 흔적 정리
-   - 구현 상태를 “완전 구현/부분 구현/스텁”으로 통일 표기
+3. **P2 — Provider Live API Verification**
+   - Lightspeed / Uber Eats / DoorDash 실제 credentials로 end-to-end 검증
+
+4. **P2 — Lightspeed Order Webhook Ingestion**
+   - Order webhook handling (currently not supported)
 
 ---
 
-## 4) 운영 원칙 제안
+## 5) 운영 원칙
 
 - 기능 문서(`features.md`)는 **사용자 관점 capability**,
 - 로드맵(`doc/roadmap.md`)은 **진행 상태와 다음 작업**,
 - 본 문서(`doc/implementation-status.md`)는 **코드 기준 진실원장(source of truth)** 으로 역할 분리 권장.
-
