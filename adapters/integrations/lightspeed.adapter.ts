@@ -9,6 +9,7 @@
  *  - Order forwarding via the Order API
  */
 
+import { createHash } from "crypto";
 import type {
   AuthorizationStartResult,
   CredentialRefreshResult,
@@ -62,7 +63,7 @@ class LightspeedAdapter implements ProviderAdapter {
     state: string;
     codeVerifier?: string;
   }): AuthorizationStartResult {
-    const { appCredential, redirectUri, state } = input;
+    const { appCredential, redirectUri, state, codeVerifier } = input;
 
     const params = new URLSearchParams({
       client_id: appCredential.clientId ?? "",
@@ -73,6 +74,14 @@ class LightspeedAdapter implements ProviderAdapter {
 
     if (appCredential.scopes.length > 0) {
       params.set("scope", appCredential.scopes.join(" "));
+    }
+
+    if (codeVerifier) {
+      const codeChallenge = createHash("sha256")
+        .update(codeVerifier)
+        .digest("base64url");
+      params.set("code_challenge", codeChallenge);
+      params.set("code_challenge_method", "S256");
     }
 
     return {
