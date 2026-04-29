@@ -396,3 +396,79 @@ export interface AdminSubscriptionPlanRow {
   activeSubscriptions: number;
   createdAt: Date;
 }
+
+// ─── Provider App Credentials ─────────────────────────────────────────────────
+
+export interface AdminProviderAppCredentialListItem {
+  id: string;
+  provider: string;
+  environment: string;
+  displayName: string;
+  authScheme: string;
+  tenantId: string | null;
+  clientId: string | null;
+  keyId: string | null;
+  developerId: string | null;
+  scopes: string[];
+  isActive: boolean;
+  connectionCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AdminProviderAppCredentialDetail {
+  id: string;
+  provider: string;
+  environment: string;
+  displayName: string;
+  authScheme: string;
+  tenantId: string | null;
+  clientId: string | null;
+  keyId: string | null;
+  developerId: string | null;
+  scopes: string[];
+  /** true if clientSecret is set in the encrypted config */
+  hasClientSecret: boolean;
+  /** true if webhookSecret is set in the encrypted config */
+  hasWebhookSecret: boolean;
+  isActive: boolean;
+  connectionCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AdminProviderAppCredentialListParams {
+  provider?: string;
+  environment?: string;
+  isActive?: string;
+  page?: number | string;
+  pageSize?: number | string;
+}
+
+export interface CreateProviderAppCredentialInput {
+  provider: string;
+  environment: string;
+  displayName: string;
+  authScheme: string;
+  tenantId?: string | null;
+  clientId?: string | null;
+  keyId?: string | null;
+  developerId?: string | null;
+  scopes?: string[];
+  /** Plain-text secrets — encrypted server-side before storage */
+  clientSecret?: string | null;
+  webhookSecret?: string | null;
+}
+
+export interface UpdateProviderAppCredentialInput {
+  displayName?: string;
+  isActive?: boolean;
+  clientId?: string | null;
+  keyId?: string | null;
+  developerId?: string | null;
+  scopes?: string[];
+  /** If provided, replaces the stored clientSecret in configEncrypted */
+  clientSecret?: string | null;
+  /** If provided, replaces the stored webhookSecret in configEncrypted */
+  webhookSecret?: string | null;
+}

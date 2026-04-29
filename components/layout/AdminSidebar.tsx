@@ -36,6 +36,7 @@ const platformHealthItems: NavItem[] = [
   { href: "/admin/system", label: "System Monitoring", icon: "🖥️" },
   { href: "/admin/analytics", label: "Platform Analytics", icon: "📊" },
   { href: "/admin/integrations", label: "Integrations", icon: "🔌" },
+  { href: "/admin/integrations/credentials", label: "App Credentials", icon: "🔑" },
   { href: "/admin/jobs", label: "Jobs Console", icon: "⚙️" },
   { href: "/admin/logs", label: "System Logs", icon: "📋" },
 ];
