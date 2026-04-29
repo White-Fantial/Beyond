@@ -158,14 +158,14 @@ See [doc/architecture.md](./doc/architecture.md) for detailed diagrams and API r
 
 ## Implementation Status Snapshot (2026-04-28)
 
-현재 코드 기준으로 문서와 구현의 싱크를 맞춘 상태 요약입니다.
+Summary of current code state synchronized with documentation and implementation.
 
 ### Stable / Implemented
 
-- 멀티 포털(고객/백오피스/오너/어드민), RBAC, JWT 세션, Prisma 기반 멀티테넌시
-- 카탈로그 아키텍처 Phase 1~8 (내부 정본, 외부 diff, conflict, sync policy, merge editor)
-- Customer Portal Phase 1~5 (주문/구독/알림/주소/로열티/결제수단/리뷰/지원/추천/푸시 설정)
-- Owner/Admin 기능군의 고도화(리포트, 팀/활동, 빌링, 시스템 모니터링, 플래그, 컴플라이언스)
+- Multi-portal structure (Customer / Backoffice / Owner / Admin), RBAC, JWT sessions, Prisma-based multi-tenancy
+- Catalog architecture Phase 1–8 (internal canonical, external diff, conflict detection, sync policy, merge editor)
+- Customer Portal Phase 1–5 (orders, subscriptions, notifications, addresses, loyalty, payment methods, reviews, support, referrals, push settings)
+- Owner/Admin feature set (reports, team/activity, billing, system monitoring, feature flags, compliance)
 
 ### Provider Integration Status
 
@@ -189,7 +189,7 @@ See [doc/architecture.md](./doc/architecture.md) for detailed diagrams and API r
 - Supplier scraper adapters (Bifold/Countdown/Foodstuffs) are skeleton stubs
 - `services/store.service.ts` basic CRUD is incomplete
 
-자세한 분석/미구현 목록은 [`doc/implementation-status.md`](./doc/implementation-status.md) 참고.
+For detailed analysis and unimplemented items, see [`doc/implementation-status.md`](./doc/implementation-status.md).
 
 ---
 ## Getting Started

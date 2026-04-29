@@ -1,24 +1,24 @@
 # Beyond — Implementation Status Audit (2026-04-28)
 
-본 문서는 현재 코드베이스 기준으로 **실제로 구현된 기능**과 **아직 미구현/부분구현 상태**를 정리한 운영 문서입니다.
+This document is an operational reference based on the current codebase, summarizing **features that are actually implemented** and those that are **partially implemented or not yet implemented**.
 
 ---
 
-## 1) 핵심 구현 현황 (요약)
+## 1) Core Implementation Summary
 
-### 1.1 플랫폼/권한/포털
-- Next.js App Router 기반 멀티 포털(고객/백오피스/오너/어드민) 구조 적용
-- JWT 세션 + 역할/권한 기반 접근 제어
-- Prisma 기반 멀티테넌트 도메인 모델
+### 1.1 Platform / Auth / Portals
+- Next.js App Router multi-portal structure (Customer / Backoffice / Owner / Admin)
+- JWT session + role/permission-based access control
+- Prisma-based multi-tenant domain model
 
-### 1.2 카탈로그 도메인
-- Phase 1~8(내부 정본 → import → mapping → publish → external change detection → conflict → sync policy → merge editor)까지 주요 흐름 존재
-- 관련 UI/API/서비스/테이블이 전반적으로 연결되어 있음
+### 1.2 Catalog Domain
+- Catalog architecture Phase 1–8 (internal canonical → import → mapping → publish → external change detection → conflict → sync policy → merge editor)
+- Related UI / API / service / database tables are all wired together
 
-### 1.3 비즈니스 포털 기능
-- Customer Portal Phase 1~5 (주문, 구독, 계정, 주소, 알림, 로열티, 결제수단, 리뷰, 지원, 추천, 푸시 설정)
-- Owner Console(리포트/고객/구독/팀/활동/프로모션/기프트카드/웹훅/설정/통합 등) 다수 구현
-- Admin Console(대시보드, 로그, 잡, 빌링, 시스템 모니터링, 플래그, 컴플라이언스) 구현
+### 1.3 Business Portal Features
+- Customer Portal Phase 1–5 (orders, subscriptions, account, addresses, notifications, loyalty, payment methods, reviews, support, referrals, push preferences)
+- Owner Console (reports, customers, subscriptions, team, activity, promotions, gift cards, webhooks, settings, integrations, etc.)
+- Admin Console (dashboard, logs, jobs, billing, system monitoring, feature flags, compliance)
 
 ---
 
@@ -63,44 +63,45 @@
 
 ---
 
-## 3) 부분 구현 / 미구현 항목
+## 3) Partially Implemented / Not Yet Implemented
 
-### 3.1 Store Service 미완성
+### 3.1 Store Service Incomplete
 - `services/store.service.ts`
-  - `getStoresByTenant()` 빈 배열 반환
-  - `getStore()`는 null 반환
-  - `createStore()`는 not implemented 예외
+  - `getStoresByTenant()` returns an empty array
+  - `getStore()` returns null
+  - `createStore()` throws a not-implemented exception
 
-### 3.2 Supplier Scraper 일부 어댑터 스켈레톤
+### 3.2 Supplier Scraper — Some Adapters Are Skeletons
 - `lib/supplier-scraper/adapters/bifold.ts`
 - `lib/supplier-scraper/adapters/countdown.ts`
 - `lib/supplier-scraper/adapters/foodstuffs.ts`
 
-위 어댑터들은 주석/로그 기준으로 로그인/상품수집 로직이 stub 상태입니다.
+These adapters have login and product collection logic in stub state based on comments and logs.
 
 ### 3.3 Lightspeed — Order Webhook Ingestion
 - Lightspeed order webhook ingestion is not yet implemented (capability flag: `orderWebhookIngestion: false`).
 
 ---
 
-## 4) 권장 우선순위 백로그
+## 4) Recommended Priority Backlog
 
-1. **P1 — Store Service 실제 CRUD 연결**
-   - `services/store.service.ts`의 placeholder 제거
+1. **P1 — Connect Store Service Actual CRUD**
+   - Remove placeholders in `services/store.service.ts`
 
-2. **P1 — Scraper Adapter 실동작화**
-   - Bifold/Countdown/Foodstuffs 로그인 흐름 및 상품 파싱 구현
+2. **P1 — Implement Supplier Scraper Adapters**
+   - Implement login flow and product parsing for Bifold, Countdown, and Foodstuffs
 
 3. **P2 — Provider Live API Verification**
-   - Lightspeed / Uber Eats / DoorDash 실제 credentials로 end-to-end 검증
+   - End-to-end verification for Lightspeed / Uber Eats / DoorDash with real provider credentials
 
 4. **P2 — Lightspeed Order Webhook Ingestion**
-   - Order webhook handling (currently not supported)
+   - Implement order webhook handling (currently not supported)
 
 ---
 
-## 5) 운영 원칙
+## 5) Operational Principles
 
-- 기능 문서(`features.md`)는 **사용자 관점 capability**,
-- 로드맵(`doc/roadmap.md`)은 **진행 상태와 다음 작업**,
-- 본 문서(`doc/implementation-status.md`)는 **코드 기준 진실원장(source of truth)** 으로 역할 분리 권장.
+Recommended role separation for documentation:
+- `features.md` — user-facing capability reference
+- `doc/roadmap.md` — progress tracking and next tasks
+- `doc/implementation-status.md` (this document) — code-based source of truth for implementation state
