@@ -5,7 +5,7 @@
  * authorizes (or denies) access. Query params are provider-specific but
  * always include `state` (CSRF token).
  *
- * Supports: Loyverse, Uber Eats, DoorDash
+ * Supports: Loyverse, Lightspeed, Uber Eats, DoorDash
  *
  * On success: redirects to /owner/stores/[storeId]/integrations?connected=1
  * On failure: redirects to /owner/stores/[storeId]/integrations?error=<code>

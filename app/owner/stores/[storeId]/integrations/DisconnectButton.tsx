@@ -19,7 +19,7 @@ export default function DisconnectButton({
   const [error, setError] = useState<string | null>(null);
 
   async function handleDisconnect() {
-    if (!window.confirm(`정말로 ${provider} 연동을 해제하시겠습니까?`)) return;
+    if (!window.confirm(`Are you sure you want to disconnect the ${provider} integration?`)) return;
 
     setLoading(true);
     setError(null);
@@ -50,7 +50,7 @@ export default function DisconnectButton({
         disabled={loading}
         className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-50"
       >
-        {loading ? "해제 중…" : "연동 해제"}
+        {loading ? "Disconnecting…" : "Disconnect"}
       </button>
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>

@@ -59,6 +59,12 @@
 - [x] **Uber Eats Adapter** — OAuth 2.0 merchant authorization flow; `UBER_EATS` in `ConnectionProvider` enum; `adapters/integrations/uber-eats.adapter.ts`
 - [x] **DoorDash Adapter** — OAuth 2.0 + JWT signing key (Drive API); `DOORDASH` in `ConnectionProvider` enum; `adapters/integrations/doordash.adapter.ts`
 - [x] **Stripe Billing Adapter** — `adapters/billing/stripe.adapter.ts` implementing `BillingProviderAdapter`; `POST /api/webhooks/billing/stripe` handler; payment method management
+- [x] **Lightspeed End-to-End OAuth Lifecycle** — `LIGHTSPEED` registered in integration service, connect/callback/disconnect routes, and provider allowlist; OAuth PKCE flow, token exchange, token refresh, store listing (`listAvailableStores`), and catalog publish fully wired. `supportsStoreDiscovery: true`, `catalogPublish: true`.
+- [x] **Uber Eats Catalog Import** — `adapters/catalog/uber-eats.adapter.ts` fetches `GET /v2/eats/stores/{storeId}/menus` and maps menus → categories, items → products, modifier groups, modifier options, product-category links, and product-modifier-group links into `FullCatalogPayload`.
+- [x] **Uber Eats Catalog Publish** — `adapters/catalog/uber-eats-publish.adapter.ts` implements a read/mutate/write cycle against `PUT /v2/eats/stores/{storeId}/menus` for all entity types (categories, products, modifier groups, modifier options). Payload builders in `services/catalog-publish/payload-builders/uber-eats/index.ts`.
+- [x] **DoorDash Catalog Import** — `adapters/catalog/doordash.adapter.ts` fetches DoorDash menu API and maps categories, items, modifier groups, modifier options (including `extras`/`extra_options` variants) into `FullCatalogPayload`.
+- [x] **DoorDash Catalog Publish** — `adapters/catalog/doordash-publish.adapter.ts` implements read/mutate/write cycle for all entity types. Payload builders (`buildDoorDashCategoryCreate/Update`, `buildDoorDashProductCreate/Update`) in `services/catalog-publish/payload-builders/doordash/index.ts`.
+- [x] **Lightspeed Catalog Publish — Modifier Group & Option Operations** — `adapters/catalog/lightspeed-publish.adapter.ts` now covers all entity types: categories, products, modifier groups, and modifier options (create/update/archive/unarchive) via the Lightspeed Restaurant API v2.0.
 
 ### Backoffice Portal
 

@@ -25,28 +25,28 @@ const PROVIDERS = [
     provider: "LOYVERSE" as const,
     connectionType: "POS" as const,
     label: "Loyverse POS",
-    description: "Loyverse POS와 메뉴, 재고, 주문을 Sync합니다.",
+    description: "Sync menus, inventory, and orders with Loyverse POS.",
     logo: "🟢",
   },
   {
     provider: "LIGHTSPEED" as const,
     connectionType: "POS" as const,
-    label: "Lightspeed O-Series",
-    description: "Lightspeed O-Series POS와 메뉴, 재고, 주문을 Sync합니다.",
+    label: "Lightspeed",
+    description: "Sync menus, inventory, and orders with Lightspeed POS.",
     logo: "⚡",
   },
   {
     provider: "UBER_EATS" as const,
     connectionType: "DELIVERY" as const,
     label: "Uber Eats",
-    description: "Uber Eats 주문을 실Time으로 수신하고 메뉴를 Sync합니다.",
+    description: "Receive Uber Eats orders in real time and sync your menu.",
     logo: "🟤",
   },
   {
     provider: "DOORDASH" as const,
     connectionType: "DELIVERY" as const,
     label: "DoorDash",
-    description: "DoorDash 주문을 실Time으로 수신하고 메뉴를 Sync합니다.",
+    description: "Receive DoorDash orders in real time and sync your menu.",
     logo: "🔴",
   },
 ];
@@ -143,7 +143,7 @@ function ConnectionCard({
             storeId={storeId}
             provider={providerDef.provider}
             connectionType={providerDef.connectionType}
-            label={`${providerDef.label} 연결`}
+            label={`Connect ${providerDef.label}`}
           />
         ) : (
           <>
@@ -194,19 +194,19 @@ export default async function StoreIntegrationsPage({ params, searchParams }: Pa
       <div>
         <h1 className="text-xl font-bold text-gray-900">Store Integrations</h1>
         <p className="mt-1 text-sm text-gray-500">
-          이 Store과 외부 POS 또는 Delivery Platform을 연결합니다.
+          Connect this store to external POS systems or delivery platforms.
         </p>
       </div>
 
       {/* Success / error banner */}
       {connected === "1" && (
         <div className="rounded-md bg-green-50 border border-green-200 p-4 text-sm text-green-800">
-          ✅ {provider ? `${provider} ` : ""}연동이 Completed되었습니다.
+          ✅ {provider ? `${provider} ` : ""}integration connected successfully.
         </div>
       )}
       {error && (
         <div className="rounded-md bg-red-50 border border-red-200 p-4 text-sm text-red-800">
-          ❌ 연동 실패: {error}
+          ❌ Integration failed: {error}
         </div>
       )}
 
@@ -253,7 +253,7 @@ export default async function StoreIntegrationsPage({ params, searchParams }: Pa
                   )}
                 </div>
                 <span className="text-gray-400 flex-shrink-0">
-                  {new Date(log.createdAt).toLocaleString("ko-KR", {
+                  {new Date(log.createdAt).toLocaleString("en-US", {
                     month: "2-digit",
                     day: "2-digit",
                     hour: "2-digit",

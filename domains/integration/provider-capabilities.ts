@@ -26,10 +26,10 @@ const PROVIDER_CAPABILITIES: Record<ConnectionProvider, ProviderCapabilities> = 
   },
   LIGHTSPEED: {
     catalogSync: true,
-    catalogPublish: false,
+    catalogPublish: true,
     orderWebhookIngestion: false,
     availabilitySync: false,
-    supportsStoreDiscovery: false,
+    supportsStoreDiscovery: true,
   },
   UBER_EATS: {
     catalogSync: true,
