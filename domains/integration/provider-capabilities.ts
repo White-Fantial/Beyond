@@ -6,6 +6,7 @@ export interface ProviderCapabilities {
   orderWebhookIngestion: boolean;
   availabilitySync: boolean;
   supportsStoreDiscovery: boolean;
+  supportsMenuImport: boolean;
 }
 
 const DEFAULT_CAPABILITIES: ProviderCapabilities = {
@@ -14,6 +15,7 @@ const DEFAULT_CAPABILITIES: ProviderCapabilities = {
   orderWebhookIngestion: false,
   availabilitySync: false,
   supportsStoreDiscovery: false,
+  supportsMenuImport: false,
 };
 
 const PROVIDER_CAPABILITIES: Record<ConnectionProvider, ProviderCapabilities> = {
@@ -23,6 +25,7 @@ const PROVIDER_CAPABILITIES: Record<ConnectionProvider, ProviderCapabilities> = 
     orderWebhookIngestion: true,
     availabilitySync: false,
     supportsStoreDiscovery: false,
+    supportsMenuImport: true,
   },
   LIGHTSPEED: {
     catalogSync: true,
@@ -30,6 +33,7 @@ const PROVIDER_CAPABILITIES: Record<ConnectionProvider, ProviderCapabilities> = 
     orderWebhookIngestion: false,
     availabilitySync: false,
     supportsStoreDiscovery: true,
+    supportsMenuImport: true,
   },
   UBER_EATS: {
     catalogSync: true,
@@ -37,6 +41,7 @@ const PROVIDER_CAPABILITIES: Record<ConnectionProvider, ProviderCapabilities> = 
     orderWebhookIngestion: true,
     availabilitySync: true,
     supportsStoreDiscovery: true,
+    supportsMenuImport: false,
   },
   DOORDASH: {
     catalogSync: true,
@@ -44,6 +49,7 @@ const PROVIDER_CAPABILITIES: Record<ConnectionProvider, ProviderCapabilities> = 
     orderWebhookIngestion: true,
     availabilitySync: true,
     supportsStoreDiscovery: true,
+    supportsMenuImport: false,
   },
   STRIPE: {
     catalogSync: false,
@@ -51,6 +57,7 @@ const PROVIDER_CAPABILITIES: Record<ConnectionProvider, ProviderCapabilities> = 
     orderWebhookIngestion: false,
     availabilitySync: false,
     supportsStoreDiscovery: false,
+    supportsMenuImport: false,
   },
   OTHER: DEFAULT_CAPABILITIES,
 };

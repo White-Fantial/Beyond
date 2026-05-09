@@ -390,6 +390,69 @@ export async function selectProductForStore(
   };
 }
 
+export async function selectProductsForStoreBulk(input: {
+  tenantId: string;
+  storeId: string;
+  tenantProductIds: string[];
+  actorUserId: string;
+}): Promise<{ selectedCount: number; tenantProductIds: string[] }> {
+  const uniqueTenantProductIds = Array.from(
+    new Set(input.tenantProductIds.filter((id) => typeof id === "string" && id.trim().length > 0))
+  );
+
+  if (uniqueTenantProductIds.length === 0) {
+    return { selectedCount: 0, tenantProductIds: [] };
+  }
+
+  const existingProducts = await prisma.tenantCatalogProduct.findMany({
+    where: {
+      tenantId: input.tenantId,
+      id: { in: uniqueTenantProductIds },
+      deletedAt: null,
+    },
+    select: { id: true },
+  });
+  const allowedIds = existingProducts.map((p) => p.id);
+
+  if (allowedIds.length === 0) {
+    return { selectedCount: 0, tenantProductIds: [] };
+  }
+
+  await prisma.$transaction(
+    allowedIds.map((tenantProductId) =>
+      prisma.storeProductSelection.upsert({
+        where: {
+          storeId_tenantProductId: {
+            storeId: input.storeId,
+            tenantProductId,
+          },
+        },
+        create: {
+          tenantId: input.tenantId,
+          storeId: input.storeId,
+          tenantProductId,
+          isActive: true,
+        },
+        update: {
+          isActive: true,
+        },
+      })
+    )
+  );
+
+  await logAuditEvent({
+    tenantId: input.tenantId,
+    storeId: input.storeId,
+    actorUserId: input.actorUserId,
+    action: "STORE_PRODUCT_BULK_SELECTED",
+    targetType: "Store",
+    targetId: input.storeId,
+    metadata: { selectedCount: allowedIds.length, tenantProductIds: allowedIds },
+  });
+
+  return { selectedCount: allowedIds.length, tenantProductIds: allowedIds };
+}
+
 export async function deselectProductFromStore(
   tenantId: string,
   storeId: string,
@@ -567,4 +630,3 @@ export async function reorderStoreCategorySelections(
     metadata: { orderedCategoryIds },
   });
 }
-

@@ -574,6 +574,8 @@ model Connection {
   credentials   ConnectionCredential[]
   actionLogs    ConnectionActionLog[]
   catalogSettings CatalogSettings[]
+  menuImportRuns MenuImportRun[]
+  menuImportProductMaps MenuImportProductMap[]
 
   @@unique([storeId, provider, type])
   @@index([tenantId, storeId, provider])
@@ -1360,6 +1362,7 @@ model TenantCatalogProduct {
   recipes         Recipe[]
   modifierGroups  TenantProductModifierGroup[]
   usedInComponents RecipeProductComponent[]
+  menuImportMaps  MenuImportProductMap[]
 
   @@index([tenantId, isActive, displayOrder])
   @@index([tenantId, name])
@@ -1486,6 +1489,53 @@ model StoreProductSelection {
   @@index([tenantId, storeId])
   @@index([storeId, isActive, displayOrder])
   @@map("store_product_selections")
+}
+
+/// Owner menu import run for importing external POS catalog products into tenant products.
+model MenuImportRun {
+  id                     String   @id @default(uuid())
+  tenantId               String
+  storeId                String
+  connectionId           String
+  provider               String
+  status                 String   // PREVIEWED, APPLIED, FAILED
+  overwriteExisting      Boolean  @default(false)
+  externalImportRunId    String?
+  summaryJson            Json
+  applyResultJson        Json?
+  appliedAt              DateTime?
+  createdByUserId        String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  connection Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, storeId, createdAt])
+  @@index([connectionId, status, createdAt])
+  @@map("menu_import_runs")
+}
+
+/// Stable map between external product ids and tenant-level catalog products.
+model MenuImportProductMap {
+  id                        String   @id @default(uuid())
+  tenantId                  String
+  storeId                   String
+  connectionId              String
+  externalProductId         String
+  tenantProductId           String
+  lastExternalHash          String?
+  lastImportedName          String?
+  lastImportedPriceMillicents Int?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  connection    Connection           @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  tenantProduct TenantCatalogProduct @relation(fields: [tenantProductId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, externalProductId])
+  @@index([tenantId, storeId])
+  @@index([tenantProductId])
+  @@map("menu_import_product_maps")
 }
 
 model CatalogProductCategory {
