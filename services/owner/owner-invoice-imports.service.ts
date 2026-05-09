@@ -26,6 +26,9 @@ const INGREDIENT_UNITS: IngredientUnit[] = [
   "PIECE",
 ];
 
+const INVOICE_UNIT_TOKEN_PATTERN =
+  "(KG|GRAM|G|ML|L|LITER|EACH|EA|PIECE|PCS|PC|LB|OZ|TSP|TBSP|CUP)";
+
 type ParsedInvoiceRow = {
   rawLine: string | null;
   detectedName: string | null;
@@ -128,9 +131,8 @@ function parseWithHeader(header: string[], row: string[]): ParsedInvoiceRow {
 }
 
 function parseFreeTextLine(line: string): ParsedInvoiceRow {
-  const unitMatch = line.match(
-    /(\d+(?:\.\d+)?)\s*(KG|GRAM|G|ML|L|LITER|EACH|EA|PIECE|PCS|LB|OZ|TSP|TBSP|CUP)\b/i
-  );
+  const unitRegex = new RegExp(`(\\d+(?:\\.\\d+)?)\\s*${INVOICE_UNIT_TOKEN_PATTERN}\\b`, "i");
+  const unitMatch = line.match(unitRegex);
   const quantity = unitMatch ? parseQuantity(unitMatch[1]) : null;
   const unit = unitMatch ? parseIngredientUnit(unitMatch[2]) : null;
   const skuMatch = line.match(/\bSKU[:#\s-]*([A-Z0-9\-]+)/i);
@@ -140,7 +142,7 @@ function parseFreeTextLine(line: string): ParsedInvoiceRow {
   const detectedName = line
     .replace(/\$?\d+(?:\.\d{1,2})?/g, "")
     .replace(/\bSKU[:#\s-]*[A-Z0-9\-]+\b/gi, "")
-    .replace(/\b\d+(?:\.\d+)?\s*(KG|GRAM|G|ML|L|LITER|EACH|EA|PIECE|PCS|LB|OZ|TSP|TBSP|CUP)\b/gi, "")
+    .replace(new RegExp(`\\b\\d+(?:\\.\\d+)?\\s*${INVOICE_UNIT_TOKEN_PATTERN}\\b`, "gi"), "")
     .trim();
 
   return {
