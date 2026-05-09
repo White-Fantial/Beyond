@@ -33,6 +33,7 @@ const costItems: NavItem[] = [
   { href: "/owner/products/modifiers", label: "Modifiers", icon: "🔧" },
   { href: "/owner/ingredients", label: "Ingredients", icon: "🥕" },
   { href: "/owner/suppliers", label: "Suppliers", icon: "🚚" },
+  { href: "/owner/suppliers/import-invoice", label: "Import Invoices", icon: "🧾" },
 ];
 
 const insightsItems: NavItem[] = [

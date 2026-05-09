@@ -28,12 +28,20 @@ export default async function OwnerSuppliersPage() {
             .
           </p>
         </div>
-        <Link
-          href="/owner/supplier-requests"
-          className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700"
-        >
-          + Request Supplier
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/owner/suppliers/import-invoice"
+            className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50"
+          >
+            Import Invoice
+          </Link>
+          <Link
+            href="/owner/supplier-requests"
+            className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700"
+          >
+            + Request Supplier
+          </Link>
+        </div>
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-800 space-y-1">

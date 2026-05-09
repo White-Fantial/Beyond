@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { SupplierDetail } from "@/types/owner-suppliers";
 import type { SupplierCredential } from "@/types/owner-supplier-credentials";
 import { INGREDIENT_UNIT_LABELS } from "@/types/owner-ingredients";
@@ -87,15 +88,23 @@ export default function SupplierDetailView({ supplier, credential }: Props) {
       <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-900">Supplier Info</h2>
-          {supplier.products.length > 0 && (
-            <button
-              onClick={handleScrapeAll}
-              disabled={scrapingAll}
-              className="px-3 py-1.5 text-xs font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition"
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/owner/suppliers/import-invoice?supplierId=${supplier.id}`}
+              className="px-3 py-1.5 text-xs font-medium bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
             >
-              {scrapingAll ? "Scraping…" : "🔄 Scrape All Prices"}
-            </button>
-          )}
+              Import Invoice
+            </Link>
+            {supplier.products.length > 0 && (
+              <button
+                onClick={handleScrapeAll}
+                disabled={scrapingAll}
+                className="px-3 py-1.5 text-xs font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 transition"
+              >
+                {scrapingAll ? "Scraping…" : "🔄 Scrape All Prices"}
+              </button>
+            )}
+          </div>
         </div>
         {scrapeResults && (
           <p className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">
