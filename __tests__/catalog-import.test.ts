@@ -255,7 +255,7 @@ describe("catalog-import.service — runFullCatalogImport", () => {
     const call = mp["externalCatalogProduct"].upsert.mock.calls[0][0] as { create: Record<string, unknown> };
     expect(call.create["externalId"]).toBe("prod-1");
     expect(call.create["normalizedName"]).toBe("Espresso");
-    expect(call.create["normalizedPriceAmount"]).toBe(450);
+    expect(call.create["normalizedPriceAmount"]).toBe(450000);
   });
 
   // ── 4. entityHash generation ───────────────────────────────────────────────

@@ -95,7 +95,7 @@ function getNormalizedExternalProduct(provider: string, rawPayload: unknown, fal
           ? dollarToMillicents(priceFromVariant)
           : priceFromRaw !== null
           ? dollarToMillicents(priceFromRaw)
-          : (fallbackPriceAmount ?? 0) * 1000,
+          : fallbackPriceAmount ?? 0,
       isActive,
     };
   }
@@ -482,6 +482,152 @@ export async function applyOwnerMenuImportRun(input: {
     }))
     .filter((x) => x.externalProductId.length > 0);
 
+  // ── A. Import categories ────────────────────────────────────────────────────
+  // Fetch all external categories for this connection and upsert into the
+  // internal TenantProductCategory table.  Parallelise upserts since each
+  // uses a unique key and is independent.  Build a map from external category
+  // ID to internal category ID so we can set categoryId on products.
+
+  const externalCategories = await prisma.externalCatalogCategory.findMany({
+    where: { connectionId: run.connectionId },
+    select: { externalId: true, normalizedName: true },
+  });
+
+  const categoriesWithName = externalCategories.filter((c) => c.normalizedName != null);
+  const upsertedCategories = await Promise.all(
+    categoriesWithName.map((exCat) =>
+      prisma.tenantProductCategory
+        .upsert({
+          where: { tenantId_name: { tenantId: run.tenantId, name: exCat.normalizedName! } },
+          create: { tenantId: run.tenantId, name: exCat.normalizedName! },
+          update: {},
+          select: { id: true },
+        })
+        .then((cat) => ({ externalId: exCat.externalId, internalId: cat.id }))
+    )
+  );
+  const catIdMap = new Map(upsertedCategories.map((c) => [c.externalId, c.internalId]));
+
+  // ── B. Import modifier groups ────────────────────────────────────────────────
+  // Fetch all external modifier groups for this connection. Load existing
+  // TenantModifierGroup records in a single query, then batch-create the
+  // missing ones to avoid N+1 round-trips.
+
+  const externalModifierGroups = await prisma.externalCatalogModifierGroup.findMany({
+    where: { connectionId: run.connectionId },
+    select: { externalId: true, normalizedName: true },
+  });
+
+  const mgIdMap = new Map<string, string>();
+
+  if (externalModifierGroups.length > 0) {
+    const mgNames = externalModifierGroups
+      .map((g) => g.normalizedName)
+      .filter((n): n is string => n != null);
+
+    const existingMgs = await prisma.tenantModifierGroup.findMany({
+      where: { tenantId: run.tenantId, deletedAt: null, name: { in: mgNames } },
+      select: { id: true, name: true },
+    });
+    const existingMgByName = new Map(existingMgs.map((g) => [g.name, g.id]));
+
+    // Batch-create any modifier groups that don't exist yet, then re-fetch their IDs.
+    const newMgNames = externalModifierGroups
+      .map((g) => g.normalizedName)
+      .filter((n): n is string => n != null && !existingMgByName.has(n));
+
+    if (newMgNames.length > 0) {
+      await prisma.tenantModifierGroup.createMany({
+        data: newMgNames.map((name) => ({
+          tenantId: run.tenantId,
+          name,
+          selectionMin: 0,
+          isRequired: false,
+          isActive: true,
+        })),
+        skipDuplicates: true,
+      });
+
+      const newlyCreated = await prisma.tenantModifierGroup.findMany({
+        where: { tenantId: run.tenantId, deletedAt: null, name: { in: newMgNames } },
+        select: { id: true, name: true },
+      });
+      for (const g of newlyCreated) {
+        existingMgByName.set(g.name, g.id);
+      }
+    }
+
+    for (const exMg of externalModifierGroups) {
+      if (!exMg.normalizedName) continue;
+      const mgId = existingMgByName.get(exMg.normalizedName);
+      if (mgId) mgIdMap.set(exMg.externalId, mgId);
+    }
+  }
+
+  // ── C. Import modifier options ────────────────────────────────────────────────
+  // Load existing options for all affected modifier groups in one query,
+  // then batch-create any options that are not already present.
+
+  const externalModifierOptions = await prisma.externalCatalogModifierOption.findMany({
+    where: { connectionId: run.connectionId },
+    select: { externalId: true, normalizedName: true, externalParentId: true, rawPayload: true },
+  });
+
+  if (externalModifierOptions.length > 0 && mgIdMap.size > 0) {
+    const internalMgIds = Array.from(mgIdMap.values());
+    const existingOptions = await prisma.tenantModifierOption.findMany({
+      where: { tenantModifierGroupId: { in: internalMgIds }, deletedAt: null },
+      select: { tenantModifierGroupId: true, name: true },
+    });
+    const existingOptionKeys = new Set(
+      existingOptions.map((o) => `${o.tenantModifierGroupId}::${o.name}`)
+    );
+
+    const optionsToCreate = externalModifierOptions.flatMap((exMo) => {
+      if (!exMo.normalizedName || !exMo.externalParentId) return [];
+      const tenantModifierGroupId = mgIdMap.get(exMo.externalParentId);
+      if (!tenantModifierGroupId) return [];
+      if (existingOptionKeys.has(`${tenantModifierGroupId}::${exMo.normalizedName}`)) return [];
+
+      const rawMo = asRecord(exMo.rawPayload);
+      const priceRaw = maybeNumber(rawMo["price"]);
+      const priceDeltaAmount = priceRaw !== null ? dollarToMillicents(priceRaw) : 0;
+
+      return [
+        {
+          tenantId: run.tenantId,
+          tenantModifierGroupId,
+          name: exMo.normalizedName,
+          priceDeltaAmount,
+          isActive: true,
+        },
+      ];
+    });
+
+    if (optionsToCreate.length > 0) {
+      await prisma.tenantModifierOption.createMany({ data: optionsToCreate });
+    }
+  }
+
+  // ── D. Resolve external product → category mapping ───────────────────────────
+  // For the products that will be imported, look up their externalParentId
+  // (category external ID) from the external catalog.
+
+  const importedExternalProductIds = items.map((x) => x.externalProductId);
+  const externalProductCatData =
+    importedExternalProductIds.length > 0
+      ? await prisma.externalCatalogProduct.findMany({
+          where: { connectionId: run.connectionId, externalId: { in: importedExternalProductIds } },
+          select: { externalId: true, externalParentId: true },
+        })
+      : [];
+
+  const externalProductCatMap = new Map(
+    externalProductCatData
+      .filter((p) => p.externalParentId != null)
+      .map((p) => [p.externalId, p.externalParentId!])
+  );
+
   let appliedCreates = 0;
   let appliedUpdates = 0;
   let skipped = 0;
@@ -489,8 +635,15 @@ export async function applyOwnerMenuImportRun(input: {
   const tenantProductIds = new Set<string>();
   const errors: Array<{ externalProductId: string; message: string }> = [];
 
+  // Map from externalProductId → tenantProductId (built during the product loop,
+  // used afterwards to create product–modifier-group links).
+  const externalToTenantProductId = new Map<string, string>();
+
   for (const item of items) {
     try {
+      const exCatId = externalProductCatMap.get(item.externalProductId);
+      const categoryId = exCatId ? (catIdMap.get(exCatId) ?? null) : null;
+
       if (item.action === "CREATE" || !item.mappedTenantProductId) {
         const created = await prisma.tenantCatalogProduct.create({
           data: {
@@ -499,6 +652,7 @@ export async function applyOwnerMenuImportRun(input: {
             description: item.externalDescription,
             shortDescription: item.externalDescription?.slice(0, 120) ?? null,
             basePriceAmount: item.externalPriceMillicents,
+            categoryId: categoryId ?? undefined,
             isActive: true,
           },
           select: { id: true, name: true, basePriceAmount: true },
@@ -531,6 +685,7 @@ export async function applyOwnerMenuImportRun(input: {
 
         appliedCreates += 1;
         tenantProductIds.add(created.id);
+        externalToTenantProductId.set(item.externalProductId, created.id);
       } else if (item.action === "UPDATE") {
         const updated = await prisma.tenantCatalogProduct.update({
           where: { id: item.mappedTenantProductId },
@@ -541,6 +696,7 @@ export async function applyOwnerMenuImportRun(input: {
               ? item.externalDescription?.slice(0, 120) ?? null
               : undefined,
             basePriceAmount: item.externalPriceMillicents,
+            categoryId: categoryId ?? undefined,
           },
           select: { id: true },
         });
@@ -561,6 +717,7 @@ export async function applyOwnerMenuImportRun(input: {
 
         appliedUpdates += 1;
         tenantProductIds.add(updated.id);
+        externalToTenantProductId.set(item.externalProductId, updated.id);
       } else {
         skipped += 1;
       }
@@ -569,6 +726,34 @@ export async function applyOwnerMenuImportRun(input: {
       errors.push({
         externalProductId: item.externalProductId,
         message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  // ── E. Create product–modifier-group links ────────────────────────────────────
+  // For each imported product, look up its modifier-group links in the external
+  // catalog and upsert TenantProductModifierGroup rows.
+
+  if (externalToTenantProductId.size > 0) {
+    const productModifierLinks = await prisma.externalCatalogProductModifierGroupLink.findMany({
+      where: {
+        connectionId: run.connectionId,
+        externalProductId: { in: Array.from(externalToTenantProductId.keys()) },
+      },
+      select: { externalProductId: true, externalModifierGroupId: true },
+    });
+
+    const linksToCreate = productModifierLinks.flatMap((link) => {
+      const tenantProductId = externalToTenantProductId.get(link.externalProductId);
+      const tenantModifierGroupId = mgIdMap.get(link.externalModifierGroupId);
+      if (!tenantProductId || !tenantModifierGroupId) return [];
+      return [{ tenantId: run.tenantId, tenantProductId, tenantModifierGroupId }];
+    });
+
+    if (linksToCreate.length > 0) {
+      await prisma.tenantProductModifierGroup.createMany({
+        data: linksToCreate,
+        skipDuplicates: true,
       });
     }
   }
