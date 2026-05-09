@@ -409,14 +409,7 @@ export async function createOwnerInvoiceImport(
     input.fileMimeType,
     input.fileBuffer
   );
-  const parsedRows = parsed.rows.length > 0 ? parsed.rows : [{
-    rawLine: null,
-    detectedName: null,
-    detectedSku: null,
-    detectedQuantity: null,
-    detectedUnit: null,
-    detectedPrice: null,
-  }];
+  const parsedRows = parsed.rows;
 
   const selectedIngredients = activeSelections.map((selection) => selection.ingredient);
   const selectedSet = new Set(selectedIngredients.map((ingredient) => ingredient.id));
@@ -518,7 +511,7 @@ export async function createOwnerInvoiceImport(
       sourceFileSize: input.fileSize,
       status: "PREVIEWED",
       extractionNote: parsed.extractionNote,
-      rows: { create: rowsToCreate },
+      rows: rowsToCreate.length > 0 ? { create: rowsToCreate } : undefined,
     },
     include: { rows: { orderBy: { rowNumber: "asc" } } },
   });
@@ -663,8 +656,39 @@ export async function updateOwnerInvoiceImportRow(
   return toRow(updated);
 }
 
+export async function addOwnerInvoiceImportManualRow(
+  tenantId: string,
+  batchId: string
+): Promise<OwnerInvoiceImportRow> {
+  const batch = await prisma.ownerInvoiceImportBatch.findFirst({
+    where: { id: batchId, tenantId },
+    select: { id: true },
+  });
+  if (!batch) throw new Error("Invoice import batch not found.");
+
+  const maxRow = await prisma.ownerInvoiceImportRow.findFirst({
+    where: { batchId },
+    orderBy: { rowNumber: "desc" },
+    select: { rowNumber: true },
+  });
+  const rowNumber = (maxRow?.rowNumber ?? 0) + 1;
+
+  const row = await prisma.ownerInvoiceImportRow.create({
+    data: {
+      batchId,
+      rowNumber,
+      rowStatus: "INCOMPLETE",
+      confidence: 0,
+      matchReason: "Added manually.",
+      applyStatus: "PENDING",
+    },
+  });
+  return toRow(row);
+}
+
 async function resolveIngredientForApply(
   tenantId: string,
+  batchId: string,
   row: {
     ingredientId: string | null;
     platformIngredientId: string | null;
@@ -698,8 +722,8 @@ async function resolveIngredientForApply(
     const provisional = await tx.ingredient.create({
       data: {
         name: row.provisionalIngredientName.trim(),
-        category: "Provisional",
-        notes: "Auto-created from owner invoice import.",
+        category: null,
+        notes: `Auto-created from invoice import batch ${batchId} for tenant ${tenantId}.`,
         unit: "EACH",
         isActive: true,
       },
@@ -761,7 +785,7 @@ export async function applyOwnerInvoiceImport(
           throw new Error("Selected supplier product is not valid for this supplier.");
         }
 
-        const ingredientId = await resolveIngredientForApply(tenantId, row, tx);
+        const ingredientId = await resolveIngredientForApply(tenantId, batch.id, row, tx);
         if (!ingredientId) {
           throw new Error("Ingredient is required to apply price updates.");
         }
@@ -803,7 +827,7 @@ export async function applyOwnerInvoiceImport(
             observedPrice: detectedPrice,
             source: "INVOICE_IMPORT",
             observedAt: new Date(),
-            notes: `Invoice import batch ${batch.id}, row ${row.rowNumber}`,
+            notes: `Invoice import "${batch.sourceFileName}" (batch ${batch.id}), row ${row.rowNumber}`,
           },
         });
 

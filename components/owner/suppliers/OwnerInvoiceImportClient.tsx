@@ -262,6 +262,35 @@ export default function OwnerInvoiceImportClient({
     }
   }
 
+  async function handleAddManualRow() {
+    if (!detail) return;
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/owner/invoice-imports/${detail.batch.id}/rows`, {
+        method: "POST",
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error ?? "Failed to add manual row.");
+        return;
+      }
+      const newRow = json.data as OwnerInvoiceImportRow;
+      setDetail((prev) =>
+        prev
+          ? {
+              ...prev,
+              rows: [...prev.rows, newRow].sort((a, b) => a.rowNumber - b.rowNumber),
+            }
+          : prev
+      );
+      setDrafts((prev) => ({ ...prev, [newRow.id]: toDraft(newRow) }));
+      setMessage(`Row #${newRow.rowNumber} added for manual entry.`);
+    } catch {
+      setError("Network error. Please try again.");
+    }
+  }
+
   return (
     <div className="space-y-5">
       <form
@@ -370,15 +399,27 @@ export default function OwnerInvoiceImportClient({
             </label>
             <button
               type="button"
+              onClick={handleAddManualRow}
+              className="ml-auto px-4 py-2 bg-white border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50"
+            >
+              + Add Manual Row
+            </button>
+            <button
+              type="button"
               onClick={handleApply}
               disabled={applyLoading}
-              className="ml-auto px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50"
+              className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50"
             >
               {applyLoading ? "Applying…" : "Confirm & Apply"}
             </button>
           </div>
 
           <div className="space-y-3">
+            {visibleRows.length === 0 && (
+              <div className="bg-white rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+                No rows in this filter. Add a manual row to continue invoice review.
+              </div>
+            )}
             {visibleRows.map((row) => {
               const draft = drafts[row.id] ?? toDraft(row);
               return (
