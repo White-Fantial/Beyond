@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth/permissions";
-import { scrapeSupplierProduct } from "@/services/owner/owner-supplier-scraper.service";
+import { scrapeProductForUser } from "@/services/owner/owner-supplier-scraper.service";
 
 interface Params {
   params: Promise<{ supplierId: string; productId: string }>;
@@ -10,9 +10,10 @@ export async function POST(_req: Request, { params }: Params) {
   const { supplierId, productId } = await params;
   const ctx = await requireAuth();
   const tenantId = ctx.tenantMemberships[0]?.tenantId ?? "";
-  console.log(`[API /suppliers/${supplierId}/products/${productId}/scrape] POST tenantId=${tenantId}`);
+  const userId = ctx.userId;
+  console.log(`[API /suppliers/${supplierId}/products/${productId}/scrape] POST tenantId=${tenantId} userId=${userId}`);
   try {
-    const result = await scrapeSupplierProduct(tenantId, productId);
+    const result = await scrapeProductForUser(tenantId, userId, productId);
     console.log(`[API /suppliers/${supplierId}/products/${productId}/scrape] completed changed=${result.changed} newPrice=${result.newPrice}`);
     return NextResponse.json({ data: result });
   } catch (err) {

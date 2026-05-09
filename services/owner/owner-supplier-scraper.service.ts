@@ -199,6 +199,239 @@ export async function scrapeAllSupplierProducts(
 // ─── Phase 5: per-user credentialed scraping & reference price ─────────────────
 
 /**
+ * Scrape a single supplier product using the owner's registered credentials.
+ * Appends a SupplierPriceRecord and recomputes the referencePrice.
+ */
+export async function scrapeProductForUser(
+  tenantId: string,
+  userId: string,
+  supplierProductId: string
+): Promise<ScrapeResult> {
+  const product = await prisma.supplierProduct.findFirst({
+    where: {
+      id: supplierProductId,
+      deletedAt: null,
+      supplier: {
+        deletedAt: null,
+        OR: [{ scope: "PLATFORM" }, { tenantId }],
+      },
+    },
+    select: {
+      id: true,
+      supplierId: true,
+      externalUrl: true,
+      referencePrice: true,
+      supplier: { select: { adapterType: true } },
+    },
+  });
+  if (!product) throw new Error(`SupplierProduct ${supplierProductId} not found`);
+  if (!product.externalUrl) {
+    throw new Error(`SupplierProduct ${supplierProductId} has no externalUrl to scrape`);
+  }
+
+  const credential = await prisma.supplierCredential.findFirst({
+    where: { tenantId, userId, supplierId: product.supplierId, deletedAt: null, isActive: true },
+    select: { id: true },
+  });
+  if (!credential) {
+    throw new Error(
+      "No active credential found for this supplier. Please register your login in the Credentials section."
+    );
+  }
+
+  const supplierInfo = (product as typeof product & { supplier: SupplierAdapterInfo }).supplier;
+  const domainScraper = getScraperForSupplier(supplierInfo, product.externalUrl);
+  if (!domainScraper) throw new Error("No scraper configured for this supplier");
+
+  const decrypted = await getDecryptedCredential(credential.id);
+  let scraped: ScrapedProduct;
+
+  if (domainScraper.login && domainScraper.scrapeWithSession) {
+    const session = await domainScraper.login({
+      loginUrl: decrypted.loginUrl ?? undefined,
+      username: decrypted.username,
+      password: decrypted.password,
+    });
+    if (!session.authenticated) throw new Error("Login failed — check your credentials");
+    scraped = await domainScraper.scrapeWithSession(product.externalUrl, session);
+  } else {
+    scraped = await credentialedScraper.scrapeWithCredential(product.externalUrl, {
+      loginUrl: decrypted.loginUrl,
+      username: decrypted.username,
+      password: decrypted.password,
+    });
+  }
+
+  if (scraped.price === null) throw new Error("Could not extract price from supplier page");
+
+  const previousPrice = product.referencePrice;
+  const scrapedAt = new Date();
+
+  await prisma.supplierPriceRecord.create({
+    data: {
+      supplierProductId: product.id,
+      tenantId,
+      observedPrice: scraped.price,
+      source: "SCRAPED",
+      credentialId: credential.id,
+      observedAt: scrapedAt,
+    },
+  });
+
+  await recomputeReferencePrice(product.id);
+
+  const updated = await prisma.supplierProduct.findFirst({
+    where: { id: product.id },
+    select: { referencePrice: true },
+  });
+
+  const newPrice = updated?.referencePrice ?? scraped.price;
+
+  return {
+    supplierProductId: product.id,
+    previousPrice,
+    newPrice,
+    changed: newPrice !== previousPrice,
+    scrapedAt: scrapedAt.toISOString(),
+  };
+}
+
+/**
+ * Scrape all products for a specific supplier using the owner's registered credential.
+ * Reuses the authenticated session across all products for the supplier.
+ */
+export async function scrapeSupplierForUser(
+  tenantId: string,
+  userId: string,
+  supplierId: string
+): Promise<ScrapeResult[]> {
+  const supplier = await prisma.supplier.findFirst({
+    where: {
+      id: supplierId,
+      deletedAt: null,
+      OR: [{ scope: "PLATFORM" }, { tenantId }],
+    },
+  });
+  if (!supplier) throw new Error(`Supplier ${supplierId} not found`);
+
+  const credential = await prisma.supplierCredential.findFirst({
+    where: { tenantId, userId, supplierId, deletedAt: null, isActive: true },
+    select: { id: true },
+  });
+  if (!credential) {
+    throw new Error(
+      "No active credential found for this supplier. Please register your login in the Credentials section."
+    );
+  }
+
+  const products = await prisma.supplierProduct.findMany({
+    where: { supplierId, deletedAt: null },
+    select: {
+      id: true,
+      externalUrl: true,
+      referencePrice: true,
+      supplier: { select: { adapterType: true } },
+    },
+  });
+
+  const decrypted = await getDecryptedCredential(credential.id);
+
+  // Session is shared across all products for this supplier (login once).
+  let sessionEntry: SupplierSessionEntry | undefined;
+
+  const results: ScrapeResult[] = [];
+
+  for (const product of products) {
+    if (!product.externalUrl) continue;
+
+    const supplierInfo = (product as typeof product & { supplier: SupplierAdapterInfo }).supplier;
+    const domainScraper = getScraperForSupplier(supplierInfo, product.externalUrl);
+    if (!domainScraper) continue;
+
+    try {
+      if (sessionEntry === undefined) {
+        if (domainScraper.login && domainScraper.scrapeWithSession) {
+          const session = await domainScraper.login({
+            loginUrl: decrypted.loginUrl ?? undefined,
+            username: decrypted.username,
+            password: decrypted.password,
+          });
+          sessionEntry = session.authenticated
+            ? { session, scraper: domainScraper, credentialId: credential.id, decryptedCredential: decrypted }
+            : null;
+        } else {
+          sessionEntry = {
+            session: { authenticated: false },
+            scraper: domainScraper,
+            credentialId: credential.id,
+            decryptedCredential: decrypted,
+          };
+        }
+      }
+
+      if (sessionEntry === null) {
+        console.warn(`[scrapeSupplierForUser] login failed for supplierId=${supplierId} — skipping product ${product.id}`);
+        continue;
+      }
+
+      let scraped: ScrapedProduct;
+      if (sessionEntry.scraper.scrapeWithSession && sessionEntry.session.authenticated) {
+        scraped = await sessionEntry.scraper.scrapeWithSession(product.externalUrl, sessionEntry.session);
+      } else {
+        scraped = await credentialedScraper.scrapeWithCredential(product.externalUrl, {
+          loginUrl: decrypted.loginUrl,
+          username: decrypted.username,
+          password: decrypted.password,
+        });
+      }
+
+      if (scraped.price === null) {
+        console.warn(`[scrapeSupplierForUser] product ${product.id} price is null — skipping`);
+        continue;
+      }
+
+      const previousPrice = product.referencePrice;
+      const scrapedAt = new Date();
+
+      await prisma.supplierPriceRecord.create({
+        data: {
+          supplierProductId: product.id,
+          tenantId,
+          observedPrice: scraped.price,
+          source: "SCRAPED",
+          credentialId: credential.id,
+          observedAt: scrapedAt,
+        },
+      });
+
+      await recomputeReferencePrice(product.id);
+
+      const updated = await prisma.supplierProduct.findFirst({
+        where: { id: product.id },
+        select: { referencePrice: true },
+      });
+
+      const newPrice = updated?.referencePrice ?? scraped.price;
+
+      results.push({
+        supplierProductId: product.id,
+        previousPrice,
+        newPrice,
+        changed: newPrice !== previousPrice,
+        scrapedAt: scrapedAt.toISOString(),
+      });
+    } catch (err) {
+      console.error(
+        `[scrapeSupplierForUser] Failed to scrape product ${product.id}:`,
+        err instanceof Error ? err.message : String(err)
+      );
+    }
+  }
+
+  return results;
+}
+
+/**
  * Recompute the referencePrice for a supplier product.
  * Uses the most recent platform-scraped price record (tenantId = PLATFORM_SCRAPER_TENANT_ID).
  * Falls back to the most recent price record across all tenants if no platform record exists.

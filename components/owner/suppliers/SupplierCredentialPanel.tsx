@@ -102,7 +102,7 @@ export default function SupplierCredentialPanel({ supplierId, credential }: Prop
     setScraping(true);
     setScrapeResult(null);
     try {
-      const res = await fetch(`/api/owner/suppliers/${supplierId}/scrape`, {
+      const res = await fetch(`/api/owner/scrape/user`, {
         method: "POST",
       });
       const data = await res.json();
@@ -110,9 +110,10 @@ export default function SupplierCredentialPanel({ supplierId, credential }: Prop
         setScrapeResult(`Error: ${data.error ?? "Scrape failed"}`);
         return;
       }
-      const results = data.data as { changed: boolean }[];
-      const changed = results.filter((r) => r.changed).length;
-      setScrapeResult(`Scraped ${results.length} product(s). ${changed} price(s) updated.`);
+      const result = data.data as { scraped: number; failed: number };
+      setScrapeResult(
+        `Scraped ${result.scraped} product(s).${result.failed > 0 ? ` ${result.failed} failed.` : ""}`
+      );
       router.refresh();
     } catch {
       setScrapeResult("Network error.");
