@@ -371,7 +371,7 @@ export async function createOwnerMenuImportPreview(input: {
       summaryJson: {
         summary,
         items,
-      } as Prisma.InputJsonValue,
+      } as unknown as Prisma.InputJsonValue,
       createdByUserId: input.actorUserId,
     },
     select: {
@@ -588,7 +588,7 @@ export async function applyOwnerMenuImportRun(input: {
     data: {
       status: failed > 0 ? "FAILED" : "APPLIED",
       appliedAt: new Date(),
-      applyResultJson: applyResult as Prisma.InputJsonValue,
+      applyResultJson: applyResult as unknown as Prisma.InputJsonValue,
     },
   });
 
