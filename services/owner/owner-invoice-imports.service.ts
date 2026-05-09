@@ -28,6 +28,16 @@ const INGREDIENT_UNITS: IngredientUnit[] = [
 
 const INVOICE_UNIT_TOKEN_PATTERN =
   "(KG|GRAM|G|ML|L|LITER|EACH|EA|PIECE|PCS|PC|LB|OZ|TSP|TBSP|CUP)";
+const PLATFORM_INGREDIENT_LOOKUP_LIMIT = 1000;
+const MATCH_CONFIDENCE = {
+  SKU_EXACT: 96,
+  NAME_EXACT: 90,
+  NAME_FUZZY: 74,
+  LINKED_SELECTED: 92,
+  LINKED_NOT_SELECTED: 88,
+  ACTIVE_NAME: 83,
+  PLATFORM_NAME: 76,
+} as const;
 
 type ParsedInvoiceRow = {
   rawLine: string | null;
@@ -232,7 +242,11 @@ function findSupplierProductMatch(
       return normalizeText(code) === skuNormalized;
     });
     if (skuMatch) {
-      return { productId: skuMatch.id, confidence: 96, reason: "Matched supplier product by SKU/code." };
+      return {
+        productId: skuMatch.id,
+        confidence: MATCH_CONFIDENCE.SKU_EXACT,
+        reason: "Matched supplier product by SKU/code.",
+      };
     }
   }
 
@@ -243,7 +257,11 @@ function findSupplierProductMatch(
 
   const exact = products.find((product) => normalizeText(product.name) === nameNormalized);
   if (exact) {
-    return { productId: exact.id, confidence: 90, reason: "Matched supplier product by exact name." };
+    return {
+      productId: exact.id,
+      confidence: MATCH_CONFIDENCE.NAME_EXACT,
+      reason: "Matched supplier product by exact name.",
+    };
   }
 
   const fuzzy = products.find((product) => {
@@ -251,7 +269,11 @@ function findSupplierProductMatch(
     return productName.includes(nameNormalized) || nameNormalized.includes(productName);
   });
   if (fuzzy) {
-    return { productId: fuzzy.id, confidence: 74, reason: "Matched supplier product by normalized name similarity." };
+    return {
+      productId: fuzzy.id,
+      confidence: MATCH_CONFIDENCE.NAME_FUZZY,
+      reason: "Matched supplier product by normalized name similarity.",
+    };
   }
 
   return { productId: null, confidence: 0, reason: "No supplier product match found." };
@@ -388,7 +410,7 @@ export async function createOwnerInvoiceImport(
       where: { isActive: true, deletedAt: null },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
-      take: 1000,
+      take: PLATFORM_INGREDIENT_LOOKUP_LIMIT,
     }),
   ]);
 
@@ -446,10 +468,10 @@ export async function createOwnerInvoiceImport(
           ingredientId = null;
           needsOwnerIngredientImport = true;
           statusReason = "Matched supplier product link, but ingredient is not active for this owner.";
-          confidence = Math.max(confidence, 88);
+          confidence = Math.max(confidence, MATCH_CONFIDENCE.LINKED_NOT_SELECTED);
         } else {
           statusReason = "Matched supplier product and linked active ingredient.";
-          confidence = Math.max(confidence, 92);
+          confidence = Math.max(confidence, MATCH_CONFIDENCE.LINKED_SELECTED);
         }
       }
     } else if (row.detectedName) {
@@ -460,7 +482,7 @@ export async function createOwnerInvoiceImport(
       if (activeByName) {
         ingredientId = activeByName.id;
         statusReason = "Matched active ingredient by name.";
-        confidence = Math.max(confidence, 83);
+        confidence = Math.max(confidence, MATCH_CONFIDENCE.ACTIVE_NAME);
       } else {
         const platformByName = platformIngredients.find(
           (ingredient) => normalizeText(ingredient.name) === normalized
@@ -469,7 +491,7 @@ export async function createOwnerInvoiceImport(
           platformIngredientId = platformByName.id;
           needsOwnerIngredientImport = true;
           statusReason = "Matched platform ingredient by name, but owner has not activated it.";
-          confidence = Math.max(confidence, 76);
+          confidence = Math.max(confidence, MATCH_CONFIDENCE.PLATFORM_NAME);
         }
       }
     }
@@ -567,7 +589,7 @@ export async function getOwnerInvoiceImportDetail(
       where: { isActive: true, deletedAt: null },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
-      take: 1000,
+      take: PLATFORM_INGREDIENT_LOOKUP_LIMIT,
     }),
   ]);
 
@@ -690,7 +712,6 @@ export async function addOwnerInvoiceImportManualRow(
 
 async function resolveIngredientForApply(
   tenantId: string,
-  batchId: string,
   row: {
     ingredientId: string | null;
     platformIngredientId: string | null;
@@ -725,7 +746,7 @@ async function resolveIngredientForApply(
       data: {
         name: row.provisionalIngredientName.trim(),
         category: null,
-        notes: `Auto-created from invoice import batch ${batchId} for tenant ${tenantId}.`,
+        notes: "Auto-created provisional ingredient from owner invoice import review.",
         unit: "EACH",
         isActive: true,
       },
@@ -787,7 +808,7 @@ export async function applyOwnerInvoiceImport(
           throw new Error("Selected supplier product is not valid for this supplier.");
         }
 
-        const ingredientId = await resolveIngredientForApply(tenantId, batch.id, row, tx);
+        const ingredientId = await resolveIngredientForApply(tenantId, row, tx);
         if (!ingredientId) {
           throw new Error("Ingredient is required to apply price updates.");
         }
