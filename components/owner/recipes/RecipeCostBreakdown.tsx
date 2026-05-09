@@ -228,7 +228,7 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
               ))}
               <tr className="bg-gray-50 border-t-2 border-gray-200">
                 <td colSpan={canEdit ? 5 : 4} className="px-5 py-3 text-right text-sm font-semibold text-gray-700">
-                  {detail.productComponents.length > 0 ? "Ingredients Subtotal" : "Total"}
+                  Ingredients Subtotal
                 </td>
                 <td className="px-5 py-3 text-right font-bold text-gray-900">
                   {formatCostRounded(ingredientsSubtotal)}
