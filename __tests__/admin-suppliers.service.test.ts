@@ -343,6 +343,13 @@ describe("normalizeSupplierProductUrl", () => {
     );
     expect(normalized).toBe("https://example.com/products/abc?a=1&b=2");
   });
+
+  it("preserves hash-router product identity for SPA URLs", () => {
+    const normalized = normalizeSupplierProductUrl(
+      "https://www.mybidfood.co.nz/#/products/detail/110262"
+    );
+    expect(normalized).toBe("https://www.mybidfood.co.nz/products/detail/110262");
+  });
 });
 
 describe("importPlatformSupplierProducts", () => {

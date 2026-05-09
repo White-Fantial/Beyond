@@ -49,12 +49,24 @@ export interface BulkSupplierProductImportInput {
   unit: IngredientUnit;
 }
 
+function trimTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47) {
+    end -= 1;
+  }
+  return value.slice(0, end);
+}
+
 export function normalizeSupplierProductUrl(rawUrl: string | null | undefined): string | null {
   const trimmed = rawUrl?.trim();
   if (!trimmed) return null;
 
   try {
     const parsed = new URL(trimmed);
+    const hashRouteRaw = parsed.hash.startsWith("#/")
+      ? trimTrailingSlashes(parsed.hash.slice(1))
+      : "";
+    const hashRoute = hashRouteRaw || null;
     parsed.hash = "";
     parsed.username = "";
     parsed.password = "";
@@ -67,7 +79,10 @@ export function normalizeSupplierProductUrl(rawUrl: string | null | undefined): 
       parsed.port = "";
     }
 
-    parsed.pathname = parsed.pathname.replace(/\/+$/, "") || "/";
+    const normalizedPathname = trimTrailingSlashes(parsed.pathname) || "/";
+    parsed.pathname = hashRoute
+      ? `${normalizedPathname === "/" ? "" : normalizedPathname}${hashRoute}`
+      : normalizedPathname;
     const normalizedParams = [...parsed.searchParams.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, value]) => `${key}=${value}`)
