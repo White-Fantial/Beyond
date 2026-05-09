@@ -3481,6 +3481,29 @@ enum SupplierPriceSource {
   INVOICE_IMPORT // Derived from an imported invoice document
 }
 
+enum OwnerInvoiceImportBatchStatus {
+  DRAFT
+  PREVIEWED
+  APPLIED
+  PARTIALLY_APPLIED
+  FAILED
+}
+
+enum OwnerInvoiceImportRowStatus {
+  MATCHED
+  PRODUCT_ONLY
+  PLATFORM_CANDIDATE
+  UNMATCHED
+  INCOMPLETE
+}
+
+enum OwnerInvoiceImportRowApplyStatus {
+  PENDING
+  APPLIED
+  FAILED
+  SKIPPED
+}
+
 enum IngredientUnit {
   GRAM
   KG
@@ -3817,6 +3840,60 @@ model SupplierPriceRecord {
   @@index([supplierProductId, tenantId])
   @@index([tenantId])
   @@map("supplier_price_records")
+}
+
+model OwnerInvoiceImportBatch {
+  id             String                       @id @default(uuid())
+  tenantId       String
+  userId         String
+  supplierId     String
+  sourceFileName String
+  sourceFileMime String?
+  sourceFileSize Int
+  status         OwnerInvoiceImportBatchStatus @default(DRAFT)
+  extractionNote String?
+  appliedAt      DateTime?
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+
+  rows OwnerInvoiceImportRow[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@index([supplierId])
+  @@map("owner_invoice_import_batches")
+}
+
+model OwnerInvoiceImportRow {
+  id                         String                         @id @default(uuid())
+  batchId                    String
+  rowNumber                  Int
+  rawLine                    String?
+  detectedName               String?
+  detectedSku                String?
+  detectedQuantity           Decimal?                       @db.Decimal(12, 4)
+  detectedUnit               IngredientUnit?
+  detectedPrice              Int?
+  rowStatus                  OwnerInvoiceImportRowStatus
+  confidence                 Int                            @default(0)
+  matchReason                String?
+  supplierProductId          String?
+  ingredientId               String?
+  platformIngredientId       String?
+  needsOwnerIngredientImport Boolean                        @default(false)
+  createProvisionalIngredient Boolean                       @default(false)
+  provisionalIngredientName  String?
+  applyStatus                OwnerInvoiceImportRowApplyStatus @default(PENDING)
+  applyError                 String?
+  createdAt                  DateTime                       @default(now())
+  updatedAt                  DateTime                       @updatedAt
+
+  batch OwnerInvoiceImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, rowNumber])
+  @@index([batchId, rowStatus])
+  @@index([batchId, applyStatus])
+  @@map("owner_invoice_import_rows")
 }
 
 // ─── Marketplace Enums ────────────────────────────────────────────────────────

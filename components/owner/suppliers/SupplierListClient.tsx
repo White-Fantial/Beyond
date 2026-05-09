@@ -76,18 +76,26 @@ export default function SupplierListClient({ suppliers, credentials }: Props) {
           </p>
         </div>
         <div className="flex flex-col items-end gap-1.5 shrink-0">
-          <button
-            onClick={handleRefreshPrices}
-            disabled={refreshing || !hasCredentials}
-            title={
-              !hasCredentials
-                ? "Add supplier credentials first to enable price refreshing"
-                : undefined
-            }
-            className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition whitespace-nowrap"
-          >
-            {refreshing ? "Refreshing…" : "🔄 Refresh My Prices"}
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/owner/suppliers/import-invoice"
+              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition whitespace-nowrap"
+            >
+              Import Invoice
+            </Link>
+            <button
+              onClick={handleRefreshPrices}
+              disabled={refreshing || !hasCredentials}
+              title={
+                !hasCredentials
+                  ? "Add supplier credentials first to enable price refreshing"
+                  : undefined
+              }
+              className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 disabled:opacity-50 transition whitespace-nowrap"
+            >
+              {refreshing ? "Refreshing…" : "🔄 Refresh My Prices"}
+            </button>
+          </div>
           {!hasCredentials && (
             <p className="text-xs text-gray-500">
               Add credentials on a supplier row to enable this.
