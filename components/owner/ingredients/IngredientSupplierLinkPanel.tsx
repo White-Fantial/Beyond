@@ -4,9 +4,15 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { IngredientSupplierLink } from "@/types/owner-suppliers";
 import type { Supplier, SupplierProduct } from "@/types/owner-suppliers";
+import {
+  getUnitConversionFactor,
+  INGREDIENT_UNIT_LABELS,
+  type IngredientUnit,
+} from "@/types/owner-ingredients";
 
 interface Props {
   ingredientId: string;
+  ingredientUnit: IngredientUnit;
   initialLinks: IngredientSupplierLink[];
 }
 
@@ -25,6 +31,24 @@ function formatDate(iso: string | null) {
   });
 }
 
+function resolveUnitPriceMillicents(
+  packagePrice: number,
+  purchaseQty: number,
+  supplierUnit: IngredientUnit,
+  ingredientUnit: IngredientUnit
+): number | null {
+  if (purchaseQty <= 0) return null;
+  const factor = getUnitConversionFactor(supplierUnit, ingredientUnit);
+  if (factor === undefined) return null;
+  const value = packagePrice / purchaseQty / factor;
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function formatUnitPrice(millicents: number | null) {
+  if (millicents === null) return "N/A";
+  return `$${(millicents / 100000).toFixed(4)}`;
+}
+
 interface SupplierSearchResult {
   items: Supplier[];
   total: number;
@@ -36,6 +60,7 @@ interface ProductSearchResult {
 
 export default function IngredientSupplierLinkPanel({
   ingredientId,
+  ingredientUnit,
   initialLinks,
 }: Props) {
   const router = useRouter();
@@ -53,10 +78,19 @@ export default function IngredientSupplierLinkPanel({
   const [isPending, startTransition] = useTransition();
 
   const cheapestLink = links.length > 1
-    ? links.reduce((min, l) =>
-        l.referencePrice > 0 && l.referencePrice < (min?.referencePrice ?? Infinity) ? l : min,
-        null as IngredientSupplierLink | null
-      )
+    ? links.reduce((min, link) => {
+        const unitPrice = resolveUnitPriceMillicents(
+          link.referencePrice,
+          link.purchaseQty,
+          link.unit,
+          ingredientUnit
+        );
+        if (unitPrice === null) return min;
+        if (min === null || unitPrice < min.unitPrice) {
+          return { id: link.id, unitPrice };
+        }
+        return min;
+      }, null as { id: string; unitPrice: number } | null)
     : null;
 
   async function searchSuppliers() {
@@ -209,11 +243,18 @@ export default function IngredientSupplierLinkPanel({
         </p>
       ) : (
         <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
-          {links.map((link) => (
-            <div
-              key={link.id}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
-            >
+          {links.map((link) => {
+            const unitPrice = resolveUnitPriceMillicents(
+              link.referencePrice,
+              link.purchaseQty,
+              link.unit,
+              ingredientUnit
+            );
+            return (
+              <div
+                key={link.id}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+              >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-medium text-gray-900 truncate">
@@ -238,6 +279,13 @@ export default function IngredientSupplierLinkPanel({
                 </div>
                 <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
                   <span className="font-medium">{formatPrice(link.referencePrice)}</span>
+                  <span>
+                    Pack: {link.purchaseQty} {INGREDIENT_UNIT_LABELS[link.unit] ?? link.unit}
+                  </span>
+                  <span>
+                    Unit: {formatUnitPrice(unitPrice)} /{" "}
+                    {INGREDIENT_UNIT_LABELS[ingredientUnit] ?? ingredientUnit}
+                  </span>
                   <span>Last scraped: {formatDate(link.lastScrapedAt)}</span>
                 </div>
               </div>
@@ -265,8 +313,9 @@ export default function IngredientSupplierLinkPanel({
                   </button>
                 )}
               </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -322,23 +371,38 @@ export default function IngredientSupplierLinkPanel({
           {products.length > 0 && (
             <div className="space-y-1 max-h-40 overflow-y-auto">
               <p className="text-xs text-gray-500">Select a product:</p>
-              {products.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setSelectedProductId(p.id)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition-colors ${
+              {products.map((p) => {
+                const unitPrice = resolveUnitPriceMillicents(
+                  p.referencePrice,
+                  p.purchaseQty,
+                  p.unit,
+                  ingredientUnit
+                );
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setSelectedProductId(p.id)}
+                   className={`w-full text-left px-3 py-2 rounded-lg text-sm border transition-colors ${
                     selectedProductId === p.id
                       ? "border-brand-500 bg-brand-50 text-brand-700"
                       : "border-gray-200 hover:border-gray-300 hover:bg-white"
                   }`}
-                >
-                  <span className="font-medium">{p.name}</span>
-                  <span className="ml-2 text-gray-500 text-xs">
-                    {formatPrice(p.referencePrice)}
-                  </span>
-                </button>
-              ))}
+                 >
+                   <span className="font-medium">{p.name}</span>
+                   <span className="ml-2 text-gray-500 text-xs">
+                     {formatPrice(p.referencePrice)}
+                   </span>
+                   <span className="ml-2 text-gray-500 text-xs">
+                     • Pack: {p.purchaseQty} {INGREDIENT_UNIT_LABELS[p.unit] ?? p.unit}
+                   </span>
+                    <span className="ml-2 text-gray-500 text-xs">
+                      • Unit: {formatUnitPrice(unitPrice)} /{" "}
+                      {INGREDIENT_UNIT_LABELS[ingredientUnit] ?? ingredientUnit}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
 
