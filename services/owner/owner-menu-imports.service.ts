@@ -493,9 +493,9 @@ export async function applyOwnerMenuImportRun(input: {
     select: { externalId: true, normalizedName: true },
   });
 
-  const namedCategories = externalCategories.filter((c) => c.normalizedName != null);
+  const categoriesWithName = externalCategories.filter((c) => c.normalizedName != null);
   const upsertedCategories = await Promise.all(
-    namedCategories.map((exCat) =>
+    categoriesWithName.map((exCat) =>
       prisma.tenantProductCategory
         .upsert({
           where: { tenantId_name: { tenantId: run.tenantId, name: exCat.normalizedName! } },
@@ -531,25 +531,36 @@ export async function applyOwnerMenuImportRun(input: {
     });
     const existingMgByName = new Map(existingMgs.map((g) => [g.name, g.id]));
 
+    // Batch-create any modifier groups that don't exist yet, then re-fetch their IDs.
+    const newMgNames = externalModifierGroups
+      .map((g) => g.normalizedName)
+      .filter((n): n is string => n != null && !existingMgByName.has(n));
+
+    if (newMgNames.length > 0) {
+      await prisma.tenantModifierGroup.createMany({
+        data: newMgNames.map((name) => ({
+          tenantId: run.tenantId,
+          name,
+          selectionMin: 0,
+          isRequired: false,
+          isActive: true,
+        })),
+        skipDuplicates: true,
+      });
+
+      const newlyCreated = await prisma.tenantModifierGroup.findMany({
+        where: { tenantId: run.tenantId, deletedAt: null, name: { in: newMgNames } },
+        select: { id: true, name: true },
+      });
+      for (const g of newlyCreated) {
+        existingMgByName.set(g.name, g.id);
+      }
+    }
+
     for (const exMg of externalModifierGroups) {
       if (!exMg.normalizedName) continue;
-      const existingId = existingMgByName.get(exMg.normalizedName);
-      if (existingId) {
-        mgIdMap.set(exMg.externalId, existingId);
-      } else {
-        const created = await prisma.tenantModifierGroup.create({
-          data: {
-            tenantId: run.tenantId,
-            name: exMg.normalizedName,
-            selectionMin: 0,
-            isRequired: false,
-            isActive: true,
-          },
-          select: { id: true },
-        });
-        mgIdMap.set(exMg.externalId, created.id);
-        existingMgByName.set(exMg.normalizedName, created.id);
-      }
+      const mgId = existingMgByName.get(exMg.normalizedName);
+      if (mgId) mgIdMap.set(exMg.externalId, mgId);
     }
   }
 

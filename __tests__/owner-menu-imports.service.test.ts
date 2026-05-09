@@ -25,7 +25,7 @@ vi.mock("@/lib/prisma", () => ({
     },
     tenantModifierGroup: {
       findMany: vi.fn(),
-      create: vi.fn(),
+      createMany: vi.fn(),
     },
     tenantModifierOption: {
       findMany: vi.fn(),
@@ -73,7 +73,7 @@ const prismaMock = prisma as unknown as {
   externalCatalogProduct: { findMany: ReturnType<typeof vi.fn> };
   externalCatalogProductModifierGroupLink: { findMany: ReturnType<typeof vi.fn> };
   tenantProductCategory: { upsert: ReturnType<typeof vi.fn> };
-  tenantModifierGroup: { findMany: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> };
+  tenantModifierGroup: { findMany: ReturnType<typeof vi.fn>; createMany: ReturnType<typeof vi.fn> };
   tenantModifierOption: { findMany: ReturnType<typeof vi.fn>; createMany: ReturnType<typeof vi.fn> };
   tenantProductModifierGroup: { createMany: ReturnType<typeof vi.fn> };
   menuImportProductMap: {
@@ -126,7 +126,7 @@ describe("owner-menu-imports.service", () => {
 
     prismaMock.tenantProductCategory.upsert.mockResolvedValue({ id: "cat-internal-1" });
     prismaMock.tenantModifierGroup.findMany.mockResolvedValue([]);
-    prismaMock.tenantModifierGroup.create.mockResolvedValue({ id: "mg-internal-1" });
+    prismaMock.tenantModifierGroup.createMany.mockResolvedValue({ count: 0 });
     prismaMock.tenantModifierOption.findMany.mockResolvedValue([]);
     prismaMock.tenantModifierOption.createMany.mockResolvedValue({ count: 0 });
     prismaMock.tenantProductModifierGroup.createMany.mockResolvedValue({ count: 0 });
@@ -345,8 +345,11 @@ describe("owner-menu-imports.service", () => {
     prismaMock.externalCatalogModifierGroup.findMany.mockResolvedValue([
       { externalId: "mg-ext-1", normalizedName: "Size" },
     ]);
-    prismaMock.tenantModifierGroup.findMany.mockResolvedValue([]);
-    prismaMock.tenantModifierGroup.create.mockResolvedValue({ id: "mg-int-1" });
+    // No existing modifier groups → will batch-create then re-fetch
+    prismaMock.tenantModifierGroup.findMany
+      .mockResolvedValueOnce([])               // first call: lookup existing
+      .mockResolvedValueOnce([{ id: "mg-int-1", name: "Size" }]); // second call: after createMany
+    prismaMock.tenantModifierGroup.createMany.mockResolvedValue({ count: 1 });
 
     prismaMock.externalCatalogModifierOption.findMany.mockResolvedValue([
       {
@@ -365,9 +368,11 @@ describe("owner-menu-imports.service", () => {
       actorUserId: "user-1",
     });
 
-    expect(prismaMock.tenantModifierGroup.create).toHaveBeenCalledWith(
+    expect(prismaMock.tenantModifierGroup.createMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ name: "Size", tenantId: "tenant-1" }),
+        data: expect.arrayContaining([
+          expect.objectContaining({ name: "Size", tenantId: "tenant-1" }),
+        ]),
       })
     );
 
@@ -412,6 +417,7 @@ describe("owner-menu-imports.service", () => {
     prismaMock.externalCatalogModifierGroup.findMany.mockResolvedValue([
       { externalId: "mg-ext-1", normalizedName: "Size" },
     ]);
+    // "Size" already exists in the tenant
     prismaMock.tenantModifierGroup.findMany.mockResolvedValue([{ id: "mg-int-1", name: "Size" }]);
 
     prismaMock.tenantCatalogProduct.create.mockResolvedValue({ id: "tp-1", name: "Latte", basePriceAmount: 500000 });
