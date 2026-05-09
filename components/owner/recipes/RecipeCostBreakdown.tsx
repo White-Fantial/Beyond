@@ -36,6 +36,9 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
   const [editingIngredientId, setEditingIngredientId] = useState<string | null>(null);
   const [deletingIngredientId, setDeletingIngredientId] = useState<string | null>(null);
 
+  const ingredientsSubtotal = detail.ingredients.reduce((sum, i) => sum + i.lineCost, 0);
+  const componentsSubtotal = detail.productComponents.reduce((sum, c) => sum + c.lineCost, 0);
+
   async function handleDeleteIngredient(ingredientId: string) {
     setDeletingIngredientId(ingredientId);
     try {
@@ -225,10 +228,10 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
               ))}
               <tr className="bg-gray-50 border-t-2 border-gray-200">
                 <td colSpan={canEdit ? 5 : 4} className="px-5 py-3 text-right text-sm font-semibold text-gray-700">
-                  Total
+                  Ingredients Subtotal
                 </td>
                 <td className="px-5 py-3 text-right font-bold text-gray-900">
-                  {formatCostRounded(detail.totalCost)}
+                  {formatCostRounded(ingredientsSubtotal)}
                 </td>
               </tr>
             </tbody>
@@ -246,10 +249,11 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
       {/* Product component breakdown */}
       {detail.productComponents.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
+          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
               🧩 Product Components
             </h3>
+            <span className="text-xs text-gray-400">Included in Total Cost</span>
           </div>
           <table className="w-full text-sm">
             <thead>
@@ -282,6 +286,14 @@ export default function RecipeCostBreakdown({ detail, canEdit }: Props) {
                   </td>
                 </tr>
               ))}
+              <tr className="bg-gray-50 border-t-2 border-gray-200">
+                <td colSpan={4} className="px-5 py-3 text-right text-sm font-semibold text-gray-700">
+                  Components Subtotal
+                </td>
+                <td className="px-5 py-3 text-right font-bold text-gray-900">
+                  {formatCostRounded(componentsSubtotal)}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>

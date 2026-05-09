@@ -118,6 +118,19 @@ type RawRecipeProductComponent = {
       yieldQty: number;
       yieldUnit: string;
       ingredients: RawRecipeIngredient[];
+      /** Nested product components within the sub-product's recipe (1 level deep). */
+      productComponents: Array<{
+        tenantProductId: string;
+        quantity: { toNumber: () => number } | number;
+        unit: string;
+        tenantProduct: {
+          id: string;
+          recipes: Array<{
+            yieldQty: number;
+            ingredients: RawRecipeIngredient[];
+          }>;
+        };
+      }>;
     }>;
   };
 };
@@ -248,7 +261,7 @@ const ingredientInclude = {
   },
 } as const;
 
-/** Include shape for product components — brings in enough data to resolve cost. */
+/** Include shape for product components — brings in enough data to resolve cost (1 level of nesting). */
 const productComponentInclude = {
   tenantProduct: {
     select: {
@@ -263,6 +276,29 @@ const productComponentInclude = {
           yieldUnit: true,
           ingredients: {
             include: ingredientInclude,
+          },
+          // Fetch nested product components so their costs are included in the
+          // sub-product's costPerUnit calculation.
+          productComponents: {
+            select: {
+              tenantProductId: true,
+              quantity: true,
+              unit: true,
+              tenantProduct: {
+                select: {
+                  id: true,
+                  recipes: {
+                    where: { deletedAt: null },
+                    select: {
+                      yieldQty: true,
+                      ingredients: { include: ingredientInclude },
+                    },
+                    orderBy: { createdAt: "asc" as const },
+                    take: 1,
+                  },
+                },
+              },
+            },
           },
         },
         orderBy: { createdAt: "asc" as const },
@@ -334,7 +370,7 @@ async function resolveCosts(
 
 /**
  * For each product component, compute the sub-product's costPerUnit by resolving
- * its own recipe's ingredient costs.
+ * its own recipe's ingredient costs AND its own product component costs (1 level deep).
  * Returns a map: tenantProductId → costPerUnit (minor units / yield unit).
  */
 async function resolveProductComponentCosts(
@@ -344,15 +380,27 @@ async function resolveProductComponentCosts(
   const result = new Map<string, number>();
   if (!components?.length) return result;
 
-  // Gather all ingredient rows from all sub-product recipes in one bulk call
+  // Gather all ingredient rows from all sub-product recipes (including nested ones)
+  // for a single bulk cost-resolution call.
   const allIngredients: RawRecipeIngredient[] = [];
   for (const comp of components) {
     for (const recipe of comp.tenantProduct.recipes ?? []) {
       allIngredients.push(...(recipe.ingredients as RawRecipeIngredient[]));
+      // Collect nested ingredient rows so their prices are fetched in the bulk call.
+      for (const nested of recipe.productComponents ?? []) {
+        for (const nestedRecipe of nested.tenantProduct.recipes ?? []) {
+          allIngredients.push(...(nestedRecipe.ingredients as RawRecipeIngredient[]));
+        }
+      }
     }
   }
 
   const ingredientCostMap = await resolveCosts(tenantId, allIngredients);
+
+  /** Compute total ingredient line-cost for a recipe given the pre-resolved price map. */
+  function ingredientLineCostTotal(ings: RawRecipeIngredient[]): number {
+    return ings.reduce((sum, ri) => sum + toRecipeIngredientWithCost(ri, ingredientCostMap).lineCost, 0);
+  }
 
   for (const comp of components) {
     const recipes = comp.tenantProduct.recipes ?? [];
@@ -361,11 +409,24 @@ async function resolveProductComponentCosts(
       continue;
     }
     const recipe = recipes[0];
-    const rawIngs = recipe.ingredients as RawRecipeIngredient[];
-    const totalCost = rawIngs.reduce((sum, ri) => {
-      const mapped = toRecipeIngredientWithCost(ri, ingredientCostMap);
-      return sum + mapped.lineCost;
-    }, 0);
+
+    // Sum ingredient costs for this sub-product's recipe.
+    let totalCost = ingredientLineCostTotal(recipe.ingredients as RawRecipeIngredient[]);
+
+    // Sum nested product component costs (1 level deep).
+    for (const nested of recipe.productComponents ?? []) {
+      const nestedQty =
+        typeof nested.quantity === "object" ? nested.quantity.toNumber() : nested.quantity;
+      const nestedRecipes = nested.tenantProduct.recipes ?? [];
+      if (nestedRecipes.length > 0) {
+        const nestedRecipe = nestedRecipes[0];
+        const nestedTotalCost = ingredientLineCostTotal(nestedRecipe.ingredients as RawRecipeIngredient[]);
+        const nestedCostPerUnit =
+          nestedRecipe.yieldQty > 0 ? Math.round(nestedTotalCost / nestedRecipe.yieldQty) : 0;
+        totalCost += Math.round(nestedQty * nestedCostPerUnit);
+      }
+    }
+
     const subProductCostPerUnit =
       recipe.yieldQty > 0 ? Math.round(totalCost / recipe.yieldQty) : 0;
     result.set(comp.tenantProductId, subProductCostPerUnit);

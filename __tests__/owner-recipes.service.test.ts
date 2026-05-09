@@ -567,6 +567,91 @@ describe("createRecipe with productComponents", () => {
     expect(result.productComponents[0].tenantProductName).toBe("Bulgogi Filling");
   });
 
+  it("includes product component lineCost in recipe totalCost and costPerUnit", async () => {
+    // Sub-product has mockIngRow (sp-1, 250g GRAM, price=5000 millicents/GRAM)
+    // → effectiveCost=5000 millicents/g → lineCost=Math.round(250*5000/1000)=1250 cents
+    // → subProductCostPerUnit=Math.round(1250/1)=1250 cents
+    // qty=2 → component lineCost=Math.round(2*1250)=2500 cents
+    // parent recipe: no ingredients, yieldQty=12
+    // → totalCost=2500, costPerUnit=Math.round(2500/12)=208
+    const compWithCostRow = {
+      id: "pc-cost",
+      recipeId: "recipe-1",
+      tenantProductId: "tp-comp-cost",
+      quantity: { toNumber: () => 2 },
+      unit: "EACH",
+      tenantProduct: {
+        id: "tp-comp-cost",
+        name: "Filling with Cost",
+        tenantId: TENANT,
+        recipes: [
+          {
+            tenantCatalogProductId: "tp-comp-cost",
+            yieldQty: 1,
+            yieldUnit: "EACH",
+            ingredients: [{ ...mockIngRow, recipeId: "sub-recipe-x" }],
+            productComponents: [],
+          },
+        ],
+      },
+    };
+
+    mockPrisma.recipe.findFirst.mockResolvedValue({
+      ...mockRecipeRow,
+      ingredients: [],
+      productComponents: [compWithCostRow],
+    });
+
+    const result = await getRecipe(TENANT, "recipe-1");
+
+    expect(result.productComponents).toHaveLength(1);
+    expect(result.productComponents[0].tenantProductCostPerUnit).toBe(1250);
+    expect(result.productComponents[0].lineCost).toBe(2500);
+    // totalCost must include the product component's lineCost
+    expect(result.totalCost).toBe(2500);
+    expect(result.costPerUnit).toBe(Math.round(2500 / 12));
+  });
+
+  it("adds product component costs on top of ingredient costs in totalCost", async () => {
+    // Parent: mockIngRow ingredient → lineCost=1250 cents
+    // + product component (sub-product yields 1, no ingredients → lineCost=0)
+    // → totalCost=1250 (product component has 0 cost, so same as ingredient-only)
+    // But with a component that HAS cost (1250 lineCost), totalCost=1250+2500=3750
+    const compWithCostRow = {
+      id: "pc-cost2",
+      recipeId: "recipe-1",
+      tenantProductId: "tp-comp-cost2",
+      quantity: { toNumber: () => 2 },
+      unit: "EACH",
+      tenantProduct: {
+        id: "tp-comp-cost2",
+        name: "Costly Component",
+        tenantId: TENANT,
+        recipes: [
+          {
+            tenantCatalogProductId: "tp-comp-cost2",
+            yieldQty: 1,
+            yieldUnit: "EACH",
+            ingredients: [{ ...mockIngRow, recipeId: "sub-recipe-y" }],
+            productComponents: [],
+          },
+        ],
+      },
+    };
+
+    mockPrisma.recipe.findFirst.mockResolvedValue({
+      ...mockRecipeRow,
+      ingredients: [mockIngRow],
+      productComponents: [compWithCostRow],
+    });
+
+    const result = await getRecipe(TENANT, "recipe-1");
+
+    // ingredient lineCost=1250, component lineCost=2500 → totalCost=3750
+    expect(result.totalCost).toBe(3750);
+    expect(result.costPerUnit).toBe(Math.round(3750 / 12));
+  });
+
   it("omits productComponents key when none provided", async () => {
     mockPrisma.recipe.create.mockResolvedValue({
       ...mockRecipeRow,
