@@ -733,7 +733,9 @@ export async function applyOwnerInvoiceImport(
   let skippedCount = 0;
 
   for (const row of batch.rows) {
-    if (!row.supplierProductId || row.detectedPrice === null || row.detectedPrice <= 0) {
+    const supplierProductId = row.supplierProductId;
+    const detectedPrice = row.detectedPrice;
+    if (!supplierProductId || detectedPrice === null || detectedPrice <= 0) {
       await prisma.ownerInvoiceImportRow.update({
         where: { id: row.id },
         data: {
@@ -749,7 +751,7 @@ export async function applyOwnerInvoiceImport(
       await prisma.$transaction(async (tx) => {
         const product = await tx.supplierProduct.findFirst({
           where: {
-            id: row.supplierProductId!,
+            id: supplierProductId,
             supplierId: batch.supplierId,
             deletedAt: null,
           },
@@ -778,7 +780,7 @@ export async function applyOwnerInvoiceImport(
         const existingLink = await tx.ingredientSupplierLink.findFirst({
           where: {
             ingredientId,
-            supplierProductId: row.supplierProductId,
+            supplierProductId,
             OR: [{ tenantId }, { tenantId: null }],
           },
           select: { id: true },
@@ -787,7 +789,7 @@ export async function applyOwnerInvoiceImport(
           await tx.ingredientSupplierLink.create({
             data: {
               ingredientId,
-              supplierProductId: row.supplierProductId,
+              supplierProductId,
               tenantId,
               isPreferred: false,
             },
@@ -796,9 +798,9 @@ export async function applyOwnerInvoiceImport(
 
         await tx.supplierPriceRecord.create({
           data: {
-            supplierProductId: row.supplierProductId,
+            supplierProductId,
             tenantId,
-            observedPrice: row.detectedPrice,
+            observedPrice: detectedPrice,
             source: "INVOICE_IMPORT",
             observedAt: new Date(),
             notes: `Invoice import batch ${batch.id}, row ${row.rowNumber}`,
