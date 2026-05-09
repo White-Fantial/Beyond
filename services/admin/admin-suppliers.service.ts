@@ -63,9 +63,10 @@ export function normalizeSupplierProductUrl(rawUrl: string | null | undefined): 
 
   try {
     const parsed = new URL(trimmed);
-    const hashRoute = parsed.hash.startsWith("#/")
-      ? trimTrailingSlashes(parsed.hash.slice(1)) || "/"
-      : null;
+    const hashRouteRaw = parsed.hash.startsWith("#/")
+      ? trimTrailingSlashes(parsed.hash.slice(1))
+      : "";
+    const hashRoute = hashRouteRaw || null;
     parsed.hash = "";
     parsed.username = "";
     parsed.password = "";
