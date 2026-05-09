@@ -395,7 +395,7 @@ export async function createOwnerInvoiceImport(
 ): Promise<OwnerInvoiceImportDetail> {
   await assertSupplierAccess(tenantId, input.supplierId);
 
-  const [products, activeSelections, platformIngredients] = await Promise.all([
+  const [products, activeSelections, platformIngredients, platformIngredientTotal] = await Promise.all([
     prisma.supplierProduct.findMany({
       where: { supplierId: input.supplierId, deletedAt: null },
       select: { id: true, name: true, unit: true, referencePrice: true, metadata: true },
@@ -411,6 +411,9 @@ export async function createOwnerInvoiceImport(
       select: { id: true, name: true },
       orderBy: { name: "asc" },
       take: PLATFORM_INGREDIENT_LOOKUP_LIMIT,
+    }),
+    prisma.ingredient.count({
+      where: { isActive: true, deletedAt: null },
     }),
   ]);
 
@@ -525,6 +528,16 @@ export async function createOwnerInvoiceImport(
     };
   });
 
+  const extractionNote =
+    platformIngredientTotal > PLATFORM_INGREDIENT_LOOKUP_LIMIT
+      ? [
+          parsed.extractionNote,
+          `Ingredient candidate matching uses the first ${PLATFORM_INGREDIENT_LOOKUP_LIMIT} platform ingredients alphabetically.`,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : parsed.extractionNote;
+
   const batch = await prisma.ownerInvoiceImportBatch.create({
     data: {
       tenantId,
@@ -534,7 +547,7 @@ export async function createOwnerInvoiceImport(
       sourceFileMime: input.fileMimeType,
       sourceFileSize: input.fileSize,
       status: "PREVIEWED",
-      extractionNote: parsed.extractionNote,
+      extractionNote,
       rows: rowsToCreate.length > 0 ? { create: rowsToCreate } : undefined,
     },
     include: { rows: { orderBy: { rowNumber: "asc" } } },
@@ -712,6 +725,7 @@ export async function addOwnerInvoiceImportManualRow(
 
 async function resolveIngredientForApply(
   tenantId: string,
+  sourceFileName: string,
   row: {
     ingredientId: string | null;
     platformIngredientId: string | null;
@@ -746,7 +760,7 @@ async function resolveIngredientForApply(
       data: {
         name: row.provisionalIngredientName.trim(),
         category: null,
-        notes: "Auto-created provisional ingredient from owner invoice import review.",
+        notes: `Auto-created from supplier invoice file "${sourceFileName}".`,
         unit: "EACH",
         isActive: true,
       },
@@ -808,7 +822,7 @@ export async function applyOwnerInvoiceImport(
           throw new Error("Selected supplier product is not valid for this supplier.");
         }
 
-        const ingredientId = await resolveIngredientForApply(tenantId, row, tx);
+        const ingredientId = await resolveIngredientForApply(tenantId, batch.sourceFileName, row, tx);
         if (!ingredientId) {
           throw new Error("Ingredient is required to apply price updates.");
         }
