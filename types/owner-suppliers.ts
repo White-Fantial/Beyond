@@ -46,6 +46,10 @@ export interface IngredientSupplierLink {
   isPreferred: boolean;
   /** Current reference price in millicents for display */
   referencePrice: number;
+  /** Number of supplier units included in one package (e.g. 10 for 10kg). */
+  purchaseQty: number;
+  /** Supplier product package unit. */
+  unit: IngredientUnit;
   lastScrapedAt: string | null;
   createdAt: string;
 }
@@ -184,4 +188,3 @@ export interface SupplierRequestFilters {
   page?: number;
   pageSize?: number;
 }
-

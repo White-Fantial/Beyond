@@ -185,6 +185,8 @@ function toLinkRow(r: {
   supplierProduct: {
     name: string;
     referencePrice: number;
+    purchaseQty: number;
+    unit: IngredientUnit;
     lastScrapedAt: Date | null;
     supplier: { name: string };
   };
@@ -198,6 +200,8 @@ function toLinkRow(r: {
     supplierName: r.supplierProduct.supplier.name,
     isPreferred: r.isPreferred,
     referencePrice: r.supplierProduct.referencePrice,
+    purchaseQty: r.supplierProduct.purchaseQty,
+    unit: r.supplierProduct.unit,
     lastScrapedAt: r.supplierProduct.lastScrapedAt?.toISOString() ?? null,
     createdAt: r.createdAt.toISOString(),
   };
@@ -208,6 +212,8 @@ const linkInclude = {
     select: {
       name: true,
       referencePrice: true,
+      purchaseQty: true,
+      unit: true,
       lastScrapedAt: true,
       supplier: { select: { name: true } },
     },

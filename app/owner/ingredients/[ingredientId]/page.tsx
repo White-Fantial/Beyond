@@ -73,6 +73,7 @@ export default async function EditIngredientPage({ params }: Props) {
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <IngredientSupplierLinkPanel
           ingredientId={ingredientId}
+          ingredientUnit={ingredient.unit}
           initialLinks={links}
         />
       </div>
