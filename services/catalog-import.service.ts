@@ -148,9 +148,9 @@ function extractItemPrice(raw: Record<string, unknown>): number | null {
   const variants = raw["variants"];
   if (Array.isArray(variants) && variants.length > 0) {
     const first = variants[0] as Record<string, unknown>;
-    if (typeof first["price"] === "number") return Math.round(first["price"] * 100);
+    if (typeof first["price"] === "number") return Math.round(first["price"] * 100_000);
   }
-  if (typeof raw["price"] === "number") return Math.round((raw["price"] as number) * 100);
+  if (typeof raw["price"] === "number") return Math.round((raw["price"] as number) * 100_000);
   return null;
 }
 
@@ -175,7 +175,7 @@ function extractModifierOptionName(raw: Record<string, unknown>): string | null 
 }
 
 function extractModifierOptionPrice(raw: Record<string, unknown>): number | null {
-  if (typeof raw["price"] === "number") return Math.round((raw["price"] as number) * 100);
+  if (typeof raw["price"] === "number") return Math.round((raw["price"] as number) * 100_000);
   return null;
 }
 
