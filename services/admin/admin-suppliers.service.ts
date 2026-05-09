@@ -55,6 +55,9 @@ export function normalizeSupplierProductUrl(rawUrl: string | null | undefined): 
 
   try {
     const parsed = new URL(trimmed);
+    const hashRoute = parsed.hash.startsWith("#/")
+      ? parsed.hash.slice(1).replace(/\/+$/, "") || "/"
+      : null;
     parsed.hash = "";
     parsed.username = "";
     parsed.password = "";
@@ -67,7 +70,10 @@ export function normalizeSupplierProductUrl(rawUrl: string | null | undefined): 
       parsed.port = "";
     }
 
-    parsed.pathname = parsed.pathname.replace(/\/+$/, "") || "/";
+    const normalizedPathname = parsed.pathname.replace(/\/+$/, "") || "/";
+    parsed.pathname = hashRoute
+      ? `${normalizedPathname === "/" ? "" : normalizedPathname}${hashRoute}`
+      : normalizedPathname;
     const normalizedParams = [...parsed.searchParams.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, value]) => `${key}=${value}`)
