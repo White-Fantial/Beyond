@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import ConnectionStatusBadge from "./ConnectionStatusBadge";
 import type { OwnerTenantConnectionCard } from "@/services/owner/owner-integrations.service";
 
@@ -30,6 +31,12 @@ export default function ConnectionCard({ card, onDisconnected, onSynced }: Props
 
   const isConnected = card.status === "CONNECTED";
   const canSync = isConnected && card.connectionId;
+  const canImportMenu =
+    isConnected &&
+    card.connectionId &&
+    card.storeId &&
+    card.connectionType === "POS" &&
+    (card.provider === "LOYVERSE" || card.provider === "LIGHTSPEED");
   const canDisconnect =
     card.connectionId &&
     card.status !== "NOT_CONNECTED" &&
@@ -121,7 +128,7 @@ export default function ConnectionCard({ card, onDisconnected, onSynced }: Props
         </p>
       )}
 
-      {(canSync || canDisconnect) && (
+      {(canSync || canImportMenu || canDisconnect) && (
         <div className="mt-3 flex items-center gap-2">
           {canSync && (
             <button
@@ -131,6 +138,14 @@ export default function ConnectionCard({ card, onDisconnected, onSynced }: Props
             >
               {actionState === "syncing" ? "Syncing…" : "Sync Now"}
             </button>
+          )}
+          {canImportMenu && (
+            <Link
+              href={`/owner/stores/${card.storeId}/integrations/${card.connectionId}/menu-import`}
+              className="text-xs px-2.5 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Import Menu
+            </Link>
           )}
           {canDisconnect && (
             <button

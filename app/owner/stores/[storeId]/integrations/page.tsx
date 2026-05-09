@@ -7,6 +7,7 @@ import {
 import ConnectButton from "./ConnectButton";
 import DisconnectButton from "./DisconnectButton";
 import type { ConnectionSummary } from "@/domains/integration/types";
+import Link from "next/link";
 
 interface PageProps {
   params: Promise<{ storeId: string }>;
@@ -86,6 +87,11 @@ function ConnectionCard({
   const isConnected =
     connection?.status === "CONNECTED" || connection?.status === "REAUTH_REQUIRED";
   const status = connection?.status ?? "NOT_CONNECTED";
+  const canImportMenu =
+    isConnected &&
+    connection &&
+    providerDef.connectionType === "POS" &&
+    (providerDef.provider === "LOYVERSE" || providerDef.provider === "LIGHTSPEED");
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-5 flex flex-col gap-3">
@@ -160,6 +166,14 @@ function ConnectionCard({
               provider={providerDef.provider}
               connectionType={providerDef.connectionType}
             />
+            {canImportMenu && connection && (
+              <Link
+                href={`/owner/stores/${storeId}/integrations/${connection.id}/menu-import`}
+                className="inline-flex items-center px-3 py-1.5 rounded border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Import Menu
+              </Link>
+            )}
           </>
         )}
       </div>
